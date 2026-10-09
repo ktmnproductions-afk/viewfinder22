@@ -548,7 +548,7 @@ async function wikipediaSearch(c,radius,id){
   return {id:'wiki-'+p.pageid,name:p.title,lat:p.lat,lng:p.lon,distance:d,tags:{},source:'Wikipedia',sourceUrl:'https://en.wikipedia.org/?curid='+p.pageid,category:'history',summary:extract,history:extract,wikiUrl:'https://en.wikipedia.org/?curid='+p.pageid,license:'Wikipedia article; see source attribution'};
  }).filter(Boolean);
 }
-const IMAGE_EVENT_OR_PERSON_RE = /\b(event|festival|concert|tournament|championship|competition|match|team|players?|skatehockey|football|soccer|basketball|volleyball|hockey|marathon|race|wedding|birthday|graduation|crowd|spectators?|audience|selfie|portrait|headshot|family|children|athletes?|school class|group photo|u(?:1[0-9]|2[0-3])\b|award ceremony|celebration|party|conference|meeting|demonstration|protest)\b/i;
+const IMAGE_EVENT_OR_PERSON_RE = /\b(event|festival|concert|tournament|championship|competition|match|team|players?|skatehockey|football|soccer|basketball|volleyball|hockey|marathon|race|bicycl\w*|cycling|biciklijad\w*|kolesar\w*|utrk\w*|dirk\w*|natjecanj\w*|utakmic\w*|turnir\w*|prired\w*|sejem\w*|wedding|birthday|graduation|crowd|spectators?|audience|selfie|portrait|headshot|family|children|athletes?|school class|group photo|tombstone|gravestone|cemetery|headstone|u(?:1[0-9]|2[0-3])\b|award ceremony|celebration|party|conference|meeting|demonstration|protest)\b/i;
 const IMAGE_SCENE_RE = /\b(panorama|skyline|cityscape|landscape|architecture|historic|old town|church|cathedral|castle|cross|monument|coast|coastal|harbou?r|bay|rooftops?|mountains?|valley|viewpoint|lookout|sunset|sunrise|bridge|fort|ruins|street|town|city|village|port|waterfront|cliff|hill|ridge|sea|island|beach|square|chapel|tower|lighthouse|building|aerial|view|scenic|landmark|nature|forest|river|lake|churchyard|wayside)\b/i;
 const IMAGE_QUERY_STOPWORDS=new Set(['photo','photos','picture','pictures','photography','landscape','landscapes','panorama','architecture','historic','historical','old','town','city','cityscape','view','viewpoint','images','image','near','around','the','with','and','for','from']);
 function normalizedPhotoTitle(value){return String(value||'').replace(/^File:/i,'').replace(/\.[a-z0-9]{2,5}$/i,'').replace(/[_-]+/g,' ').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim().toLowerCase();}
@@ -966,12 +966,16 @@ async function generateConcept(){
  button.disabled=true;button.textContent='Generating…';
  status.textContent='Creating a visual concept for '+item.name+'. This can take a little while; the selected model/provider may ask you to sign in or confirm usage.';
  try{
-  const generated=await window.puter.ai.txt2img(imageConceptPrompt(item,mode),{
+  const generationPromise=window.puter.ai.txt2img(imageConceptPrompt(item,mode),{
    provider:'openai',
    model:'gpt-image-2',
    quality:'medium',
    ratio:{w:16,h:9}
   });
+  const generated=await Promise.race([
+   generationPromise,
+   new Promise((resolve,reject)=>window.setTimeout(()=>reject(new Error('No image returned within 90 seconds. The image service may still be processing; avoid repeatedly starting new generations.')),90000))
+  ]);
   const src=typeof generated==='string'?generated:(generated&&generated.src?generated.src:'');
   if(!src)throw new Error('The image provider returned no viewable image.');
   image.src=src;
