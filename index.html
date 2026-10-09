@@ -466,6 +466,22 @@ function cardHTML(item){
  return '<article class="spot-card" data-item-id="'+esc(item.id)+'" tabindex="0" role="button"><div class="spot-icon '+esc(item.category)+'">'+icon+'</div><div class="spot-body"><div class="spot-title">'+title+'</div><div class="spot-meta"><span>'+esc(tagLine)+'</span></div>'+(desc?'<div class="spot-summary">'+esc(desc)+'</div>':'')+'</div><div class="spot-distance">'+dist+'</div></article>';
 }
 function emptyHTML(text){return '<div class="empty">'+esc(text)+'</div>';}
+function wireCards(container,items){
+ container.querySelectorAll('.spot-card').forEach(el=>{
+  const item=items.find(r=>r.id===el.dataset.itemId);
+  if(!item)return;
+  el.classList.toggle('selected',state.selected&&state.selected.id===item.id);
+  const open=()=>selectItem(item);
+  el.addEventListener('click',open);
+  el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
+ });
+}
+function renderScenicSpots(){
+ const scoutKm=Math.max(25,Math.min(30,state.radius/1000*2));
+ $('scenicCount').textContent=state.scenicSpots.length+' · '+scoutKm+' km';
+ $('scenicResults').innerHTML=state.scenicSpots.length?state.scenicSpots.slice(0,20).map(cardHTML).join(''):emptyHTML(state.center?'No mapped lookout or strong scenic feature found in the wider radius. Try 20–30 km. We will not invent a camera position where the map data has none.':'Drop a pin to search beyond the city centre for hilltops, ridges, viewpoints and landscape frames.');
+ wireCards($('scenicResults'),state.scenicSpots);
+}
 function renderResults(){
  const shown=state.filter==='all'?state.results:state.results.filter(r=>r.category===state.filter);
  const parking=shown.filter(r=>r.category==='parking');
@@ -477,41 +493,40 @@ function renderResults(){
  $('parkingResults').innerHTML=parking.length?parking.map(cardHTML).join(''):emptyHTML(state.results.length?'No mapped parking found in this radius. Try a larger scan or verify parking locally.':'Scan a place to search for parking.');
  $('historyResults').innerHTML=history.length?history.slice(0,12).map(cardHTML).join(''):emptyHTML(state.results.length?'No nearby history articles or tagged historic places were found. This means coverage is limited, not that history is absent.':'Historical sites and encyclopedia articles appear here after a scan.');
  $('viewResults').innerHTML=view.length?view.slice(0,16).map(cardHTML).join(''):emptyHTML(state.results.length?'No tagged viewpoints or architectural subjects found in the selected radius.':'Look for viewpoints, interesting buildings and natural subjects.');
- document.querySelectorAll('.spot-card').forEach(el=>{
-  const item=state.results.find(r=>r.id===el.dataset.itemId);
-  if(!item)return;
-  el.classList.toggle('selected',state.selected&&state.selected.id===item.id);
-  const open=()=>selectItem(item);
-  el.addEventListener('click',open);
-  el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
- });
+ wireCards($('parkingResults'),parking);
+ wireCards($('historyResults'),history);
+ wireCards($('viewResults'),view);
+ renderScenicSpots();
  renderPhotos();
  $('mapTitle').textContent=state.center?(state.selected?state.selected.name:'Explore around your pin.'):'Explore the world, one stop at a time.';
- $('mapSubtitle').textContent=state.center?coordLabel(state.center)+' · '+(state.radius/1000)+' km radius':'Click anywhere on the map to plan a photography stop.';
+ $('mapSubtitle').textContent=state.center?coordLabel(state.center)+' · '+(state.radius/1000)+' km local search + wider photo scouting':'Click anywhere on the map to plan a photography stop.';
 }
 function renderPhotos(){
  $('photoCount').textContent=state.photos.length+' images';
- $('photoResults').innerHTML=state.photos.length?state.photos.slice(0,10).map(p=>'<article class="photo-card"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open source image page"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="photo-caption">'+esc(p.name)+'<div class="photo-license">'+esc(p.license||'Licence on source page')+'</div></div></a></article>').join(''):emptyHTML(state.center?'No geotagged Commons image references were found in this radius. Use the Pinterest or Instagram search links for more visual inspiration.':'Drop a pin to look for geotagged reference images.');
+ $('photoResults').innerHTML=state.photos.length?state.photos.slice(0,12).map(p=>'<article class="photo-card"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original photo and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="photo-caption">'+esc(p.name)+'<div class="photo-license">'+esc(p.geotagged?'Geotagged reference · '+distanceLabel(p.distance)+' away':'Location-themed inspiration · exact shooting position not verified')+'</div><div class="photo-license">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Check original file page')+'</div></div></a></article>').join(''):emptyHTML(state.center?'Searching for photo references… If there are no geotagged images, location-themed Commons images are searched as a fallback.':'Drop a pin to look for visual references.');
 }
 function markerEl(category,label){
  const el=document.createElement('button'); el.type='button'; el.className='scout-marker '+category;
  el.title=label; el.setAttribute('aria-label',label);
  const core=document.createElement('span');core.className='dot-core';
- if(category==='viewpoint')core.innerHTML='<span>V</span>';else core.textContent=category==='parking'?'P':category==='history'?'H':category==='photo'?'✦':'A';
+ if(category==='viewpoint')core.innerHTML='<span>V</span>';
+ else if(category==='photoSpot')core.innerHTML='<span>✦</span>';
+ else core.textContent=category==='parking'?'P':category==='history'?'H':category==='photo'?'✦':'A';
  el.appendChild(core); return el;
 }
 function clearMarkers(){state.markers.forEach(m=>m.remove());state.markers=[];}
 function renderMarkers(){
  if(!state.map || !state.styleLoaded)return;
  clearMarkers();
- state.results.forEach(item=>{
-  const el=markerEl(item.category,item.name+' · '+distanceLabel(item.distance));
+ [...state.results,...state.scenicSpots].forEach(item=>{
+  const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.name+' · '+distanceLabel(item.distance);
+  const el=markerEl(item.category,label);
   el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
   const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
   state.markers.push(m);
  });
- state.photos.forEach(item=>{
-  const el=markerEl('photo',item.name+' · photo reference');
+ state.photos.filter(item=>item.geotagged&&Number.isFinite(item.lat)&&Number.isFinite(item.lng)).forEach(item=>{
+  const el=markerEl('photo',item.name+' · geotagged photo reference');
   el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
   const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
   state.markers.push(m);
@@ -606,13 +621,16 @@ function updateSocialSearch(query){
  $('instagramSearch').href='https://www.instagram.com/explore/search/keyword/?q='+encodeURIComponent(q);
 }
 function shotPrompt(item){
- const tags=item.tags||{};
  let genre='editorial travel photography';
  if(item.category==='history')genre='historical architecture and cultural documentary photography';
  if(item.category==='parking')genre='a visual story of the surrounding place, not a photograph of the car park';
  if(item.category==='viewpoint')genre='landscape and viewpoint photography';
+ if(item.category==='photoSpot')genre=(item.scenicKind||'landscape')+' photography designed to show a city or landscape from a strong position';
  if(item.category==='architecture')genre='urban architecture and street photography';
- return 'Create a photorealistic visual reference for a real-world photo shoot at '+item.name+'. Location: '+item.lat.toFixed(5)+', '+item.lng.toFixed(5)+'. Genre: '+genre+'. Develop an original composition with a deliberate foreground, clear subject hierarchy, layered depth, considered geometry, natural believable light, controlled colour palette, and a cinematic but realistic editorial finish. Suggest an uncommon camera position and a strong frame edge; avoid generic travel-poster styling, oversaturated colours, text overlays, logos, fake architecture, and impossible scenery. Treat this as creative inspiration, not evidence of the exact on-site view. Include one wide establishing composition and one tighter detail alternative. If lighting is not specified, propose one overcast/daylight approach and one golden-hour approach.';
+ const gear='Camera: Canon EOS R50 with RF-S 18–150mm lens. At 18–24mm include foreground and setting; 35–70mm balances subject and context; 100–150mm compresses distant rooftops, skyline layers and mountain ridges. Use f/8–f/11 for landscape depth in daylight; consider a tripod and low ISO for blue hour.';
+ const framing=item.category==='photoSpot'?'Create two alternate compositions: (1) a wide environmental frame with foreground and city/landscape layers; (2) a compressed telephoto frame isolating rooftops, towers, ridgelines or repeating forms.':'Create one wide establishing frame and one tighter detail frame.';
+ const evidence=item.category==='photoSpot'?'Mapped evidence: '+(item.why||'scenic feature candidate')+'. Do not invent a real structure or claim an unverified view. ':'';
+ return 'Create a photorealistic visual reference for a real-world photography outing at '+item.name+'. Coordinates: '+Number(item.lat).toFixed(5)+', '+Number(item.lng).toFixed(5)+'. Genre: '+genre+'. '+evidence+gear+' '+framing+' Suggest an achievable camera position, clear foreground, layered depth, strong geometry, natural light and an editorial colour palette. Avoid generic travel-poster styling, oversaturation, text overlays, logos, fabricated architecture or impossible scenery. This is a creative illustration, not proof of the exact on-site view. Offer golden-hour and overcast/daylight options.';
 }
 function selectItem(item){
  state.selected=item;
