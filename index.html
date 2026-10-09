@@ -816,9 +816,12 @@ function renderMarkers(){
   const cell=Math.round(item.lat*10000)+'|'+Math.round(item.lng*10000);
   if(seen.has(cell))return;
   seen.add(cell);
-  const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas':item.parkingOrigin==='basemap'?'Mapped parking · availability unverified · ':'Scout parking feature · ')+item.name+' · '+distanceLabel(item.distance):item.name+' · '+distanceLabel(item.distance);
+  const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas · '+distanceLabel(item.distance):(item.parkingOrigin==='basemap'?'Mapped parking · availability unverified · ':'Scout parking feature · ')+item.name+' · '+distanceLabel(item.distance)):item.name+' · '+distanceLabel(item.distance);
   const el=markerEl(item.category,label);
   if(item.parkingOrigin==='basemap')el.classList.add('basemap-parking');
+  // Explicit z-order stops nearby building/history dots from intercepting taps on
+  // parking destinations when their coordinates are close at neighbourhood zoom.
+  el.style.zIndex=item.category==='parking'?'1100':item.category==='history'?'800':item.category==='architecture'?'650':item.category==='viewpoint'?'600':item.category==='photoSpot'?'300':'500';
   if(item.clusterMembers){
    el.classList.add('parking-cluster');
    el.querySelector('.dot-core').textContent='P'+item.clusterSize;
@@ -838,6 +841,7 @@ function setActivePin(c){
  if(state.pinMarker)state.pinMarker.remove();
  const el=markerEl('active-pin','Active photography stop');
  const core=el.querySelector('.dot-core'); if(core)core.innerHTML='<span>+</span>';
+ el.style.zIndex='1200';
  state.pinMarker=new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([c.lng,c.lat]).addTo(map);
 }
 function setStatus(title,msg,kind){
