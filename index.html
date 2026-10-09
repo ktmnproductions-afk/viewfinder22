@@ -547,14 +547,14 @@ function setStatus(title,msg,kind){
 async function scanAt(c,opts){
  if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng)||Math.abs(c.lat)>85||Math.abs(c.lng)>180){setStatus('Choose a valid map point','That coordinate cannot be scanned.','warn');return;}
  state.scanId++;const id=state.scanId;state.scanCount++;cancelPreviousRequests();
- state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||5000;state.results=[];state.photos=[];state.selected=null;
+ state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.results=[];state.scenicSpots=[];state.photos=[];state.selected=null;
  $('spotDetail').classList.remove('show');
  setActivePin(state.center);updateRadius();
  if(opts&&opts.fly&&map.getZoom()<8){map.flyTo({center:[c.lng,c.lat],zoom:12,duration:850});}
- renderResults();renderPhotos();
- setStatus('Searching around your pin','Searching parking and places first. History and photo references will appear as each source responds.','loading');
+ renderResults();renderPhotos();renderMarkers();
+ setStatus('Scouting around your pin','Searching mapped parking and history nearby, plus a wider 25–30 km radius for landscape and city-view candidates.','loading');
  $('mapTitle').textContent='Exploring your stop';
- $('mapSubtitle').textContent=coordLabel(c)+' · '+(state.radius/1000)+' km radius';
+ $('mapSubtitle').textContent=coordLabel(c)+' · '+(state.radius/1000)+' km local search + wider photo scouting';
  updateSocialSearch('near '+coordLabel(c));
  const rad=state.radius;
  let osmResults=[];
@@ -578,8 +578,9 @@ async function scanAt(c,opts){
   mergePlaces();
   renderResults();renderPhotos();renderMarkers();updateRadius();
   const parts=[];
-  if(completed.has('places'))parts.push(osmResults.length+' mapped spots');
+  if(completed.has('places'))parts.push(osmResults.length+' mapped places');
   if(completed.has('history'))parts.push(wikiResults.length+' history articles');
+  if(completed.has('scenic'))parts.push(state.scenicSpots.length+' photo spots in wider radius');
   if(completed.has('photos'))parts.push(state.photos.length+' photo references');
   if(failures.size)parts.push('unavailable: '+Array.from(failures).join(', '));
   setStatus('Searching around your pin',parts.length?parts.join(' · ')+' · loading remaining sources':'Waiting for geographic sources to respond…',failures.size?'warn':'loading');
@@ -600,18 +601,43 @@ async function scanAt(c,opts){
  await Promise.all([
   runSource('places',overpassSearch(c,rad,id),data=>{osmResults=data;}),
   runSource('history',wikipediaSearch(c,rad,id),data=>{wikiResults=data;}),
+  runSource('scenic',scenicSearch(c,rad,id),data=>{state.scenicSpots=data;}),
   runSource('photos',commonsSearch(c,rad,id),data=>{state.photos=data;})
  ]);
  if(id!==state.scanId)return;
  mergePlaces();
+ // Geotagged images are scarce in many areas. Search Commons by local city or
+ // nearby landmark names too, but never label those photos as exact GPS matches.
+ if(state.photos.filter(p=>p.geotagged).length<4){
+  const displayCity=osmResults.find(r=>r.city&&String(r.city).trim())?.city||'';
+  const terms=[];
+  if(displayCity){terms.push(displayCity+' panorama',displayCity+' cityscape',displayCity+' old town architecture');}
+  else {
+   const names=wikiResults.slice(0,2).map(r=>r.name).filter(Boolean);
+   names.forEach(n=>terms.push(n+' landscape photography'));
+   if(names.length)terms.push(names[0]+' panorama');
+  }
+  if(terms.length){
+   try{
+    const thematic=await commonsTextSearch(terms,c,id);
+    if(id!==state.scanId)return;
+    const existing=new Set(state.photos.map(p=>p.id));
+    state.photos=[...state.photos,...thematic.filter(p=>!existing.has(p.id))].slice(0,12);
+    failures.delete('photos');
+   }catch(err){if(id!==state.scanId)return;failures.add('photo inspiration');}
+  }
+ }
+ if(id!==state.scanId)return;
  renderResults();renderPhotos();renderMarkers();updateRadius();
  const parks=state.results.filter(r=>r.category==='parking').length;
  const histories=state.results.filter(r=>r.category==='history').length;
- const photos=state.photos.length;
+ const imageCount=state.photos.length;
+ const themed=state.photos.filter(p=>!p.geotagged).length;
+ const scoutKm=Math.max(25,Math.min(30,rad/1000*2));
  if(failures.size){
-  setStatus('Partial results loaded',state.results.length+' mapped places · '+parks+' parking features · '+histories+' history entries · '+photos+' images. Unavailable: '+Array.from(failures).join(', ')+'. Retry or use external inspiration search.','warn');
+  setStatus('Partial results loaded',state.results.length+' nearby places · '+parks+' parking features · '+histories+' history entries · '+state.scenicSpots.length+' photo-spot candidates within about '+scoutKm+' km · '+imageCount+' images ('+themed+' inspiration refs). Some sources unavailable: '+Array.from(failures).join(', ')+'.','warn');
  }else{
-  setStatus('Stop research ready',state.results.length+' mapped places · '+parks+' parking features · '+histories+' history entries · '+photos+' geotagged images. Check parking signs and access on site.','');
+  setStatus('Photo stop ready',state.results.length+' nearby places · '+parks+' parking features · '+histories+' history entries · '+state.scenicSpots.length+' photo-spot candidates within about '+scoutKm+' km · '+imageCount+' on-screen image refs. Check access and line of sight before driving.','');
  }
  mapOk();
 }
