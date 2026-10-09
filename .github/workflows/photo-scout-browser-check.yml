@@ -82,8 +82,12 @@ jobs:
               throw new Error('Clicking the geographic map did not start a scan: ' + JSON.stringify(afterClick));
             }
             const scenicCardCount = await page.locator('#scenicResults .spot-card').count();
-            if (!(afterClick.scenicCount > 0) || scenicCardCount < 1) {
-              throw new Error('No photo-spot candidates were displayed after scanning: ' + JSON.stringify({afterClick,scenicCardCount}));
+            const scenicGroupCount = await page.locator('#scenicResults .scenic-group').count();
+            if (!(afterClick.scenicCount > 0) || scenicCardCount < 1 || scenicGroupCount !== 3) {
+              throw new Error('No grouped photo-spot candidates were displayed after scanning: ' + JSON.stringify({afterClick,scenicCardCount,scenicGroupCount}));
+            }
+            if (!(afterClick.scenicDistanceBands?.distant > 0)) {
+              throw new Error('The wider search did not return any candidate 15 km or farther from the pin: ' + JSON.stringify(afterClick.scenicDistanceBands));
             }
             await page.locator('#scenicResults .spot-card').first().click();
             await page.waitForFunction(() => document.querySelector('#spotDetail')?.classList.contains('show'), null, { timeout: 5000 });
@@ -94,10 +98,11 @@ jobs:
               photoCount: document.querySelectorAll('#detailPhotoRefs .detail-photo').length,
               photoStatus: document.querySelector('#detailPhotoCount')?.textContent,
               compositionCards: document.querySelectorAll('#spotDetail .concept-card').length,
+              scenicGroupHeadings: [...document.querySelectorAll('#scenicResults .scenic-group-title')].map(x=>x.textContent),
               visible: !!document.querySelector('#spotDetail')?.getBoundingClientRect().height,
               markerWidth: getComputedStyle(document.querySelector('.scout-marker.photoSpot .dot-core')).width
             }));
-            if (!selectedSpot.title || !selectedSpot.hasShotPrompt || selectedSpot.compositionCards !== 3 || !selectedSpot.visible) {
+            if (!selectedSpot.title || !selectedSpot.hasShotPrompt || selectedSpot.compositionCards !== 3 || selectedSpot.photoCount < 1 || !selectedSpot.visible) {
               throw new Error('Photo-spot detail panel did not contain the expected camera-specific workflow: ' + JSON.stringify(selectedSpot));
             }
             if (parseFloat(selectedSpot.markerWidth) < 30) {
@@ -133,7 +138,7 @@ jobs:
             }
             await page.waitForTimeout(800);
             await page.screenshot({ path: 'artifacts/photo-scout-live-map.png', fullPage: false });
-            console.log(JSON.stringify({ initial, afterClick, successfulVectorTiles:successfulVectorTiles.length, failedVectorTiles, observedMapProviderResponses:tileResponses.length, browserErrors:errors }, null, 2));
+            console.log(JSON.stringify({ initial, afterClick, selectedSpot, successfulVectorTiles:successfulVectorTiles.length, failedVectorTiles, observedMapProviderResponses:tileResponses.length, browserErrors:errors }, null, 2));
             if (failedVectorTiles.length) throw new Error('Map vector tile requests failed: ' + JSON.stringify(failedVectorTiles.slice(0, 10)));
             if (errors.some(x => /maplibre|webgl/i.test(x))) throw new Error('Map renderer browser errors: ' + JSON.stringify(errors));
             await browser.close();
