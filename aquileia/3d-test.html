@@ -122,8 +122,18 @@ const bankLines=new THREE.Group();scene.add(bankLines);line(bankLines,[[28,.21,-
 const reeds=new THREE.Group();scene.add(reeds);let seed=77;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};for(let i=0;i<420;i++){const z=-70+rnd()*130;const x=(z<15?41+Math.sin(z*.06)*3:30-rnd()*8);if(rnd()>.75)continue;const h=.25+rnd()*.5;const stalk=box(reeds,x,.2+h/2,z,.025,h,.025,mat(0x7e8650),false,false);stalk.rotation.z=(rnd()-.5)*.2;}
 // Roman road network digitized in simplified form from the published archaeological city plan.
 const roads=new THREE.Group();roads.position.y=.19;scene.add(roads);const xRoads=[-52,-42,-31,-20,-9,2,13,24,33];const zRoads=[-64,-53,-42,-31,-20,-9,2,13,24,35,43];
-function spanRoadHorizontal(z,x1,x2,width,main){for(let x=x1;x<x2;x+=2.4){const mx=x+1.2;if(!inPoly(mx,z))continue;const r=box(roads,mx,.035,z,Math.min(2.45,x2-x),.07,width,main?mats.roadEdge:mats.road,false,true);if(main){box(roads,mx,.075,z,.25,.018,width*.8,mats.road,false,false);}}}
-function spanRoadVertical(x,z1,z2,width,main){for(let z=z1;z<z2;z+=2.4){const mz=z+1.2;if(!inPoly(x,mz))continue;box(roads,x,.035,mz,width,.07,Math.min(2.45,z2-z),main?mats.roadEdge:mats.road,false,true);}}
+function spanRoadHorizontal(z,x1,x2,width,main){
+ const xs=[];for(let x=x1;x<=x2;x+=.5)if(inPoly(x,z))xs.push(x);
+ if(xs.length<2)return;const lo=Math.min(...xs),hi=Math.max(...xs),len=hi-lo,mid=(hi+lo)/2;
+ box(roads,mid,.035,z,len,.07,width,main?mats.roadEdge:mats.road,false,true);
+ if(main){box(roads,mid,.077,z,len,.025,.10,mats.road,false,false);box(roads,mid,.076,z-width*.43,len,.02,.035,mats.wallLight,false,false);box(roads,mid,.076,z+width*.43,len,.02,.035,mats.wallLight,false,false);}
+}
+function spanRoadVertical(x,z1,z2,width,main){
+ const zs=[];for(let z=z1;z<=z2;z+=.5)if(inPoly(x,z))zs.push(z);
+ if(zs.length<2)return;const lo=Math.min(...zs),hi=Math.max(...zs),len=hi-lo,mid=(hi+lo)/2;
+ box(roads,x,.035,mid,width,.07,len,main?mats.roadEdge:mats.road,false,true);
+ if(main){box(roads,x,.077,mid,.10,.025,len,mats.road,false,false);box(roads,x-width*.43,.076,mid,.035,.02,len,mats.wallLight,false,false);box(roads,x+width*.43,.076,mid,.035,.02,len,mats.wallLight,false,false);}
+}
 zRoads.forEach((z,i)=>spanRoadHorizontal(z,-56,36,(i===2||i===7)?1.05:.58,i===2||i===7));
 xRoads.forEach((x,i)=>spanRoadVertical(x,-75,49,(i===2||i===6)?1.0:.58,i===2||i===6));
 const ghostRoads=new THREE.Group();scene.add(ghostRoads);for(const x of xRoads)polyline(ghostRoads,[[x,.19,-66],[x,.19,42]],0xdfd4b9,.035);for(const z of zRoads)polyline(ghostRoads,[[-53,.19,z],[34,.19,z]],0xdfd4b9,.035);
@@ -178,8 +188,13 @@ function makeModernBuilding(x,z,w,d,h,orientation=0){
 // Early colonia huts and first streets, before the imperial city fills the plan.
 for(let i=0;i<22;i++){const x=-19+(i%6)*3.1+(rnd()-.5),z=-22+Math.floor(i/6)*3.0+(rnd()-.5);if(!inPoly(x,z)||skipLot(x,z))continue;const g=actor(new THREE.Group(),"early");g.position.set(x,groundH(x,z)+.2,z);cyl(g,0,.52,0,.95,1.1,1.05,mats.wood,9);const roof=new THREE.Mesh(new THREE.ConeGeometry(1.35,1.15,9),mat(0x8e7950));roof.position.y=1.48;roof.castShadow=true;g.add(roof);box(g,.25,.42,.95,.34,.78,.08,mats.dark,false,false);scene.add(g);cityActors.early.push(g);}
 // Landscape trees, planted as groups, return strongly in the present-day era.
-function addTree(x,z,size){const g=actor(new THREE.Group(),"tree");g.position.set(x,groundH(x,z)+.16,z);cyl(g,0,size*.32,0,.10*size,.15*size,size*.65,mats.treeTrunk,6);for(let j=0;j<3;j++){const cone=new THREE.Mesh(new THREE.ConeGeometry(size*(.42-j*.08),size*(.72-j*.1),7),j%2?mats.leaf1:mats.leaf2);cone.position.y=size*(.55+j*.26);cone.castShadow=true;g.add(cone);}scene.add(g);cityActors.trees.push(g);return g;}
-for(let i=0;i<180;i++){let x=-126+rnd()*252,z=-138+rnd()*276;if(inPoly(x,z)||Math.abs(x)>124||Math.abs(z)>138)continue;addTree(x,z,1.4+rnd()*2.0);}
+// Instanced trees keep the landscape detailed while preserving responsive frame rates.
+const treeRoot=actor(new THREE.Group(),"tree-population");treeRoot.position.set(0,0,0);scene.add(treeRoot);cityActors.trees.push(treeRoot);
+const treeLocations=[];for(let i=0;i<180;i++){let x=-126+rnd()*252,z=-138+rnd()*276;if(inPoly(x,z)||Math.abs(x)>124||Math.abs(z)>138)continue;treeLocations.push({x,z,size:1.4+rnd()*2.0});}
+function addTreeInstances(geometry,material,positionFn){const mesh=new THREE.InstancedMesh(geometry,material,treeLocations.length);mesh.castShadow=true;mesh.receiveShadow=true;const dummy=new THREE.Object3D();treeLocations.forEach((p,i)=>{const y=groundH(p.x,p.z);const tr=positionFn(p);dummy.position.set(p.x,y+tr.y,p.z);dummy.scale.set(tr.sx||p.size,tr.sy||p.size,tr.sz||p.size);dummy.rotation.y=tr.rotation||0;dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);});mesh.instanceMatrix.needsUpdate=true;treeRoot.add(mesh);return mesh;}
+addTreeInstances(new THREE.CylinderGeometry(.07,.11,.65,6),mats.treeTrunk,p=>({y:p.size*.32}));
+addTreeInstances(new THREE.ConeGeometry(.46,.85,7),mats.leaf1,p=>({y:p.size*.62,sx:p.size,sy:p.size,sz:p.size,rotation:p.size*1.3}));
+addTreeInstances(new THREE.ConeGeometry(.35,.72,7),mats.leaf2,p=>({y:p.size*.98,sx:p.size,sy:p.size,sz:p.size,rotation:p.size*2.1}));
 // Ships occupy the port only in the imperial and early Christian phases.
 const ships=[];function makeShip(x,z,rot){const g=actor(new THREE.Group(),"ship");g.position.set(x,.23,z);g.rotation.y=rot;const hullShape=new THREE.Shape();hullShape.moveTo(-1.1,-2.9);hullShape.lineTo(1.1,-2.9);hullShape.lineTo(1.35,1.65);hullShape.lineTo(0,3.0);hullShape.lineTo(-1.35,1.65);hullShape.closePath();const geo=new THREE.ShapeGeometry(hullShape);geo.rotateX(-Math.PI/2);const hull=new THREE.Mesh(geo,mats.wood);hull.position.y=.15;hull.scale.set(1,1,.65);g.add(hull);box(g,0,.24,0,1.65,.2,3.1,mats.wood,false,false);cyl(g,0,2.0,.3,.07,.07,3.5,mats.wood,7);const sail=new THREE.Mesh(new THREE.PlaneGeometry(1.65,1.9),new THREE.MeshStandardMaterial({color:0xe6d7b6,side:THREE.DoubleSide,roughness:1}));sail.position.set(.05,2.0,.2);sail.castShadow=true;g.add(sail);scene.add(g);ships.push(g);return g;}
 makeShip(34,-31,.2);makeShip(39,-19,-.18);makeShip(37,-7,.1);makeShip(32,-40,.32);
