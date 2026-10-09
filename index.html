@@ -19,7 +19,29 @@
 .filter-row{display:flex;gap:6px;flex-wrap:wrap}.filter-chip{background:#1b2821;border:1px solid #35463a;border-radius:999px;padding:7px 10px;color:#b3c0b6;font-size:10px;white-space:nowrap}.filter-chip.active,.filter-chip:hover{border-color:#8fa24f;background:#34432d;color:#e4f58f}
 .results-section{padding-top:17px}.section-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}.section-heading h3{margin:0;font-size:10px;font-weight:850;letter-spacing:.11em;text-transform:uppercase;color:#e9f0e6}.count{font-size:10px;color:#93a497}.result-list{display:grid;gap:7px}.empty{border:1px dashed #3b4b40;border-radius:11px;padding:13px;color:#94a69a;font-size:11px;line-height:1.5}.spot-card{display:flex;align-items:flex-start;gap:10px;padding:11px;border:1px solid #2d3d32;border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,.035),rgba(255,255,255,.012));cursor:pointer;transition:transform .15s,border-color .15s,background .15s;min-width:0}.spot-card:hover,.spot-card.selected{border-color:#82964d;background:#26352a;transform:translateY(-1px)}.spot-icon{width:32px;height:32px;flex:0 0 32px;border-radius:10px;display:grid;place-items:center;font-size:14px;font-weight:850;background:#26392d;color:var(--lime);border:1px solid #3c4e3d}.spot-icon.parking{color:var(--parking);background:rgba(116,216,160,.08);border-color:rgba(116,216,160,.22)}.spot-icon.history{color:var(--history);background:rgba(255,156,131,.08);border-color:rgba(255,156,131,.2)}.spot-icon.viewpoint{color:var(--view);background:rgba(255,200,110,.08);border-color:rgba(255,200,110,.2)}.spot-body{flex:1;min-width:0}.spot-title{font-size:12px;line-height:1.35;font-weight:780;color:#f2f5ef}.spot-meta{font-size:9px;color:#9bac9f;margin-top:4px;display:flex;gap:6px;flex-wrap:wrap}.spot-summary{font-size:10px;color:#b7c4ba;line-height:1.5;margin-top:6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.spot-distance{font-size:9px;color:#aabaad;white-space:nowrap;padding-top:2px}
 .photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.photo-card{border:1px solid #314136;border-radius:11px;overflow:hidden;background:#1c2921;min-width:0}.photo-card a{text-decoration:none}.photo-card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#29382d}.photo-caption{padding:8px;font-size:10px;color:#dce6db;line-height:1.4;overflow-wrap:anywhere}.photo-license{font-size:9px;color:#92a398;margin-top:4px}.social-row{display:flex;gap:7px;margin-top:8px}.social-row .btn{flex:1}
-.detail{margin:16px 18px 0;border:1px solid #465b3c;background:linear-gradient(145deg,#26362a,#1c2921);border-radius:14px;padding:14px;display:none}.detail.show{display:block}.detail h2{font-family:Georgia,serif;font-weight:500;font-size:22px;line-height:1.15;margin:3px 0 8px}.detail p{font-size:11px;line-height:1.6;color:#c0cdc1;margin:8px 0}.detail-actions{display:flex;gap:7px;flex-wrap:wrap;margin:11px 0}.detail-actions .btn{flex:1}.prompt-box{background:#111b14;border:1px solid #3b4b3b;border-radius:10px;padding:10px;margin-top:10px}.prompt-box textarea{width:100%;resize:vertical;min-height:110px;outline:none;border:0;background:transparent;color:#d5e1d5;font-size:10px;line-height:1.55}.prompt-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:9px;color:#9eae9f}.saved-row{display:flex;gap:6px;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid #344439;border-radius:9px;margin-top:6px;font-size:10px;color:#cfdbcf}.saved-row button{background:none;color:var(--lime);border:0;font-size:10px}
+.detail{margin:14px 18px 0;border:1px solid #536c43;background:linear-gradient(145deg,#26362a,#1c2921);border-radius:14px;padding:14px;display:none;box-shadow:0 8px 25px rgba(0,0,0,.12)}.detail.show{display:block}
+.detail-reference-block,.concept-block{margin-top:13px;padding-top:12px;border-top:1px solid rgba(232,242,228,.12)}
+.detail-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.detail-photo{min-width:0;overflow:hidden;border:1px solid #3b4b3c;border-radius:9px;background:#142018}
+.detail-photo a{display:block;text-decoration:none}
+.detail-photo img{display:block;width:100%;height:74px;object-fit:cover;background:#2a392e}
+.detail-photo-title{padding:6px 7px 0;font-size:9px;line-height:1.35;color:#e6ede2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.detail-photo-note{padding:4px 7px 7px;font-size:8px;line-height:1.35;color:#9eafa0}
+.concept-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.concept-card{background:#18251c;border:1px solid #344638;border-radius:9px;overflow:hidden;min-width:0}
+.concept-art{height:58px;position:relative;overflow:hidden;background:linear-gradient(180deg,#344e4c 0%,#b9b99a 68%,#526b54 100%)}
+.concept-art.balanced{background:linear-gradient(180deg,#465c60 0%,#b5b6a1 72%,#4a6452 100%)}
+.concept-art.compressed{background:linear-gradient(180deg,#374b59 0%,#a7aea2 72%,#3e5546 100%)}
+.concept-sun{position:absolute;right:18%;top:8px;width:12px;height:12px;border-radius:50%;background:#f1d79c;box-shadow:0 0 14px rgba(255,223,163,.4)}
+.concept-ridge{position:absolute;left:-5%;right:-5%;height:45px;bottom:7px;clip-path:polygon(0 90%,16% 43%,29% 62%,42% 22%,56% 58%,72% 18%,88% 55%,100% 30%,100% 100%,0 100%);background:#728873}
+.concept-ridge.back{bottom:13px;background:#7f9a91;opacity:.85}
+.concept-ridge.front{background:#314f43;clip-path:polygon(0 68%,17% 85%,32% 38%,49% 68%,63% 30%,78% 73%,100% 40%,100% 100%,0 100%)}
+.concept-city{position:absolute;bottom:12px;left:29%;right:17%;height:18px;background:repeating-linear-gradient(90deg,#d6c4a0 0 5px,#3e4f45 5px 7px);clip-path:polygon(0 45%,9% 45%,9% 25%,18% 25%,18% 0,26% 0,26% 35%,40% 35%,40% 52%,53% 52%,53% 12%,64% 12%,64% 45%,78% 45%,78% 28%,88% 28%,88% 50%,100% 50%,100% 100%,0 100%)}
+.concept-title{padding:7px 7px 0;font-size:9px;line-height:1.3;font-weight:800;color:#eaf1e5}
+.concept-lens{padding:3px 7px 0;color:var(--lime);font-size:9px;font-weight:800}
+.concept-card p{padding:0 7px 8px;margin:5px 0 0;font-size:8px;line-height:1.4;color:#aab9ad}
+.concept-note{font-size:9px;color:#93a497;line-height:1.45;margin-top:8px}
+@media(max-width:680px){.detail-photo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.detail-photo img{height:62px}.concept-art{height:50px}.detail{margin-left:14px;margin-right:14px}}.detail h2{font-family:Georgia,serif;font-weight:500;font-size:22px;line-height:1.15;margin:3px 0 8px}.detail p{font-size:11px;line-height:1.6;color:#c0cdc1;margin:8px 0}.detail-actions{display:flex;gap:7px;flex-wrap:wrap;margin:11px 0}.detail-actions .btn{flex:1}.prompt-box{background:#111b14;border:1px solid #3b4b3b;border-radius:10px;padding:10px;margin-top:10px}.prompt-box textarea{width:100%;resize:vertical;min-height:110px;outline:none;border:0;background:transparent;color:#d5e1d5;font-size:10px;line-height:1.55}.prompt-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:9px;color:#9eae9f}.saved-row{display:flex;gap:6px;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid #344439;border-radius:9px;margin-top:6px;font-size:10px;color:#cfdbcf}.saved-row button{background:none;color:var(--lime);border:0;font-size:10px}
 .map-heading{position:fixed;z-index:5;left:430px;top:15px;background:rgba(18,28,23,.92);border:1px solid rgba(255,255,255,.11);padding:13px 17px;border-radius:13px;box-shadow:0 8px 28px rgba(18,32,20,.13);backdrop-filter:blur(14px);max-width:calc(100vw - 460px)}.map-heading .eyebrow{font-size:8px;margin-bottom:5px}.map-heading strong{font-family:Georgia,serif;font-size:21px;font-weight:500;color:#f2f5ed;letter-spacing:-.015em}.map-heading div:last-child{font-size:10px;color:#aab9ac;margin-top:5px}.map-styles{position:fixed;right:16px;top:15px;z-index:6;display:flex;gap:4px;padding:5px;border-radius:13px;background:rgba(18,28,23,.94);border:1px solid rgba(255,255,255,.11);box-shadow:0 8px 28px rgba(18,32,20,.14);backdrop-filter:blur(14px)}.map-style{border:0;background:transparent;color:#aebcaf;padding:8px 10px;border-radius:8px;font-size:10px}.map-style:hover,.map-style.active{background:#37482c;color:#e3f58b}.map-style.active{box-shadow:inset 0 0 0 1px rgba(217,243,107,.19)}.map-credit{position:fixed;right:12px;bottom:5px;z-index:5;font-size:9px;color:#445747;background:rgba(248,250,243,.86);padding:4px 7px;border-radius:5px;pointer-events:none}.map-issue{position:fixed;z-index:8;top:72px;right:15px;max-width:370px;background:rgba(27,36,29,.97);border:1px solid rgba(255,156,131,.35);border-radius:12px;padding:13px;color:#f3eee8;box-shadow:var(--shadow);display:none}.map-issue.show{display:block}.map-issue strong{font-size:12px}.map-issue p{margin:5px 0 10px;color:#c6c9bd;font-size:10px;line-height:1.5}.map-issue button{background:var(--lime);border:0;border-radius:8px;padding:7px 10px;font-weight:800;font-size:10px;color:#18221b}
 .scout-marker{border:0;display:grid;place-items:center;cursor:pointer;padding:0;outline:none;transition:transform .14s}.scout-marker:hover{transform:scale(1.16);z-index:30!important}.scout-marker .dot-core{display:grid;place-items:center;border:2px solid rgba(255,255,255,.96);box-shadow:0 2px 9px rgba(0,0,0,.35);font:850 10px/1 ui-sans-serif,system-ui;background:#26342c;color:#fff}.scout-marker.parking .dot-core{width:25px;height:25px;border-radius:8px;background:#19734f;color:#e6ffe9;border-color:#c7f8d4}.scout-marker.history .dot-core{width:15px;height:15px;border-radius:50%;background:#ed8b73;color:#263127;border-color:#fff0e9}.scout-marker.viewpoint .dot-core{width:18px;height:18px;border-radius:5px;transform:rotate(45deg);background:#f0b84f;color:#372c1b;border-color:#fff2cd}.scout-marker.viewpoint .dot-core span{transform:rotate(-45deg)}.scout-marker.architecture .dot-core{width:16px;height:16px;border-radius:4px;background:#76b7a4;border-color:#e8fff6}.scout-marker.photo .dot-core{width:22px;height:22px;border-radius:50%;background:#8560d6;color:#fff;border-color:#eee2ff;font-size:14px}.scout-marker.active-pin .dot-core{width:25px;height:25px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--lime);border:2px solid #17251b;color:#152018;box-shadow:0 3px 12px rgba(0,0,0,.55)}.scout-marker.active-pin .dot-core span{transform:rotate(45deg);font-size:12px}
 .scout-marker .dot-core{transition:transform .12s,box-shadow .12s}
@@ -71,6 +93,21 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
   <section class="section">
     <div class="status-box" id="statusBox"><div class="status-icon">✣</div><div class="status-copy"><div class="status-title" id="statusTitle">Pick a point on the map</div><div class="status-msg" id="statusMsg">Click a place, town, mountain or coastline. We'll search around that exact point.</div></div></div>
   </section>
+  <section class="detail" id="spotDetail">
+    <div class="eyebrow" id="detailEyebrow">Selected location</div><h2 id="detailTitle">Your pin</h2><div class="spot-meta" id="detailMeta"></div>
+    <div id="detailHistory"></div>
+    <div class="detail-reference-block"><div class="section-heading"><h3>Visual references for this stop</h3><span class="count" id="detailPhotoCount">—</span></div><div class="detail-photo-grid" id="detailPhotoRefs"><div class="empty">Drop a pin and select a spot to find source-linked image references.</div></div></div>
+    <div class="concept-block"><div class="section-heading"><h3>Three ways to frame it</h3><span class="count">Canon R50 · 18–150 mm</span></div>
+      <div class="concept-grid">
+        <article class="concept-card"><div class="concept-art wide"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Wide landscape</div><div class="concept-lens">18–24 mm</div><p>Build a foreground, then lead the eye into the city, coastline or hills.</p></article>
+        <article class="concept-card"><div class="concept-art balanced"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">City with context</div><div class="concept-lens">35–70 mm</div><p>Keep the skyline readable while retaining the landscape around it.</p></article>
+        <article class="concept-card"><div class="concept-art compressed"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Compressed layers</div><div class="concept-lens">100–150 mm</div><p>Stack rooftops, towers and mountain ridges into graphic layers.</p></article>
+      </div>
+      <div class="concept-note">These are composition sketches, not photographs of the actual view. The prompt below describes a tailored AI visual reference for the selected spot.</div>
+    </div>
+    <div class="detail-actions"><a class="btn primary" id="driveLink" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Drive to spot ↗</a><button class="btn" id="saveSelected">☆ Save spot</button></div>
+    <div class="prompt-box"><div class="section-heading"><h3>AI shot reference</h3><span class="count">Editable prompt</span></div><textarea id="shotPrompt" aria-label="AI shot reference prompt"></textarea><div class="prompt-footer"><span>Use as a starting brief in your image tool.</span><button class="btn small" id="copyPrompt">Copy prompt</button></div></div>
+  </section>
   <section class="section">
     <div class="filter-row" id="filters">
       <button class="filter-chip active" data-filter="all">All spots</button>
@@ -106,12 +143,7 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
     <div class="section-heading"><h3>Saved stops</h3><span class="count" id="savedCount">0</span></div>
     <div id="savedResults"><div class="empty">Save a pin or selected place to build a road-trip list on this device.</div></div>
   </section>
-  <section class="detail" id="spotDetail">
-    <div class="eyebrow" id="detailEyebrow">Selected location</div><h2 id="detailTitle">Your pin</h2><div class="spot-meta" id="detailMeta"></div>
-    <div id="detailHistory"></div>
-    <div class="detail-actions"><a class="btn primary" id="driveLink" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Drive to spot ↗</a><button class="btn" id="saveSelected">☆ Save spot</button></div>
-    <div class="prompt-box"><div class="section-heading"><h3>AI shot reference</h3><span class="count">Editable prompt</span></div><textarea id="shotPrompt" aria-label="AI shot reference prompt"></textarea><div class="prompt-footer"><span>Use as a starting brief in your image tool.</span><button class="btn small" id="copyPrompt">Copy prompt</button></div></div>
-  </section>
+  
 </div>
 <footer>Map data © <a class="footer-link" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Vector basemap by <a class="footer-link" href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>. History links and photo licences are shown where available. Always verify road access, parking signs and private-property restrictions.</footer>
 </aside>
@@ -706,6 +738,23 @@ function shotPrompt(item){
  const evidence=item.category==='photoSpot'?'Mapped evidence: '+(item.why||'scenic feature candidate')+'. Do not invent a real structure or claim an unverified view. ':'';
  return 'Create a photorealistic visual reference for a real-world photography outing at '+item.name+'. Coordinates: '+Number(item.lat).toFixed(5)+', '+Number(item.lng).toFixed(5)+'. Genre: '+genre+'. '+evidence+gear+' '+framing+' Suggest an achievable camera position, clear foreground, layered depth, strong geometry, natural light and an editorial colour palette. Avoid generic travel-poster styling, oversaturation, text overlays, logos, fabricated architecture or impossible scenery. This is a creative illustration, not proof of the exact on-site view. Offer golden-hour and overcast/daylight options.';
 }
+function renderDetailPhotoRefs(item){
+ const container=$('detailPhotoRefs');
+ if(!container)return;
+ const geotagged=(state.photos||[]).filter(p=>p.geotagged&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)).map(p=>({...p,spotDistance:haversine({lat:item.lat,lng:item.lng},{lat:p.lat,lng:p.lng})})).sort((a,b)=>a.spotDistance-b.spotDistance);
+ const close=geotagged.filter(p=>p.spotDistance<=8000).slice(0,3);
+ const themed=(state.photos||[]).filter(p=>!p.geotagged).slice(0,3);
+ const refs=close.length?close:themed;
+ $('detailPhotoCount').textContent=refs.length?(close.length?'Nearby · '+refs.length:'Inspiration · '+refs.length):'No image refs';
+ if(!refs.length){
+  container.innerHTML=emptyHTML('No source-linked visual references were available for this exact area. Open the Pinterest or Instagram search links below for more ideas.');
+  return;
+ }
+ container.innerHTML=refs.map(p=>{
+  const note=p.geotagged?'Image geotag is '+distanceLabel(p.spotDistance)+' from this candidate; it does not prove the exact camera position.':(p.referenceType||'Location-themed inspiration; shooting point unverified.');
+  return '<article class="detail-photo"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original image and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(note)+'</div></a></article>';
+ }).join('');
+}
 function selectItem(item){
  state.selected=item;
  $('spotDetail').classList.add('show');
@@ -718,6 +767,8 @@ function selectItem(item){
  if(item.category==='parking')history='Mapped parking feature only. This does not confirm that parking is currently open, free, legal, safe, or available. Verify signage and restrictions on arrival.';
  const gear='Canon EOS R50 + RF-S 18–150mm: 18–24mm for a wide establishing frame, 35–70mm for city-with-context, 100–150mm to compress distant skyline and mountain layers.';
  $('detailHistory').innerHTML='<p>'+esc(history)+'</p>'+(item.category==='photoSpot'?'<p>'+esc(gear)+'</p>':'')+'<p><a class="footer-link" href="'+esc(safeLink(item.wikiUrl||item.sourceUrl||'#'))+'" target="_blank" rel="noopener">Open source / more history ↗</a></p>';
+ renderDetailPhotoRefs(item);
+ updateSocialSearch(item.name+' '+(item.city||state.detectedLocality||''));
  const destination=item.lat+','+item.lng;
  $('driveLink').href='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode=driving';
  $('driveLink').textContent=item.category==='parking'?'Navigate to parking ↗':item.category==='photoSpot'?'Navigate to photo spot ↗':'Drive to spot ↗';
@@ -725,7 +776,7 @@ function selectItem(item){
  if(map.getZoom()<11)map.flyTo({center:[item.lng,item.lat],zoom:12,duration:650});
  renderResults();
  renderMarkers();
- if(window.innerWidth<680)$('spotDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
+ $('spotDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 function parseCoords(text){
  const m=text.trim().match(/^(-?\d{1,2}(?:\.\d+)?)\s*[,; ]\s*(-?\d{1,3}(?:\.\d+)?)$/);
