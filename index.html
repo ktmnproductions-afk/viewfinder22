@@ -619,8 +619,8 @@ function renderResults(){
  $('mapSubtitle').textContent=state.center?coordLabel(state.center)+' · '+(state.radius/1000)+' km local search + wider photo scouting':'Click anywhere on the map to plan a photography stop.';
 }
 function renderPhotos(){
- $('photoCount').textContent=state.photos.length+' images';
- $('photoResults').innerHTML=state.photos.length?state.photos.slice(0,12).map(p=>'<article class="photo-card"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original photo and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="photo-caption">'+esc(p.name)+'<div class="photo-license">'+esc(p.geotagged?'Geotagged reference · '+distanceLabel(p.distance)+' away':'Location-themed inspiration · exact shooting position not verified')+'</div><div class="photo-license">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Check original file page')+'</div></div></a></article>').join(''):emptyHTML(state.center?'Searching for photo references… If there are no geotagged images, location-themed Commons images are searched as a fallback.':'Drop a pin to look for visual references.');
+ $('photoCount').textContent=state.photos.length+' matched images';
+ $('photoResults').innerHTML=state.photos.length?state.photos.slice(0,12).map(p=>'<article class="photo-card"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original photo and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="photo-caption">'+esc(p.name)+'<div class="photo-license">Title-matched place/subject reference · not a verified camera position</div><div class="photo-license">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Check original file page')+'</div></div></a></article>').join(''):emptyHTML(state.center?'No suitable landmark/topic-matched photo references returned. We will not substitute unrelated event or personal images. Try another nearby landmark or use the external Instagram/Pinterest searches.':'Drop a pin to look for place- and subject-matched visual references.');
 }
 function markerEl(category,label){
  const el=document.createElement('button'); el.type='button'; el.className='scout-marker '+category;
@@ -653,12 +653,7 @@ function renderMarkers(){
   const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
   state.markers.push(m);
  });
- state.photos.filter(item=>item.geotagged&&Number.isFinite(item.lat)&&Number.isFinite(item.lng)).slice(0,10).forEach(item=>{
-  const el=markerEl('photo',item.name+' · geotagged photo reference');
-  el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
-  const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
-  state.markers.push(m);
- });
+ // Photographs are inspiration only. Do not plot someone's upload coordinate as a scout spot.
 }
 function setActivePin(c){
  if(state.pinMarker)state.pinMarker.remove();
@@ -729,30 +724,39 @@ async function scanAt(c,opts){
  await Promise.all([
   runSource('places',overpassSearch(c,rad,id),data=>{osmResults=data;}),
   runSource('history',wikipediaSearch(c,rad,id),data=>{wikiResults=data;}),
-  runSource('scenic',scenicSearch(c,rad,id),data=>{state.scenicSpots=data;}),
-  runSource('photos',commonsSearch(c,rad,id),data=>{state.photos=data;})
+  runSource('scenic',scenicSearch(c,rad,id),data=>{state.scenicSpots=data;})
  ]);
  if(id!==state.scanId)return;
  mergePlaces();
- // Geotagged images are scarce in many areas. Search Commons by local city or
- // nearby landmark names too, but never label those photos as exact GPS matches.
- if(state.photos.filter(p=>p.geotagged).length<4){
+ // Photo references are searched by place/subject title, not by distance-only
+ // geotags. That prevents event uploads and random nearby portraits from masquerading
+ // as useful views of a landmark.
+ {
   const displayCity=state.detectedLocality||osmResults.find(r=>r.city&&String(r.city).trim())?.city||'';
-  const terms=[];
-  if(displayCity){terms.push(displayCity+' panorama',displayCity+' cityscape',displayCity+' old town architecture');}
-  else {
-   const names=wikiResults.slice(0,2).map(r=>r.name).filter(Boolean);
-   names.forEach(n=>terms.push(n+' landscape photography'));
-   if(names.length)terms.push(names[0]+' panorama');
+  const landmarkNames=[
+   ...wikiResults.slice(0,3).map(r=>r.name),
+   ...state.scenicSpots.filter(r=>!r.genericFeature).slice(0,3).map(r=>r.name),
+   ...osmResults.filter(r=>r.category==='history'||r.category==='viewpoint').slice(0,3).map(r=>r.name)
+  ].filter(Boolean);
+  let terms=[];
+  if(displayCity){
+   terms=[displayCity+' panorama skyline',displayCity+' historic architecture landmark',displayCity+' coast landscape'];
+  }else{
+   terms=landmarkNames.slice(0,2).map(n=>n+' landmark architecture');
+   if(landmarkNames.length)terms.push(landmarkNames[0]+' landscape panorama');
+   if(!terms.length)terms=['historic landscape architecture Croatia'];
   }
-  if(terms.length){
-   try{
-    const thematic=await commonsTextSearch(terms,c,id);
-    if(id!==state.scanId)return;
-    const existing=new Set(state.photos.map(p=>p.id));
-    state.photos=[...state.photos,...thematic.filter(p=>!existing.has(p.id))].slice(0,12);
-    failures.delete('photos');
-   }catch(err){if(id!==state.scanId)return;failures.add('photo inspiration');}
+  terms=terms.slice(0,3);
+  try{
+   const matched=await commonsTextSearch(terms,c,id);
+   if(id!==state.scanId)return;
+   state.photos=matched.map(p=>({...p,geotagged:false,referenceType:'Matched by landmark/topic title. This is visual inspiration, not a verified camera position.'}));
+   completed.add('photos');
+   failures.delete('photos');
+  }catch(err){
+   if(id!==state.scanId)return;
+   failures.add('photo inspiration');
+   state.photos=[];
   }
  }
  if(id!==state.scanId)return;
