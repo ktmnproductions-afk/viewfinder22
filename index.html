@@ -201,7 +201,7 @@ window.__PHOTO_SCOUT_TEST__ = {
  get styleLoaded(){ return state.styleLoaded; },
  get vectorTileSuccesses(){ return state.vectorTileSuccesses; },
  get scanCount(){ return state.scanCount; },
- getState(){ return {styleLoaded:state.styleLoaded, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, resultCount:state.results.length, parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, mapErrors:state.mapErrors}; },
+ getState(){ return {styleLoaded:state.styleLoaded, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, resultCount:state.results.length, parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
  scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); }
 };
 const mapError = message => {
@@ -748,11 +748,14 @@ function renderMarkers(){
  const history=state.results.filter(r=>r.category==='history').slice(0,22);
  const viewpoints=state.results.filter(r=>r.category==='viewpoint').slice(0,12);
  const architecture=state.results.filter(r=>r.category==='architecture').slice(0,12);
- const visible=[...parking,...history,...viewpoints,...architecture,...state.scenicSpots.slice(0,24)];
+ const protectedPlaces=[...parking,...history,...viewpoints,...architecture];
+ // Do not let a scenic suggestion cover a real parking/history pin at the same spot.
+ const scenic=state.scenicSpots.slice(0,24).filter(p=>!protectedPlaces.some(q=>haversine({lat:p.lat,lng:p.lng},{lat:q.lat,lng:q.lng})<85));
+ const visible=[...parking,...history,...viewpoints,...architecture,...scenic];
  const seen=new Set();
  visible.forEach(item=>{
   const cell=Math.round(item.lat*10000)+'|'+Math.round(item.lng*10000);
-  const key=item.category+'|'+cell;
+  const key=cell;
   if(seen.has(key))return;
   seen.add(key);
   const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.category==='parking'?(item.parkingOrigin==='basemap'?'Mapped parking · availability unverified · ':'Scout parking feature · ')+item.name+' · '+distanceLabel(item.distance):item.name+' · '+distanceLabel(item.distance);
