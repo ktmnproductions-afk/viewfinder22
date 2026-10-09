@@ -87,51 +87,51 @@ function addOverlayLayers(){if(!map.getSource('atlas-cities'))map.addSource('atl
 }
 function addSatelliteLayer(){
  if(!map.getSource('atlas-imagery'))map.addSource('atlas-imagery',{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community'});
- if(!map.getLayer('atlas-imagery')){const layers=map.getStyle().layers||[];const before=layers.find(l=>l.type==='line'||l.type==='symbol');map.addLayer({id:'atlas-imagery',type:'raster',source:'atlas-imagery',layout:{visibility:imageryOn?'visible':'none'},paint:{'raster-opacity':.44,'raster-saturation':-.24,'raster-contrast':.10,'raster-brightness-min':.05,'raster-brightness-max':.86,'raster-fade-duration':100}},before?before.id:undefined)}
+ if(!map.getLayer('atlas-imagery')){const layers=map.getStyle().layers||[];const before=layers.find(l=>l.type==='line'||l.type==='symbol');map.addLayer({id:'atlas-imagery',type:'raster',source:'atlas-imagery',layout:{visibility:imageryOn?'visible':'none'},paint:{'raster-opacity':.32,'raster-saturation':-.18,'raster-contrast':.08,'raster-brightness-min':.08,'raster-brightness-max':.94,'raster-fade-duration':100}},before?before.id:undefined)}
 }
 function stylePlaceLabels(){
  if(!map||!map.isStyleLoaded())return;
- const paper=theme==='paper';
+ const paper=theme==='paper',aurora=theme==='aurora';
  const labelLayers=(map.getStyle().layers||[]).filter(l=>l.type==='symbol'&&l['source-layer']==='place'&&l.layout?.['text-field']);
  for(const l of labelLayers){
   const id=l.id||'';
-  let size=['interpolate',['linear'],['zoom'],0,11.5,3,13,5,15,8,17,12,19];
-  let color=paper?'#34463d':'#edf6f1',halo=2.3;
+  let size=['interpolate',['linear'],['zoom'],0,12,3,13.5,5,15.5,8,17.5,12,19.5];
+  let color=paper?'#31443a':'#f0f7f4',halo=2.7,spacing=.02;
   if(id==='place_country_major'||id==='place_country_other'||id==='place_country_minor'){
-   size=['interpolate',['linear'],['zoom'],0,13,2,16,4,19,6,20];
-   color=paper?'#23382f':'#f7fff9';halo=2.7;
+   size=['interpolate',['linear'],['zoom'],0,14,2,17,4,19.5,6,21];
+   color=paper?'#20372d':(aurora?'#e3fff9':'#fffdf5');halo=3.2;spacing=.13;
   }else if(id==='place_state'){
-   size=['interpolate',['linear'],['zoom'],4,13.5,6,15.5,8,17.5,10,18.5];
-   color=paper?'#3d6c6e':'#b4ece8';halo=2.4;
+   size=['interpolate',['linear'],['zoom'],4,14,6,16.2,8,18.2,10,19];
+   color=paper?'#315e60':(aurora?'#c2fff5':'#c7f7ee');halo=3;
   }else if(id==='place_city_large'){
-   size=['interpolate',['linear'],['zoom'],0,12.5,2,14,4,16.5,6,18.5,8,20.5,11,22];
-   color=paper?'#26392f':'#fffdf7';halo=2.9;
+   size=['interpolate',['linear'],['zoom'],0,13,2,15.2,4,17.4,6,19.4,8,21.2,11,23];
+   color=paper?'#25392f':'#fffef9';halo=3.55;
   }else if(id==='place_city'){
-   size=['interpolate',['linear'],['zoom'],2,11.5,4,13.5,6,15.5,8,17.5,11,19.5,14,21];
-   color=paper?'#2c3e34':'#f3faf6';halo=2.65;
+   size=['interpolate',['linear'],['zoom'],2,12.4,4,14.7,6,16.9,8,18.9,11,20.8,14,22];
+   color=paper?'#2b3d33':'#f7fcf9';halo=3.25;
   }else if(id==='place_town'){
-   size=['interpolate',['linear'],['zoom'],4.5,12,6,14,8,16.2,10,18,13,20,16,21];
-   color=paper?'#36483d':'#e7f3ee';halo=2.5;
+   size=['interpolate',['linear'],['zoom'],4.5,12.5,6,14.3,8,16.5,10,18.3,13,20.1,16,21];
+   color=paper?'#37493e':'#ecf6f2';halo=2.95;
   }else if(id==='place_village'||id==='place_suburb'||id==='place_other'){
-   size=['interpolate',['linear'],['zoom'],7.5,11.5,9,13,11,15,14,17,16,18];
-   color=paper?'#45564c':'#d7e6e1';halo=2.3;
+   size=['interpolate',['linear'],['zoom'],7.5,11.7,9,13.2,11,15.2,14,17.2,16,18.3];
+   color=paper?'#45564a':'#e1eeea';halo=2.7;
   }
   try{
    map.setLayoutProperty(id,'visibility',labelsOn?'visible':'none');
    map.setLayoutProperty(id,'text-size',size);
-   if(['place_city','place_city_large','place_town','place_village','place_suburb'].includes(id))map.setLayoutProperty(id,'text-transform','none');
    map.setLayoutProperty(id,'text-allow-overlap',false);
    map.setLayoutProperty(id,'text-ignore-placement',false);
    map.setLayoutProperty(id,'text-padding',3);
+   map.setLayoutProperty(id,'text-letter-spacing',spacing);
+   if(['place_city','place_city_large','place_town','place_village','place_suburb'].includes(id))map.setLayoutProperty(id,'text-transform','none');
    map.setPaintProperty(id,'text-color',color);
    map.setPaintProperty(id,'text-opacity',1);
-   map.setPaintProperty(id,'text-halo-color',paper?'rgba(242,239,228,.99)':'rgba(1,7,13,.99)');
+   map.setPaintProperty(id,'text-halo-color',paper?'rgba(246,243,232,.99)':'rgba(0,5,11,1)');
    map.setPaintProperty(id,'text-halo-width',halo);
-   map.setPaintProperty(id,'text-halo-blur',.06);
+   map.setPaintProperty(id,'text-halo-blur',0);
   }catch(e){console.warn('Could not restyle place label layer '+id,e)}
  }
-}
-function setTerrain(enabled){terrainOn=enabled;updateSwitch('terrainToggle',enabled);if(!map)return;if(!enabled){try{map.setTerrain(null)}catch(e){}return;}try{if(!terrainSourceAdded){map.addSource('atlas-dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',maxzoom:15,attribution:'Terrain tiles © AWS Open Data'});terrainSourceAdded=true}map.setTerrain({source:'atlas-dem',exaggeration:1.18});showStatus('3D terrain enabled · additional elevation tiles are loading')}catch(e){terrainOn=false;updateSwitch('terrainToggle',false);showStatus('3D terrain is unavailable in this map style.')}}
+}function setTerrain(enabled){terrainOn=enabled;updateSwitch('terrainToggle',enabled);if(!map)return;if(!enabled){try{map.setTerrain(null)}catch(e){}return;}try{if(!terrainSourceAdded){map.addSource('atlas-dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',maxzoom:15,attribution:'Terrain tiles © AWS Open Data'});terrainSourceAdded=true}map.setTerrain({source:'atlas-dem',exaggeration:1.18});showStatus('3D terrain enabled · additional elevation tiles are loading')}catch(e){terrainOn=false;updateSwitch('terrainToggle',false);showStatus('3D terrain is unavailable in this map style.')}}
 function paintIf(layer,prop,val){try{map.setPaintProperty(layer.id,prop,val)}catch(e){}}
 function layoutIf(layer,prop,val){try{map.setLayoutProperty(layer.id,prop,val)}catch(e){}}
 function applyTheme(next){theme=next;const t=THEME[theme];document.documentElement.style.setProperty('--mint',t.accent);document.documentElement.style.setProperty('--gold',t.gold);document.documentElement.style.setProperty('--bg',t.background);document.querySelectorAll('.style').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.theme===theme)));if(!map||!map.isStyleLoaded())return;
@@ -188,7 +188,7 @@ function applyTheme(next){theme=next;const t=THEME[theme];document.documentEleme
  }
  try{map.setFog({color:theme==='paper'?'#cfd9d4':'#0b1928','high-color':theme==='aurora'?'#124050':'#16374a','space-color':theme==='paper'?'#d8d5c9':'#02060d','horizon-blend':.12,'star-intensity':theme==='paper'?0:.28})}catch(e){}
  if(map.getLayer('atlas-city-halo')){paintIf({id:'atlas-city-halo'},'circle-color',t.accent);paintIf({id:'atlas-city-dot'},'circle-color',t.accent);paintIf({id:'atlas-city-label'},'text-color',t.text);paintIf({id:'atlas-city-label'},'text-halo-color',t.background);paintIf({id:'atlas-route-glow'},'line-color',t.gold);paintIf({id:'atlas-routes'},'line-color',t.gold)}
- if(map.getLayer('atlas-imagery')){paintIf({id:'atlas-imagery'},'raster-opacity',theme==='paper'?.16:(theme==='aurora'?.4:.44));paintIf({id:'atlas-imagery'},'raster-saturation',theme==='paper'?-.08:-.24);paintIf({id:'atlas-imagery'},'raster-brightness-max',theme==='paper'?.92:.86)}
+ if(map.getLayer('atlas-imagery')){paintIf({id:'atlas-imagery'},'raster-opacity',theme==='paper'?.12:(theme==='aurora'?.28:.32));paintIf({id:'atlas-imagery'},'raster-saturation',theme==='paper'?-.05:-.18);paintIf({id:'atlas-imagery'},'raster-brightness-min',theme==='paper'?.12:.08);paintIf({id:'atlas-imagery'},'raster-brightness-max',theme==='paper'?.98:.94)}
  stylePlaceLabels();
 }
 function addLayersVisibility(){if(!map||!map.getLayer('atlas-city-label'))return;['atlas-city-halo','atlas-city-dot'].forEach(id=>layoutIf({id},'visibility',citiesOn?'visible':'none'));(map.getStyle().layers||[]).filter(l=>l.type==='symbol'&&l['source-layer']==='place').forEach(l=>layoutIf({id:l.id},'visibility',labelsOn?'visible':'none'));if(map.getLayer('atlas-city-label'))layoutIf({id:'atlas-city-label'},'visibility',labelsOn?'visible':'none');['atlas-route-glow','atlas-routes'].forEach(id=>layoutIf({id},'visibility',arcsOn?'visible':'none'))}
