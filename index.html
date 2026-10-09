@@ -661,19 +661,22 @@ function shotPrompt(item){
 function selectItem(item){
  state.selected=item;
  $('spotDetail').classList.add('show');
- $('detailEyebrow').textContent=item.category==='photo'?'Visual reference · source-linked':item.category==='parking'?'Parking candidate · verify on arrival':item.category==='history'?'History & place · sourced summary':'Photographic subject · map data';
+ $('detailEyebrow').textContent=item.category==='photo'?'Visual reference · source-linked':item.category==='photoSpot'?'Photo spot candidate · evidence-ranked':item.category==='parking'?'Parking candidate · verify on arrival':item.category==='history'?'History & place · sourced summary':item.category==='viewpoint'?'Mapped viewpoint · verify the view':'Photographic subject · map data';
  $('detailTitle').textContent=item.name;
- $('detailMeta').textContent=distanceLabel(item.distance||0)+' from pin · '+item.source+' · '+coordLabel({lat:item.lat,lng:item.lng});
+ $('detailMeta').textContent=(Number.isFinite(item.distance)?distanceLabel(item.distance)+' from pin · ':'')+item.source+' · '+coordLabel({lat:item.lat,lng:item.lng});
  let history=item.history||item.summary||'No short history summary is available for this place yet. Open the source record to inspect the mapped details.';
- if(item.category==='photo') history='Image reference by '+(item.artist||'an unlisted photographer')+'. Licence: '+(item.license||'see the original file page')+'. Treat its geotag as a reference location, not a verified camera position.';
+ if(item.category==='photoSpot')history='WHY IT IS SUGGESTED: '+(item.why||'The mapped feature may work as a scenic photo subject.')+' This is a data-based scouting candidate, not a guarantee of an unobstructed view. Check the route, public access, terrain, private land and safe stopping before travelling. The point is a mapped feature, not necessarily the exact place where a photographer should stand.';
+ if(item.category==='photo') history='Image reference by '+(item.artist||'an unlisted photographer')+'. Licence: '+(item.license||'see the original file page')+'. '+(item.geotagged?'This image is geotagged near this coordinate; the exact camera position is not independently confirmed.':'This image matches the area/topic but has no verified shooting coordinates.');
  if(item.category==='parking')history='Mapped parking feature only. This does not confirm that parking is currently open, free, legal, safe, or available. Verify signage and restrictions on arrival.';
- $('detailHistory').innerHTML='<p>'+esc(history)+'</p><p><a class="footer-link" href="'+esc(safeLink(item.wikiUrl||item.sourceUrl||'#'))+'" target="_blank" rel="noopener">Open source / more history ↗</a></p>';
+ const gear='Canon EOS R50 + RF-S 18–150mm: 18–24mm for a wide establishing frame, 35–70mm for city-with-context, 100–150mm to compress distant skyline and mountain layers.';
+ $('detailHistory').innerHTML='<p>'+esc(history)+'</p>'+(item.category==='photoSpot'?'<p>'+esc(gear)+'</p>':'')+'<p><a class="footer-link" href="'+esc(safeLink(item.wikiUrl||item.sourceUrl||'#'))+'" target="_blank" rel="noopener">Open source / more history ↗</a></p>';
  const destination=item.lat+','+item.lng;
  $('driveLink').href='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode=driving';
- $('driveLink').textContent=item.category==='parking'?'Navigate to parking ↗':'Drive to spot ↗';
+ $('driveLink').textContent=item.category==='parking'?'Navigate to parking ↗':item.category==='photoSpot'?'Navigate to photo spot ↗':'Drive to spot ↗';
  $('shotPrompt').value=shotPrompt(item);
  if(map.getZoom()<11)map.flyTo({center:[item.lng,item.lat],zoom:12,duration:650});
  renderResults();
+ renderMarkers();
  if(window.innerWidth<680)$('spotDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 function parseCoords(text){
