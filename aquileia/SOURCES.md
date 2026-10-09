@@ -1,47 +1,50 @@
-# Aquileia — source and accuracy notes
+# Aquileia — source, geometry and accuracy notes
 
-This is a browser-based historical multimedia atlas. It combines existing published reconstruction imagery and films with a modern map and a five-period timeline. It is **not** a newly surveyed or archaeologically certified 3D model of the complete ancient city.
+## What this version actually renders
 
-## Historical sources
+The main view is a live Three.js 3D scene. Its terrain, road surfaces, individual building meshes, forum colonnades, river-port warehouse, ships, amphitheatre, circus, Christian basilica, Late Antique wall segments, smoke/fire and present-day buildings are generated as 3D geometry in the browser. The five-stage timeline changes those objects in place; it does not use a slideshow as the scene.
 
-- **Fondazione Aquileia — Antica Aquileia 3D**: https://www.fondazioneaquileia.it/en/aquileia-3d  
-  Foundation documentation describes ten archaeologist-informed films and sixty static virtual reconstructions for the forum, river port, markets, houses, necropolis, amphitheatre, walls, basilica civilis and circus.
+This is a **procedural reconstruction based on a published archaeological plan**, not an excavation-grade digital twin. It is a first-party model authored for this page, not the original editable model from the Foundation's Antica Aquileia 3D project.
+
+## Primary archaeological sources
+
+- **Fondazione Aquileia — Aquileia 3D**: https://www.fondazioneaquileia.it/en/aquileia-3d  
+  The Foundation describes ten films created with archaeologists and 60 virtual reconstructions covering the forum, river port, markets, houses, necropolis, amphitheatre, Republican walls, civilian basilica and circus. The original project informs site selection and architectural interpretation; its original scene meshes were not imported.
+- **Fondazione Aquileia — Aquileia: A Border City** (PDF): https://www.fondazioneaquileia.it/files/allegati/aquileia_a_border_city_eng.pdf  
+  Page 5 includes a citywide plan gathering archaeological structures and infrastructure discovered to date, credited to C. Tiussi based on L. Bertacchi, *Nuova pianta archeologica di Aquileia*, Udine, 2003. The 3D scene's simplified road grid, broad urban outline and landmark arrangement were transcribed from this plan as a spatial scaffold.
 - **IKON — Ancient Aquileia 3D**: https://www.ikon.it/en/projects/ancient-aquileia-3d  
-  Project producer's description of the mobile 3D/AR application and its reconstruction of Aquileia as it appeared in the 4th century CE.
+  Project producer's overview.
 - **UNESCO World Heritage — Archaeological Area and the Patriarchal Basilica of Aquileia**: https://whc.unesco.org/en/list/825/
 - **Fondazione Aquileia — Roman Forum**: https://www.fondazioneaquileia.it/en/must-see/roman-forum  
-  The foundation gives the forum dimensions as 141 × 55 metres and describes its phases.
+  The square's published dimensions are about 141 × 55 metres.
 - **Fondazione Aquileia — River Port**: https://www.fondazioneaquileia.it/en/must-see/river-port  
-  The foundation describes the warehouse structure as over 300 metres long and the ancient waterway as nearly 50 metres wide in this area.
+  The Foundation describes a port-side structure over 300 metres long and an ancient waterway nearly 50 metres wide in this area.
 - **Fondazione Aquileia — Basilica**: https://www.fondazioneaquileia.it/en/must-see/basilica
 - **Fondazione Aquileia — Fondo Pasqualis markets**: https://www.fondazioneaquileia.it/en/must-see/fondo-pasqualis-markets
 - **Fondazione Aquileia — Domus of Titus Macro**: https://www.fondazioneaquileia.it/en/must-see/titus-macers-house
 
-## Visual assets and credits
+## What is evidence-based and what is interpretive
 
-Images are referenced from their publishers rather than copied into this repository. They may be subject to the publishers' copyright and terms; obtain permission before commercial redistribution or production use.
+- **Published-plan scaffold:** the rough orthogonal street network, approximate city extent and relative arrangement of major civic and entertainment complexes follow the published archaeological plan. The plan combines discoveries made over multiple excavation periods; it is not one complete preserved Roman city surface.
+- **Landmark locations:** the forum, river port, basilica, amphitheatre, circus and market complex are positioned according to the plan at schematic 3D coordinates. The 3D world is not georeferenced parcel-by-parcel to the modern map. The separate map view uses real geographic map tiles and approximate site pins.
+- **Measured dimensions:** the forum model uses its published 141 × 55 m overall dimensions as a scale reference. The river-port warehouse is shown as a long narrow structure based on the published length description. Its precise shape and placement in the 3D scene remain simplified.
+- **Representative structures:** houses, roofs, courtyards, forum columns, warehouses, amphitheatre seating, circus track, basilica elevations and defensive-wall modules are newly generated procedural meshes. They show the type and broad scale of structures; they are not claimed to reproduce every excavated footprint or the original project's proprietary models.
+- **452 CE:** a subset of buildings darkens and collapses while fire/smoke particles appear. This is a visual interpretation of the documented sack, not a verified building-by-building fire map.
+- **Present day:** modern houses, a basilica tower, fields and archaeological traces are contextual scene geometry, not a surveyed digital twin of modern Aquileia.
+- **Old city boundaries and ancient river alignment:** outlines are interpretive aids, not surveyed cadastral or hydrological boundaries.
 
-- Roman-city panorama: Roman Ports, article “Aquileia: the second Rome”: https://www.romanports.org/en/articles/ports-in-focus/827-aquileia-the-second-rome.html
-- River-port reconstructions: Fondazione Aquileia, including its port quay, ships and warehouses: https://www.fondazioneaquileia.it/en/must-see/river-port
-- Forum and hypothetical forum-temple reconstructions: Fondazione Aquileia: https://www.fondazioneaquileia.it/en/must-see/roman-forum
-- Markets and Domus of Titus Macro reconstructions: Fondazione Aquileia: https://www.fondazioneaquileia.it/en/must-see/fondo-pasqualis-markets and https://www.fondazioneaquileia.it/en/must-see/titus-macers-house
-- Constantinian basilica architectural reconstruction: Altair4 / Arte.it: https://altair4multimedia.it/modelli/basilica-di-aquileia/
-- Modern aerial photographs: credited on the page, with links to the publisher at each selected image.
+## Rendering and map stack
 
-The “Watch this era” control links to era- or feature-relevant publicly published videos. The video player may depend on the video publisher's embedding policy, browser privacy settings, and network access.
+- Three.js generates the interactive 3D terrain and architectural geometry in the browser. The terrain's field texture and roof-tile texture are generated procedurally.
+- Leaflet displays a separate real map view. Satellite tiles are served by Esri World Imagery; street-map tiles use OpenStreetMap. Attribution appears in the interface.
+- The site loads external browser libraries and map tiles from their public CDNs/services, so an internet connection is required.
+- The 3D model is orbitable, zoomable and has a landmark-focused camera. The era slider animates actual scene objects between historical states.
 
-## Map and geometry
+## Remaining work for archaeological-grade accuracy
 
-- Aerial tiles are provided by Esri World Imagery. Street-map tiles use OpenStreetMap; map attribution appears in the interface.
-- Forum, port, basilica, Domus and market markers are geospatial reference points. Domus and market pins are explicitly approximate.
-- The forum rectangle is scaled from the published 141 × 55 m dimensions; its orientation is an approximation for display.
-- The port line is an interpretive alignment over the present map. Ancient watercourses and shoreline conditions changed, so it is **not** a surveyed reconstruction of the historic bank or quay.
-- The narrow port-warehouse polygon uses the published length (over 300 m) and maximum width (about 13 m) as scale, but its position/orientation on the modern map is approximate. It is not a surveyed building footprint.
-- The broad dashed ancient-city extent is an interpretive visual locator, **not** a verified Roman perimeter or wall survey.
-- The 452 CE red circle is a symbolic event indicator. It is **not** a building-by-building damage map.
+1. Obtain/relicense original model geometry from Fondazione Aquileia/IKON, or digitize surveyed excavation plans and elevations into meshes.
+2. Register the plan against the modern coordinate system and georeference individual monuments, street alignments, river courses and excavated structures.
+3. Replace representative house blocks with phase-specific meshes based on excavated house plans and documented architectural reconstructions.
+4. Have an archaeologist review building phases, wall segments and the visual treatment of the 452 CE destruction.
 
-## Known limits
-
-1. The raw editable city-scene meshes/textures used by the official Antica Aquileia 3D project were not found as public downloads during implementation. This page does not extract or claim to reproduce those native meshes.
-2. The timeline provides a source-led cinematic sequence and changing geographic overlays, rather than a single continuous 3D mesh whose entire city morphs between 181 BCE, the imperial era, 452 CE and the present.
-3. A full mesh-driven transformation requires licensed/released geometry or a new model authored from published excavation plans and archaeological drawings. Until then, any generalized citywide view must remain explicitly interpretive.
+Until those steps are done, this is a deliberately labelled procedural visualization, not an archaeological authority.
