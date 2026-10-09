@@ -1,170 +1,507 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ViewFinder Pro — Scene-Aware Scout</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        :root {
-            --bg: #fdfdfd;
-            --blue: #3498db;        /* Roadside / StreetView */
-            --green-easy: #2ecc71;  /* Easy Walk */
-            --green-hard: #1e8449;  /* Hard Climb */
-            --yellow: #f1c40f;      /* Crowdsourced */
-            --target: #e74c3c;
-        }
-        body, html { margin: 0; padding: 0; height: 100%; background: var(--bg); font-family: 'Inter', -apple-system, sans-serif; }
-        #map { height: 100vh; width: 100%; }
-        
-        .hud {
-            position: absolute; top: 15px; left: 15px; z-index: 1000;
-            background: rgba(255,255,255,0.95); padding: 18px; border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1); width: 300px; border: 1px solid #eee;
-        }
-        .hud h2 { margin: 0 0 10px; font-size: 18px; color: #2c3e50; }
-        .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .legend-item { display: flex; align-items: center; font-size: 10px; text-transform: uppercase; font-weight: 600; color: #555; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-        #status { font-family: monospace; font-size: 11px; color: #444; background: #f0f0f0; padding: 8px; border-radius: 4px; }
-        
-        .btn-action { 
-            display: block; text-align: center; background: #4285F4; color: white; 
-            padding: 8px; margin-top: 10px; text-decoration: none; border-radius: 6px; 
-            font-size: 11px; font-weight: bold; text-transform: uppercase;
-        }
-        .btn-action:hover { background: #3367D6; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17211c">
+<meta name="description" content="A global photography road-trip scout. Find parking, historical places, photo references and shot ideas wherever you drop a pin.">
+<title>Photo Scout — Roadtrip Photography Planner</title>
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.13.0/dist/maplibre-gl.css">
+<style>
+:root{--ink:#17211c;--panel:#17211c;--panel2:#202d26;--panel3:#28372f;--line:rgba(237,244,232,.12);--text:#edf2e8;--muted:#a7b5aa;--lime:#d9f36b;--lime2:#b7d943;--parking:#74d8a0;--history:#ff9c83;--view:#ffc86e;--photo:#c2a1ff;--shadow:0 18px 55px rgba(10,20,14,.24)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#dfe7de;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:inherit}
+#map{position:fixed;inset:0;background:#dce6de}.maplibregl-canvas{outline:none}.maplibregl-ctrl-group{border:1px solid #d8e0d5!important;border-radius:12px!important;overflow:hidden;box-shadow:0 5px 22px rgba(20,40,25,.13)!important}.maplibregl-ctrl button{width:38px!important;height:38px!important}.maplibregl-ctrl-attrib{font-size:10px!important}
+.sidebar{position:fixed;z-index:10;left:14px;top:14px;bottom:14px;width:398px;max-width:calc(100vw - 28px);background:rgba(18,28,23,.97);border:1px solid rgba(255,255,255,.09);border-radius:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;backdrop-filter:blur(18px)}
+.brand{padding:19px 20px 15px;border-bottom:1px solid var(--line);flex:0 0 auto}.brand-line{display:flex;align-items:center;gap:11px}.brand-symbol{width:36px;height:36px;border-radius:12px;background:#2b3a2f;border:1px solid #506640;color:var(--lime);display:grid;place-items:center;font-size:19px;box-shadow:inset 0 0 0 1px rgba(217,243,107,.06)}.brand-name{font-size:15px;letter-spacing:.13em;font-weight:850}.brand-sub{margin-top:4px;font-size:9px;letter-spacing:.17em;text-transform:uppercase;color:var(--lime);font-weight:800}.brand p{font-size:12px;line-height:1.55;color:var(--muted);margin:13px 0 0}.online-state{display:flex;align-items:center;gap:7px;font-size:10px;color:#b9c8bc;margin-top:12px}.live-dot{width:7px;height:7px;background:var(--lime);border-radius:50%;box-shadow:0 0 0 4px rgba(217,243,107,.10)}
+.panel-scroll{overflow:auto;min-height:0;flex:1;scrollbar-width:thin;scrollbar-color:#415448 transparent;padding-bottom:18px}.section{padding:16px 18px 0}.eyebrow{font-size:9px;font-weight:850;letter-spacing:.16em;text-transform:uppercase;color:var(--lime);margin:0 0 10px}.search-row{display:flex;gap:8px}.search-box{position:relative;flex:1;min-width:0}.search-box svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aebcaf;pointer-events:none}.search-box input{height:43px;width:100%;background:#0e1712;border:1px solid #34453a;border-radius:11px;color:#f4f7ef;padding:0 12px 0 38px;outline:none;font-size:12px}.search-box input:focus{border-color:#829a48;box-shadow:0 0 0 3px rgba(217,243,107,.09)}.search-box input::placeholder{color:#85958a}.btn{border:1px solid var(--line);border-radius:10px;background:var(--panel3);color:var(--text);padding:10px 12px;font-size:11px;font-weight:750;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;transition:background .15s,border-color .15s;white-space:nowrap}.btn:hover{background:#344739;border-color:#607653}.btn.primary{background:var(--lime);color:#17211c;border-color:var(--lime)}.btn.primary:hover{background:#e6ff80}.btn.ghost{background:transparent}.btn.small{font-size:10px;padding:7px 9px}.scan-options{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px}.scan-options label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#a9b8ad}.scan-options select{color:#f3f7ee;background:#202d26;border:1px solid #3d5042;border-radius:9px;font-size:11px;padding:7px 9px;outline:none}.utility-row{display:flex;gap:7px;margin-top:10px}.utility-row .btn{flex:1}
+.status-box{border:1px solid rgba(217,243,107,.2);background:rgba(217,243,107,.055);border-radius:11px;padding:11px 12px;display:flex;align-items:flex-start;gap:9px}.status-icon{color:var(--lime);font-size:15px;line-height:1.2}.status-copy{min-width:0;flex:1}.status-title{font-size:11px;font-weight:800}.status-msg{font-size:10px;color:#b7c4ba;line-height:1.5;margin-top:4px}.status-box.warn{background:rgba(255,156,131,.08);border-color:rgba(255,156,131,.22)}.status-box.warn .status-icon{color:var(--history)}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap}.filter-chip{background:#1b2821;border:1px solid #35463a;border-radius:999px;padding:7px 10px;color:#b3c0b6;font-size:10px;white-space:nowrap}.filter-chip.active,.filter-chip:hover{border-color:#8fa24f;background:#34432d;color:#e4f58f}
+.results-section{padding-top:17px}.section-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}.section-heading h3{margin:0;font-size:10px;font-weight:850;letter-spacing:.11em;text-transform:uppercase;color:#e9f0e6}.count{font-size:10px;color:#93a497}.result-list{display:grid;gap:7px}.empty{border:1px dashed #3b4b40;border-radius:11px;padding:13px;color:#94a69a;font-size:11px;line-height:1.5}.spot-card{display:flex;align-items:flex-start;gap:10px;padding:11px;border:1px solid #2d3d32;border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,.035),rgba(255,255,255,.012));cursor:pointer;transition:transform .15s,border-color .15s,background .15s;min-width:0}.spot-card:hover,.spot-card.selected{border-color:#82964d;background:#26352a;transform:translateY(-1px)}.spot-icon{width:32px;height:32px;flex:0 0 32px;border-radius:10px;display:grid;place-items:center;font-size:14px;font-weight:850;background:#26392d;color:var(--lime);border:1px solid #3c4e3d}.spot-icon.parking{color:var(--parking);background:rgba(116,216,160,.08);border-color:rgba(116,216,160,.22)}.spot-icon.history{color:var(--history);background:rgba(255,156,131,.08);border-color:rgba(255,156,131,.2)}.spot-icon.viewpoint{color:var(--view);background:rgba(255,200,110,.08);border-color:rgba(255,200,110,.2)}.spot-body{flex:1;min-width:0}.spot-title{font-size:12px;line-height:1.35;font-weight:780;color:#f2f5ef}.spot-meta{font-size:9px;color:#9bac9f;margin-top:4px;display:flex;gap:6px;flex-wrap:wrap}.spot-summary{font-size:10px;color:#b7c4ba;line-height:1.5;margin-top:6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.spot-distance{font-size:9px;color:#aabaad;white-space:nowrap;padding-top:2px}
+.photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.photo-card{border:1px solid #314136;border-radius:11px;overflow:hidden;background:#1c2921;min-width:0}.photo-card a{text-decoration:none}.photo-card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#29382d}.photo-caption{padding:8px;font-size:10px;color:#dce6db;line-height:1.4;overflow-wrap:anywhere}.photo-license{font-size:9px;color:#92a398;margin-top:4px}.social-row{display:flex;gap:7px;margin-top:8px}.social-row .btn{flex:1}
+.detail{margin:16px 18px 0;border:1px solid #465b3c;background:linear-gradient(145deg,#26362a,#1c2921);border-radius:14px;padding:14px;display:none}.detail.show{display:block}.detail h2{font-family:Georgia,serif;font-weight:500;font-size:22px;line-height:1.15;margin:3px 0 8px}.detail p{font-size:11px;line-height:1.6;color:#c0cdc1;margin:8px 0}.detail-actions{display:flex;gap:7px;flex-wrap:wrap;margin:11px 0}.detail-actions .btn{flex:1}.prompt-box{background:#111b14;border:1px solid #3b4b3b;border-radius:10px;padding:10px;margin-top:10px}.prompt-box textarea{width:100%;resize:vertical;min-height:110px;outline:none;border:0;background:transparent;color:#d5e1d5;font-size:10px;line-height:1.55}.prompt-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:9px;color:#9eae9f}.saved-row{display:flex;gap:6px;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid #344439;border-radius:9px;margin-top:6px;font-size:10px;color:#cfdbcf}.saved-row button{background:none;color:var(--lime);border:0;font-size:10px}
+.map-heading{position:fixed;z-index:5;left:430px;top:15px;background:rgba(18,28,23,.92);border:1px solid rgba(255,255,255,.11);padding:13px 17px;border-radius:13px;box-shadow:0 8px 28px rgba(18,32,20,.13);backdrop-filter:blur(14px);max-width:calc(100vw - 460px)}.map-heading .eyebrow{font-size:8px;margin-bottom:5px}.map-heading strong{font-family:Georgia,serif;font-size:21px;font-weight:500;color:#f2f5ed;letter-spacing:-.015em}.map-heading div:last-child{font-size:10px;color:#aab9ac;margin-top:5px}.map-styles{position:fixed;right:16px;top:15px;z-index:6;display:flex;gap:4px;padding:5px;border-radius:13px;background:rgba(18,28,23,.94);border:1px solid rgba(255,255,255,.11);box-shadow:0 8px 28px rgba(18,32,20,.14);backdrop-filter:blur(14px)}.map-style{border:0;background:transparent;color:#aebcaf;padding:8px 10px;border-radius:8px;font-size:10px}.map-style:hover,.map-style.active{background:#37482c;color:#e3f58b}.map-style.active{box-shadow:inset 0 0 0 1px rgba(217,243,107,.19)}.map-credit{position:fixed;right:12px;bottom:5px;z-index:5;font-size:9px;color:#445747;background:rgba(248,250,243,.86);padding:4px 7px;border-radius:5px;pointer-events:none}.map-issue{position:fixed;z-index:8;top:72px;right:15px;max-width:370px;background:rgba(27,36,29,.97);border:1px solid rgba(255,156,131,.35);border-radius:12px;padding:13px;color:#f3eee8;box-shadow:var(--shadow);display:none}.map-issue.show{display:block}.map-issue strong{font-size:12px}.map-issue p{margin:5px 0 10px;color:#c6c9bd;font-size:10px;line-height:1.5}.map-issue button{background:var(--lime);border:0;border-radius:8px;padding:7px 10px;font-weight:800;font-size:10px;color:#18221b}
+.scout-marker{border:0;display:grid;place-items:center;cursor:pointer;padding:0;outline:none;transition:transform .14s}.scout-marker:hover{transform:scale(1.16);z-index:30!important}.scout-marker .dot-core{display:grid;place-items:center;border:2px solid rgba(255,255,255,.96);box-shadow:0 2px 9px rgba(0,0,0,.35);font:850 10px/1 ui-sans-serif,system-ui;background:#26342c;color:#fff}.scout-marker.parking .dot-core{width:25px;height:25px;border-radius:8px;background:#19734f;color:#e6ffe9;border-color:#c7f8d4}.scout-marker.history .dot-core{width:15px;height:15px;border-radius:50%;background:#ed8b73;color:#263127;border-color:#fff0e9}.scout-marker.viewpoint .dot-core{width:18px;height:18px;border-radius:5px;transform:rotate(45deg);background:#f0b84f;color:#372c1b;border-color:#fff2cd}.scout-marker.viewpoint .dot-core span{transform:rotate(-45deg)}.scout-marker.architecture .dot-core{width:16px;height:16px;border-radius:4px;background:#76b7a4;border-color:#e8fff6}.scout-marker.photo .dot-core{width:22px;height:22px;border-radius:50%;background:#8560d6;color:#fff;border-color:#eee2ff;font-size:14px}.scout-marker.active-pin .dot-core{width:25px;height:25px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--lime);border:2px solid #17251b;color:#152018;box-shadow:0 3px 12px rgba(0,0,0,.55)}.scout-marker.active-pin .dot-core span{transform:rotate(45deg);font-size:12px}
+footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;border-top:1px solid var(--line);flex:0 0 auto}.footer-link{color:#aebfae;text-decoration:underline;text-underline-offset:2px}
+@media(max-width:900px){.sidebar{width:350px}.map-heading{left:380px}.map-style{padding:7px 8px}.map-styles{right:10px;top:10px}.map-heading{top:10px}}
+@media(max-width:680px){.sidebar{left:8px;right:8px;bottom:8px;top:auto;width:auto;max-width:none;max-height:58dvh;border-radius:18px}.brand{padding:12px 14px 10px}.brand-symbol{width:30px;height:30px}.brand-name{font-size:13px}.brand p{font-size:11px;margin-top:7px}.brand-sub{font-size:8px}.online-state{margin-top:7px}.section{padding:12px 14px 0}.map-heading{left:8px;top:8px;max-width:calc(100vw - 16px);padding:10px 12px}.map-heading strong{font-size:17px}.map-heading .eyebrow{margin-bottom:2px}.map-heading div:last-child{display:none}.map-styles{top:8px;right:8px;transform:translateY(68px);gap:2px;padding:3px}.map-style{font-size:9px;padding:6px 7px}.map-credit{bottom:calc(58dvh + 12px);font-size:8px}.maplibregl-ctrl-bottom-right{bottom:calc(58dvh + 10px)!important}.map-issue{top:126px;right:8px;left:8px;max-width:none}.detail{margin-left:14px;margin-right:14px}.utility-row .btn{font-size:10px;padding:8px 6px}}
+</style>
 </head>
 <body>
-
-<div class="hud">
-    <h2>ViewFinder <span style="color:var(--target)">R50</span></h2>
-    <div class="legend-grid">
-        <div class="legend-item"><div class="dot" style="background:var(--blue)"></div> Road / SV (20x)</div>
-        <div class="legend-item"><div class="dot" style="background:var(--yellow)"></div> Popular Spot</div>
-        <div class="legend-item"><div class="dot" style="background:var(--green-easy)"></div> Easy Hike</div>
-        <div class="legend-item"><div class="dot" style="background:var(--green-hard)"></div> Hard Climb</div>
-    </div>
-    <div id="status">Target a scenery (e.g., Učka) to calculate 20km radius shots.</div>
+<div id="map" aria-label="Interactive world map. Click a location to find parking, historical places and photography ideas."></div>
+<div class="map-heading"><div class="eyebrow">Global discovery map</div><strong id="mapTitle">Explore places around your pin.</strong><div id="mapSubtitle">Click anywhere on the map to plan a photography stop.</div></div>
+<div class="map-styles" role="group" aria-label="Map style">
+  <button class="map-style active" data-style="liberty">Atlas</button>
+  <button class="map-style" data-style="bright">Bright</button>
+  <button class="map-style" data-style="positron">Light</button>
+  <button class="map-style" data-style="dark">Dark</button>
+  <button class="map-style" data-style="fiord">Terrain</button>
 </div>
-
-<div id="map"></div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<div id="mapIssue" class="map-issue"><strong>Basemap could not be loaded.</strong><p>The app is not using the blocked OpenStreetMap volunteer tile endpoint. Retry the vector map or check the connection.</p><button id="retryMap">Retry map</button></div>
+<aside class="sidebar">
+<header class="brand">
+  <div class="brand-line"><div class="brand-symbol">✣</div><div><div class="brand-name">PHOTO SCOUT</div><div class="brand-sub">Roadtrip photography planner</div></div></div>
+  <p>Drop a pin anywhere to discover car parks, history, visual references and shot ideas. Global by design.</p>
+  <div class="online-state"><span class="live-dot"></span><span id="appState">Map loading · global search ready</span></div>
+</header>
+<div class="panel-scroll">
+  <section class="section">
+    <form id="searchForm">
+      <div class="search-row">
+        <div class="search-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="placeSearch" autocomplete="off" placeholder="Search a place or paste lat, lon" aria-label="Search place or coordinates"></div>
+        <button class="btn primary" type="submit">Go</button>
+      </div>
+    </form>
+    <div class="scan-options"><label for="radius">Scan radius</label><select id="radius"><option value="2000">2 km</option><option value="5000" selected>5 km</option><option value="10000">10 km</option></select></div>
+    <div class="utility-row"><button class="btn" id="useLocation">◎ Use my location</button><button class="btn" id="saveStop">☆ Save stop</button></div>
+  </section>
+  <section class="section">
+    <div class="status-box" id="statusBox"><div class="status-icon">✣</div><div class="status-copy"><div class="status-title" id="statusTitle">Pick a point on the map</div><div class="status-msg" id="statusMsg">Click a place, town, mountain or coastline. We'll search around that exact point.</div></div></div>
+  </section>
+  <section class="section">
+    <div class="filter-row" id="filters">
+      <button class="filter-chip active" data-filter="all">All spots</button>
+      <button class="filter-chip" data-filter="parking">Parking</button>
+      <button class="filter-chip" data-filter="history">History</button>
+      <button class="filter-chip" data-filter="architecture">Architecture</button>
+      <button class="filter-chip" data-filter="viewpoint">Nature & views</button>
+    </div>
+  </section>
+  <section class="section results-section">
+    <div class="section-heading"><h3>Parking near your stop</h3><span class="count" id="parkingCount">—</span></div>
+    <div class="result-list" id="parkingResults"><div class="empty">Choose a point on the map to find mapped parking. Parking legality and availability must be checked on site.</div></div>
+  </section>
+  <section class="section results-section">
+    <div class="section-heading"><h3>History & places nearby</h3><span class="count" id="historyCount">—</span></div>
+    <div class="result-list" id="historyResults"><div class="empty">Historical sites and nearby encyclopedia articles appear here when available.</div></div>
+  </section>
+  <section class="section results-section">
+    <div class="section-heading"><h3>Architecture & viewpoints</h3><span class="count" id="viewCount">—</span></div>
+    <div class="result-list" id="viewResults"><div class="empty">Look for viewpoints, interesting buildings and natural subjects around the pin.</div></div>
+  </section>
+  <section class="section results-section">
+    <div class="section-heading"><h3>Artistic photo references</h3><span class="count" id="photoCount">—</span></div>
+    <div class="photos" id="photoResults"><div class="empty" style="grid-column:1/-1">Geotagged visual references from Wikimedia Commons appear here when available.</div></div>
+    <div class="social-row"><a class="btn small" id="pinterestSearch" target="_blank" rel="noopener noreferrer" href="https://www.pinterest.com/">Pinterest ↗</a><a class="btn small" id="instagramSearch" target="_blank" rel="noopener noreferrer" href="https://www.instagram.com/explore/">Instagram ↗</a></div>
+  </section>
+  <section class="section results-section">
+    <div class="section-heading"><h3>Saved stops</h3><span class="count" id="savedCount">0</span></div>
+    <div id="savedResults"><div class="empty">Save a pin or selected place to build a road-trip list on this device.</div></div>
+  </section>
+  <section class="detail" id="spotDetail">
+    <div class="eyebrow" id="detailEyebrow">Selected location</div><h2 id="detailTitle">Your pin</h2><div class="spot-meta" id="detailMeta"></div>
+    <div id="detailHistory"></div>
+    <div class="detail-actions"><a class="btn primary" id="driveLink" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Drive to spot ↗</a><button class="btn" id="saveSelected">☆ Save spot</button></div>
+    <div class="prompt-box"><div class="section-heading"><h3>AI shot reference</h3><span class="count">Editable prompt</span></div><textarea id="shotPrompt" aria-label="AI shot reference prompt"></textarea><div class="prompt-footer"><span>Use as a starting brief in your image tool.</span><button class="btn small" id="copyPrompt">Copy prompt</button></div></div>
+  </section>
+</div>
+<footer>Map data © <a class="footer-link" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Vector basemap by <a class="footer-link" href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>. History links and photo licences are shown where available. Always verify road access, parking signs and private-property restrictions.</footer>
+</aside>
+<div class="map-credit">Made for curious photographers · Photo Scout</div>
+<script src="https://unpkg.com/maplibre-gl@6.13.0/dist/maplibre-gl.js"></script>
 <script>
-    // Initialize map near Matulji / Brnini
-    const map = L.map('map', {zoomControl: false}).setView([45.3524, 14.3045], 11);
-    const sceneLayers = L.layerGroup().addTo(map);
-    const lineLayer = L.layerGroup().addTo(map);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { detectRetina: true }).addTo(map);
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-    function updateStatus(msg) { document.getElementById('status').innerText = msg; }
-
-    map.on('click', async (e) => {
-        const target = e.latlng;
-        sceneLayers.clearLayers();
-        lineLayer.clearLayers();
-        updateStatus("Processing Landscape Scene & SV Links...");
-
-        // Draw Scene Buffer around the mountain
-        L.circle(target, { radius: 3000, color: 'var(--target)', fillOpacity: 0.1, weight: 1, dashArray: '5,5' }).addTo(sceneLayers);
-        L.circleMarker(target, { radius: 6, color: 'white', fillColor: 'var(--target)', fillOpacity: 1 }).addTo(sceneLayers);
-
-        try {
-            // Overpass Query: 20km radius. 
-            // We specifically look for higher-tier roads to guarantee Street View.
-            const query = `[out:json][timeout:30];
-                (
-                  way["highway"~"primary|secondary|tertiary"](around:20000, ${target.lat}, ${target.lng});
-                  node["tourism"="viewpoint"](around:20000, ${target.lat}, ${target.lng});
-                );
-                out center 50;`;
-            
-            const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-            const data = await response.json();
-            
-            // Filter out 20 roads and up to 10 web viewpoints
-            let roadPoints = data.elements.filter(el => el.tags.highway).slice(0, 20);
-            let webPoints = data.elements.filter(el => el.tags.tourism === 'viewpoint').slice(0, 10);
-
-            // 1. Process Blue Roadside Points
-            roadPoints.forEach(p => {
-                createMarker(L.latLng(p.center.lat, p.center.lon), 'var(--blue)', 'Roadside / Street View', target);
-            });
-
-            // 2. Process Yellow Web Points
-            webPoints.forEach(p => {
-                createMarker(L.latLng(p.lat, p.lon), 'var(--yellow)', 'Popular Photo Spot', target);
-            });
-
-            // 3. Generate Green Math/Off-road Spots
-            generateGreenSpots(target);
-
-            updateStatus("Scene Ready. Select a pin to verify Street View.");
-        } catch (err) {
-            updateStatus("Data Error. Check connection.");
-        }
-    });
-
-    async function generateGreenSpots(target) {
-        for (let i = 0; i < 6; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 8000 + Math.random() * 12000; // 8km to 20km out
-            const lat = target.lat + (dist / 111320) * Math.cos(angle);
-            const lng = target.lng + (dist / (111320 * Math.cos(target.lat * (Math.PI / 180)))) * Math.sin(angle);
-            const pos = L.latLng(lat, lng);
-
-            try {
-                const eRes = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${pos.lat}&longitude=${pos.lng}`);
-                const eData = await eRes.json();
-                const alt = eData.elevation[0];
-
-                if (alt > 200) {
-                    const difficulty = alt > 600 ? 'var(--green-hard)' : 'var(--green-easy)';
-                    const label = alt > 600 ? 'Hard Climb / Off-Road' : 'Easy Hike / Trail';
-                    createMarker(pos, difficulty, label, target, alt);
-                }
-            } catch (e) { console.log("Elev skip"); }
-        }
-    }
-
-    function createMarker(pos, color, type, target, altitude = null) {
-        const dist = (pos.distanceTo(target) / 1000).toFixed(1);
-        const m = L.circleMarker(pos, {
-            radius: 7, color: '#fff', fillColor: color, fillOpacity: 0.9, weight: 2
-        }).addTo(sceneLayers);
-
-        m.on('click', (e) => {
-            L.DomEvent.stopPropagation(e);
-            lineLayer.clearLayers();
-            L.polyline([pos, target], { color: color, weight: 2, dashArray: '5,8', opacity: 0.7 }).addTo(lineLayer);
-
-            // Canon R50 Crop Factor Logic
-            let lensRec = "18-35mm (Wide)";
-            if (dist > 8) lensRec = "50-85mm (Natural)";
-            if (dist > 15) lensRec = "100-150mm (Compressed)";
-
-            // True Google Maps Street View Pano URL
-            const svUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${pos.lat},${pos.lng}`;
-
-            m.bindPopup(`
-                <div style="width:200px; font-family: sans-serif;">
-                    <b style="color:${color}">${type}</b><br>
-                    ${altitude ? `Altitude: ${altitude}m<br>` : ''}
-                    Distance to Scene: ${dist} km<br>
-                    <hr style="border:0; border-top:1px solid #ddd; margin: 8px 0;">
-                    <div style="font-size: 11px;">
-                        <b>Gear: Canon R50 + 18-150mm</b><br>
-                        Recommended focal length: <span style="color:var(--target); font-weight:bold;">${lensRec}</span>
-                    </div>
-                    <a class="btn-action" href="${svUrl}" target="_blank">Open Street View</a>
-                </div>
-            `).openPopup();
-        });
-    }
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const styleUrls = {
+ liberty:'https://tiles.openfreemap.org/styles/liberty',
+ bright:'https://tiles.openfreemap.org/styles/bright',
+ positron:'https://tiles.openfreemap.org/styles/positron',
+ dark:'https://tiles.openfreemap.org/styles/dark',
+ fiord:'https://tiles.openfreemap.org/styles/fiord'
+};
+const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:5000, results:[], photos:[], selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0};
+window.__PHOTO_SCOUT_TEST__ = {
+ get map(){ return state.map; },
+ get styleLoaded(){ return state.styleLoaded; },
+ get vectorTileSuccesses(){ return state.vectorTileSuccesses; },
+ get scanCount(){ return state.scanCount; },
+ getState(){ return {styleLoaded:state.styleLoaded, scanCount:state.scanCount, activeCenter:state.center, resultCount:state.results.length, photoCount:state.photos.length, mapErrors:state.mapErrors}; },
+ scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); }
+};
+const mapError = message => {
+ $('mapIssue').classList.add('show');
+ $('appState').textContent = 'Map connection issue';
+ $('statusTitle').textContent = 'Map service needs attention';
+ $('statusMsg').textContent = message || 'Map tiles did not load. Retry the basemap; location search can still be attempted.';
+ $('statusBox').classList.add('warn');
+};
+const mapOk = () => {
+ $('mapIssue').classList.remove('show');
+ $('appState').textContent = 'Interactive map ready · click anywhere to scout';
+};
+if (!window.maplibregl) {
+ mapError('The MapLibre map renderer did not load from its CDN. Check the connection and reload this page.');
+ return;
+}
+const map = new maplibregl.Map({
+ container:'map',
+ style:styleUrls.liberty,
+ center:[12,32],
+ zoom:2.65,
+ minZoom:2,
+ maxZoom:19,
+ attributionControl:true,
+ renderWorldCopies:true,
+ cooperativeGestures:true,
+ maxPitch:55,
+ pitch:0
+});
+state.map = map;
+map.addControl(new maplibregl.NavigationControl({showCompass:true,visualizePitch:true}), 'bottom-right');
+map.addControl(new maplibregl.ScaleControl({maxWidth:120,unit:'metric'}), 'bottom-left');
+map.on('error', function(e){
+ state.mapErrors++;
+ const msg = e && e.error && e.error.message ? e.error.message : '';
+ if (/style|403|404|failed to fetch|load/i.test(msg) && !state.styleLoaded) mapError('The vector basemap did not finish loading. Check the connection or retry.');
+});
+map.on('style.load', function(){
+ state.styleLoaded = true;
+ ensureRadiusLayers();
+ updateRadius();
+ mapOk();
+ renderMarkers();
+});
+map.on('sourcedata', function(e){
+ if(e && e.sourceId && e.isSourceLoaded && e.sourceDataType === 'content') state.vectorTileSuccesses++;
+});
+map.on('load', function(){
+ state.styleLoaded = true;
+ ensureRadiusLayers();
+ updateRadius();
+ mapOk();
+ renderMarkers();
+});
+$('retryMap').addEventListener('click',function(){
+ $('mapIssue').classList.remove('show');
+ state.styleLoaded=false;
+ map.setStyle(styleUrls[currentStyle]);
+});
+let currentStyle='liberty';
+document.querySelectorAll('[data-style]').forEach(btn=>btn.addEventListener('click',function(){
+ currentStyle=this.dataset.style;
+ document.querySelectorAll('[data-style]').forEach(b=>b.classList.toggle('active',b===this));
+ state.styleLoaded=false;
+ map.setStyle(styleUrls[currentStyle]);
+}));
+function ensureRadiusLayers(){
+ if(!map.getSource('scout-radius')){
+  map.addSource('scout-radius',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+  map.addLayer({id:'scout-radius-fill',type:'fill',source:'scout-radius',paint:{'fill-color':'#d9f36b','fill-opacity':0.075}});
+  map.addLayer({id:'scout-radius-line',type:'line',source:'scout-radius',paint:{'line-color':'#c8e94f','line-width':1.8,'line-opacity':0.95,'line-dasharray':[2,2]}});
+ }
+}
+function circleGeoJSON(center,radius){
+ if(!center) return {type:'FeatureCollection',features:[]};
+ const coords=[]; const R=6371008.8; const lat1=center.lat*Math.PI/180; const lon1=center.lng*Math.PI/180; const angular=radius/R;
+ for(let i=0;i<=72;i++){
+  const b=2*Math.PI*i/72;
+  const lat2=Math.asin(Math.sin(lat1)*Math.cos(angular)+Math.cos(lat1)*Math.sin(angular)*Math.cos(b));
+  const lon2=lon1+Math.atan2(Math.sin(b)*Math.sin(angular)*Math.cos(lat1),Math.cos(angular)-Math.sin(lat1)*Math.sin(lat2));
+  coords.push([lon2*180/Math.PI,lat2*180/Math.PI]);
+ }
+ return {type:'FeatureCollection',features:[{type:'Feature',properties:{},geometry:{type:'Polygon',coordinates:[coords]}}]};
+}
+function updateRadius(){
+ if(!state.styleLoaded || !map.getSource('scout-radius')) return;
+ map.getSource('scout-radius').setData(circleGeoJSON(state.center,state.radius));
+}
+function haversine(a,b){
+ const r=Math.PI/180, dLat=(b.lat-a.lat)*r,dLon=(b.lng-a.lng)*r;
+ const t=Math.sin(dLat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLon/2)**2;
+ return 6371008.8*2*Math.atan2(Math.sqrt(t),Math.sqrt(Math.max(0,1-t)));
+}
+function distanceLabel(m){return m<1000?Math.round(m)+' m':(m/1000).toFixed(1)+' km';}
+function coordLabel(c){return c.lat.toFixed(5)+', '+c.lng.toFixed(5);}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function safeLink(url){try{const u=new URL(url);return ['https:','http:'].includes(u.protocol)?u.href:'#';}catch(e){return '#';}}
+function cancelPreviousRequests(){state.controllers.forEach(c=>{try{c.abort();}catch(e){}});state.controllers=[];}
+async function requestJSON(url,scanId,timeoutMs){
+ const controller=new AbortController(); state.controllers.push(controller);
+ const timer=setTimeout(()=>controller.abort(),timeoutMs||13000);
+ try{
+  const response=await fetch(url,{signal:controller.signal,mode:'cors',credentials:'omit'});
+  if(!response.ok) throw new Error('HTTP '+response.status);
+  const data=await response.json();
+  if(scanId!==state.scanId) throw new Error('stale scan');
+  return data;
+ }finally{
+  clearTimeout(timer);
+  state.controllers=state.controllers.filter(c=>c!==controller);
+ }
+}
+async function overpassSearch(c,radius,id){
+ const query='[out:json][timeout:18];('+
+ 'nwr(around:'+radius+','+c.lat+','+c.lng+')["amenity"="parking"];'+
+ 'nwr(around:'+radius+','+c.lat+','+c.lng+')["historic"];'+
+ 'nwr(around:'+radius+','+c.lat+','+c.lng+')["heritage"];'+
+ 'nwr(around:'+radius+','+c.lat+','+c.lng+')["tourism"~"attraction|museum|viewpoint|artwork|gallery"];'+
+ 'nwr(around:'+radius+','+c.lat+','+c.lng+')["building"~"church|cathedral|castle|fort|ruins|monument"];'+
+ 'nwr(around:'+radius+','+c.lat+','+c.lng+')["natural"~"peak|cliff|cave|waterfall|beach"];'+
+ 'nwr(around:'+radius+','+c.lat+','+c.lng+')["man_made"~"lighthouse|tower|bridge"];'+
+ ');out center tags 100;';
+ const endpoints=['https://overpass-api.de/api/interpreter?data=','https://overpass.kumi.systems/api/interpreter?data='];
+ let lastErr;
+ for(const endpoint of endpoints){
+  try{
+   const data=await requestJSON(endpoint+encodeURIComponent(query),id,14000);
+   const raw=(data.elements||[]).map(el=>{
+    const tags=el.tags||{};
+    const lat=el.lat!=null?el.lat:(el.center&&el.center.lat);
+    const lng=el.lon!=null?el.lon:(el.center&&el.center.lon);
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)||!tags.name) return null;
+    const c2={lat:lat,lng:lng}; const d=haversine(c,c2);
+    if(d>radius) return null;
+    return {id:'osm-'+el.type+'-'+el.id,name:tags.name,lat:lat,lng:lng,distance:d,tags:tags,source:'OpenStreetMap',sourceUrl:'https://www.openstreetmap.org/'+el.type+'/'+el.id,category:classify(tags),summary:tags.description||tags['description:en']||'',history:'',wikiUrl:tags.wikipedia?wikiURL(tags.wikipedia):'',license:'© OpenStreetMap contributors'};
+   }).filter(Boolean);
+   const dedup=new Map();
+   raw.sort((a,b)=>priority(b)-priority(a)||a.distance-b.distance);
+   raw.forEach(v=>{const key=v.category+'|'+v.name.toLowerCase().trim();if(!dedup.has(key))dedup.set(key,v);});
+   return Array.from(dedup.values()).sort((a,b)=>a.distance-b.distance).slice(0,100);
+  }catch(err){lastErr=err;if(id!==state.scanId) throw err;}
+ }
+ throw lastErr||new Error('Place search unavailable');
+}
+function classify(t){
+ if(t.amenity==='parking'||t.amenity==='parking_space'||t.parking) return 'parking';
+ if(t.tourism==='viewpoint'||t.natural==='peak'||t.natural==='cliff'||t.natural==='waterfall'||t.natural==='beach'||t.natural==='cave') return 'viewpoint';
+ if(t.historic||t.heritage||t.tourism==='museum'||t.tourism==='attraction'||t.building==='castle'||t.building==='church'||t.building==='cathedral'||t.building==='ruins') return 'history';
+ return 'architecture';
+}
+function priority(v){return (v.category==='parking'?7:0)+(v.tags.wikipedia?6:0)+(v.tags.wikidata?3:0)+(v.tags.description?2:0)+(v.tags.image?1:0);}
+function wikiURL(tag){const p=tag.split(':');return 'https://'+(p.length>1?p[0]:'en')+'.wikipedia.org/wiki/'+encodeURIComponent(p.slice(1).join(':').replace(/ /g,'_'));}
+async function wikipediaSearch(c,radius,id){
+ const url='https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord='+c.lat+'|'+c.lng+'&gsradius='+Math.min(radius,10000)+'&gslimit=8&format=json&origin=*';
+ const data=await requestJSON(url,id,12000);
+ const pages=(data.query&&data.query.geosearch)||[];
+ if(!pages.length) return [];
+ const ids=pages.map(p=>p.pageid).join('|');
+ let extracts={};
+ try{
+  const details=await requestJSON('https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&exsentences=3&pageids='+ids+'&format=json&origin=*',id,12000);
+  extracts=details.query&&details.query.pages||{};
+ }catch(e){}
+ return pages.map(p=>{
+  const c2={lat:p.lat,lng:p.lon}; const d=haversine(c,c2);
+  if(d>radius) return null;
+  const extract=extracts[p.pageid]&&extracts[p.pageid].extract||'';
+  return {id:'wiki-'+p.pageid,name:p.title,lat:p.lat,lng:p.lon,distance:d,tags:{},source:'Wikipedia',sourceUrl:'https://en.wikipedia.org/?curid='+p.pageid,category:'history',summary:extract,history:extract,wikiUrl:'https://en.wikipedia.org/?curid='+p.pageid,license:'Wikipedia article; see source attribution'};
+ }).filter(Boolean);
+}
+async function commonsSearch(c,radius,id){
+ const url='https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggscoord='+c.lat+'|'+c.lng+'&ggsradius='+Math.min(radius,10000)+'&ggsnamespace=6&ggslimit=12&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&format=json&origin=*';
+ const data=await requestJSON(url,id,15000);
+ const pages=Object.values(data.query&&data.query.pages||{});
+ return pages.map(p=>{
+  const point=p.coordinates&&p.coordinates[0]; const info=p.imageinfo&&p.imageinfo[0];
+  if(!point||!info||!info.thumburl) return null;
+  const c2={lat:point.lat,lng:point.lon}; const d=haversine(c,c2); if(d>radius)return null;
+  const meta=info.extmetadata||{};
+  const plain=v=>String(v&&v.value||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+  return {id:'commons-'+p.pageid,name:(p.title||'').replace(/^File:/,''),lat:point.lat,lng:point.lon,distance:d,thumb:info.thumburl,sourceUrl:info.descriptionurl||info.url,source:'Wikimedia Commons',artist:plain(meta.Artist)||'Photographer not listed',license:plain(meta.LicenseShortName)||'Check original file page',category:'photo'};
+ }).filter(Boolean).sort((a,b)=>a.distance-b.distance);
+}
+function cardHTML(item){
+ const icon=item.category==='parking'?'P':item.category==='history'?'H':item.category==='viewpoint'?'↗':item.category==='photo'?'✦':'A';
+ const title=esc(item.name); const dist=distanceLabel(item.distance||0);
+ const desc=item.summary||((item.tags&&item.tags.description)||((item.tags&&item.tags.tourism==='viewpoint')?'Mapped viewpoint; the exact camera position and view are not independently verified.':'Mapped place. Check the source and access details before travelling.'));
+ const tagLine=item.source+' · '+(item.category==='parking'?'Parking':item.category==='history'?'History / place':item.category==='viewpoint'?'Viewpoint / nature':'Architecture');
+ return '<article class="spot-card" data-item-id="'+esc(item.id)+'" tabindex="0" role="button"><div class="spot-icon '+esc(item.category)+'">'+icon+'</div><div class="spot-body"><div class="spot-title">'+title+'</div><div class="spot-meta"><span>'+esc(tagLine)+'</span></div>'+(desc?'<div class="spot-summary">'+esc(desc)+'</div>':'')+'</div><div class="spot-distance">'+dist+'</div></article>';
+}
+function emptyHTML(text){return '<div class="empty">'+esc(text)+'</div>';}
+function renderResults(){
+ const shown=state.filter==='all'?state.results:state.results.filter(r=>r.category===state.filter);
+ const parking=shown.filter(r=>r.category==='parking');
+ const history=shown.filter(r=>r.category==='history');
+ const view=shown.filter(r=>r.category==='viewpoint'||r.category==='architecture');
+ $('parkingCount').textContent=parking.length+' spots';
+ $('historyCount').textContent=history.length+' places';
+ $('viewCount').textContent=view.length+' places';
+ $('parkingResults').innerHTML=parking.length?parking.map(cardHTML).join(''):emptyHTML(state.results.length?'No mapped parking found in this radius. Try a larger scan or verify parking locally.':'Scan a place to search for parking.');
+ $('historyResults').innerHTML=history.length?history.slice(0,12).map(cardHTML).join(''):emptyHTML(state.results.length?'No nearby history articles or tagged historic places were found. This means coverage is limited, not that history is absent.':'Historical sites and encyclopedia articles appear here after a scan.');
+ $('viewResults').innerHTML=view.length?view.slice(0,16).map(cardHTML).join(''):emptyHTML(state.results.length?'No tagged viewpoints or architectural subjects found in the selected radius.':'Look for viewpoints, interesting buildings and natural subjects.');
+ document.querySelectorAll('.spot-card').forEach(el=>{
+  const item=state.results.find(r=>r.id===el.dataset.itemId);
+  if(!item)return;
+  el.classList.toggle('selected',state.selected&&state.selected.id===item.id);
+  const open=()=>selectItem(item);
+  el.addEventListener('click',open);
+  el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
+ });
+ renderPhotos();
+ $('mapTitle').textContent=state.center?(state.selected?state.selected.name:'Explore around your pin.'):'Explore the world, one stop at a time.';
+ $('mapSubtitle').textContent=state.center?coordLabel(state.center)+' · '+(state.radius/1000)+' km radius':'Click anywhere on the map to plan a photography stop.';
+}
+function renderPhotos(){
+ $('photoCount').textContent=state.photos.length+' images';
+ $('photoResults').innerHTML=state.photos.length?state.photos.slice(0,10).map(p=>'<article class="photo-card"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open source image page"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="photo-caption">'+esc(p.name)+'<div class="photo-license">'+esc(p.license||'Licence on source page')+'</div></div></a></article>').join(''):emptyHTML(state.center?'No geotagged Commons image references were found in this radius. Use the Pinterest or Instagram search links for more visual inspiration.':'Drop a pin to look for geotagged reference images.');
+}
+function markerEl(category,label){
+ const el=document.createElement('button'); el.type='button'; el.className='scout-marker '+category;
+ el.title=label; el.setAttribute('aria-label',label);
+ const core=document.createElement('span');core.className='dot-core';
+ if(category==='viewpoint')core.innerHTML='<span>V</span>';else core.textContent=category==='parking'?'P':category==='history'?'H':category==='photo'?'✦':'A';
+ el.appendChild(core); return el;
+}
+function clearMarkers(){state.markers.forEach(m=>m.remove());state.markers=[];}
+function renderMarkers(){
+ if(!state.map || !state.styleLoaded)return;
+ clearMarkers();
+ state.results.forEach(item=>{
+  const el=markerEl(item.category,item.name+' · '+distanceLabel(item.distance));
+  el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
+  const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
+  state.markers.push(m);
+ });
+ state.photos.forEach(item=>{
+  const el=markerEl('photo',item.name+' · photo reference');
+  el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
+  const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
+  state.markers.push(m);
+ });
+}
+function setActivePin(c){
+ if(state.pinMarker)state.pinMarker.remove();
+ const el=markerEl('active-pin','Active photography stop');
+ const core=el.querySelector('.dot-core'); if(core)core.innerHTML='<span>+</span>';
+ state.pinMarker=new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([c.lng,c.lat]).addTo(map);
+}
+function setStatus(title,msg,kind){
+ $('statusTitle').textContent=title;
+ $('statusMsg').textContent=msg;
+ $('statusBox').classList.toggle('warn',kind==='warn');
+ $('statusBox').querySelector('.status-icon').textContent=kind==='warn'?'!':kind==='loading'?'◌':'✣';
+}
+async function scanAt(c,opts){
+ if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng)||Math.abs(c.lat)>85||Math.abs(c.lng)>180){setStatus('Choose a valid map point','That coordinate cannot be scanned.','warn');return;}
+ state.scanId++;const id=state.scanId;state.scanCount++;cancelPreviousRequests();
+ state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||5000;state.results=[];state.photos=[];state.selected=null;
+ $('spotDetail').classList.remove('show');
+ setActivePin(state.center);updateRadius();
+ if(opts&&opts.fly&&map.getZoom()<8){map.flyTo({center:[c.lng,c.lat],zoom:12,duration:850});}
+ renderResults();renderPhotos();
+ setStatus('Scanning this area','Searching for mapped parking, historic places, nearby articles and geotagged photo references. Older scan results are cleared.','loading');
+ $('mapTitle').textContent='Exploring your stop';
+ $('mapSubtitle').textContent=coordLabel(c)+' · '+(state.radius/1000)+' km radius';
+ updateSocialSearch('near '+coordLabel(c));
+ const rad=state.radius;
+ const tasks=await Promise.allSettled([overpassSearch(c,rad,id),wikipediaSearch(c,rad,id),commonsSearch(c,rad,id)]);
+ if(id!==state.scanId)return;
+ const osm=tasks[0].status==='fulfilled'?tasks[0].value:[];
+ const wiki=tasks[1].status==='fulfilled'?tasks[1].value:[];
+ const photos=tasks[2].status==='fulfilled'?tasks[2].value:[];
+ // Where an OSM place already represents a nearby article, attach that article rather than doubling the pin.
+ wiki.forEach(w=>{
+  const normalized=w.name.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  const match=osm.find(o=>o.category==='history'&&o.name.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()===normalized);
+  if(match){match.history=w.history;match.wikiUrl=w.wikiUrl;match.summary=match.summary||w.summary;}
+  else osm.push(w);
+ });
+ osm.forEach(o=>{if(!o.distance&&o.distance!==0)o.distance=haversine(c,{lat:o.lat,lng:o.lng});});
+ state.results=osm.filter(o=>o.distance<=rad).sort((a,b)=>a.distance-b.distance);
+ state.photos=photos;
+ const failed=[];
+ if(tasks[0].status==='rejected')failed.push('place data');
+ if(tasks[1].status==='rejected')failed.push('history');
+ if(tasks[2].status==='rejected')failed.push('photo references');
+ renderResults();renderPhotos();renderMarkers();updateRadius();
+ const parks=state.results.filter(r=>r.category==='parking').length;
+ const histories=state.results.filter(r=>r.category==='history').length;
+ if(failed.length){
+  setStatus('Partial results loaded',state.results.length+' mapped places · '+parks+' parking features · '+histories+' history entries · '+photos.length+' images. Unavailable: '+failed.join(', ')+'. Retry or use external inspiration search.','warn');
+ }else{
+  setStatus('Stop research ready',state.results.length+' mapped places · '+parks+' parking features · '+histories+' history entries · '+photos.length+' geotagged images. Check parking signs and access on site.','');
+ }
+ mapOk();
+}
+function updateSocialSearch(query){
+ const q=(query+' photography').trim();
+ $('pinterestSearch').href='https://www.pinterest.com/search/pins/?q='+encodeURIComponent(q);
+ $('instagramSearch').href='https://www.instagram.com/explore/search/keyword/?q='+encodeURIComponent(q);
+}
+function shotPrompt(item){
+ const tags=item.tags||{};
+ let genre='editorial travel photography';
+ if(item.category==='history')genre='historical architecture and cultural documentary photography';
+ if(item.category==='parking')genre='a visual story of the surrounding place, not a photograph of the car park';
+ if(item.category==='viewpoint')genre='landscape and viewpoint photography';
+ if(item.category==='architecture')genre='urban architecture and street photography';
+ return 'Create a photorealistic visual reference for a real-world photo shoot at '+item.name+'. Location: '+item.lat.toFixed(5)+', '+item.lng.toFixed(5)+'. Genre: '+genre+'. Develop an original composition with a deliberate foreground, clear subject hierarchy, layered depth, considered geometry, natural believable light, controlled colour palette, and a cinematic but realistic editorial finish. Suggest an uncommon camera position and a strong frame edge; avoid generic travel-poster styling, oversaturated colours, text overlays, logos, fake architecture, and impossible scenery. Treat this as creative inspiration, not evidence of the exact on-site view. Include one wide establishing composition and one tighter detail alternative. If lighting is not specified, propose one overcast/daylight approach and one golden-hour approach.';
+}
+function selectItem(item){
+ state.selected=item;
+ $('spotDetail').classList.add('show');
+ $('detailEyebrow').textContent=item.category==='photo'?'Visual reference · source-linked':item.category==='parking'?'Parking candidate · verify on arrival':item.category==='history'?'History & place · sourced summary':'Photographic subject · map data';
+ $('detailTitle').textContent=item.name;
+ $('detailMeta').textContent=distanceLabel(item.distance||0)+' from pin · '+item.source+' · '+coordLabel({lat:item.lat,lng:item.lng});
+ let history=item.history||item.summary||'No short history summary is available for this place yet. Open the source record to inspect the mapped details.';
+ if(item.category==='photo') history='Image reference by '+(item.artist||'an unlisted photographer')+'. Licence: '+(item.license||'see the original file page')+'. Treat its geotag as a reference location, not a verified camera position.';
+ if(item.category==='parking')history='Mapped parking feature only. This does not confirm that parking is currently open, free, legal, safe, or available. Verify signage and restrictions on arrival.';
+ $('detailHistory').innerHTML='<p>'+esc(history)+'</p><p><a class="footer-link" href="'+esc(safeLink(item.wikiUrl||item.sourceUrl||'#'))+'" target="_blank" rel="noopener">Open source / more history ↗</a></p>';
+ const destination=item.lat+','+item.lng;
+ $('driveLink').href='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode=driving';
+ $('driveLink').textContent=item.category==='parking'?'Navigate to parking ↗':'Drive to spot ↗';
+ $('shotPrompt').value=shotPrompt(item);
+ if(map.getZoom()<11)map.flyTo({center:[item.lng,item.lat],zoom:12,duration:650});
+ renderResults();
+ if(window.innerWidth<680)$('spotDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function parseCoords(text){
+ const m=text.trim().match(/^(-?\d{1,2}(?:\.\d+)?)\s*[,; ]\s*(-?\d{1,3}(?:\.\d+)?)$/);
+ if(!m)return null;
+ const lat=Number(m[1]),lng=Number(m[2]);if(Math.abs(lat)>90||Math.abs(lng)>180)return null;return {lat,lng};
+}
+$('searchForm').addEventListener('submit',async e=>{
+ e.preventDefault();const q=$('placeSearch').value.trim();if(!q)return;
+ const coord=parseCoords(q);if(coord){map.flyTo({center:[coord.lng,coord.lat],zoom:12,duration:800});scanAt(coord,{fly:false});return;}
+ setStatus('Finding that place','Looking up the destination name…','loading');
+ try{
+  const data=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q='+encodeURIComponent(q),{headers:{'Accept':'application/json'},mode:'cors'});
+  if(!data.ok)throw new Error('Search service returned '+data.status);
+  const places=await data.json();if(!places.length)throw new Error('No place found');
+  const p=places[0],c={lat:Number(p.lat),lng:Number(p.lon)};
+  $('placeSearch').value=p.display_name||q;
+  map.flyTo({center:[c.lng,c.lat],zoom:12,duration:900});
+  scanAt(c,{fly:false});
+ }catch(err){setStatus('Place search failed','Try latitude, longitude or click a point directly on the map.','warn');}
+});
+$('radius').addEventListener('change',()=>{if(state.center)scanAt(state.center,{fly:false});});
+$('useLocation').addEventListener('click',()=>{
+ if(!navigator.geolocation){setStatus('Location unavailable','This browser does not expose geolocation. Click the map or search a place.','warn');return;}
+ setStatus('Waiting for location permission','Allow location access in your browser if you want to scan your current position.','loading');
+ navigator.geolocation.getCurrentPosition(pos=>{
+  const c={lat:pos.coords.latitude,lng:pos.coords.longitude};map.flyTo({center:[c.lng,c.lat],zoom:13,duration:850});scanAt(c,{fly:false});
+ },()=>setStatus('Could not read your location','You can still click anywhere on the map or search for a destination.','warn'),{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+});
+map.on('click',e=>scanAt({lat:e.lngLat.lat,lng:e.lngLat.lng},{fly:true}));
+document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>{
+ state.filter=btn.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b===btn));renderResults();
+}));
+function loadSaved(){try{state.saved=JSON.parse(localStorage.getItem('photo-scout-saved')||'[]');if(!Array.isArray(state.saved))state.saved=[];}catch(e){state.saved=[];}renderSaved();}
+function saveCurrent(item){
+ const place=item?{lat:item.lat,lng:item.lng,name:item.name,category:item.category}:{lat:state.center&&state.center.lat,lng:state.center&&state.center.lng,name:'Photography stop '+(state.center?coordLabel(state.center):''),category:'pin'};
+ if(!Number.isFinite(place.lat)||!Number.isFinite(place.lng)){setStatus('No pin to save','Click the map before saving a stop.','warn');return;}
+ if(state.saved.some(s=>Math.abs(s.lat-place.lat)<0.00001&&Math.abs(s.lng-place.lng)<0.00001)){setStatus('Already saved','This location is already in your saved stops.','');return;}
+ state.saved.unshift({...place,id:'saved-'+Date.now()});state.saved=state.saved.slice(0,50);
+ try{localStorage.setItem('photo-scout-saved',JSON.stringify(state.saved));}catch(e){}
+ renderSaved();setStatus('Stop saved','Added to Saved stops in this browser.','');
+}
+function renderSaved(){
+ $('savedCount').textContent=state.saved.length;
+ $('savedResults').innerHTML=state.saved.length?state.saved.map(s=>'<div class="saved-row"><button data-open-save="'+esc(s.id)+'">'+esc(s.name)+'</button><button data-remove-save="'+esc(s.id)+'" aria-label="Remove saved stop">Remove</button></div>').join(''):emptyHTML('Save a pin or selected place to build a road-trip list on this device.');
+ $('savedResults').querySelectorAll('[data-open-save]').forEach(b=>b.addEventListener('click',()=>{const s=state.saved.find(x=>x.id===b.dataset.openSave);if(!s)return;map.flyTo({center:[s.lng,s.lat],zoom:12,duration:750});scanAt({lat:s.lat,lng:s.lng},{fly:false});}));
+ $('savedResults').querySelectorAll('[data-remove-save]').forEach(b=>b.addEventListener('click',()=>{state.saved=state.saved.filter(x=>x.id!==b.dataset.removeSave);try{localStorage.setItem('photo-scout-saved',JSON.stringify(state.saved));}catch(e){}renderSaved();}));
+}
+$('saveStop').addEventListener('click',()=>saveCurrent(null));
+$('saveSelected').addEventListener('click',()=>saveCurrent(state.selected));
+$('copyPrompt').addEventListener('click',async()=>{
+ const text=$('shotPrompt').value;
+ try{await navigator.clipboard.writeText(text);$('copyPrompt').textContent='Copied';setTimeout(()=>$('copyPrompt').textContent='Copy prompt',1300);}
+ catch(e){$('shotPrompt').focus();$('shotPrompt').select();document.execCommand('copy');$('copyPrompt').textContent='Selected';}
+});
+loadSaved();
+window.addEventListener('resize',()=>{if(map)map.resize();});
+})();
 </script>
 </body>
 </html>
