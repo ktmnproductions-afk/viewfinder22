@@ -63,14 +63,14 @@ const renderer=new THREE.WebGLRenderer({canvas:$("world"),antialias:true,alpha:f
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.88;
 const camera=new THREE.PerspectiveCamera(34,innerWidth/innerHeight,.1,600);const homeTarget=new THREE.Vector3(8,0,2);camera.position.set(118,100,130);camera.lookAt(homeTarget);
 let controls=null;if(THREE.OrbitControls){controls=new THREE.OrbitControls(camera,renderer.domElement);controls.target.copy(homeTarget);controls.enableDamping=true;controls.dampingFactor=.055;controls.enablePan=true;controls.minDistance=80;controls.maxDistance=310;controls.maxPolarAngle=Math.PI*.48;controls.minPolarAngle=.22;controls.update();}
-scene.add(new THREE.HemisphereLight(0xe6e9d2,0x353d2d,.9));
-const sun=new THREE.DirectionalLight(0xffdfab,1.8);sun.position.set(-45,85,32);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-115;sun.shadow.camera.right=115;sun.shadow.camera.top=125;sun.shadow.camera.bottom=-125;sun.shadow.bias=-.00018;scene.add(sun);
-const fill=new THREE.DirectionalLight(0xc7ddd9,.42);fill.position.set(70,36,-80);scene.add(fill);
-const rim=new THREE.DirectionalLight(0xe8c68d,.24);rim.position.set(0,35,90);scene.add(rim);
+scene.add(new THREE.HemisphereLight(0xe6e9d2,0x353d2d,.72));
+const sun=new THREE.DirectionalLight(0xffdfab,1.3);sun.position.set(-45,85,32);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-115;sun.shadow.camera.right=115;sun.shadow.camera.top=125;sun.shadow.camera.bottom=-125;sun.shadow.bias=-.00018;scene.add(sun);
+const fill=new THREE.DirectionalLight(0xc7ddd9,.3);fill.position.set(70,36,-80);scene.add(fill);
+const rim=new THREE.DirectionalLight(0xe8c68d,.16);rim.position.set(0,35,90);scene.add(rim);
 const mats={
  dirt:new THREE.MeshStandardMaterial({color:0x85895b,roughness:1}),field:new THREE.MeshStandardMaterial({color:0x929467,roughness:1}),
- fieldLight:new THREE.MeshStandardMaterial({color:0xb1a578,roughness:1}),fieldDark:new THREE.MeshStandardMaterial({color:0x687b51,roughness:1}),
- road:new THREE.MeshStandardMaterial({color:0xb4a887,roughness:1}),roadEdge:new THREE.MeshStandardMaterial({color:0xddd0ad,roughness:.94}),
+ fieldLight:new THREE.MeshStandardMaterial({color:0xa59b70,roughness:1}),fieldDark:new THREE.MeshStandardMaterial({color:0x687b51,roughness:1}),
+ road:new THREE.MeshStandardMaterial({color:0x94866b,roughness:1}),roadEdge:new THREE.MeshStandardMaterial({color:0xb5a582,roughness:.94}),
  wall:new THREE.MeshStandardMaterial({color:0xc3ad83,roughness:.9}),wallLight:new THREE.MeshStandardMaterial({color:0xdacaa5,roughness:.88}),
  plaster:new THREE.MeshStandardMaterial({color:0xe0cba2,roughness:.88}),plaster2:new THREE.MeshStandardMaterial({color:0xc3b08d,roughness:.9}),
  roofRed:new THREE.MeshStandardMaterial({color:0xa94f32,roughness:.82}),roofRed2:new THREE.MeshStandardMaterial({color:0xc16a43,roughness:.82}),roofRed3:new THREE.MeshStandardMaterial({color:0x85412e,roughness:.88}),
@@ -100,9 +100,9 @@ function cyl(parent,x,y,z,rt,rb,h,material,seg=10){const m=new THREE.Mesh(new TH
 function line(parent,points,material,rad=.04,closed=false){const c=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(p[0],p[1],p[2])),closed,"catmullrom",.1);const g=new THREE.TubeGeometry(c,Math.max(24,points.length*5),rad,5,closed);const m=new THREE.Mesh(g,material);m.castShadow=true;parent.add(m);return m;}
 function polyline(parent,points,color,opacity=1){const geo=new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(p[0],p[1],p[2])));const m=new THREE.Line(geo,new THREE.LineBasicMaterial({color,transparent:opacity<1,opacity}));parent.add(m);return m;}
 function makeGroundTexture(){const c=document.createElement("canvas");c.width=2048;c.height=2048;const q=c.getContext("2d");q.fillStyle="#858e61";q.fillRect(0,0,2048,2048);let seed=120984;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
-const cols=["#8b9362","#a4a071","#b2a678","#718657","#98a06e","#c1b184","#75885a","#9c9b6a"];
-for(let r=0;r<6;r++){for(let k=0;k<6;k++){const x=k*360+(r%2)*32+rand()*18,y=r*355+rand()*18,w=240+rand()*110,h=250+rand()*100;q.fillStyle=cols[Math.floor(rand()*cols.length)];q.globalAlpha=.52;q.fillRect(x,y,w,h);q.globalAlpha=1;q.strokeStyle="#e0d0a3";q.globalAlpha=.4;q.lineWidth=3;for(let z=0;z<28;z++){const xx=x+z*7;q.beginPath();q.moveTo(xx,y+3);q.lineTo(xx,y+h-3);q.stroke();}q.globalAlpha=1;}}
-for(let i=0;i<28000;i++){q.fillStyle=rand()>.5?"#3c4f31":"#e8d5a5";q.globalAlpha=.045;q.fillRect(rand()*2048,rand()*2048,1+rand()*4,1+rand()*3);}q.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
+const cols=["#8b9362","#a4a071","#b2a678","#718657","#98a06e","#b6aa7e","#75885a","#9c9b6a"];
+for(let r=0;r<6;r++){for(let k=0;k<6;k++){const x=k*360+(r%2)*32+rand()*18,y=r*355+rand()*18,w=240+rand()*110,h=250+rand()*100;q.fillStyle=cols[Math.floor(rand()*cols.length)];q.globalAlpha=.30;q.fillRect(x,y,w,h);q.globalAlpha=1;q.strokeStyle="#d8c99a";q.globalAlpha=.17;q.lineWidth=2;for(let z=0;z<18;z++){const xx=x+z*13;q.beginPath();q.moveTo(xx,y+3);q.lineTo(xx,y+h-3);q.stroke();}q.globalAlpha=1;}}
+for(let i=0;i<9000;i++){q.fillStyle=rand()>.5?"#3c4f31":"#e8d5a5";q.globalAlpha=.025;q.fillRect(rand()*2048,rand()*2048,1+rand()*3,1+rand()*2);}q.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
 const groundTexture=makeGroundTexture();
 // Scene projection: local east/south metres, scaled to 10 metres per model unit. The forum is the anchor.
 const GEO_ANCHOR={lat:45.77366,lon:13.36633,x:-5,z:-7};
@@ -165,11 +165,11 @@ xRoads.forEach((x,i)=>spanRoadVertical(x,-75,49,(i===2||i===6)?1.0:.58,i===2||i=
 const ghostRoads=new THREE.Group();scene.add(ghostRoads);
 for(const x of xRoads){
  const ps=roadSegments(-66,42,.6,z=>!inRiverBand(x,z));
- ps.forEach(([a,b])=>polyline(ghostRoads,[[x,.19,a],[x,.19,b]],0xdfd4b9,.035));
+ ps.forEach(([a,b])=>polyline(ghostRoads,[[x,.19,a],[x,.19,b]],0x9f9274,.025));
 }
 for(const z of zRoads){
  const ps=roadSegments(-53,34,.6,x=>!inRiverBand(x,z));
- ps.forEach(([a,b])=>polyline(ghostRoads,[[a,.19,z],[b,.19,z]],0xdfd4b9,.035));
+ ps.forEach(([a,b])=>polyline(ghostRoads,[[a,.19,z],[b,.19,z]],0x9f9274,.025));
 }
 // Boundary follows the general city outline from the published plan; it is not a surveyed property line.
 const cityBoundary=new THREE.Group();scene.add(cityBoundary);const boundaryPts=cityPoly.concat([cityPoly[0]]).map(p=>[p[0],.32,p[1]]);line(cityBoundary,boundaryPts,mat(0xd7b77b),.12);
@@ -312,7 +312,7 @@ const eras=[
 {year:"Medieval–present",title:"The living landscape and buried city",copy:"The Roman city is no longer a continuous metropolis. Later settlement clusters around surviving landmarks while roads, foundations, fields and archaeology become the visible pattern.",evidence:"The present-day town is a real place. The small modern buildings and residual archaeological walls in this model are visual context, not a digital twin of today's cadastral map.",label:"MEDIEVAL–PRESENT · THE LIVING LANDSCAPE",hud:"The past remains beneath the present",sub:"Roman buildings recede; fields, ruins and the basilica remain.",view:4}
 ];
 let stageIndex=0,playing=false,playTimer=null;
-const roadsActors=[roads,ghostRoads,cityBoundary,farmlandTracks];
+const roadsActors=[roads,ghostRoads,cityBoundary];
 function setTarget(g,v){g.userData.targetScale=v;return g;}
 function setEra(i){
  stageIndex=Math.max(0,Math.min(4,Number(i)));const e=eras[stageIndex];
@@ -324,7 +324,7 @@ function setEra(i){
  cityActors.walls.forEach(g=>setTarget(g,stageIndex===2?.98:stageIndex===3?(g.userData.breached?.28:.7):.001));
  ships.forEach(g=>setTarget(g,stageIndex===1||stageIndex===2?1:stageIndex===3?.25:.001));
  roadsActors.forEach(g=>setTarget(g,stageIndex===0?.08:stageIndex===4?g===farmlandTracks?1:.07:1));
- fields.scale.set(1,1,1);farmlandTracks.scale.set(1,1,1);
+ fields.scale.set(1,1,1);farmlandTracks.scale.set(1,1,1);farmlandTracks.visible=stageIndex===4;
  cityActors.ruins.forEach(g=>setTarget(g,stageIndex===4?.95:.001));
  cityActors.trees.forEach(g=>setTarget(g,stageIndex===4?1:stageIndex===3?.5:.22));cityActors.modern.forEach(g=>setTarget(g,stageIndex===4?.98:.001));
  fires.forEach(f=>{f.flame.visible=stageIndex===3;f.sprite.material.opacity=stageIndex===3?.75:0;f.sprite2.material.opacity=stageIndex===3?.52:0;});
