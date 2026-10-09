@@ -152,13 +152,14 @@ jobs:
               autoSketchSrc: document.querySelector('#autoSketchImage')?.getAttribute('src') || '',
               selectedSketchSrc: document.querySelector('#selectedConceptPreviewImg')?.getAttribute('src') || '',
               detailHasJumpButton: !!document.querySelector('#jumpToPhotoIdeas'),
+              hasSelectedGenerateButton: !!document.querySelector('#generateSelectedConcept'),
               hasGenerateButton: !!document.querySelector('#generateConcept'),
               hasActualImageSlot: !!document.querySelector('#generatedVisual'),
               imageProviderLoaded: !!window.puter?.ai?.txt2img,
               visible: !!document.querySelector('#spotDetail')?.getBoundingClientRect().height,
               markerWidth: getComputedStyle(document.querySelector('.scout-marker.photoSpot .dot-core')).width
             }));
-            if (!selectedSpot.title || !selectedSpot.hasShotPrompt || selectedSpot.compositionCards !== 3 || !selectedSpot.photoIdeaLabVisible || !selectedSpot.autoSketchSrc.startsWith('data:image/svg+xml') || !selectedSpot.selectedSketchSrc.startsWith('data:image/svg+xml') || !selectedSpot.detailHasJumpButton || !selectedSpot.hasGenerateButton || !selectedSpot.hasActualImageSlot || !selectedSpot.visible) {
+            if (!selectedSpot.title || !selectedSpot.hasShotPrompt || selectedSpot.compositionCards !== 3 || !selectedSpot.photoIdeaLabVisible || !selectedSpot.autoSketchSrc.startsWith('data:image/svg+xml') || !selectedSpot.selectedSketchSrc.startsWith('data:image/svg+xml') || !selectedSpot.detailHasJumpButton || !selectedSpot.hasSelectedGenerateButton || !selectedSpot.hasGenerateButton || !selectedSpot.hasActualImageSlot || !selectedSpot.visible) {
               throw new Error('Photo-spot detail panel did not contain the camera-specific workflow and image-generation control: ' + JSON.stringify(selectedSpot));
             }
             if (parseFloat(selectedSpot.markerWidth) < 30) {
