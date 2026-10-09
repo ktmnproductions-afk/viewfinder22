@@ -507,36 +507,63 @@ async function wikipediaSearch(c,radius,id){
   return {id:'wiki-'+p.pageid,name:p.title,lat:p.lat,lng:p.lon,distance:d,tags:{},source:'Wikipedia',sourceUrl:'https://en.wikipedia.org/?curid='+p.pageid,category:'history',summary:extract,history:extract,wikiUrl:'https://en.wikipedia.org/?curid='+p.pageid,license:'Wikipedia article; see source attribution'};
  }).filter(Boolean);
 }
+const IMAGE_EVENT_OR_PERSON_RE = /\b(event|festival|concert|tournament|championship|competition|match|team|players?|skatehockey|football|soccer|basketball|volleyball|hockey|marathon|race|wedding|birthday|graduation|crowd|spectators?|audience|selfie|portrait|headshot|family|children|athletes?|school class|group photo|u(?:1[0-9]|2[0-3])\b|award ceremony|celebration|party|conference|meeting|demonstration|protest)\b/i;
+const IMAGE_SCENE_RE = /\b(panorama|skyline|cityscape|landscape|architecture|historic|old town|church|cathedral|castle|cross|monument|coast|coastal|harbou?r|bay|rooftops?|mountains?|valley|viewpoint|lookout|sunset|sunrise|bridge|fort|ruins|street|town|city|village|port|waterfront|cliff|hill|ridge|sea|island|beach|square|chapel|tower|lighthouse|building|aerial|view|scenic|landmark|nature|forest|river|lake|churchyard|wayside)\b/i;
+const IMAGE_QUERY_STOPWORDS=new Set(['photo','photos','picture','pictures','photography','landscape','landscapes','panorama','architecture','historic','historical','old','town','city','cityscape','view','viewpoint','images','image','near','around','the','with','and','for','from']);
+function normalizedPhotoTitle(value){return String(value||'').replace(/^File:/i,'').replace(/\.[a-z0-9]{2,5}$/i,'').replace(/[_-]+/g,' ').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim().toLowerCase();}
+function photoTitleIsRelevant(title,query){
+ const clean=normalizedPhotoTitle(title);
+ if(!clean||IMAGE_EVENT_OR_PERSON_RE.test(clean))return false;
+ const meaningful=IMAGE_SCENE_RE.test(clean);
+ const qTokens=normalizedPhotoTitle(query).split(/\s+/).filter(t=>t.length>3&&!IMAGE_QUERY_STOPWORDS.has(t));
+ const queryMatch=qTokens.some(t=>clean.includes(t));
+ // Require either a recognizable photographic subject or a meaningful match
+ // to the requested place/landmark. A coordinate tag alone is never enough.
+ return meaningful||queryMatch;
+}
+function photoTitleScore(title,queries){
+ const clean=normalizedPhotoTitle(title);
+ const terms=(queries||[]).flatMap(q=>normalizedPhotoTitle(q).split(/\s+/)).filter(t=>t.length>3&&!IMAGE_QUERY_STOPWORDS.has(t));
+ const matching=terms.filter(t=>clean.includes(t)).length;
+ let score=matching*10;
+ if(/\b(panorama|cityscape|landscape|viewpoint|architecture|old town|skyline|landmark|historic|coast|harbou?r|view|monument|cross)\b/i.test(clean))score+=5;
+ if(IMAGE_EVENT_OR_PERSON_RE.test(clean))score-=100;
+ return score;
+}
 async function commonsSearch(c,radius,id){
- const url='https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggscoord='+c.lat+'|'+c.lng+'&ggsradius='+Math.min(radius,10000)+'&ggsnamespace=6&ggslimit=12&prop=coordinates%7Cimageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&format=json&origin=*';
+ const url='https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggscoord='+c.lat+'|'+c.lng+'&ggsradius='+Math.min(radius,10000)+'&ggsnamespace=6&ggslimit=25&prop=coordinates%7Cimageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&format=json&origin=*';
  const data=await requestJSON(url,id,15000);
  const pages=Object.values(data.query&&data.query.pages||{});
  return pages.map(p=>{
   const point=p.coordinates&&p.coordinates[0]; const info=p.imageinfo&&p.imageinfo[0];
-  if(!point||!info||!info.thumburl) return null;
-  const c2={lat:point.lat,lng:point.lon}; const d=haversine(c,c2); if(d>radius)return null;
+  if(!point||!info||!info.thumburl)return null;
+  const c2={lat:point.lat,lng:point.lon};const d=haversine(c,c2);if(d>radius)return null;
+  const name=(p.title||'').replace(/^File:/,'');
+  if(!photoTitleIsRelevant(name,''))return null;
   const meta=info.extmetadata||{};
   const plain=v=>String(v&&v.value||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
-  return {id:'commons-'+p.pageid,name:(p.title||'').replace(/^File:/,''),lat:point.lat,lng:point.lon,distance:d,thumb:info.thumburl,sourceUrl:info.descriptionurl||info.url,source:'Wikimedia Commons',artist:plain(meta.Artist)||'Photographer not listed',license:plain(meta.LicenseShortName)||'Check original file page',category:'photo',geotagged:true,referenceType:'Photo taken near this coordinate'};
+  return {id:'commons-'+p.pageid,name,lat:point.lat,lng:point.lon,distance:d,thumb:info.thumburl,sourceUrl:info.descriptionurl||info.url,source:'Wikimedia Commons',artist:plain(meta.Artist)||'Photographer not listed',license:plain(meta.LicenseShortName)||'Check original file page',category:'photo',geotagged:true,referenceType:'Relevant scene title and geotag; exact camera position still unverified'};
  }).filter(Boolean).sort((a,b)=>a.distance-b.distance);
 }
 async function commonsTextSearch(queries,c,id){
  const clean=[...new Set((queries||[]).map(q=>String(q||'').trim()).filter(Boolean))].slice(0,3);
  const results=await Promise.allSettled(clean.map(async q=>{
-  const url='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+encodeURIComponent(q)+'&gsrnamespace=6&gsrlimit=8&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&format=json&origin=*';
+  const url='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+encodeURIComponent(q)+'&gsrnamespace=6&gsrlimit=12&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&format=json&origin=*';
   const data=await requestJSON(url,id,15000);
   return Object.values(data.query&&data.query.pages||{}).map(p=>{
    const info=p.imageinfo&&p.imageinfo[0];if(!info||!info.thumburl)return null;
+   const name=(p.title||'').replace(/^File:/,'');
+   if(!photoTitleIsRelevant(name,q))return null;
    const meta=info.extmetadata||{};
    const plain=v=>String(v&&v.value||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
-   return {id:'commons-search-'+p.pageid,name:(p.title||'').replace(/^File:/,''),thumb:info.thumburl,sourceUrl:info.descriptionurl||info.url,source:'Wikimedia Commons · '+q,artist:plain(meta.Artist)||'Photographer not listed',license:plain(meta.LicenseShortName)||'Check original file page',category:'photo',geotagged:false,referenceType:'Location-themed inspiration — the shooting position is not verified'};
+   return {id:'commons-search-'+p.pageid,name,thumb:info.thumburl,sourceUrl:info.descriptionurl||info.url,source:'Wikimedia Commons · '+q,artist:plain(meta.Artist)||'Photographer not listed',license:plain(meta.LicenseShortName)||'Check original file page',category:'photo',geotagged:false,referenceType:'Landmark/topic-matched image; not verified as the exact camera position',relevance:photoTitleScore(name,clean)};
   }).filter(Boolean);
  }));
  if(id!==state.scanId)throw new Error('stale scan');
  const seen=new Set();
  return results.filter(r=>r.status==='fulfilled').flatMap(r=>r.value).filter(p=>{
   const key=p.id||p.name;if(seen.has(key))return false;seen.add(key);return true;
- }).slice(0,12);
+ }).sort((a,b)=>(b.relevance||0)-(a.relevance||0)).slice(0,12);
 }
 function cardHTML(item){
  const icon=item.category==='parking'?'P':item.category==='history'?'H':item.category==='viewpoint'?'↗':item.category==='photoSpot'?'✦':item.category==='photo'?'✦':'A';
