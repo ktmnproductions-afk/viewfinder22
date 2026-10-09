@@ -380,37 +380,66 @@ async function scanAt(c,opts){
  setActivePin(state.center);updateRadius();
  if(opts&&opts.fly&&map.getZoom()<8){map.flyTo({center:[c.lng,c.lat],zoom:12,duration:850});}
  renderResults();renderPhotos();
- setStatus('Scanning this area','Searching for mapped parking, historic places, nearby articles and geotagged photo references. Older scan results are cleared.','loading');
+ setStatus('Searching around your pin','Searching parking and places first. History and photo references will appear as each source responds.','loading');
  $('mapTitle').textContent='Exploring your stop';
  $('mapSubtitle').textContent=coordLabel(c)+' · '+(state.radius/1000)+' km radius';
  updateSocialSearch('near '+coordLabel(c));
  const rad=state.radius;
- const tasks=await Promise.allSettled([overpassSearch(c,rad,id),wikipediaSearch(c,rad,id),commonsSearch(c,rad,id)]);
+ let osmResults=[];
+ let wikiResults=[];
+ const failures=new Set();
+ const completed=new Set();
+ function normalizeName(name){return String(name||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
+ function mergePlaces(){
+  const merged=osmResults.map(o=>({...o}));
+  wikiResults.forEach(w=>{
+   const normalized=normalizeName(w.name);
+   const match=merged.find(o=>o.category==='history'&&normalizeName(o.name)===normalized);
+   if(match){match.history=w.history;match.wikiUrl=w.wikiUrl;match.summary=match.summary||w.summary;}
+   else merged.push(w);
+  });
+  merged.forEach(o=>{if(o.distance!==0&&!o.distance)o.distance=haversine(c,{lat:o.lat,lng:o.lng});});
+  state.results=merged.filter(o=>Number.isFinite(o.distance)&&o.distance<=rad).sort((a,b)=>a.distance-b.distance);
+ }
+ function applyLiveResults(){
+  if(id!==state.scanId)return;
+  mergePlaces();
+  renderResults();renderPhotos();renderMarkers();updateRadius();
+  const parts=[];
+  if(completed.has('places'))parts.push(osmResults.length+' mapped spots');
+  if(completed.has('history'))parts.push(wikiResults.length+' history articles');
+  if(completed.has('photos'))parts.push(state.photos.length+' photo references');
+  if(failures.size)parts.push('unavailable: '+Array.from(failures).join(', '));
+  setStatus('Searching around your pin',parts.length?parts.join(' · ')+' · loading remaining sources':'Waiting for geographic sources to respond…',failures.size?'warn':'loading');
+ }
+ const runSource=async(name,promise,onData)=>{
+  try{
+   const data=await promise;
+   if(id!==state.scanId)return;
+   onData(data||[]);
+   completed.add(name);
+  }catch(err){
+   if(id!==state.scanId)return;
+   failures.add(name);
+   completed.add(name);
+  }
+  applyLiveResults();
+ };
+ await Promise.all([
+  runSource('places',overpassSearch(c,rad,id),data=>{osmResults=data;}),
+  runSource('history',wikipediaSearch(c,rad,id),data=>{wikiResults=data;}),
+  runSource('photos',commonsSearch(c,rad,id),data=>{state.photos=data;})
+ ]);
  if(id!==state.scanId)return;
- const osm=tasks[0].status==='fulfilled'?tasks[0].value:[];
- const wiki=tasks[1].status==='fulfilled'?tasks[1].value:[];
- const photos=tasks[2].status==='fulfilled'?tasks[2].value:[];
- // Where an OSM place already represents a nearby article, attach that article rather than doubling the pin.
- wiki.forEach(w=>{
-  const normalized=w.name.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-  const match=osm.find(o=>o.category==='history'&&o.name.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()===normalized);
-  if(match){match.history=w.history;match.wikiUrl=w.wikiUrl;match.summary=match.summary||w.summary;}
-  else osm.push(w);
- });
- osm.forEach(o=>{if(!o.distance&&o.distance!==0)o.distance=haversine(c,{lat:o.lat,lng:o.lng});});
- state.results=osm.filter(o=>o.distance<=rad).sort((a,b)=>a.distance-b.distance);
- state.photos=photos;
- const failed=[];
- if(tasks[0].status==='rejected')failed.push('place data');
- if(tasks[1].status==='rejected')failed.push('history');
- if(tasks[2].status==='rejected')failed.push('photo references');
+ mergePlaces();
  renderResults();renderPhotos();renderMarkers();updateRadius();
  const parks=state.results.filter(r=>r.category==='parking').length;
  const histories=state.results.filter(r=>r.category==='history').length;
- if(failed.length){
-  setStatus('Partial results loaded',state.results.length+' mapped places · '+parks+' parking features · '+histories+' history entries · '+photos.length+' images. Unavailable: '+failed.join(', ')+'. Retry or use external inspiration search.','warn');
+ const photos=state.photos.length;
+ if(failures.size){
+  setStatus('Partial results loaded',state.results.length+' mapped places · '+parks+' parking features · '+histories+' history entries · '+photos+' images. Unavailable: '+Array.from(failures).join(', ')+'. Retry or use external inspiration search.','warn');
  }else{
-  setStatus('Stop research ready',state.results.length+' mapped places · '+parks+' parking features · '+histories+' history entries · '+photos.length+' geotagged images. Check parking signs and access on site.','');
+  setStatus('Stop research ready',state.results.length+' mapped places · '+parks+' parking features · '+histories+' history entries · '+photos+' geotagged images. Check parking signs and access on site.','');
  }
  mapOk();
 }
