@@ -810,7 +810,15 @@ function renderMarkers(){
  const protectedPlaces=[...parking,...history,...viewpoints,...architecture];
  // Do not let a scenic suggestion cover a real parking/history pin at the same spot.
  const scenic=state.scenicSpots.slice(0,24).filter(p=>!protectedPlaces.some(q=>haversine({lat:p.lat,lng:p.lng},{lat:q.lat,lng:q.lng})<85));
- const visible=[...parkingMarkers,...history,...viewpoints,...architecture,...scenic];
+ // At overview zoom, hide ordinary dots within the tap target of a parking icon.
+ // The full history/architecture lists remain available in the sidebar; zooming in
+ // brings those map markers back. This prevents building icons intercepting parking taps.
+ const parkingScreens=parkingMarkers.map(p=>({item:p,point:map.project([p.lng,p.lat])}));
+ const nonParking=[...history,...viewpoints,...architecture,...scenic].filter(item=>{
+  const point=map.project([item.lng,item.lat]);
+  return !parkingScreens.some(p=>Math.hypot(point.x-p.point.x,point.y-p.point.y)<27);
+ });
+ const visible=[...nonParking,...parkingMarkers];
  const seen=new Set();
  visible.forEach(item=>{
   const cell=Math.round(item.lat*10000)+'|'+Math.round(item.lng*10000);
