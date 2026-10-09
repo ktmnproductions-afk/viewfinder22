@@ -774,6 +774,7 @@ async function scanAt(c,opts){
  $('spotDetail').classList.remove('show');
  setActivePin(state.center);updateRadius();
  if(opts&&opts.fly&&map.getZoom()<8){map.flyTo({center:[c.lng,c.lat],zoom:9.5,duration:700});}
+ refreshBasemapParking();
  renderResults();renderPhotos();renderMarkers();
  setStatus('Scouting around your pin','Searching mapped parking and history nearby, plus a wider 25–30 km radius for landscape and city-view candidates.','loading');
  $('mapTitle').textContent='Exploring your stop';
