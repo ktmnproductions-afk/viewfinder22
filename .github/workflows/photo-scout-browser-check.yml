@@ -68,7 +68,7 @@ jobs:
               mapLoaded: window.__PHOTO_SCOUT_TEST__.map.loaded(),
               styleSources: Object.keys(window.__PHOTO_SCOUT_TEST__.map.getStyle().sources || {}).length
             }));
-            if (!initial.mapLoaded || initial.styleSources < 1 || successfulVectorTiles.length < 1) {
+            if (!initial.styleLoaded || initial.styleSources < 1 || successfulVectorTiles.length < 1) {
               throw new Error('No successful live vector map tiles: ' + JSON.stringify({initial,tileResponses}));
             }
             await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.map.jumpTo({ center: [14.43, 45.33], zoom: 12 }));
