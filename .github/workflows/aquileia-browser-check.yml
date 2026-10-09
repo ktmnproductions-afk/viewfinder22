@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "aquileia/index.html"
+      - ".github/workflows/aquileia-browser-check.yml"
   workflow_dispatch:
 
 permissions:
@@ -34,7 +35,7 @@ jobs:
           done
           cat /tmp/aquileia-http.log
           exit 1
-      - name: Check 3D rendering, timeline and map interaction
+      - name: Verify geometry changes, five eras, and map interaction
         run: |
           mkdir -p artifacts
           node <<'NODE'
@@ -50,41 +51,58 @@ jobs:
             page.on('console', m => { if (m.type() === 'error') errors.push('CONSOLE: ' + m.text()); });
             await page.goto('http://127.0.0.1:8000/aquileia/', { waitUntil: 'domcontentloaded', timeout: 60000 });
             await page.waitForFunction(() => window.__AQUILEIA_TEST__ && window.__AQUILEIA_TEST__.drawCalls > 0, { timeout: 30000 });
-            const initial = await page.evaluate(() => ({
+            const snapshot = async () => page.evaluate(() => ({
               stage: window.__AQUILEIA_TEST__.stage,
               drawCalls: window.__AQUILEIA_TEST__.drawCalls,
               sceneObjects: window.__AQUILEIA_TEST__.sceneObjects,
               landmarks: window.__AQUILEIA_TEST__.landmarks,
-              canvasWidth: document.querySelector('#world').width,
-              canvasHeight: document.querySelector('#world').height
+              counts: window.__AQUILEIA_TEST__.counts,
+              title: document.querySelector('#eraTitle').textContent
             }));
-            if (initial.drawCalls < 40) throw new Error('3D frame rendered too few draw calls: ' + JSON.stringify(initial));
-            if (initial.landmarks < 5) throw new Error('Expected clickable 3D landmarks were not created.');
-            for (const stage of [1, 2, 3, 4, 1]) {
+            const assert = (ok, message, data) => { if (!ok) throw new Error(message + ' ' + JSON.stringify(data)); };
+            await page.waitForTimeout(1000);
+            const colony = await snapshot();
+            assert(colony.drawCalls > 40, 'No substantial WebGL scene rendered.', colony);
+            assert(colony.landmarks >= 5, 'Expected interactive 3D landmarks were not created.', colony);
+            assert(colony.counts.earlyHouses > 0 && colony.counts.romanHouses === 0, 'Colony phase does not show its distinct building set.', colony);
+            await page.screenshot({ path: 'artifacts/01-colony.png' });
+
+            const results = [colony];
+            const expected = {
+              1: s => s.counts.romanHouses > 0 && s.counts.ships > 0,
+              2: s => s.counts.walls > 0,
+              3: s => s.counts.fires > 0,
+              4: s => s.counts.modernBuildings > 0 && s.counts.ruins > 0
+            };
+            const screenshots = {
+              1: 'artifacts/02-imperial-city.png',
+              2: 'artifacts/03-christian-city.png',
+              3: 'artifacts/04-sack-452.png',
+              4: 'artifacts/05-modern-landscape.png'
+            };
+            for (const stage of [1, 2, 3, 4]) {
               await page.locator('button[data-era="' + stage + '"]').click();
-              await page.waitForFunction(expected => window.__AQUILEIA_TEST__?.stage === expected, stage, { timeout: 5000 });
+              await page.waitForFunction(expectedStage => window.__AQUILEIA_TEST__?.stage === expectedStage, stage, { timeout: 5000 });
+              await page.waitForTimeout(1100);
+              const state = await snapshot();
+              assert(expected[stage](state), 'Geometry for historical stage ' + stage + ' did not become active.', state);
+              results.push(state);
+              await page.screenshot({ path: screenshots[stage] });
             }
-            await page.waitForTimeout(1400);
-            const changed = await page.evaluate(() => ({
-              stage: window.__AQUILEIA_TEST__.stage,
-              drawCalls: window.__AQUILEIA_TEST__.drawCalls,
-              title: document.querySelector('#eraTitle').textContent,
-              canvasWidth: document.querySelector('#world').width
-            }));
             await page.locator('#modeMap').click();
             await page.waitForFunction(() => document.body.classList.contains('map-mode'));
+            await page.waitForTimeout(250);
             await page.locator('#mode3d').click();
             await page.waitForFunction(() => !document.body.classList.contains('map-mode'));
-            await page.screenshot({ path: 'artifacts/aquileia-3d.png' });
-            if (errors.length) throw new Error('Browser errors: \\n' + errors.join('\\n'));
-            console.log(JSON.stringify({ initial, changed, mapToggle: 'passed', consoleErrors: errors.length }, null, 2));
+            assert(errors.length === 0, 'Browser errors detected.', errors);
+            console.log(JSON.stringify({ verified: results, mapToggle: 'passed', consoleErrors: errors.length }, null, 2));
             await browser.close();
           })().catch(e => { console.error(e); process.exit(1); });
           NODE
-      - name: Save browser screenshot
+      - name: Save five browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: aquileia-3d-browser-check
-          path: artifacts/aquileia-3d.png
+          name: aquileia-3d-five-era-check
+          path: artifacts/*.png
           if-no-files-found: ignore
