@@ -37,7 +37,7 @@ body.cinema-mode .sidepanel{opacity:0;transform:translateX(-20px);pointer-events
 <div class="gallery" id="gallery" aria-label="Views in the selected historical phase"></div>
 <section class="timeline"><div class="timeline-head"><div class="timeline-kicker">Scrub through 2,200 years</div><div class="counter" id="counter">01 / 05</div><button class="play" id="play">▶ Play story</button></div><div class="scrub-row"><span>Foundation</span><input id="scrub" aria-label="Historical timeline" type="range" min="0" max="4" step="1" value="0"><span>Present</span></div><div class="stops"><button class="stop active" data-i="0"><i class="stop-dot"></i><span class="stop-year">181 BCE</span><span class="stop-name">The colony</span></button><button class="stop" data-i="1"><i class="stop-dot"></i><span class="stop-year">1st–2nd c.</span><span class="stop-name">Imperial metropolis</span></button><button class="stop" data-i="2"><i class="stop-dot"></i><span class="stop-year">4th c. CE</span><span class="stop-name">Christian centre</span></button><button class="stop" data-i="3"><i class="stop-dot"></i><span class="stop-year">452 CE</span><span class="stop-name">Sack of the city</span></button><button class="stop" data-i="4"><i class="stop-dot"></i><span class="stop-year">Today</span><span class="stop-name">Living archaeology</span></button></div></section>
 <div class="map-legend"><strong style="color:#e7c98f;letter-spacing:.1em;text-transform:uppercase;font-size:8px">Reading the historical layer</strong><br>Gold marks: civic / archaeological sites · Teal: river port · Dashed outline: indicative ancient city extent, not a surveyed wall line. Select any marker for source notes.</div>
-<div class="modal" id="filmModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-inner"><div class="modal-head"><div><div class="modal-title" id="modalTitle">Antica Aquileia 3D</div><div class="modal-sub">Official reconstruction film · Nudesign / Fondazione Aquileia</div></div><button class="close" id="closeFilm">Close ✕</button></div><div class="film-frame"><iframe id="filmFrame" title="Official Aquileia reconstruction film" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div><div class="film-source">The Foundation describes ten archaeologist-informed films and 60 virtual reconstructions for Antica Aquileia 3D. <a href="https://www.fondazioneaquileia.it/en/aquileia-3d" target="_blank" rel="noreferrer">Project details ↗</a></div></div></div>
+<div class="modal" id="filmModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-inner"><div class="modal-head"><div><div class="modal-title" id="modalTitle">Antica Aquileia 3D</div><div class="modal-sub">Official reconstruction film · Nudesign / Fondazione Aquileia</div></div><button class="close" id="closeFilm">Close ✕</button></div><div class="film-frame"><iframe id="filmFrame" title="Official Aquileia reconstruction film" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div><div class="film-source" id="filmSource">Source clip · original publisher and reconstruction credits retained.</div></div></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
 (()=>{
@@ -118,18 +118,22 @@ $("sceneModeBtn").addEventListener("click",()=>setMode("scene"));$("mapModeBtn")
 document.querySelectorAll(".stop").forEach(b=>b.addEventListener("click",()=>{stopPlayback();selectStage(b.dataset.i);}));$("scrub").addEventListener("input",e=>{stopPlayback();selectStage(e.target.value);});
 function stopPlayback(){if(timer)clearInterval(timer);timer=null;playing=false;$("play").textContent="▶ Play story";}
 $("play").addEventListener("click",()=>{if(playing){stopPlayback();return;}playing=true;$("play").textContent="Ⅱ Pause";if(stageIndex===4)selectStage(0);timer=setInterval(()=>{if(stageIndex>=4){stopPlayback();return;}selectStage(stageIndex+1);},4900);});
-const stageFilms=[
- {url:"https://www.youtube-nocookie.com/embed/03Pic7VqU7U?autoplay=1&mute=1&rel=0",title:"Origins before Rome",sub:"Historical context · pre-Roman origins"},
- {url:"https://www.youtube-nocookie.com/embed/Tkd7XGb14aE?autoplay=1&mute=1&rel=0",title:"Aquileia — Roman city reconstruction",sub:"Full-city 3D reconstruction · Ars Europa Channel / Fondazione Aquileia"},
- {url:"https://www.youtube-nocookie.com/embed/rBlvsVjfi8Q?autoplay=1&mute=1&rel=0",title:"The Constantinian Basilica",sub:"Early Christian architectural reconstruction · Fondazione Aquileia"},
- {url:"https://www.youtube-nocookie.com/embed/Tkd7XGb14aE?autoplay=1&mute=1&rel=0",title:"Aquileia before the sack",sub:"Roman city reconstruction · the destruction itself is not reconstructed in this film"},
- {url:"https://www.youtube-nocookie.com/embed/uT2EJUPlyeM?autoplay=1&mute=1&rel=0",title:"Aquileia today",sub:"Present-day town and archaeological landscape"}
-];
+const videoClips={
+ origins:{id:"03Pic7VqU7U",title:"Before Roman Aquileia",sub:"Pre-Roman origins · historical context",source:"https://acuiledalfriul.org/onewebmedia/Video-Aquileia-la-nostra-storia.pdf"},
+ city:{id:"Tkd7XGb14aE",title:"Aquileia — Roman city reconstruction",sub:"Full-city 3D reconstruction · Ars Europa Channel / Fondazione Aquileia",source:"https://www.youtube.com/watch?v=Tkd7XGb14aE"},
+ basilica:{id:"rBlvsVjfi8Q",title:"The Constantinian Basilica",sub:"Early Christian architectural reconstruction · Fondazione Aquileia",source:"https://www.youtube.com/watch?v=rBlvsVjfi8Q"},
+ port:{id:"8UDX1FD18DU",title:"The river port and Aquileia's trade",sub:"Archaeologist Cristiano Tiussi on the river port and commerce",source:"https://www.fondazioneaquileia.it/it/attivita/il-porto-fluviale-di-aquileia-e-i-commerci-con-cristiano-tiussi-pillola-video-3"},
+ houses:{id:"u07r4NC-7lk",title:"Roman houses of Aquileia",sub:"Antiche case romane ad Aquileia · reconstruction context",source:"https://www.youtube.com/watch?v=u07r4NC-7lk"},
+ today:{id:"uT2EJUPlyeM",title:"Aquileia today",sub:"Present-day town and archaeological landscape",source:"https://www.youtube.com/watch?v=uT2EJUPlyeM"}
+};
+const assetClip={currentBasilica:"today",currentExcavation:"today",panorama:"city",portOverview:"port",portShips:"port",portWarehouse:"port",forum:"city",forumTemple:"city",shops:"houses",market:"city",basilica:"basilica",amphitheatre:"city"};
 $("filmButton").addEventListener("click",()=>{
- const clip=stageFilms[stageIndex];
- $("filmFrame").src=clip.url;
+ const key=assetClip[activeAsset.id]||["origins","city","basilica","city","today"][stageIndex];
+ const clip=videoClips[key];
+ $("filmFrame").src="https://www.youtube-nocookie.com/embed/"+clip.id+"?autoplay=1&mute=1&rel=0";
  $("modalTitle").textContent=clip.title;
  document.querySelector(".modal-sub").textContent=clip.sub;
+ $("filmSource").innerHTML='This clip is a sourced reference, not footage of every historical phase. <a href="'+clip.source+'" target="_blank" rel="noreferrer">Open original video / source ↗</a>';
  $("filmModal").classList.add("open");
 });
 function closeFilm(){$("filmModal").classList.remove("open");$("filmFrame").src="";}$("closeFilm").addEventListener("click",closeFilm);$("filmModal").addEventListener("click",e=>{if(e.target===$("filmModal"))closeFilm();});document.addEventListener("keydown",e=>{if(e.key==="Escape")closeFilm();});
