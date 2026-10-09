@@ -81,6 +81,34 @@ jobs:
             if (!afterClick.activeCenter || afterClick.scanCount < 1) {
               throw new Error('Clicking the geographic map did not start a scan: ' + JSON.stringify(afterClick));
             }
+            const rangefindProbe = await page.evaluate(async () => {
+              try {
+                const { createSearch } = await import('https://esm.sh/rangefind@0.5.0/browser');
+                const engine = await createSearch({
+                  baseUrl: 'https://osm.rangefind.dev/',
+                  multiRangeRequests: true,
+                  geoCapsules: true,
+                  geoCellIndexes: true
+                });
+                const response = await engine.search({
+                  q: '',
+                  geo: { near: { lat: 45.33, lon: 14.49, radiusMeters: 5000, sort: 'distance' } },
+                  size: 100
+                });
+                return {
+                  ok: true,
+                  keys: Object.keys(response),
+                  resultCount: response.results?.length ?? null,
+                  sample: (response.results || []).slice(0, 5).map(x => x.doc || x)
+                };
+              } catch (e) {
+                return { ok: false, error: String(e), stack: e && e.stack ? String(e.stack).slice(0, 1000) : '' };
+              }
+            });
+            console.log('RANGEFIND_PROBE ' + JSON.stringify(rangefindProbe));
+            if (!rangefindProbe.ok || !(rangefindProbe.resultCount > 0)) {
+              throw new Error('Hosted OSM static index probe failed: ' + JSON.stringify(rangefindProbe));
+            }
             await page.waitForTimeout(800);
             await page.screenshot({ path: 'artifacts/photo-scout-live-map.png', fullPage: false });
             console.log(JSON.stringify({ initial, afterClick, successfulVectorTiles:successfulVectorTiles.length, failedVectorTiles, observedMapProviderResponses:tileResponses.length, browserErrors:errors }, null, 2));
