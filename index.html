@@ -128,7 +128,7 @@ const styleUrls = {
  dark:'https://tiles.openfreemap.org/styles/dark',
  fiord:'https://tiles.openfreemap.org/styles/fiord'
 };
-const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, results:[], scenicSpots:[], photos:[], selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0};
+const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, detectedLocality:'', results:[], scenicSpots:[], photos:[], selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0};
 window.__PHOTO_SCOUT_TEST__ = {
  get map(){ return state.map; },
  get styleLoaded(){ return state.styleLoaded; },
@@ -279,6 +279,14 @@ async function overpassSearch(c,radius,id){
  const successful=responses.filter(r=>r.status==='fulfilled');
  if(!successful.length)throw (responses.find(r=>r.status==='rejected')?.reason||new Error('Place search unavailable'));
  const rows=successful.flatMap(r=>r.value.results||[]);
+ if(id===state.scanId){
+  const localityCounts=new Map();
+  rows.forEach(r=>{
+   const locality=String(r.city||r.town||r.village||r.municipality||r.suburb||'').trim();
+   if(locality)localityCounts.set(locality,(localityCounts.get(locality)||0)+1);
+  });
+  state.detectedLocality=[...localityCounts.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+ }
  const places=[];
  const normalizeTags=r=>{
   const d=r.details&&typeof r.details==='object'?r.details:{};
@@ -348,9 +356,9 @@ async function scenicSearch(c,radius,id){
   const tags=toTags(r);
   const type=String(r.type||'').toLowerCase();
   const osmCategory=String(r.category||'').toLowerCase();
-  const name=String(r.name||r.title||'').trim();
-  if(!name)return;
-  const lowerName=name.toLowerCase();
+  const rawName=String(r.name||r.title||'').trim();
+  const genericName=!rawName||/^(viewpoint|lookout|panorama|hill|peak|mountain|ridge|observation tower|belvedere|tower|park|beach|bridge|scenic view|unnamed)$/i.test(rawName)||rawName.toLowerCase()===type;
+  const lowerName=rawName.toLowerCase();
   const nature=String(tags.natural||'').toLowerCase();
   const place=String(tags.place||'').toLowerCase();
   const tourism=String(tags.tourism||'').toLowerCase();
@@ -360,19 +368,20 @@ async function scenicSearch(c,radius,id){
   const evidence=[];
   let kind='landscape';
   if(tourism==='viewpoint'||type==='viewpoint'||tags.viewpoint==='yes'){
-   score+=100;evidence.push('explicitly mapped as a viewpoint');kind='viewpoint';
+   score+=100;evidence.push(genericName?'explicitly mapped as a viewpoint, but it has no specific name':'explicitly mapped as a viewpoint');kind='viewpoint';
   }
   if(['peak','hill','ridge','mountain','cliff','volcano','saddle'].includes(nature)||['peak','hill','ridge','mountain'].includes(type)||['hill','mountain','ridge'].includes(place)){
    score+=86;evidence.push('mapped topographic feature');kind='elevated landscape';
   }
-  if(/viewpoint|lookout|belvedere|panorama|vista|scenic|observation/.test(lowerName)){
+  if(!genericName&&/viewpoint|lookout|belvedere|panorama|vista|scenic|observation/.test(lowerName)){
    score+=65;evidence.push('name suggests a view or lookout');kind='viewpoint';
   }
   if(manMade==='tower'||type.includes('tower')||towerType==='observation'||towerType==='watchtower'||type==='lighthouse'||manMade==='lighthouse'){
    score+=55;evidence.push('mapped tower or lighthouse may provide an elevated frame');kind='elevated cityscape';
   }
-  if(['castle','fort','ruins','fortress','monument','bridge','beach','pier','marina','harbour','harbor','waterfront','park','garden','promenade'].includes(type)||['historic','tourism','leisure','waterway'].includes(osmCategory)&&score===0){
-   score+=38;evidence.push('mapped scenic, historic or open-space feature');kind=['beach','pier','marina','harbour','harbor','waterfront','promenade'].includes(type)?'coastal / waterfront': 'environmental portrait';
+  if(['castle','fort','ruins','fortress','monument','bridge','beach','pier','marina','harbour','harbor','waterfront','park','garden','promenade'].includes(type)){
+   score+=38;evidence.push('mapped scenic, historic or open-space feature');
+   kind=['beach','pier','marina','harbour','harbor','waterfront','promenade'].includes(type)?'coastal / waterfront':'environmental portrait';
   }
   const ele=Number(tags.ele??r.ele??tags.elevation);
   if(Number.isFinite(ele)){score+=Math.min(20,Math.max(0,ele/100));evidence.push('mapped elevation '+ele+' m');}
@@ -380,11 +389,18 @@ async function scenicSearch(c,radius,id){
   if(Number.isFinite(prominence)&&prominence>0){score+=Math.min(15,prominence/20);evidence.push('topographic prominence '+prominence+' m');}
   if(tags.wikipedia||tags.wikidata||tags.wikimedia_commons||tags.image){score+=4;evidence.push('has an external reference or media tag');}
   if(score<35)return;
-  const key=String(r.id||'')||name.toLowerCase()+'|'+lat.toFixed(4)+'|'+lng.toFixed(4);
+  const locality=String(r.city||r.town||r.village||r.municipality||r.suburb||state.detectedLocality||'').trim();
+  const featureLabel= tourism==='viewpoint'||type==='viewpoint'||tags.viewpoint==='yes'?'viewpoint':
+     ['peak','hill','ridge','mountain','cliff','volcano','saddle'].includes(nature)||['peak','hill','ridge','mountain'].includes(type)?'hilltop / terrain feature':
+     manMade==='tower'||type.includes('tower')||type==='lighthouse'?'lookout tower':
+     ['beach','pier','marina','harbour','harbor','waterfront','promenade'].includes(type)?'waterfront photo spot':'scenic feature';
+  const name=genericName?'Unnamed mapped '+featureLabel+(locality?' near '+locality:''):rawName;
+  const unnamedKey='unnamed-'+featureLabel+'-'+Math.round(lat*300)+'-'+Math.round(lng*250);
+  const key=genericName?unnamedKey:(String(r.id||'')||rawName.toLowerCase()+'|'+lat.toFixed(4)+'|'+lng.toFixed(4));
   const sourceUrl=r.url||(r.id?'https://www.openstreetmap.org/'+String(r.id):'https://www.openstreetmap.org/');
   const why=evidence.join('; ')+'. The actual line of sight, safe access and whether the city is visible still need checking.';
   const item={
-   id:'scenic-'+key,name,lat,lng,distance,tags,city:String(r.city||r.town||r.village||r.municipality||r.suburb||''),
+   id:'scenic-'+key,name,lat,lng,distance,tags,city:locality,
    source:'OpenStreetMap via Rangefind',sourceUrl,category:'photoSpot',
    summary:String(tags.description||tags['description:en']||r.description||''),
    why,scenicScore:Math.round(score),scenicKind:kind,evidence,
@@ -395,7 +411,19 @@ async function scenicSearch(c,radius,id){
   const prior=pool.get(key);
   if(!prior||item.scenicScore>prior.scenicScore)pool.set(key,item);
  });
- return [...pool.values()].sort((a,b)=>b.scenicScore-a.scenicScore||a.distance-b.distance).slice(0,35);
+ // Avoid flooding the result list with clustered anonymous lookouts near the pin.
+ // Keep a few strong candidates from each distance band so distant cityscape frames survive ranking.
+ const sorted=[...pool.values()].sort((a,b)=>b.scenicScore-a.scenicScore||a.distance-b.distance);
+ const bucketCounts=new Map();
+ const selected=[];
+ for(const item of sorted){
+  const bucket=Math.floor(item.distance/5000);
+  const count=bucketCounts.get(bucket)||0;
+  if(count>=7)continue;
+  selected.push(item);bucketCounts.set(bucket,count+1);
+  if(selected.length>=35)break;
+ }
+ return selected.sort((a,b)=>b.scenicScore-a.scenicScore||a.distance-b.distance);
 }
 function normalizeNameForDedup(name){
  return String(name||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
@@ -427,7 +455,7 @@ async function wikipediaSearch(c,radius,id){
  }).filter(Boolean);
 }
 async function commonsSearch(c,radius,id){
- const url='https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggscoord='+c.lat+'|'+c.lng+'&ggsradius='+Math.min(radius,10000)+'&ggsnamespace=6&ggslimit=12&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&format=json&origin=*';
+ const url='https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggscoord='+c.lat+'|'+c.lng+'&ggsradius='+Math.min(radius,10000)+'&ggsnamespace=6&ggslimit=12&prop=coordinates%7Cimageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&format=json&origin=*';
  const data=await requestJSON(url,id,15000);
  const pages=Object.values(data.query&&data.query.pages||{});
  return pages.map(p=>{
@@ -609,7 +637,7 @@ async function scanAt(c,opts){
  // Geotagged images are scarce in many areas. Search Commons by local city or
  // nearby landmark names too, but never label those photos as exact GPS matches.
  if(state.photos.filter(p=>p.geotagged).length<4){
-  const displayCity=osmResults.find(r=>r.city&&String(r.city).trim())?.city||'';
+  const displayCity=state.detectedLocality||osmResults.find(r=>r.city&&String(r.city).trim())?.city||'';
   const terms=[];
   if(displayCity){terms.push(displayCity+' panorama',displayCity+' cityscape',displayCity+' old town architecture');}
   else {
