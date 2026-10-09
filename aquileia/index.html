@@ -120,7 +120,7 @@ const groundGeo=new THREE.BufferGeometry();groundGeo.setAttribute("position",new
 const fields=new THREE.Group();fields.visible=false;scene.add(fields);for(let i=0;i<44;i++){const x=-126+((i*37)%250),z=-133+((i*53)%270);if(inPoly(x,z))continue;const w=7+(i%5)*2.3,d=9+(i%7)*2;const fm=[mats.field,mats.fieldLight,mats.fieldDark][i%3];const p=box(fields,x,.08,z,w,.035,d,fm,false,true);p.rotation.y=((i*13)%11)*.018;}
 const farmlandTracks=new THREE.Group();scene.add(farmlandTracks);for(let x=-130;x<130;x+=8){const pts=[];for(let z=-145;z<145;z+=6)pts.push([x+Math.sin(z*.06+x)*.8,groundH(x,z)+.11,z]);polyline(farmlandTracks,pts,0xd2c393,.22);}
 const waterShape=new THREE.Shape();function move(x,z){waterShape.moveTo(x,-z);}function bez(x1,z1,x2,z2,x3,z3){waterShape.bezierCurveTo(x1,-z1,x2,-z2,x3,-z3);}
-move(20,-82);bez(27,-66,31,-48,32,-31);bez(34,-14,33,3,29,18);bez(24,32,11,43,-5,49);bez(-21,52,-36,45,-45,39);waterShape.lineTo(-42,34);bez(-32,40,-20,44,-7,44);bez(8,43,19,34,24,20);bez(29,5,29,-12,28,-30);bez(27,-47,23,-65,15,-79);waterShape.closePath();
+move(20,-82);bez(24,-66,28,-48,29,-31);bez(30,-14,30,3,25,18);bez(21,31,14,42,0,49);bez(-14,52,-30,45,-45,39);waterShape.lineTo(-42,-34);bez(-30,40,-19,44,-3,44);bez(10,38,18,28,21,17);bez(25,2,25,-13,24,-30);bez(23,-47,19,-65,14,-79);waterShape.closePath();
 const waterGeo=new THREE.ShapeGeometry(waterShape,36);waterGeo.rotateX(-Math.PI/2);const river=new THREE.Mesh(waterGeo,mats.water);river.position.y=.14;river.receiveShadow=true;scene.add(river);
 const waterRipples=new THREE.Group();scene.add(waterRipples);for(let j=0;j<50;j++){const z=-66+(j*2.35)%105;const x=riverCenterAt(z)+Math.sin(j*.23)*1.2;if(j%3!==0)continue;const pts=[[x-.6,.19,z],[x-.18,.2,z+.1],[x+.35,.19,z+.15]];polyline(waterRipples,pts,0xc3ddd0,.018);}
 const bankLines=new THREE.Group();scene.add(bankLines);line(bankLines,[[20,.21,-81],[27,.21,-65],[31,.21,-48],[32,.21,-31],[33,.21,-12],[30,.21,9],[25,.21,25],[12,.21,41],[-5,.21,48],[-21,.21,47],[-45,.21,39]],mat(0xa9a17a),.18);line(bankLines,[[15,.21,-79],[22,.21,-64],[26,.21,-47],[27,.21,-30],[28,.21,-12],[25,.21,8],[20,.21,24],[8,.21,37],[-7,.21,43],[-21,.21,42],[-42,.21,34]],mat(0xa9a17a),.13);
@@ -129,14 +129,14 @@ const reeds=new THREE.Group();scene.add(reeds);let seed=77;const rnd=()=>{seed=(
 // Roman road network digitized in simplified form from the published archaeological city plan.
 const roads=new THREE.Group();roads.position.y=.19;scene.add(roads);const xRoads=[-52,-42,-31,-20,-9,2,13,24,33];const zRoads=[-64,-53,-42,-31,-20,-9,2,13,24,35,43];
 function riverCenterAt(z){
- if(z < -48) return 18.5+(z+48)*.24;
- if(z < -31) return 18.5+(z+48)*.24;
- if(z < -10) return 22.58+(z+31)*.055;
- if(z <= 18) return 23.735-(z+10)*.15;
- if(z <= 39) return 19.535-(z-18)*.38;
- return 11.555-(z-39)*1.15;
+ if(z < -65) return 20+(z+82)*.24;
+ if(z < -30) return 24.08+(z+65)*.14;
+ if(z < -10) return 28.98-(z+30)*.02;
+ if(z <= 18) return 28.58-(z+10)*.24;
+ if(z <= 40) return 21.86-(z-18)*.73;
+ return 5.80-(z-40)*.55;
 }
-function inRiverBand(x,z){if(z < -82 || z > 51)return false;return Math.abs(x-riverCenterAt(z))<3.45;}
+function inRiverBand(x,z){if(z < -82 || z > 51)return false;return Math.abs(x-riverCenterAt(z))<3.25;}
 function roadSegments(start,end,step,accept){
  const out=[];let a=null,last=null;
  for(let v=start;v<=end+step*.25;v+=step){
@@ -352,7 +352,7 @@ document.querySelectorAll(".milestone").forEach(b=>b.addEventListener("click",()
 $("time").addEventListener("input",e=>{stopPlay();setEra(e.target.value);});
 function stopPlay(){if(playTimer)clearInterval(playTimer);playTimer=null;playing=false;$("play").textContent="▶ Play timeline";}
 $("play").addEventListener("click",()=>{if(playing){stopPlay();return;}playing=true;$("play").textContent="Ⅱ Pause";if(stageIndex===4)setEra(0);playTimer=setInterval(()=>{if(stageIndex>=4){stopPlay();return;}setEra(stageIndex+1);},4300);});
-function resetCamera(){cameraTransition=false;camera.position.set(118,100,130);cameraGoal.copy(camera.position);cameraTargetGoal.copy(homeTarget);if(controls){controls.target.copy(homeTarget);controls.update();}}
+function resetCamera(){cameraTransition=false;const p=rotateLocalPoint(118,130);camera.position.set(p[0],100,p[1]);cameraGoal.copy(camera.position);cameraTargetGoal.copy(homeTarget);if(controls){controls.target.copy(homeTarget);controls.update();}}
 $("resetCamera").addEventListener("click",resetCamera);
 let cinema=false;$("cinema").addEventListener("click",async()=>{if(!cinema){document.body.classList.add("cinema-mode");cinema=true;$("cinema").textContent="Exit cinema";try{await document.documentElement.requestFullscreen();}catch(e){}}else{document.body.classList.remove("cinema-mode");cinema=false;$("cinema").textContent="⛶ Cinema";if(document.fullscreenElement){try{await document.exitFullscreen();}catch(e){}}}});document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&cinema){document.body.classList.remove("cinema-mode");cinema=false;$("cinema").textContent="⛶ Cinema";}resize();});
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();let pointerDown=null;renderer.domElement.addEventListener("pointerdown",e=>{pointerDown=[e.clientX,e.clientY];});renderer.domElement.addEventListener("pointerup",e=>{if(!pointerDown||Math.hypot(e.clientX-pointerDown[0],e.clientY-pointerDown[1])>5)return;pointerDown=null;const rect=renderer.domElement.getBoundingClientRect();pointer.x=((e.clientX-rect.left)/rect.width)*2-1;pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(pickables,false);if(hits.length){const key=hits[0].object.userData.siteKey;if(key)selectSite(key);}});
