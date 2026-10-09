@@ -128,13 +128,13 @@ const styleUrls = {
  dark:'https://tiles.openfreemap.org/styles/dark',
  fiord:'https://tiles.openfreemap.org/styles/fiord'
 };
-const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:5000, results:[], photos:[], selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0};
+const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, results:[], scenicSpots:[], photos:[], selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0};
 window.__PHOTO_SCOUT_TEST__ = {
  get map(){ return state.map; },
  get styleLoaded(){ return state.styleLoaded; },
  get vectorTileSuccesses(){ return state.vectorTileSuccesses; },
  get scanCount(){ return state.scanCount; },
- getState(){ return {styleLoaded:state.styleLoaded, scanCount:state.scanCount, activeCenter:state.center, resultCount:state.results.length, photoCount:state.photos.length, mapErrors:state.mapErrors}; },
+ getState(){ return {styleLoaded:state.styleLoaded, scanCount:state.scanCount, activeCenter:state.center, resultCount:state.results.length, parkingCount:state.results.filter(r=>r.category==='parking').length, historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicSample:state.scenicSpots.slice(0,5).map(r=>({name:r.name,category:r.category,score:r.scenicScore,why:r.why,distance:r.distance})), photoCount:state.photos.length, geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapErrors:state.mapErrors}; },
  scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); }
 };
 const mapError = message => {
@@ -259,22 +259,32 @@ async function getRangefindEngine(){
  return rangefindEnginePromise;
 }
 async function overpassSearch(c,radius,id){
- // Use a browser-safe, cacheable global OSM index. Public Overpass query servers
- // are best-effort and often time out or reject cross-origin browser requests.
  const engine=await getRangefindEngine();
- const response=await engine.search({
-  q:'',
+ // Search broadly, then run focused category queries so sparse nearby results
+ // do not hide parking, heritage or important architecture.
+ const queries=[
+  {q:'',size:100},
+  {q:'parking',size:60},
+  {q:'historic',size:50},
+  {q:'museum',size:35},
+  {q:'viewpoint',size:35},
+  {q:'church',size:35}
+ ];
+ const responses=await Promise.allSettled(queries.map(q=>engine.search({
+  q:q.q,
   geo:{near:{lat:c.lat,lon:c.lng,radiusMeters:radius},sort:'distance'},
-  size:100
- });
+  size:q.size
+ })));
  if(id!==state.scanId)throw new Error('stale scan');
- const rows=response.results||[];
+ const successful=responses.filter(r=>r.status==='fulfilled');
+ if(!successful.length)throw (responses.find(r=>r.status==='rejected')?.reason||new Error('Place search unavailable'));
+ const rows=successful.flatMap(r=>r.value.results||[]);
  const places=[];
  const normalizeTags=r=>{
   const d=r.details&&typeof r.details==='object'?r.details:{};
   const t={...d};
   if(r.category&&r.type)t[r.category]=r.type;
-  if(r.type && !t.type)t.type=r.type;
+  if(r.type&&!t.type)t.type=r.type;
   return t;
  };
  rows.forEach((r,index)=>{
@@ -284,31 +294,108 @@ async function overpassSearch(c,radius,id){
   const type=String(r.type||'').toLowerCase();
   const categoryTag=String(r.category||'').toLowerCase();
   const parking=type==='parking'||type==='parking_space'||tags.amenity==='parking'||tags.amenity==='parking_space'||Boolean(tags.parking);
-  const history=categoryTag==='historic'||Boolean(tags.historic)||Boolean(tags.heritage)||['museum','attraction','tourist_attraction','memorial','monument','archaeological_site','castle','ruins','fort','church','cathedral','place_of_worship'].includes(type);
-  const viewpoint=type==='viewpoint'||['peak','cliff','cave','waterfall','beach','spring'].includes(type)||categoryTag==='natural'&&['peak','cliff','cave','waterfall','beach'].includes(type);
-  const architecture=['church','cathedral','castle','fort','ruins','monument','lighthouse','tower','bridge','industrial','historic'].includes(type)||categoryTag==='building'&&Boolean(r.name);
+  const history=categoryTag==='historic'||Boolean(tags.historic)||Boolean(tags.heritage)||['museum','attraction','tourist_attraction','memorial','monument','archaeological_site','castle','ruins','fort','church','cathedral','place_of_worship','monastery','chapel'].includes(type);
+  const viewpoint=type==='viewpoint'||['peak','hill','ridge','mountain','cliff','cave','waterfall','beach','spring','lookout'].includes(type)||tags.tourism==='viewpoint'||tags.natural==='peak'||tags.natural==='hill'||tags.natural==='ridge';
+  const architecture=['church','cathedral','castle','fort','ruins','monument','lighthouse','tower','bridge','industrial','historic','palace','townhall','city_hall'].includes(type)||categoryTag==='building'&&Boolean(r.name);
   let placeCategory=parking?'parking':history?'history':viewpoint?'viewpoint':architecture?'architecture':null;
   if(!placeCategory)return;
   const name=String(r.name||r.title||'').trim()||(parking?'Parking area':'');
   if(!name)return;
   const distance=Number.isFinite(Number(r.distanceMeters))?Number(r.distanceMeters):haversine(c,{lat,lng});
   if(distance>radius)return;
-  const osmUrl=r.url||(r.id?'https://www.openstreetmap.org/'+String(r.id).replace('/','/'):'https://www.openstreetmap.org/');
+  const osmUrl=r.url||(r.id?'https://www.openstreetmap.org/'+String(r.id):'https://www.openstreetmap.org/');
   const wikiTag=tags.wikipedia||tags['wikipedia:en']||'';
   places.push({
    id:'rf-'+String(r.id||index)+'-'+placeCategory,
-   name,lat,lng,distance,tags,source:'OpenStreetMap via Rangefind',sourceUrl:osmUrl,
-   category:placeCategory,summary:String(tags.description||tags['description:en']||''),
+   name,lat,lng,distance,tags,city:String(r.city||r.town||r.village||r.municipality||r.suburb||''),
+   source:'OpenStreetMap via Rangefind',sourceUrl:osmUrl,
+   category:placeCategory,summary:String(tags.description||tags['description:en']||r.description||''),
    history:'',wikiUrl:wikiTag?wikiURL(String(wikiTag)):(tags.wikidata?'https://www.wikidata.org/wiki/'+tags.wikidata:''),
    license:'© OpenStreetMap contributors'
   });
  });
  const seen=new Set();
- const deduped=places.sort((a,b)=>a.distance-b.distance).filter(p=>{
+ return places.sort((a,b)=>a.distance-b.distance).filter(p=>{
   const key=p.category+'|'+normalizeNameForDedup(p.name)+'|'+p.lat.toFixed(4)+'|'+p.lng.toFixed(4);
   if(seen.has(key))return false;seen.add(key);return true;
+ }).slice(0,100);
+}
+async function scenicSearch(c,radius,id){
+ const engine=await getRangefindEngine();
+ const scoutRadius=Math.max(25000,Math.min(30000,radius*2));
+ const queries=['viewpoint','lookout','panorama','hill','peak','mountain','ridge','observation tower','belvedere'];
+ const responses=await Promise.allSettled(queries.map(q=>engine.search({
+  q,
+  geo:{near:{lat:c.lat,lon:c.lng,radiusMeters:scoutRadius},sort:'distance'},
+  size:35
+ })));
+ if(id!==state.scanId)throw new Error('stale scan');
+ const successful=responses.filter(r=>r.status==='fulfilled');
+ if(!successful.length)throw (responses.find(r=>r.status==='rejected')?.reason||new Error('Scenic search unavailable'));
+ const pool=new Map();
+ const toTags=r=>{
+  const d=r.details&&typeof r.details==='object'?r.details:{};
+  const t={...d};
+  if(r.category&&r.type)t[r.category]=r.type;
+  if(r.type&&!t.type)t.type=r.type;
+  return t;
+ };
+ successful.flatMap(r=>r.value.results||[]).forEach((r,index)=>{
+  const lat=Number(r.lat),lng=Number(r.lon??r.lng);
+  if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
+  const distance=Number.isFinite(Number(r.distanceMeters))?Number(r.distanceMeters):haversine(c,{lat,lng});
+  if(distance>scoutRadius)return;
+  const tags=toTags(r);
+  const type=String(r.type||'').toLowerCase();
+  const osmCategory=String(r.category||'').toLowerCase();
+  const name=String(r.name||r.title||'').trim();
+  if(!name)return;
+  const lowerName=name.toLowerCase();
+  const nature=String(tags.natural||'').toLowerCase();
+  const place=String(tags.place||'').toLowerCase();
+  const tourism=String(tags.tourism||'').toLowerCase();
+  const towerType=String(tags['tower:type']||'').toLowerCase();
+  const manMade=String(tags.man_made||'').toLowerCase();
+  let score=0;
+  const evidence=[];
+  let kind='landscape';
+  if(tourism==='viewpoint'||type==='viewpoint'||tags.viewpoint==='yes'){
+   score+=100;evidence.push('explicitly mapped as a viewpoint');kind='viewpoint';
+  }
+  if(['peak','hill','ridge','mountain','cliff','volcano','saddle'].includes(nature)||['peak','hill','ridge','mountain'].includes(type)||['hill','mountain','ridge'].includes(place)){
+   score+=86;evidence.push('mapped topographic feature');kind='elevated landscape';
+  }
+  if(/viewpoint|lookout|belvedere|panorama|vista|scenic|observation/.test(lowerName)){
+   score+=65;evidence.push('name suggests a view or lookout');kind='viewpoint';
+  }
+  if(manMade==='tower'||type.includes('tower')||towerType==='observation'||towerType==='watchtower'||type==='lighthouse'||manMade==='lighthouse'){
+   score+=55;evidence.push('mapped tower or lighthouse may provide an elevated frame');kind='elevated cityscape';
+  }
+  if(['castle','fort','ruins','fortress','monument','bridge','beach','pier','marina','harbour','harbor','waterfront','park','garden','promenade'].includes(type)||['historic','tourism','leisure','waterway'].includes(osmCategory)&&score===0){
+   score+=38;evidence.push('mapped scenic, historic or open-space feature');kind=['beach','pier','marina','harbour','harbor','waterfront','promenade'].includes(type)?'coastal / waterfront': 'environmental portrait';
+  }
+  const ele=Number(tags.ele??r.ele??tags.elevation);
+  if(Number.isFinite(ele)){score+=Math.min(20,Math.max(0,ele/100));evidence.push('mapped elevation '+ele+' m');}
+  const prominence=Number(tags.prominence);
+  if(Number.isFinite(prominence)&&prominence>0){score+=Math.min(15,prominence/20);evidence.push('topographic prominence '+prominence+' m');}
+  if(tags.wikipedia||tags.wikidata||tags.wikimedia_commons||tags.image){score+=4;evidence.push('has an external reference or media tag');}
+  if(score<35)return;
+  const key=String(r.id||'')||name.toLowerCase()+'|'+lat.toFixed(4)+'|'+lng.toFixed(4);
+  const sourceUrl=r.url||(r.id?'https://www.openstreetmap.org/'+String(r.id):'https://www.openstreetmap.org/');
+  const why=evidence.join('; ')+'. The actual line of sight, safe access and whether the city is visible still need checking.';
+  const item={
+   id:'scenic-'+key,name,lat,lng,distance,tags,city:String(r.city||r.town||r.village||r.municipality||r.suburb||''),
+   source:'OpenStreetMap via Rangefind',sourceUrl,category:'photoSpot',
+   summary:String(tags.description||tags['description:en']||r.description||''),
+   why,scenicScore:Math.round(score),scenicKind:kind,evidence,
+   confidence:score>=90?'Mapped viewpoint / terrain':score>=60?'Strong mapped feature candidate':'Possible scenic subject',
+   history:'',wikiUrl:tags.wikipedia?wikiURL(String(tags.wikipedia)):(tags.wikidata?'https://www.wikidata.org/wiki/'+tags.wikidata:''),
+   license:'© OpenStreetMap contributors'
+  };
+  const prior=pool.get(key);
+  if(!prior||item.scenicScore>prior.scenicScore)pool.set(key,item);
  });
- return deduped.slice(0,80);
+ return [...pool.values()].sort((a,b)=>b.scenicScore-a.scenicScore||a.distance-b.distance).slice(0,35);
 }
 function normalizeNameForDedup(name){
  return String(name||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
