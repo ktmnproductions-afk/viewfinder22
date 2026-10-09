@@ -119,7 +119,7 @@ document.querySelectorAll(".stop").forEach(b=>b.addEventListener("click",()=>{st
 function stopPlayback(){if(timer)clearInterval(timer);timer=null;playing=false;$("play").textContent="▶ Play story";}
 $("play").addEventListener("click",()=>{if(playing){stopPlayback();return;}playing=true;$("play").textContent="Ⅱ Pause";if(stageIndex===4)selectStage(0);timer=setInterval(()=>{if(stageIndex>=4){stopPlayback();return;}selectStage(stageIndex+1);},4900);});
 const videoClips={
- origins:{id:"03Pic7VqU7U",title:"Before Roman Aquileia",sub:"Pre-Roman origins · historical context",source:"https://acuiledalfriul.org/onewebmedia/Video-Aquileia-la-nostra-storia.pdf"},
+ origins:{id:"03Pic7VqU7U",title:"Before Roman Aquileia",sub:"Pre-Roman origins · historical context",source:"https://www.youtube.com/watch?v=03Pic7VqU7U"},
  city:{id:"Tkd7XGb14aE",title:"Aquileia — Roman city reconstruction",sub:"Full-city 3D reconstruction · Ars Europa Channel / Fondazione Aquileia",source:"https://www.youtube.com/watch?v=Tkd7XGb14aE"},
  basilica:{id:"rBlvsVjfi8Q",title:"The Constantinian Basilica",sub:"Early Christian architectural reconstruction · Fondazione Aquileia",source:"https://www.youtube.com/watch?v=rBlvsVjfi8Q"},
  port:{id:"8UDX1FD18DU",title:"The river port and Aquileia's trade",sub:"Archaeologist Cristiano Tiussi on the river port and commerce",source:"https://www.fondazioneaquileia.it/it/attivita/il-porto-fluviale-di-aquileia-e-i-commerci-con-cristiano-tiussi-pillola-video-3"},
