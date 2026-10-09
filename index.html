@@ -1242,7 +1242,7 @@ async function generateConcept(){
  try{
   const generationPromise=window.puter.ai.txt2img(imageConceptPrompt(item,mode),{
    provider:'openai',
-   model:'gpt-image-2',
+   model:'gpt-image-2.5-flare',
    quality:'medium',
    ratio:{w:16,h:9}
   });
