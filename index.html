@@ -187,13 +187,13 @@ const styleUrls = {
  dark:'https://tiles.openfreemap.org/styles/dark',
  fiord:'https://tiles.openfreemap.org/styles/fiord'
 };
-const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, detectedLocality:'', results:[], scenicSpots:[], photos:[], selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0};
+const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, detectedLocality:'', results:[], scenicSpots:[], photos:[], basemapParking:[], parkingFilteredLayers:new Set(), selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0};
 window.__PHOTO_SCOUT_TEST__ = {
  get map(){ return state.map; },
  get styleLoaded(){ return state.styleLoaded; },
  get vectorTileSuccesses(){ return state.vectorTileSuccesses; },
  get scanCount(){ return state.scanCount; },
- getState(){ return {styleLoaded:state.styleLoaded, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, resultCount:state.results.length, parkingCount:state.results.filter(r=>r.category==='parking').length, historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, mapErrors:state.mapErrors}; },
+ getState(){ return {styleLoaded:state.styleLoaded, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, resultCount:state.results.length, parkingCount:parkingCandidates().length, explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, mapErrors:state.mapErrors}; },
  scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); }
 };
 const mapError = message => {
@@ -234,6 +234,8 @@ map.on('error', function(e){
 });
 map.on('style.load', function(){
  state.styleLoaded = true;
+ state.parkingFilteredLayers=new Set();
+ suppressBasemapParkingSymbols();
  ensureRadiusLayers();
  updateRadius();
  mapOk();
@@ -242,8 +244,11 @@ map.on('style.load', function(){
 map.on('sourcedata', function(e){
  if(e && e.sourceId && e.isSourceLoaded && e.sourceDataType === 'content') state.vectorTileSuccesses++;
 });
+map.on('idle', function(){ refreshBasemapParking(); });
+map.on('moveend', function(){ refreshBasemapParking(); });
 map.on('load', function(){
  state.styleLoaded = true;
+ suppressBasemapParkingSymbols();
  ensureRadiusLayers();
  updateRadius();
  mapOk();
@@ -257,6 +262,7 @@ $('retryMap').addEventListener('click',function(){
 let currentStyle='liberty';
 document.querySelectorAll('[data-style]').forEach(btn=>btn.addEventListener('click',function(){
  currentStyle=this.dataset.style;
+ state.basemapParking=[];state.parkingFilteredLayers=new Set();
  document.querySelectorAll('[data-style]').forEach(b=>b.classList.toggle('active',b===this));
  state.styleLoaded=false;
  map.setStyle(styleUrls[currentStyle]);
@@ -660,11 +666,77 @@ function markerEl(category,label){
  el.appendChild(core); return el;
 }
 function clearMarkers(){state.markers.forEach(m=>m.remove());state.markers=[];}
+function suppressBasemapParkingSymbols(){
+ if(!map||!state.styleLoaded)return;
+ const layers=(map.getStyle()&&map.getStyle().layers)||[];
+ layers.forEach(layer=>{
+  if(layer.type!=='symbol'||layer['source-layer']!=='poi'||!/^poi_r\d+$/i.test(layer.id)||state.parkingFilteredLayers.has(layer.id))return;
+  const existing=layer.filter||['all'];
+  // Replace the basemap's blue parking P icons with the app's larger, clickable
+  // green parking markers so users can tell Scout results apart from map labels.
+  map.setFilter(layer.id,['all',existing,
+   ['!=',['get','class'],'parking'],
+   ['!=',['get','subclass'],'parking'],
+   ['!=',['get','class'],'parking_space'],
+   ['!=',['get','subclass'],'parking_space']
+  ]);
+  state.parkingFilteredLayers.add(layer.id);
+ });
+}
+function parkingCandidates(){
+ const direct=state.results.filter(r=>r.category==='parking').map(p=>({...p,parkingOrigin:'indexed'}));
+ const radius=state.radius||10000;
+ const center=state.center;
+ const seen=[...direct];
+ (state.basemapParking||[]).forEach(p=>{
+  const dist=center?haversine(center,{lat:p.lat,lng:p.lng}):p.distance;
+  if(!Number.isFinite(dist)||dist>radius)return;
+  if(seen.some(q=>haversine({lat:q.lat,lng:q.lng},{lat:p.lat,lng:p.lng})<65))return;
+  seen.push({...p,distance:dist,parkingOrigin:'basemap'});
+ });
+ return seen.sort((a,b)=>(a.distance||0)-(b.distance||0));
+}
+function refreshBasemapParking(){
+ if(!map||!state.styleLoaded||!state.center)return;
+ let features=[];
+ try{features=map.querySourceFeatures('openmaptiles',{sourceLayer:'poi'});}catch(e){return;}
+ const radius=state.radius||10000;
+ const seen=new Set();
+ const spots=[];
+ features.forEach((feature,index)=>{
+  const p=feature.properties||{};
+  const cls=String(p.class||'').toLowerCase();
+  const sub=String(p.subclass||'').toLowerCase();
+  if(!['parking','parking_space'].includes(cls)&&!['parking','parking_space'].includes(sub)&&String(p.amenity||'').toLowerCase()!=='parking')return;
+  if(!feature.geometry||feature.geometry.type!=='Point'||!Array.isArray(feature.geometry.coordinates))return;
+  const lng=Number(feature.geometry.coordinates[0]),lat=Number(feature.geometry.coordinates[1]);
+  if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return;
+  const distance=haversine(state.center,{lat,lng});
+  if(distance>radius)return;
+  const name=String(p.name||p.name_en||p.name_latin||'').trim()||'Mapped parking feature';
+  const key=String(p.osm_id||p.id||feature.id||'')||Math.round(lat*10000)+'-'+Math.round(lng*10000);
+  if(seen.has(key))return;
+  seen.add(key);
+  const url='https://www.openstreetmap.org/?mlat='+lat.toFixed(6)+'&mlon='+lng.toFixed(6)+'#map=18/'+lat.toFixed(6)+'/'+lng.toFixed(6);
+  spots.push({
+   id:'basemap-parking-'+key,name,lat,lng,distance,
+   category:'parking',parkingOrigin:'basemap',source:'OpenFreeMap / OpenStreetMap',
+   sourceUrl:url,tags:{class:cls,subclass:sub,osm_id:p.osm_id||p.id||feature.id||''},
+   summary:'Mapped parking feature from the basemap. Its exact entrance, legal access, opening status and availability are not verified. Check road signs and access on arrival.',
+   history:'',wikiUrl:url,license:'© OpenStreetMap contributors'
+  });
+ });
+ const signature=spots.map(p=>p.id+':'+Math.round(p.distance)).sort().join('|');
+ const oldSignature=(state.basemapParking||[]).map(p=>p.id+':'+Math.round(p.distance)).sort().join('|');
+ if(signature===oldSignature)return;
+ state.basemapParking=spots;
+ renderResults();
+ renderMarkers();
+}
 function renderMarkers(){
  if(!state.map || !state.styleLoaded)return;
  clearMarkers();
- // Keep the map legible in dense cities while preserving the complete result lists.
- const parking=state.results.filter(r=>r.category==='parking').slice(0,30);
+ const parking=parkingCandidates().slice(0,50);
  const history=state.results.filter(r=>r.category==='history').slice(0,22);
  const viewpoints=state.results.filter(r=>r.category==='viewpoint').slice(0,12);
  const architecture=state.results.filter(r=>r.category==='architecture').slice(0,12);
@@ -675,13 +747,13 @@ function renderMarkers(){
   const key=item.category+'|'+cell;
   if(seen.has(key))return;
   seen.add(key);
-  const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.name+' · '+distanceLabel(item.distance);
+  const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.category==='parking'?(item.parkingOrigin==='basemap'?'Mapped parking · availability unverified · ':'Scout parking feature · ')+item.name+' · '+distanceLabel(item.distance):item.name+' · '+distanceLabel(item.distance);
   const el=markerEl(item.category,label);
+  if(item.parkingOrigin==='basemap')el.classList.add('basemap-parking');
   el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
   const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
   state.markers.push(m);
  });
- // Photographs are inspiration only. Do not plot someone's upload coordinate as a scout spot.
 }
 function setActivePin(c){
  if(state.pinMarker)state.pinMarker.remove();
@@ -698,7 +770,7 @@ function setStatus(title,msg,kind){
 async function scanAt(c,opts){
  if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng)||Math.abs(c.lat)>85||Math.abs(c.lng)>180){setStatus('Choose a valid map point','That coordinate cannot be scanned.','warn');return;}
  state.scanId++;const id=state.scanId;state.scanCount++;cancelPreviousRequests();
- state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.results=[];state.scenicSpots=[];state.photos=[];state.selected=null;
+ state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.results=[];state.scenicSpots=[];state.photos=[];state.basemapParking=[];state.selected=null;
  $('spotDetail').classList.remove('show');
  setActivePin(state.center);updateRadius();
  if(opts&&opts.fly&&map.getZoom()<8){map.flyTo({center:[c.lng,c.lat],zoom:9.5,duration:700});}
