@@ -844,16 +844,18 @@ async function scanAt(c,opts){
   const displayCity=state.detectedLocality||osmResults.find(r=>r.city&&String(r.city).trim())?.city||'';
   const landmarkNames=[
    ...wikiResults.slice(0,3).map(r=>r.name),
-   ...state.scenicSpots.filter(r=>!r.genericFeature).slice(0,3).map(r=>r.name),
+   ...state.scenicSpots.filter(r=>!r.genericFeature&&!/^Unnamed mapped/i.test(r.name)).slice(0,3).map(r=>r.name),
    ...osmResults.filter(r=>r.category==='history'||r.category==='viewpoint').slice(0,3).map(r=>r.name)
   ].filter(Boolean);
+  // Wikimedia full-text search treats multiword terms conjunctively. Start
+  // with the place name itself instead of over-constraining it with 3 scene words.
   let terms=[];
   if(displayCity){
-   terms=[displayCity+' panorama skyline',displayCity+' historic architecture landmark',displayCity+' coast landscape'];
+   terms=[displayCity,displayCity+' Croatia',landmarkNames[0]||displayCity+' old town'];
   }else{
-   terms=landmarkNames.slice(0,2).map(n=>n+' landmark architecture');
-   if(landmarkNames.length)terms.push(landmarkNames[0]+' landscape panorama');
-   if(!terms.length)terms=['historic landscape architecture Croatia'];
+   terms=landmarkNames.slice(0,2);
+   if(landmarkNames.length>0)terms.push(landmarkNames[0]+' Croatia');
+   if(!terms.length)terms=['Croatia landscape'];
   }
   terms=terms.slice(0,3);
   try{
@@ -884,12 +886,9 @@ async function scanAt(c,opts){
  mapOk();
 }
 function updateSocialSearch(query){
- // Inspiration is shown in the app from subject-matched media. Keep this helper
- // null-safe for deployments that do not render external social-search links.
- const q=(query+' photography').trim();
- const pinterest=$('pinterestSearch'),instagram=$('instagramSearch');
- if(pinterest)pinterest.href='https://www.pinterest.com/search/pins/?q='+encodeURIComponent(q);
- if(instagram)instagram.href='https://www.instagram.com/explore/search/keyword/?q='+encodeURIComponent(q);
+ // References are searched and shown inside Photo Scout; external social search
+ // is deliberately not used as a substitute for in-app visual inspiration.
+ return;
 }
 function shotPrompt(item){
  let genre='editorial travel photography';
@@ -996,11 +995,10 @@ async function renderDetailPhotoRefs(item){
  const rawName=String(item.name||'').replace(/^Unnamed mapped\s+/i,'').replace(/\s+near\s+.+$/i,'').trim();
  const queryName=rawName&&!/^your pin$/i.test(rawName)?rawName:'';
  const terms=[];
+ if(queryName)terms.push(queryName);
  if(queryName&&locality)terms.push(queryName+' '+locality);
- else if(queryName)terms.push(queryName+' landscape architecture');
- if(queryName)terms.push(queryName+' landmark view');
- if(locality)terms.push(locality+' panorama skyline');
- if(locality)terms.push(locality+' historic architecture coast');
+ if(locality)terms.push(locality);
+ else if(state.detectedLocality)terms.push(state.detectedLocality);
  const refs=await commonsTextSearch(terms,{lat:item.lat,lng:item.lng},state.scanId).catch(()=>[]);
  if(!state.selected||state.selected.id!==selectedId)return;
  const fallback=(state.photos||[]).filter(p=>!p.geotagged&&photoTitleIsRelevant(p.name,queryName+' '+locality));
@@ -1009,7 +1007,7 @@ async function renderDetailPhotoRefs(item){
  const finalRefs=[...unique.values()].slice(0,3);
  $('detailPhotoCount').textContent=finalRefs.length?(queryName?'Landmark matched · '+finalRefs.length:'Area matched · '+finalRefs.length):'No close matches';
  if(!finalRefs.length){
-  container.innerHTML=emptyHTML('No suitable source-linked image matched this place name. We are not showing unrelated event photos as if they depict this spot. Try the city-level references or open the Instagram/Pinterest search links.');
+  container.innerHTML=emptyHTML('No suitable source-linked image matched this place name. We will not substitute unrelated event uploads. The location-specific composition sketches and AI photo-idea button remain available above.');
   return;
  }
  container.innerHTML=finalRefs.map(p=>{
