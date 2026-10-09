@@ -76,6 +76,7 @@ jobs:
             const rect = await page.locator('#map').boundingBox();
             await page.mouse.click(Math.min(rect.x + rect.width * 0.72, 1500), rect.y + rect.height * 0.50);
             await page.waitForFunction(() => window.__PHOTO_SCOUT_TEST__?.scanCount >= 1, null, { timeout: 5000 });
+            await page.waitForFunction(() => ['Stop research ready', 'Partial results loaded'].includes(document.querySelector('#statusTitle')?.textContent), null, { timeout: 65000 });
             const afterClick = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.getState());
             if (!afterClick.activeCenter || afterClick.scanCount < 1) {
               throw new Error('Clicking the geographic map did not start a scan: ' + JSON.stringify(afterClick));
