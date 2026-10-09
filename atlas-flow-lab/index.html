@@ -89,41 +89,47 @@ function addSatelliteLayer(){
  if(!map.getSource('atlas-imagery'))map.addSource('atlas-imagery',{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community'});
  if(!map.getLayer('atlas-imagery')){const layers=map.getStyle().layers||[];const before=layers.find(l=>l.type==='line'||l.type==='symbol');map.addLayer({id:'atlas-imagery',type:'raster',source:'atlas-imagery',layout:{visibility:imageryOn?'visible':'none'},paint:{'raster-opacity':.44,'raster-saturation':-.24,'raster-contrast':.10,'raster-brightness-min':.05,'raster-brightness-max':.86,'raster-fade-duration':100}},before?before.id:undefined)}
 }
-function addReadablePlaceLabels(){
- if(!map||!map.getSource('openmaptiles'))return;
- const layers=map.getStyle().layers||[];
- layers.filter(l=>l.type==='symbol'&&l['source-layer']==='place').forEach(l=>{try{map.setLayoutProperty(l.id,'visibility','none')}catch(e){}});
- const textField=['coalesce',['get','name_en'],['get','name:latin'],['get','name']];
- const common={
-  type:'symbol',source:'openmaptiles','source-layer':'place',
-  layout:{
-   'text-field':textField,'text-font':['Noto Sans Regular'],'text-transform':'uppercase',
-   'text-anchor':'center','text-justify':'center','text-allow-overlap':false,
-   'text-ignore-placement':false,'text-padding':3,'text-max-width':10,
-   'text-letter-spacing':.035,'symbol-sort-key':['coalesce',['get','rank'],8]
-  },
-  paint:{
-   'text-color':theme==='paper'?'#25372f':'#fffdf7',
-   'text-halo-color':theme==='paper'?'rgba(244,241,231,.98)':'rgba(2,7,13,.98)',
-   'text-halo-width':2.6,'text-halo-blur':.08,'text-opacity':1
+function stylePlaceLabels(){
+ if(!map||!map.isStyleLoaded())return;
+ const paper=theme==='paper';
+ const labelLayers=(map.getStyle().layers||[]).filter(l=>l.type==='symbol'&&l['source-layer']==='place'&&l.layout?.['text-field']);
+ for(const l of labelLayers){
+  const id=l.id||'';
+  let size=['interpolate',['linear'],['zoom'],0,11.5,3,13,5,15,8,17,12,19];
+  let color=paper?'#34463d':'#edf6f1',halo=2.3;
+  if(id==='place_country_major'||id==='place_country_other'||id==='place_country_minor'){
+   size=['interpolate',['linear'],['zoom'],0,13,2,16,4,19,6,20];
+   color=paper?'#23382f':'#f7fff9';halo=2.7;
+  }else if(id==='place_state'){
+   size=['interpolate',['linear'],['zoom'],4,13.5,6,15.5,8,17.5,10,18.5];
+   color=paper?'#3d6c6e':'#b4ece8';halo=2.4;
+  }else if(id==='place_city_large'){
+   size=['interpolate',['linear'],['zoom'],0,12.5,2,14,4,16.5,6,18.5,8,20.5,11,22];
+   color=paper?'#26392f':'#fffdf7';halo=2.9;
+  }else if(id==='place_city'){
+   size=['interpolate',['linear'],['zoom'],2,11.5,4,13.5,6,15.5,8,17.5,11,19.5,14,21];
+   color=paper?'#2c3e34':'#f3faf6';halo=2.65;
+  }else if(id==='place_town'){
+   size=['interpolate',['linear'],['zoom'],4.5,12,6,14,8,16.2,10,18,13,20,16,21];
+   color=paper?'#36483d':'#e7f3ee';halo=2.5;
+  }else if(id==='place_village'||id==='place_suburb'||id==='place_other'){
+   size=['interpolate',['linear'],['zoom'],7.5,11.5,9,13,11,15,14,17,16,18];
+   color=paper?'#45564c':'#d7e6e1';halo=2.3;
   }
- };
- const layer=(id,cls,minzoom,maxzoom,textSize,extraFilter,letterSpacing)=>{
-  const f=['all',['match',['geometry-type'],['MultiPoint','Point'],true,false],['==',['get','class'],cls]];
-  if(extraFilter)f.push(extraFilter);
-  const def=JSON.parse(JSON.stringify(common));def.id=id;def.minzoom=minzoom;def.maxzoom=maxzoom;def.filter=f;
-  def.layout['text-size']=textSize;def.layout['text-letter-spacing']=letterSpacing??.035;
-  if(id==='atlas-place-country-labels'){def.layout['text-anchor']='center';def.layout['text-letter-spacing']=.14;def.paint['text-halo-width']=2.2}
-  if(id==='atlas-place-state-labels'){def.paint['text-halo-width']=2.3}
-  if(id==='atlas-place-village-labels'){def.paint['text-halo-width']=2.2}
-  def.layout.visibility=(id==='atlas-place-country-labels')?'visible':(labelsOn?'visible':'none');
-  if(!map.getLayer(id))map.addLayer(def);
- };
- layer('atlas-place-country-labels','country',0,6.8,['interpolate',['linear'],['zoom'],0,13,2,16,4,19,6,21],['<=',['get','rank'],3],.13);
- layer('atlas-place-state-labels','state',4,10,['interpolate',['linear'],['zoom'],4,13,6,15.5,8,17.5,10,18],null,.06);
- layer('atlas-place-city-labels','city',2.5,15,['interpolate',['linear'],['zoom'],2.5,12,4,14.5,6,17,8,19,11,21,14,22],['<=',['get','rank'],7],.035);
- layer('atlas-place-town-labels','town',4.8,16,['interpolate',['linear'],['zoom'],5,12,6,13.8,8,16,10,18,13,20,16,21],null,.02);
- layer('atlas-place-village-labels','village',8,17,['interpolate',['linear'],['zoom'],8,12,10,14,12,16,15,18,17,19],null,.01);
+  try{
+   map.setLayoutProperty(id,'visibility',labelsOn?'visible':'none');
+   map.setLayoutProperty(id,'text-size',size);
+   if(['place_city','place_city_large','place_town','place_village','place_suburb'].includes(id))map.setLayoutProperty(id,'text-transform','none');
+   map.setLayoutProperty(id,'text-allow-overlap',false);
+   map.setLayoutProperty(id,'text-ignore-placement',false);
+   map.setLayoutProperty(id,'text-padding',3);
+   map.setPaintProperty(id,'text-color',color);
+   map.setPaintProperty(id,'text-opacity',1);
+   map.setPaintProperty(id,'text-halo-color',paper?'rgba(242,239,228,.99)':'rgba(1,7,13,.99)');
+   map.setPaintProperty(id,'text-halo-width',halo);
+   map.setPaintProperty(id,'text-halo-blur',.06);
+  }catch(e){console.warn('Could not restyle place label layer '+id,e)}
+ }
 }
 function setTerrain(enabled){terrainOn=enabled;updateSwitch('terrainToggle',enabled);if(!map)return;if(!enabled){try{map.setTerrain(null)}catch(e){}return;}try{if(!terrainSourceAdded){map.addSource('atlas-dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',maxzoom:15,attribution:'Terrain tiles © AWS Open Data'});terrainSourceAdded=true}map.setTerrain({source:'atlas-dem',exaggeration:1.18});showStatus('3D terrain enabled · additional elevation tiles are loading')}catch(e){terrainOn=false;updateSwitch('terrainToggle',false);showStatus('3D terrain is unavailable in this map style.')}}
 function paintIf(layer,prop,val){try{map.setPaintProperty(layer.id,prop,val)}catch(e){}}
@@ -183,8 +189,9 @@ function applyTheme(next){theme=next;const t=THEME[theme];document.documentEleme
  try{map.setFog({color:theme==='paper'?'#cfd9d4':'#0b1928','high-color':theme==='aurora'?'#124050':'#16374a','space-color':theme==='paper'?'#d8d5c9':'#02060d','horizon-blend':.12,'star-intensity':theme==='paper'?0:.28})}catch(e){}
  if(map.getLayer('atlas-city-halo')){paintIf({id:'atlas-city-halo'},'circle-color',t.accent);paintIf({id:'atlas-city-dot'},'circle-color',t.accent);paintIf({id:'atlas-city-label'},'text-color',t.text);paintIf({id:'atlas-city-label'},'text-halo-color',t.background);paintIf({id:'atlas-route-glow'},'line-color',t.gold);paintIf({id:'atlas-routes'},'line-color',t.gold)}
  if(map.getLayer('atlas-imagery')){paintIf({id:'atlas-imagery'},'raster-opacity',theme==='paper'?.16:(theme==='aurora'?.4:.44));paintIf({id:'atlas-imagery'},'raster-saturation',theme==='paper'?-.08:-.24);paintIf({id:'atlas-imagery'},'raster-brightness-max',theme==='paper'?.92:.86)}
+ stylePlaceLabels();
 }
-function addLayersVisibility(){if(!map||!map.getLayer('atlas-city-label'))return;['atlas-city-halo','atlas-city-dot'].forEach(id=>layoutIf({id},'visibility',citiesOn?'visible':'none'));['atlas-city-label','atlas-place-state-labels','atlas-place-city-labels','atlas-place-town-labels','atlas-place-village-labels'].forEach(id=>{if(map.getLayer(id))layoutIf({id},'visibility',labelsOn?'visible':'none')});['atlas-route-glow','atlas-routes'].forEach(id=>layoutIf({id},'visibility',arcsOn?'visible':'none'))}
+function addLayersVisibility(){if(!map||!map.getLayer('atlas-city-label'))return;['atlas-city-halo','atlas-city-dot'].forEach(id=>layoutIf({id},'visibility',citiesOn?'visible':'none'));(map.getStyle().layers||[]).filter(l=>l.type==='symbol'&&l['source-layer']==='place').forEach(l=>layoutIf({id:l.id},'visibility',labelsOn?'visible':'none'));if(map.getLayer('atlas-city-label'))layoutIf({id:'atlas-city-label'},'visibility',labelsOn?'visible':'none');['atlas-route-glow','atlas-routes'].forEach(id=>layoutIf({id},'visibility',arcsOn?'visible':'none'))}
 function toggle(id,key){const value=key==='flow'?!flowOn:key==='arcs'?!arcsOn:key==='cities'?!citiesOn:key==='labels'?!labelsOn:!terrainOn; if(key==='flow'){flowOn=value;updateSwitch(id,value);if(!value){app.classList.remove('flow-ready');ctx.clearRect(0,0,screenW,screenH);if(raf)cancelAnimationFrame(raf);raf=0}else{resetParticles();app.classList.add('flow-ready');if(!paused&&!raf)raf=requestAnimationFrame(renderFlow)}}if(key==='arcs'){arcsOn=value;updateSwitch(id,value);addLayersVisibility()}if(key==='cities'){citiesOn=value;updateSwitch(id,value);addLayersVisibility()}if(key==='labels'){labelsOn=value;updateSwitch(id,value);addLayersVisibility()}if(key==='terrain'){setTerrain(value)}}
 function vortexes(){if(flowMode==='ocean')return [{lon:-155,lat:22,s:1.2,r:40},{lon:-35,lat:28,s:-1.6,r:34},{lon:40,lat:-28,s:1.5,r:36},{lon:130,lat:18,s:-1.3,r:31},{lon:15,lat:56,s:1,r:25},{lon:95,lat:-45,s:-1.4,r:34}];if(flowMode==='jet')return [{lon:-145,lat:48,s:1,r:43},{lon:-65,lat:46,s:-.8,r:40},{lon:15,lat:49,s:1.25,r:36},{lon:95,lat:43,s:-.9,r:40},{lon:155,lat:45,s:.85,r:35},{lon:-15,lat:-42,s:1,r:38}];return [{lon:-130,lat:45,s:1.15,r:44},{lon:-30,lat:25,s:-1.5,r:36},{lon:45,lat:5,s:1.25,r:37},{lon:135,lat:-25,s:-1.2,r:39},{lon:10,lat:54,s:1.05,r:26},{lon:-75,lat:-38,s:-1.0,r:34}]}
 function vectorAt(lon,lat){let u=2.6*Math.cos(lat*Math.PI/180)+1.4*Math.sin(lon*.055),v=1.0*Math.sin(lon*.04)*Math.cos(lat*Math.PI/180)+.65*Math.cos(lat*.08);for(const z of vortexes()){let dx=wrapLon(lon-z.lon)*Math.max(.22,Math.cos(z.lat*Math.PI/180)),dy=lat-z.lat;let rr=(dx*dx+dy*dy)/(z.r*z.r);let a=z.s*Math.exp(-rr*1.65);u+=(-dy/z.r)*a*16;v+=(dx/z.r)*a*16}if(flowMode==='jet'){u+=4*Math.sin((lat-35)*.11)*Math.exp(-Math.pow((lat-42)/18,2));v+=.8*Math.sin(lon*.03)}if(flowMode==='ocean'){u*=.68;v*=1.05}return [u,v]}
@@ -236,7 +243,7 @@ function exportArtwork(){
 function resetComposition(){setProjection('globe');map.flyTo({center:[12,27],zoom:1.45,pitch:0,bearing:0,speed:.7,curve:1.2});$('mainTitle').innerHTML='A living<br>planet.';$('mainSub').textContent='Currents, corridors and the invisible geometry of movement.';$('sideTitle').textContent='A world in motion.';$('sideCopy').textContent='The land is a geographic base. The moving particles reveal a stylized vector field, designed to make the invisible structure of flow legible.';flowMode='wind';$('fieldMode').value='wind';particleCount=+$('density').value;speedScale=+$('speed').value/100;resetParticles();pauseFlow(false)}
 function initMap(){if(!window.maplibregl){$('loadStatus').textContent='LIBRARY FAILED';showStatus('Could not load MapLibre. Check the internet connection and reload.');return}
  map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/dark',center:[12,27],zoom:1.45,projection:{type:'globe'},pitch:0,bearing:0,minZoom:0.5,maxZoom:17,scrollZoom:{around:'center'},dragRotate:true,renderWorldCopies:false,attributionControl:true,canvasContextAttributes:{antialias:false,powerPreference:'high-performance',preserveDrawingBuffer:false},maxTileCacheZoomLevels:3,fadeDuration:120});
- map.addControl(new maplibregl.NavigationControl({showCompass:true,showZoom:true,visualizePitch:false}),'bottom-right');map.on('load',()=>{loaded=true;mapNode.classList.add('ready');$('loadStatus').textContent='VECTOR MAP READY';try{map.setProjection({type:'globe'});map.setFog({color:'#0b1928','high-color':'#17394b','space-color':'#02060d','horizon-blend':.12,'star-intensity':.28})}catch(e){}addSatelliteLayer();addOverlayLayers();applyTheme(theme);addReadablePlaceLabels();setCanvasSize();resetParticles();app.classList.add('flow-ready');updateMetrics();map.on('movestart',handleMoveStart);map.on('moveend',handleMoveEnd);map.on('zoomend',updateMetrics);if(!raf&&!paused)raf=requestAnimationFrame(renderFlow);});
+ map.addControl(new maplibregl.NavigationControl({showCompass:true,showZoom:true,visualizePitch:false}),'bottom-right');map.on('load',()=>{loaded=true;mapNode.classList.add('ready');$('loadStatus').textContent='VECTOR MAP READY';try{map.setProjection({type:'globe'});map.setFog({color:'#0b1928','high-color':'#17394b','space-color':'#02060d','horizon-blend':.12,'star-intensity':.28})}catch(e){}addSatelliteLayer();addOverlayLayers();applyTheme(theme);stylePlaceLabels();setCanvasSize();resetParticles();app.classList.add('flow-ready');updateMetrics();map.on('movestart',handleMoveStart);map.on('moveend',handleMoveEnd);map.on('zoomend',updateMetrics);if(!raf&&!paused)raf=requestAnimationFrame(renderFlow);});
  map.on('error',e=>{if(!loaded){$('loadStatus').textContent='LOADING MAP';if(e&&e.error)console.warn('Basemap event:',e.error.message)}});
 }
 $('searchBtn').addEventListener('click',searchPlace);$('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlace()});$('globeBtn').addEventListener('click',()=>setProjection('globe'));$('flatBtn').addEventListener('click',()=>setProjection('mercator'));document.querySelectorAll('.style').forEach(b=>b.addEventListener('click',()=>applyTheme(b.dataset.theme)));
