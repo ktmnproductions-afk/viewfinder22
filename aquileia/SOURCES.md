@@ -25,13 +25,14 @@ This is a **procedural reconstruction based on a published archaeological plan**
 
 ## What is evidence-based and what is interpretive
 
-- **Published-plan scaffold:** the rough orthogonal street network, approximate city extent and relative arrangement of major civic and entertainment complexes follow the published archaeological plan. The plan combines discoveries made over multiple excavation periods; it is not one complete preserved Roman city surface.
-- **Landmark locations:** the forum, river port, basilica, amphitheatre, circus and market complex are positioned according to the plan at schematic 3D coordinates. The 3D world is not georeferenced parcel-by-parcel to the modern map. The separate map view uses real geographic map tiles and approximate site pins.
+- **Published-plan scaffold:** the rough orthogonal street network, approximate city extent and relative arrangement of major civic and entertainment complexes follow the published archaeological plan. The plan combines discoveries made over multiple excavation periods; it is not one complete preserved Roman city surface. The 3D scene's road grid is a simplified, rotated alignment—not a pixel-traced digitization—and its broad urban outline remains interpretive.
+- **Landmark locations:** the forum, river port, basilica, Titus Macro house and market complex use mapped geographic reference points and a shared local projection anchored on the forum (approximately 10 m per scene unit). The 3D city grid is rotated to its schematic archaeological street axis. Amphitheatre and circus placement remain plan-derived approximations. The whole city is not a georeferenced, parcel-by-parcel archaeological survey.
 - **Measured dimensions:** the forum model uses its published 141 × 55 m overall dimensions as a scale reference. The river-port warehouse is shown as a long narrow structure based on the published length description. Its precise shape and placement in the 3D scene remain simplified.
 - **Representative structures:** houses, roofs, courtyards, forum columns, warehouses, amphitheatre seating, circus track, basilica elevations and defensive-wall modules are newly generated procedural meshes. They show the type and broad scale of structures; they are not claimed to reproduce every excavated footprint or the original project's proprietary models.
 - **452 CE:** a subset of buildings darkens and collapses while fire/smoke particles appear. This is a visual interpretation of the documented sack, not a verified building-by-building fire map.
 - **Present day:** modern houses, a basilica tower, fields and archaeological traces are contextual scene geometry, not a surveyed digital twin of modern Aquileia.
 - **Old city boundaries and ancient river alignment:** outlines are interpretive aids, not surveyed cadastral or hydrological boundaries.
+- **Phase-specific visibility:** the timeline controls which structures are rendered, not only their height. Early-colony buildings, developed Roman housing, Late Antique walls, fire effects and modern/archaeological traces are assigned to the relevant eras rather than leaving flattened building footprints visible in unrelated periods.
 
 ## Rendering and map stack
 
