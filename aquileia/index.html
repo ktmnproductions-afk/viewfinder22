@@ -318,15 +318,15 @@ function setEra(i){
  stageIndex=Math.max(0,Math.min(4,Number(i)));const e=eras[stageIndex];
  $("eraYear").textContent=e.year;$("eraTitle").textContent=e.title;$("eraCopy").textContent=e.copy;$("evidenceText").textContent=e.evidence;$("hudLabel").textContent=e.label;$("hudTitle").textContent=e.hud;$("hudSub").textContent=e.sub;$("count").textContent=String(stageIndex+1).padStart(2,"0")+" / 05";$("time").value=stageIndex;
  document.querySelectorAll(".milestone").forEach((b,n)=>{b.classList.toggle("active",n===stageIndex);b.setAttribute("aria-pressed",n===stageIndex?"true":"false");});
- cityActors.early.forEach(g=>setTarget(g,stageIndex===0?.97:stageIndex===1?.25:.001));
- cityActors.houses.forEach(g=>{let v=stageIndex===0?.001:stageIndex===1||stageIndex===2?1:stageIndex===3?(g.userData.damage?g.userData.damagedStageScale:.78):.001;setTarget(g,v);if(g.userData.damagedRoof)g.userData.damagedRoof.visible=stageIndex===3&&g.userData.damage;});
- cityActors.landmarks.forEach(g=>{const name=g.userData.site||g.name;let v=0;if(name==="forum"||name==="civil-basilica"||name==="river-port"||name==="amphitheatre"||name==="theatre"||name==="circus"||name==="markets")v=stageIndex===0?.04:stageIndex===4?.035:stageIndex===3?.8:1;if(name==="christian-basilica")v=stageIndex===2?.98:stageIndex===3?.72:.001;if(name==="titus-macro-domus")v=stageIndex===0?.001:stageIndex===1||stageIndex===2?1:stageIndex===3?.62:.001;if(name==="modern-basilica")v=stageIndex===4?.98:.001;setTarget(g,v);});
- cityActors.walls.forEach(g=>setTarget(g,stageIndex===2?.98:stageIndex===3?(g.userData.breached?.28:.7):.001));
- ships.forEach(g=>setTarget(g,stageIndex===1||stageIndex===2?1:stageIndex===3?.25:.001));
+ cityActors.early.forEach(g=>{g.visible=stageIndex===0||stageIndex===1;setTarget(g,stageIndex===0?.97:stageIndex===1?.25:.001);});
+ cityActors.houses.forEach(g=>{g.visible=stageIndex>=1&&stageIndex<=3;let v=stageIndex===0?.001:stageIndex===1||stageIndex===2?1:stageIndex===3?(g.userData.damage?g.userData.damagedStageScale:.78):.001;setTarget(g,v);if(g.userData.damagedRoof)g.userData.damagedRoof.visible=stageIndex===3&&g.userData.damage;});
+ cityActors.landmarks.forEach(g=>{const name=g.userData.site||g.name;let v=0;if(name==="forum"||name==="civil-basilica"||name==="river-port"||name==="amphitheatre"||name==="theatre"||name==="circus"||name==="markets")v=stageIndex===0?.001:stageIndex===4?.035:stageIndex===3?.8:1;if(name==="christian-basilica")v=stageIndex===2?.98:stageIndex===3?.72:.001;if(name==="titus-macro-domus")v=stageIndex===0?.001:stageIndex===1||stageIndex===2?1:stageIndex===3?.62:.001;if(name==="modern-basilica")v=stageIndex===4?.98:.001;g.visible=v>.01;setTarget(g,v);});
+ cityActors.walls.forEach(g=>{g.visible=stageIndex===2||stageIndex===3;setTarget(g,stageIndex===2?.98:stageIndex===3?(g.userData.breached?.28:.7):.001);});
+ ships.forEach(g=>{g.visible=stageIndex===1||stageIndex===2||stageIndex===3;setTarget(g,stageIndex===1||stageIndex===2?1:stageIndex===3?.25:.001);});
  roadsActors.forEach(g=>setTarget(g,stageIndex===0?.08:stageIndex===4?g===farmlandTracks?1:.07:1));
  fields.scale.set(1,1,1);farmlandTracks.scale.set(1,1,1);farmlandTracks.visible=stageIndex===4;
- cityActors.ruins.forEach(g=>setTarget(g,stageIndex===4?.95:.001));
- cityActors.trees.forEach(g=>setTarget(g,stageIndex===4?1:stageIndex===3?.5:.22));cityActors.modern.forEach(g=>setTarget(g,stageIndex===4?.98:.001));
+ cityActors.ruins.forEach(g=>{g.visible=stageIndex===4;setTarget(g,stageIndex===4?.95:.001);});
+ cityActors.trees.forEach(g=>{g.visible=stageIndex>=3;setTarget(g,stageIndex===4?1:.5);});cityActors.modern.forEach(g=>{g.visible=stageIndex===4;setTarget(g,stageIndex===4?.98:.001);});
  fires.forEach(f=>{f.flame.visible=stageIndex===3;f.sprite.material.opacity=stageIndex===3?.75:0;f.sprite2.material.opacity=stageIndex===3?.52:0;});
  Object.entries(hotspotMeshes).forEach(([key,o])=>{const visible=stageIndex>0&&stageIndex<4||(stageIndex===4&&["basilica","markets","port","forum"].includes(key));o.marker.visible=visible;o.ring.visible=visible;o.label.visible=visible;});
  if(stageIndex===2){hotspotMeshes.basilica.label.material.opacity=1;}if(stageIndex===3){$("hudLabel").style.color="#ffb49a";}else{$("hudLabel").style.color="#f1d9a5";}
