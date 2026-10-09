@@ -1,0 +1,90 @@
+name: Aquileia 3D browser verification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "aquileia/index.html"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Playwright
+        run: npm install --no-save playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Serve the site locally
+        run: |
+          nohup python3 -m http.server 8000 --bind 127.0.0.1 > /tmp/aquileia-http.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl --silent --fail http://127.0.0.1:8000/aquileia/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/aquileia-http.log
+          exit 1
+      - name: Check 3D rendering, timeline and map interaction
+        run: |
+          mkdir -p artifacts
+          node <<'NODE'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({
+              headless: true,
+              args: ['--enable-webgl', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+            });
+            const page = await browser.newPage({ viewport: { width: 1600, height: 950 }, deviceScaleFactor: 1 });
+            const errors = [];
+            page.on('pageerror', e => errors.push('PAGE: ' + e.message));
+            page.on('console', m => { if (m.type() === 'error') errors.push('CONSOLE: ' + m.text()); });
+            await page.goto('http://127.0.0.1:8000/aquileia/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.waitForFunction(() => window.__AQUILEIA_TEST__ && window.__AQUILEIA_TEST__.drawCalls > 0, { timeout: 30000 });
+            const initial = await page.evaluate(() => ({
+              stage: window.__AQUILEIA_TEST__.stage,
+              drawCalls: window.__AQUILEIA_TEST__.drawCalls,
+              sceneObjects: window.__AQUILEIA_TEST__.sceneObjects,
+              landmarks: window.__AQUILEIA_TEST__.landmarks,
+              canvasWidth: document.querySelector('#world').width,
+              canvasHeight: document.querySelector('#world').height
+            }));
+            if (initial.drawCalls < 40) throw new Error('3D frame rendered too few draw calls: ' + JSON.stringify(initial));
+            if (initial.landmarks < 5) throw new Error('Expected clickable 3D landmarks were not created.');
+            for (const stage of [1, 2, 3, 4, 1]) {
+              await page.locator('button[data-era="' + stage + '"]').click();
+              await page.waitForFunction(expected => window.__AQUILEIA_TEST__?.stage === expected, stage, { timeout: 5000 });
+            }
+            await page.waitForTimeout(1400);
+            const changed = await page.evaluate(() => ({
+              stage: window.__AQUILEIA_TEST__.stage,
+              drawCalls: window.__AQUILEIA_TEST__.drawCalls,
+              title: document.querySelector('#eraTitle').textContent,
+              canvasWidth: document.querySelector('#world').width
+            }));
+            await page.locator('#modeMap').click();
+            await page.waitForFunction(() => document.body.classList.contains('map-mode'));
+            await page.locator('#mode3d').click();
+            await page.waitForFunction(() => !document.body.classList.contains('map-mode'));
+            await page.screenshot({ path: 'artifacts/aquileia-3d.png' });
+            if (errors.length) throw new Error('Browser errors: \\n' + errors.join('\\n'));
+            console.log(JSON.stringify({ initial, changed, mapToggle: 'passed', consoleErrors: errors.length }, null, 2));
+            await browser.close();
+          })().catch(e => { console.error(e); process.exit(1); });
+          NODE
+      - name: Save browser screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aquileia-3d-browser-check
+          path: artifacts/aquileia-3d.png
+          if-no-files-found: ignore
