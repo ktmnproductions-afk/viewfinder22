@@ -41,7 +41,7 @@
       <div class="rowlabel">Animated flow field <button class="switch on" id="flowToggle" aria-label="Toggle flow field" aria-pressed="true"></button></div>
       <div class="rowlabel">Connection arcs <button class="switch on" id="arcsToggle" aria-label="Toggle connection arcs" aria-pressed="true"></button></div>
       <div class="rowlabel">City beacons <button class="switch on" id="citiesToggle" aria-label="Toggle city beacons" aria-pressed="true"></button></div>
-      <div class="rowlabel">City labels <button class="switch" id="labelsToggle" aria-label="Toggle highlighted city labels" aria-pressed="false"></button></div>
+      <div class="rowlabel">Featured city labels <button class="switch on" id="labelsToggle" aria-label="Toggle featured city labels" aria-pressed="true"></button></div>
       <div class="rowlabel">Satellite imagery <button class="switch on" id="imageryToggle" aria-label="Toggle satellite imagery" aria-pressed="true"></button></div>
       <div class="rowlabel">3D terrain <button class="switch" id="terrainToggle" aria-label="Toggle 3D terrain" aria-pressed="false"></button></div>
       <div class="range-wrap"><div class="range-label"><label for="density">Particle density</label><span id="densityVal">280</span></div><input id="density" type="range" min="120" max="800" step="20" value="280"></div>
@@ -65,7 +65,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const app=$('app'),mapNode=$('map'),flowCanvas=$('flowCanvas'),ctx=flowCanvas.getContext('2d',{alpha:true,desynchronized:true});
-let map=null,theme='dark',projection='globe',flowOn=true,arcsOn=true,citiesOn=true,labelsOn=false,imageryOn=true,terrainOn=false,paused=false,flowMode='wind',particleCount=280,speedScale=1,particles=[],raf=0,lastFrame=0,lastMoveTimer=0,screenW=0,screenH=0,dpr=1,loaded=false,terrainSourceAdded=false;
+let map=null,theme='dark',projection='globe',flowOn=true,arcsOn=true,citiesOn=true,labelsOn=true,imageryOn=true,terrainOn=false,paused=false,flowMode='wind',particleCount=280,speedScale=1,particles=[],raf=0,lastFrame=0,lastMoveTimer=0,screenW=0,screenH=0,dpr=1,loaded=false,terrainSourceAdded=false;
 const CITIES=[
  {name:'New York',p:[-74.006,40.7128],rank:1},{name:'London',p:[-.1276,51.5072],rank:1},{name:'Paris',p:[2.3522,48.8566],rank:1},{name:'Lagos',p:[3.3792,6.5244],rank:2},{name:'Nairobi',p:[36.8219,-1.2921],rank:2},{name:'Cairo',p:[31.2357,30.0444],rank:2},{name:'Mumbai',p:[72.8777,19.076],rank:1},{name:'Tokyo',p:[139.6917,35.6895],rank:1},{name:'Singapore',p:[103.8198,1.3521],rank:2},{name:'Sydney',p:[151.2093,-33.8688],rank:1},{name:'Rio de Janeiro',p:[-43.1729,-22.9068],rank:1},{name:'Cape Town',p:[18.4241,-33.9249],rank:1},{name:'Rijeka',p:[14.4422,45.3271],rank:2},{name:'Istanbul',p:[28.9784,41.0082],rank:1},{name:'Reykjavik',p:[-21.9426,64.1466],rank:2}
 ];
@@ -79,7 +79,7 @@ function geodesicLine(a,b,n=100){const rad=Math.PI/180,la=a[1]*rad,lb=b[1]*rad,d
 function addOverlayLayers(){if(!map.getSource('atlas-cities'))map.addSource('atlas-cities',{type:'geojson',data:{type:'FeatureCollection',features:CITIES.map(c=>({type:'Feature',properties:{name:c.name,rank:c.rank},geometry:{type:'Point',coordinates:c.p}}))}});
  if(!map.getLayer('atlas-city-halo'))map.addLayer({id:'atlas-city-halo',type:'circle',source:'atlas-cities',paint:{'circle-radius':['match',['get','rank'],1,12,2,8,5],'circle-color':THEME[theme].accent,'circle-opacity':.12,'circle-blur':.95}});
  if(!map.getLayer('atlas-city-dot'))map.addLayer({id:'atlas-city-dot',type:'circle',source:'atlas-cities',paint:{'circle-radius':['match',['get','rank'],1,3.5,2,2.7,2],'circle-color':THEME[theme].accent,'circle-stroke-width':1,'circle-stroke-color':'#eafff8','circle-opacity':.98}});
- if(!map.getLayer('atlas-city-label'))map.addLayer({id:'atlas-city-label',type:'symbol',source:'atlas-cities',layout:{'text-field':['get','name'],'text-font':['Open Sans Semibold','Arial Unicode MS Bold'],'text-size':['interpolate',['linear'],['zoom'],0,10,3,12,7,13],'text-offset':[0,1.1],'text-anchor':'top','text-allow-overlap':false,'text-ignore-placement':false,'visibility':labelsOn?'visible':'none'},paint:{'text-color':THEME[theme].text,'text-halo-color':THEME[theme].background,'text-halo-width':1.7,'text-halo-blur':.2}});
+ if(!map.getLayer('atlas-city-label'))map.addLayer({id:'atlas-city-label',type:'symbol',source:'atlas-cities',layout:{'text-field':['get','name'],'text-font':['Open Sans Semibold','Arial Unicode MS Bold'],'text-size':['interpolate',['linear'],['zoom'],0,10,3,12,7,13],'text-offset':[0,1.1],'text-anchor':'top','text-allow-overlap':false,'text-ignore-placement':false,'visibility':labelsOn?'visible':'none'},paint:{'text-color':theme==='paper'?'#26372f':'#f4faf7','text-halo-color':theme==='paper'?'rgba(244,241,231,.96)':'rgba(2,7,13,.97)','text-halo-width':2.2,'text-halo-blur':.15}});
  const features=[];for(const pair of ROUTE_PAIRS){const a=CITIES.find(c=>c.name===pair[0]),b=CITIES.find(c=>c.name===pair[1]);if(a&&b)features.push({type:'Feature',properties:{from:a.name,to:b.name},geometry:{type:'LineString',coordinates:geodesicLine(a.p,b.p,64)}})}
  if(!map.getSource('atlas-routes'))map.addSource('atlas-routes',{type:'geojson',data:{type:'FeatureCollection',features}});
  if(!map.getLayer('atlas-route-glow'))map.addLayer({id:'atlas-route-glow',type:'line',source:'atlas-routes',layout:{visibility:arcsOn?'visible':'none','line-cap':'round','line-join':'round'},paint:{'line-color':THEME[theme].gold,'line-width':['interpolate',['linear'],['zoom'],0,1.2,3,2.6,7,3.6],'line-opacity':.14,'line-blur':2}});
@@ -87,7 +87,7 @@ function addOverlayLayers(){if(!map.getSource('atlas-cities'))map.addSource('atl
 }
 function addSatelliteLayer(){
  if(!map.getSource('atlas-imagery'))map.addSource('atlas-imagery',{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community'});
- if(!map.getLayer('atlas-imagery')){const layers=map.getStyle().layers||[];const before=layers.find(l=>l.type==='line'||l.type==='symbol');map.addLayer({id:'atlas-imagery',type:'raster',source:'atlas-imagery',layout:{visibility:imageryOn?'visible':'none'},paint:{'raster-opacity':.76,'raster-saturation':-.45,'raster-contrast':.16,'raster-brightness-min':.035,'raster-brightness-max':.68,'raster-fade-duration':100}},before?before.id:undefined)}
+ if(!map.getLayer('atlas-imagery')){const layers=map.getStyle().layers||[];const before=layers.find(l=>l.type==='line'||l.type==='symbol');map.addLayer({id:'atlas-imagery',type:'raster',source:'atlas-imagery',layout:{visibility:imageryOn?'visible':'none'},paint:{'raster-opacity':.56,'raster-saturation':-.32,'raster-contrast':.12,'raster-brightness-min':.045,'raster-brightness-max':.78,'raster-fade-duration':100}},before?before.id:undefined)}
 }
 function setTerrain(enabled){terrainOn=enabled;updateSwitch('terrainToggle',enabled);if(!map)return;if(!enabled){try{map.setTerrain(null)}catch(e){}return;}try{if(!terrainSourceAdded){map.addSource('atlas-dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',maxzoom:15,attribution:'Terrain tiles © AWS Open Data'});terrainSourceAdded=true}map.setTerrain({source:'atlas-dem',exaggeration:1.18});showStatus('3D terrain enabled · additional elevation tiles are loading')}catch(e){terrainOn=false;updateSwitch('terrainToggle',false);showStatus('3D terrain is unavailable in this map style.')}}
 function paintIf(layer,prop,val){try{map.setPaintProperty(layer.id,prop,val)}catch(e){}}
@@ -110,13 +110,31 @@ function applyTheme(next){theme=next;const t=THEME[theme];document.documentEleme
   }
   if(l.type==='symbol'){
    if(/poi|housenumber|aeroway|airport_gate/.test(key)){layoutIf(l,'visibility','none');continue}
-   if(/text-color/.test(id)||l.layout?.['text-field']){paintIf(l,'text-color',/country|state|continent|region/.test(key)?t.text:t.minor);paintIf(l,'text-halo-color',t.background);paintIf(l,'text-halo-width',1.25)}
+   if(l.layout?.['text-field']){
+    const isAdmin=/country|continent|state|region|admin_0|admin-0|boundary-label/.test(key);
+    const isPlace=/place|city|town|village|settlement|locality|capital|neighbourhood/.test(key);
+    const isWater=/water|ocean|lake|river|sea-name/.test(key);
+    const isTransport=/road|street|transport|highway|railway|motorway/.test(key);
+    const halo=theme==='paper'?'rgba(244,241,231,.96)':'rgba(2,7,13,.97)';
+    const textColor=theme==='paper'?(isWater?'#376c73':(isTransport?'#56645d':'#26372f')):(isWater?'#a8e6f0':(isTransport?'#d5e4df':'#f4faf7'));
+    const size=isPlace?['interpolate',['linear'],['zoom'],0,10,2,11.5,4,13.5,6,15,9,17,13,19]:
+     isAdmin?['interpolate',['linear'],['zoom'],0,10,2,12,4,14,7,16]:
+     isWater?['interpolate',['linear'],['zoom'],0,9,3,11,6,13.5,10,15]:
+     isTransport?['interpolate',['linear'],['zoom'],5,9,8,10.5,11,12,14,13]:
+     ['interpolate',['linear'],['zoom'],0,8.5,4,10,8,11.5];
+    layoutIf(l,'text-size',size);
+    paintIf(l,'text-color',textColor);
+    paintIf(l,'text-opacity',isTransport?.84:.98);
+    paintIf(l,'text-halo-color',halo);
+    paintIf(l,'text-halo-width',isPlace||isAdmin?2.15:(isWater?1.9:1.65));
+    paintIf(l,'text-halo-blur',.15);
+   }
   }
   if(l.type==='fill-extrusion'){paintIf(l,'fill-extrusion-color',t.building);paintIf(l,'fill-extrusion-opacity',.52)}
  }
  try{map.setFog({color:theme==='paper'?'#cfd9d4':'#0b1928','high-color':theme==='aurora'?'#124050':'#16374a','space-color':theme==='paper'?'#d8d5c9':'#02060d','horizon-blend':.12,'star-intensity':theme==='paper'?0:.28})}catch(e){}
  if(map.getLayer('atlas-city-halo')){paintIf({id:'atlas-city-halo'},'circle-color',t.accent);paintIf({id:'atlas-city-dot'},'circle-color',t.accent);paintIf({id:'atlas-city-label'},'text-color',t.text);paintIf({id:'atlas-city-label'},'text-halo-color',t.background);paintIf({id:'atlas-route-glow'},'line-color',t.gold);paintIf({id:'atlas-routes'},'line-color',t.gold)}
- if(map.getLayer('atlas-imagery')){paintIf({id:'atlas-imagery'},'raster-opacity',theme==='paper'?.26:(theme==='aurora'?.66:.76));paintIf({id:'atlas-imagery'},'raster-saturation',theme==='paper'?-.12:-.45);paintIf({id:'atlas-imagery'},'raster-brightness-max',theme==='paper'?.84:.68)}
+ if(map.getLayer('atlas-imagery')){paintIf({id:'atlas-imagery'},'raster-opacity',theme==='paper'?.2:(theme==='aurora'?.46:.56));paintIf({id:'atlas-imagery'},'raster-saturation',theme==='paper'?-.12:-.32);paintIf({id:'atlas-imagery'},'raster-brightness-max',theme==='paper'?.88:.78)}
 }
 function addLayersVisibility(){if(!map||!map.getLayer('atlas-city-label'))return;['atlas-city-halo','atlas-city-dot'].forEach(id=>layoutIf({id},'visibility',citiesOn?'visible':'none'));layoutIf({id:'atlas-city-label'},'visibility',labelsOn?'visible':'none');['atlas-route-glow','atlas-routes'].forEach(id=>layoutIf({id},'visibility',arcsOn?'visible':'none'))}
 function toggle(id,key){const value=key==='flow'?!flowOn:key==='arcs'?!arcsOn:key==='cities'?!citiesOn:key==='labels'?!labelsOn:!terrainOn; if(key==='flow'){flowOn=value;updateSwitch(id,value);if(!value){app.classList.remove('flow-ready');ctx.clearRect(0,0,screenW,screenH);if(raf)cancelAnimationFrame(raf);raf=0}else{resetParticles();app.classList.add('flow-ready');if(!paused&&!raf)raf=requestAnimationFrame(renderFlow)}}if(key==='arcs'){arcsOn=value;updateSwitch(id,value);addLayersVisibility()}if(key==='cities'){citiesOn=value;updateSwitch(id,value);addLayersVisibility()}if(key==='labels'){labelsOn=value;updateSwitch(id,value);addLayersVisibility()}if(key==='terrain'){setTerrain(value)}}
