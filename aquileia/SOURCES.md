@@ -36,6 +36,7 @@ The “Watch this era” control links to era- or feature-relevant publicly publ
 - Forum, port, basilica, Domus and market markers are geospatial reference points. Domus and market pins are explicitly approximate.
 - The forum rectangle is scaled from the published 141 × 55 m dimensions; its orientation is an approximation for display.
 - The port line is an interpretive alignment over the present map. Ancient watercourses and shoreline conditions changed, so it is **not** a surveyed reconstruction of the historic bank or quay.
+- The narrow port-warehouse polygon uses the published length (over 300 m) and maximum width (about 13 m) as scale, but its position/orientation on the modern map is approximate. It is not a surveyed building footprint.
 - The broad dashed ancient-city extent is an interpretive visual locator, **not** a verified Roman perimeter or wall survey.
 - The 452 CE red circle is a symbolic event indicator. It is **not** a building-by-building damage map.
 
