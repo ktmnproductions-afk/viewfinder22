@@ -779,9 +779,17 @@ function renderSpotParking(item){
 }
 async function loadParkingNearSelected(item){
  const requestId=++state.spotParkingRequest;
- // Collect existing scan parking before switching the targeted spot ID, so results
- // from the previously selected spot never leak into the new spot's recommendations.
- const local=parkingCandidates().map(p=>({...p,distance:haversine({lat:item.lat,lng:item.lng},{lat:p.lat,lng:p.lng}),parkingOrigin:'near-selected'})).filter(p=>Number.isFinite(p.distance)&&p.distance<=3500);
+ // Seed from the original scan's parking and basemap data only. Never reuse
+ // the previous selected spot's result list when the user selects another place.
+ const center={lat:item.lat,lng:item.lng};
+ const rawLocal=[
+  ...state.results.filter(p=>p.category==='parking').map(p=>({...p,parkingOrigin:'indexed'})),
+  ...(state.basemapParking||[]).map(p=>({...p,parkingOrigin:'basemap'}))
+ ].map(p=>({...p,distance:haversine(center,{lat:p.lat,lng:p.lng}),distanceFromSpot:haversine(center,{lat:p.lat,lng:p.lng}),parkingOrigin:'near-selected'})).filter(p=>Number.isFinite(p.distance)&&p.distance<=3500);
+ const local=[];
+ rawLocal.forEach(p=>{
+  if(!local.some(q=>haversine({lat:q.lat,lng:q.lng},{lat:p.lat,lng:p.lng})<65))local.push(p);
+ });
  state.spotParkingTargetId=item.id;
  state.spotParkingLoading=true;
  state.spotParking=local;
