@@ -43,6 +43,13 @@
 .concept-note{font-size:9px;color:#93a497;line-height:1.45;margin-top:8px}
 .ai-visual-intro{font-size:10px;line-height:1.5;color:#b8c6b9;margin:7px 0 9px}
 .ai-visual-block{margin:10px 0 12px;padding:11px;border:1px solid #40533e;border-radius:12px;background:linear-gradient(145deg,rgba(35,53,40,.78),rgba(19,31,23,.92))}
+.reference-gallery{margin-top:12px;padding-top:11px;border-top:1px solid rgba(232,242,228,.12)}
+.reference-gallery-note{font-size:9px;line-height:1.45;color:#a7b6a8;margin:5px 0 8px}
+.reference-gallery .photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.reference-gallery .photo-card img{height:72px}
+.reference-gallery .photo-caption{font-size:8px;line-height:1.3;padding:5px}
+.reference-gallery .photo-license{font-size:7px;line-height:1.25;margin-top:3px}
+
 .concept-controls{display:flex;gap:7px;align-items:stretch;margin:8px 0}
 .concept-controls select{flex:1;min-width:0;color:#eaf2e5;background:#18251c;border:1px solid #445845;border-radius:8px;padding:8px;font-size:10px}
 .concept-controls .btn{flex:0 0 auto;font-size:10px;padding:8px 10px}
@@ -126,7 +133,7 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
     <div class="status-msg" style="margin:-2px 0 9px">Scouting up to 25–30 km out for mapped viewpoints, hilltops, ridges, towers, waterfronts and other promising places for distant city or landscape frames. Suggestions are evidence-ranked, not guaranteed views.</div>
 <div class="concept-block ai-visual-block" id="aiVisualBlock">
       <div class="section-heading"><h3>Photo idea lab</h3><span class="count" id="conceptTargetName">Pin a place to start</span></div>
-      <p class="ai-visual-intro">Create a photorealistic composition concept for this selected place. It is an artistic interpretation, not proof of the actual view or a promise that the line of sight is clear.</p>
+      <p class="ai-visual-intro" id="photoIdeaSummary">Three composition ideas for the best candidate near your pin. The AI image is an artistic interpretation, not proof of the actual view or a promise that the line of sight is clear.</p>
       <div class="concept-controls">
         <select id="conceptMode" aria-label="Choose a photo composition"><option value="wide">Wide landscape · 18–24 mm</option><option value="context">Subject with context · 35–70 mm</option><option value="compressed">Compressed layers · 100–150 mm</option></select>
         <button class="btn primary" id="generateConcept" type="button">Generate image idea</button>
@@ -136,12 +143,17 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
         <img class="generated-visual-img" id="generatedVisual" alt="AI-generated illustrative photography concept for the selected location">
         <div class="generated-visual-caption">AI-generated concept · not a verified photograph of the real location</div>
       </div>
+      <div class="reference-gallery">
+        <div class="section-heading"><h3>Place-matched reference images</h3><span class="count" id="photoCount">—</span></div>
+        <p class="reference-gallery-note">Images are matched by place or subject title. Random geotagged event uploads are excluded; a reference is inspiration, not a verified camera position.</p>
+        <div class="photos" id="photoResults"><div class="empty" style="grid-column:1/-1">Drop a pin to find source-linked images of the town, landmarks and nearby landscape.</div></div>
+      </div>
     </div>
     <div class="concept-block"><div class="section-heading"><h3>Three ways to frame it</h3><span class="count">Canon R50 · 18–150 mm</span></div>
       <div class="concept-grid">
-        <article class="concept-card"><div class="concept-art wide"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Wide landscape</div><div class="concept-lens">18–24 mm</div><p>Build a foreground, then lead the eye into the city, coastline or hills.</p></article>
-        <article class="concept-card"><div class="concept-art balanced"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">City with context</div><div class="concept-lens">35–70 mm</div><p>Keep the skyline readable while retaining the landscape around it.</p></article>
-        <article class="concept-card"><div class="concept-art compressed"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Compressed layers</div><div class="concept-lens">100–150 mm</div><p>Stack rooftops, towers and mountain ridges into graphic layers.</p></article>
+        <article class="concept-card"><div class="concept-art wide"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Wide landscape</div><div class="concept-lens">18–24 mm</div><p id="ideaWideCopy">Use a foreground edge to lead into the town, coast or hills; keep the horizon deliberate.</p></article>
+        <article class="concept-card"><div class="concept-art balanced"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">City with context</div><div class="concept-lens">35–70 mm</div><p id="ideaContextCopy">Balance the main subject with a band of surrounding landscape; avoid a postcard framing.</p></article>
+        <article class="concept-card"><div class="concept-art compressed"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Compressed layers</div><div class="concept-lens">100–150 mm</div><p id="ideaCompressedCopy">Use telephoto compression to stack rooftops, towers or ridgelines where visible.</p></article>
       </div>
       <div class="concept-note">These are instant Canon R50 shot concepts, not photos of the actual location. Generate a photorealistic visual idea above, then refine it with the editable prompt in the selected-spot panel.</div>
     </div>
@@ -160,11 +172,7 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
     <div class="section-heading"><h3>Architecture & viewpoints</h3><span class="count" id="viewCount">—</span></div>
     <div class="result-list" id="viewResults"><div class="empty">Look for viewpoints, interesting buildings and natural subjects around the pin.</div></div>
   </section>
-  <section class="section results-section">
-    <div class="section-heading"><h3>Artistic photo references</h3><span class="count" id="photoCount">—</span></div>
-    <div class="photos" id="photoResults"><div class="empty" style="grid-column:1/-1">Geotagged visual references from Wikimedia Commons appear here when available.</div></div>
-    <div class="social-row"><a class="btn small" id="pinterestSearch" target="_blank" rel="noopener noreferrer" href="https://www.pinterest.com/">Pinterest ↗</a><a class="btn small" id="instagramSearch" target="_blank" rel="noopener noreferrer" href="https://www.instagram.com/explore/">Instagram ↗</a></div>
-  </section>
+  
   <section class="section results-section">
     <div class="section-heading"><h3>Saved stops</h3><span class="count" id="savedCount">0</span></div>
     <div id="savedResults"><div class="empty">Save a pin or selected place to build a road-trip list on this device.</div></div>
@@ -876,9 +884,12 @@ async function scanAt(c,opts){
  mapOk();
 }
 function updateSocialSearch(query){
+ // Inspiration is shown in the app from subject-matched media. Keep this helper
+ // null-safe for deployments that do not render external social-search links.
  const q=(query+' photography').trim();
- $('pinterestSearch').href='https://www.pinterest.com/search/pins/?q='+encodeURIComponent(q);
- $('instagramSearch').href='https://www.instagram.com/explore/search/keyword/?q='+encodeURIComponent(q);
+ const pinterest=$('pinterestSearch'),instagram=$('instagramSearch');
+ if(pinterest)pinterest.href='https://www.pinterest.com/search/pins/?q='+encodeURIComponent(q);
+ if(instagram)instagram.href='https://www.instagram.com/explore/search/keyword/?q='+encodeURIComponent(q);
 }
 function shotPrompt(item){
  let genre='editorial travel photography';
@@ -925,9 +936,21 @@ function currentConceptTarget(){
 }
 function updateConceptTargetName(){
  const label=$('conceptTargetName');
- if(!label)return;
  const item=currentConceptTarget();
- label.textContent=item?'For: '+item.name:'Pin a place to start';
+ if(label)label.textContent=item?'For: '+item.name:'Pin a place to start';
+ const summary=$('photoIdeaSummary');
+ const wide=$('ideaWideCopy'),context=$('ideaContextCopy'),compressed=$('ideaCompressedCopy');
+ if(!item){
+  if(summary)summary.textContent='Drop a pin to get three composition ideas tailored to a mapped place, with an optional AI-generated image preview.';
+  return;
+ }
+ const name=item.name||'this location';
+ const town=String(item.city||state.detectedLocality||'the surrounding area');
+ const isArchitecture=item.category==='history'||item.category==='architecture';
+ if(summary)summary.textContent='Shot plan for '+name+(town&&town!==name?' near '+town:'')+'. These are practical starting points for your Canon EOS R50 and 18–150 mm lens; confirm the real view and safe access on site.';
+ if(wide)wide.textContent=isArchitecture?'At '+name+', use 18–24 mm to frame the whole structure with a foreground edge and clean verticals; leave room around the silhouette.':'At '+name+', use 18–24 mm with a path, wall or vegetation in the foreground, leading toward the town or ridgeline only if it is actually visible.';
+ if(context)context.textContent=isArchitecture?'At '+name+', use 35–70 mm to isolate a facade, arch or architectural detail while retaining enough context to identify the place.':'At '+name+', use 35–70 mm to balance the main subject with the landscape behind it; build clear foreground, middle-ground and background layers.';
+ if(compressed)compressed.textContent=isArchitecture?'At '+name+', use 100–150 mm to isolate repeating windows, roof textures, towers or graphic details; watch for converging verticals.':'At '+name+', use 100–150 mm to compress rooflines, distant hills or coastal layers if the sightline allows; try several heights for cleaner overlaps.';
 }
 async function generateConcept(){
  const item=currentConceptTarget();
