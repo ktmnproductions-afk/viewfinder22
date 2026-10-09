@@ -635,7 +635,7 @@ function renderScenicSpots(){
 }
 function renderResults(){
  const shown=state.filter==='all'?state.results:state.results.filter(r=>r.category===state.filter);
- const parking=shown.filter(r=>r.category==='parking');
+ const parking=(state.filter==='all'||state.filter==='parking')?parkingCandidates():[];
  const history=shown.filter(r=>r.category==='history');
  const view=shown.filter(r=>r.category==='viewpoint'||r.category==='architecture');
  $('parkingCount').textContent=parking.length+' spots';
@@ -801,7 +801,7 @@ async function scanAt(c,opts){
   mergePlaces();
   renderResults();renderPhotos();renderMarkers();updateRadius();
   const parts=[];
-  if(completed.has('places'))parts.push(osmResults.length+' mapped places');
+  if(completed.has('places'))parts.push(osmResults.length+' mapped places · '+parkingCandidates().length+' parking locations on screen/in radius');
   if(completed.has('history'))parts.push(wikiResults.length+' history articles');
   if(completed.has('scenic'))parts.push(state.scenicSpots.length+' photo spots in wider radius');
   if(completed.has('photos'))parts.push(state.photos.length+' photo references');
@@ -861,7 +861,7 @@ async function scanAt(c,opts){
  }
  if(id!==state.scanId)return;
  renderResults();renderPhotos();renderMarkers();updateRadius();
- const parks=state.results.filter(r=>r.category==='parking').length;
+ const parks=parkingCandidates().length;
  const histories=state.results.filter(r=>r.category==='history').length;
  const imageCount=state.photos.length;
  const themed=state.photos.filter(p=>!p.geotagged).length;
