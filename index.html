@@ -791,21 +791,35 @@ function shotPrompt(item){
  const evidence=item.category==='photoSpot'?'Mapped evidence: '+(item.why||'scenic feature candidate')+'. Do not invent a real structure or claim an unverified view. ':'';
  return 'Create a photorealistic visual reference for a real-world photography outing at '+item.name+'. Coordinates: '+Number(item.lat).toFixed(5)+', '+Number(item.lng).toFixed(5)+'. Genre: '+genre+'. '+evidence+gear+' '+framing+' Suggest an achievable camera position, clear foreground, layered depth, strong geometry, natural light and an editorial colour palette. Avoid generic travel-poster styling, oversaturation, text overlays, logos, fabricated architecture or impossible scenery. This is a creative illustration, not proof of the exact on-site view. Offer golden-hour and overcast/daylight options.';
 }
-function renderDetailPhotoRefs(item){
+async function renderDetailPhotoRefs(item){
  const container=$('detailPhotoRefs');
  if(!container)return;
- const geotagged=(state.photos||[]).filter(p=>p.geotagged&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)).map(p=>({...p,spotDistance:haversine({lat:item.lat,lng:item.lng},{lat:p.lat,lng:p.lng})})).sort((a,b)=>a.spotDistance-b.spotDistance);
- const close=geotagged.filter(p=>p.spotDistance<=8000).slice(0,3);
- const themed=(state.photos||[]).filter(p=>!p.geotagged).slice(0,3);
- const refs=close.length?close:themed;
- $('detailPhotoCount').textContent=refs.length?(close.length?'Nearby · '+refs.length:'Inspiration · '+refs.length):'No image refs';
- if(!refs.length){
-  container.innerHTML=emptyHTML('No source-linked visual references were available for this exact area. Open the Pinterest or Instagram search links below for more ideas.');
+ const selectedId=item.id;
+ $('detailPhotoCount').textContent='Searching…';
+ container.innerHTML=emptyHTML('Searching for images that match this landmark or subject—not simply photos uploaded nearby.');
+ const locality=String(item.city||state.detectedLocality||'').trim();
+ const rawName=String(item.name||'').replace(/^Unnamed mapped\s+/i,'').replace(/\s+near\s+.+$/i,'').trim();
+ const queryName=rawName&&!/^your pin$/i.test(rawName)?rawName:'';
+ const terms=[];
+ if(queryName&&locality)terms.push(queryName+' '+locality);
+ else if(queryName)terms.push(queryName+' landscape architecture');
+ if(queryName)terms.push(queryName+' landmark view');
+ if(locality)terms.push(locality+' panorama skyline');
+ if(locality)terms.push(locality+' historic architecture coast');
+ const refs=await commonsTextSearch(terms,{lat:item.lat,lng:item.lng},state.scanId).catch(()=>[]);
+ if(!state.selected||state.selected.id!==selectedId)return;
+ const fallback=(state.photos||[]).filter(p=>!p.geotagged&&photoTitleIsRelevant(p.name,queryName+' '+locality));
+ const unique=new Map();
+ [...refs,...fallback].forEach(p=>{if(!unique.has(p.id))unique.set(p.id,p);});
+ const finalRefs=[...unique.values()].slice(0,3);
+ $('detailPhotoCount').textContent=finalRefs.length?(queryName?'Landmark matched · '+finalRefs.length:'Area matched · '+finalRefs.length):'No close matches';
+ if(!finalRefs.length){
+  container.innerHTML=emptyHTML('No suitable source-linked image matched this place name. We are not showing unrelated event photos as if they depict this spot. Try the city-level references or open the Instagram/Pinterest search links.');
   return;
  }
- container.innerHTML=refs.map(p=>{
-  const note=p.geotagged?'Image geotag is '+distanceLabel(p.spotDistance)+' from this candidate; it does not prove the exact camera position.':(p.referenceType||'Location-themed inspiration; shooting point unverified.');
-  return '<article class="detail-photo"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original image and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(note)+'</div></a></article>';
+ container.innerHTML=finalRefs.map(p=>{
+  const note='Matched by title/subject. This is a visual reference, not proof of the exact camera position.';
+  return '<article class="detail-photo"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original image and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(note)+'</div><div class="detail-photo-note">'+esc(p.license||'Licence on source page')+'</div></a></article>';
  }).join('');
 }
 function selectItem(item){
