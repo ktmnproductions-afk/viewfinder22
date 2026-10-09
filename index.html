@@ -408,6 +408,15 @@ async function scenicSearch(c,radius,id){
    history:'',wikiUrl:tags.wikipedia?wikiURL(String(tags.wikipedia)):(tags.wikidata?'https://www.wikidata.org/wiki/'+tags.wikidata:''),
    license:'© OpenStreetMap contributors'
   };
+  if(genericName){
+   const nearbyUnnamed=[...pool.entries()].find(([existingKey,p])=>p.genericFeature&&p.featureLabel===featureLabel&&haversine({lat:p.lat,lng:p.lng},{lat:item.lat,lng:item.lng})<600);
+   if(nearbyUnnamed){
+    if(item.scenicScore>nearbyUnnamed[1].scenicScore){pool.delete(nearbyUnnamed[0]);}
+    else return;
+   }
+  }
+  item.genericFeature=genericName;
+  item.featureLabel=featureLabel;
   const prior=pool.get(key);
   if(!prior||item.scenicScore>prior.scenicScore)pool.set(key,item);
  });
@@ -546,14 +555,25 @@ function clearMarkers(){state.markers.forEach(m=>m.remove());state.markers=[];}
 function renderMarkers(){
  if(!state.map || !state.styleLoaded)return;
  clearMarkers();
- [...state.results,...state.scenicSpots].forEach(item=>{
+ // Keep the map legible in dense cities while preserving the complete result lists.
+ const parking=state.results.filter(r=>r.category==='parking').slice(0,30);
+ const history=state.results.filter(r=>r.category==='history').slice(0,22);
+ const viewpoints=state.results.filter(r=>r.category==='viewpoint').slice(0,12);
+ const architecture=state.results.filter(r=>r.category==='architecture').slice(0,12);
+ const visible=[...parking,...history,...viewpoints,...architecture,...state.scenicSpots.slice(0,24)];
+ const seen=new Set();
+ visible.forEach(item=>{
+  const cell=Math.round(item.lat*10000)+'|'+Math.round(item.lng*10000);
+  const key=item.category+'|'+cell;
+  if(seen.has(key))return;
+  seen.add(key);
   const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.name+' · '+distanceLabel(item.distance);
   const el=markerEl(item.category,label);
   el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
   const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
   state.markers.push(m);
  });
- state.photos.filter(item=>item.geotagged&&Number.isFinite(item.lat)&&Number.isFinite(item.lng)).forEach(item=>{
+ state.photos.filter(item=>item.geotagged&&Number.isFinite(item.lat)&&Number.isFinite(item.lng)).slice(0,10).forEach(item=>{
   const el=markerEl('photo',item.name+' · geotagged photo reference');
   el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
   const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
