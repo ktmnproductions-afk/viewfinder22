@@ -775,9 +775,11 @@ function renderSpotParking(item){
 }
 async function loadParkingNearSelected(item){
  const requestId=++state.spotParkingRequest;
+ // Collect existing scan parking before switching the targeted spot ID, so results
+ // from the previously selected spot never leak into the new spot's recommendations.
+ const local=parkingCandidates().map(p=>({...p,distance:haversine({lat:item.lat,lng:item.lng},{lat:p.lat,lng:p.lng}),parkingOrigin:'near-selected'})).filter(p=>Number.isFinite(p.distance)&&p.distance<=3500);
  state.spotParkingTargetId=item.id;
  state.spotParkingLoading=true;
- const local=parkingCandidates().map(p=>({...p,distance:haversine({lat:item.lat,lng:item.lng},{lat:p.lat,lng:p.lng}),parkingOrigin:'near-selected'})).filter(p=>Number.isFinite(p.distance)&&p.distance<=3500);
  state.spotParking=local;
  renderSpotParking(item);
  const engine=await getRangefindEngine().catch(()=>null);
