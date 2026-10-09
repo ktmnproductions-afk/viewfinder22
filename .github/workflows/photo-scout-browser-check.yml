@@ -83,6 +83,20 @@ jobs:
             }
             const scenicCardCount = await page.locator('#scenicResults .spot-card').count();
             const scenicGroupCount = await page.locator('#scenicResults .scenic-group').count();
+            const mapParkingDiagnostics = await page.evaluate(() => {
+              const map = window.__PHOTO_SCOUT_TEST__.map;
+              let sourceFeatures = [];
+              try { sourceFeatures = map.querySourceFeatures('openmaptiles', { sourceLayer: 'poi' }); } catch (e) {}
+              const parking = sourceFeatures.filter(f => {
+                const p = f.properties || {};
+                return ['parking','parking_space'].includes(String(p.class || '').toLowerCase()) ||
+                       ['parking','parking_space'].includes(String(p.subclass || '').toLowerCase()) ||
+                       String(p.amenity || '').toLowerCase() === 'parking';
+              }).slice(0, 12).map(f => ({id:f.id,geometry:f.geometry,properties:f.properties}));
+              const parkingLayers = (map.getStyle().layers || []).filter(l => /^poi_r\\d+$/i.test(l.id)).map(l => ({id:l.id,filter:l.filter}));
+              return { parkingFeatureCount: parking.length, parkingSamples: parking, appParkingCount:window.__PHOTO_SCOUT_TEST__.getState().basemapParkingCount, parkingLayers };
+            });
+            console.log('PHOTO_SCOUT_PARKING_DIAGNOSTICS ' + JSON.stringify({afterClick,mapParkingDiagnostics,scenicCardCount,scenicGroupCount}));
             if (!(afterClick.scenicCount > 0) || scenicCardCount < 1 || scenicGroupCount !== 3) {
               throw new Error('No grouped photo-spot candidates were displayed after scanning: ' + JSON.stringify({afterClick,scenicCardCount,scenicGroupCount}));
             }
