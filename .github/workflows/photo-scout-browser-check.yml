@@ -120,8 +120,20 @@ jobs:
             if (parseFloat(selectedSpot.markerWidth) < 30) {
               throw new Error('Photo-spot markers are still too small to notice: ' + JSON.stringify(selectedSpot));
             }
-            // Mock only the provider response in this test so no real image request
-            // or user-billed generation occurs in CI. Exercise the actual UI/render path.
+            const providerProbe = await page.evaluate(async () => {
+              try {
+                const preview = await window.puter.ai.txt2img('Test-mode landscape image preview for Photo Scout', true);
+                return { ok: !!(preview && preview.src), sourcePrefix: preview && preview.src ? String(preview.src).slice(0, 32) : '' };
+              } catch (e) {
+                return { ok: false, error: String(e && e.message || e).slice(0, 500) };
+              }
+            });
+            console.log('PUTER_TEST_MODE_PROBE ' + JSON.stringify(providerProbe));
+            if (!providerProbe.ok) {
+              throw new Error('Puter no-credit test-mode image probe failed: ' + JSON.stringify(providerProbe));
+            }
+            // Mock the paid generation response in the UI test so CI doesn't make
+            // a real generation request or incur image-generation usage.
             await page.evaluate(() => {
               window.__lastImagePrompt = '';
               window.puter = { ai: { txt2img: async (prompt, options) => {
