@@ -107,6 +107,9 @@ const groundTexture=makeGroundTexture();
 // Scene projection: local east/south metres, scaled to 10 metres per model unit. The forum is the anchor.
 const GEO_ANCHOR={lat:45.77366,lon:13.36633,x:-5,z:-7};
 function geoToScene(lat,lon){return [GEO_ANCHOR.x+(lon-GEO_ANCHOR.lon)*78500/10,GEO_ANCHOR.z+(GEO_ANCHOR.lat-lat)*111000/10];}
+// Rotate the complete urban model to the northwest–southeast axis of the published archaeological plan.
+const PLAN_ROTATION=13*Math.PI/180,PLAN_C=Math.cos(PLAN_ROTATION),PLAN_S=Math.sin(PLAN_ROTATION);
+function rotateLocalPoint(x,z){const dx=x-GEO_ANCHOR.x,dz=z-GEO_ANCHOR.z;return [GEO_ANCHOR.x+PLAN_C*dx+PLAN_S*dz,GEO_ANCHOR.z-PLAN_S*dx+PLAN_C*dz];}
 const cityPoly=[[-54,-66],[-41,-74],[13,-71],[31,-57],[35,13],[25,34],[6,47],[-35,43],[-53,25]];
 function inPoly(x,z,poly=cityPoly){let inside=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const xi=poly[i][0],zi=poly[i][1],xj=poly[j][0],zj=poly[j][1];const inter=((zi>z)!==(zj>z))&&(x<(xj-xi)*(z-zi)/(zj-zi+1e-9)+xi);if(inter)inside=!inside;}return inside;}
 function groundH(x,z){const edge=Math.max(0,(Math.max(Math.abs(x)-45,Math.abs(z)-54))/80);return .07*Math.sin(x*.17)*Math.cos(z*.12)+.03*Math.sin((x+z)*.31)+edge*edge*2.3;}
@@ -114,32 +117,60 @@ const gw=280,gd=300,nx=125,nz=135,verts=[],uvs=[],colors=[],indices=[];
 for(let iz=0;iz<=nz;iz++){for(let ix=0;ix<=nx;ix++){const x=-gw/2+gw*ix/nx,z=-gd/2+gd*iz/nz,y=groundH(x,z);verts.push(x,y,z);uvs.push(ix/nx,iz/nz);const edge=Math.min(1,Math.max(0,(Math.max(Math.abs(x)-52,Math.abs(z)-58))/46));const col=new THREE.Color().setHSL(.22-edge*.025,.34+edge*.05,.34-edge*.06);colors.push(col.r,col.g,col.b);if(ix<nx&&iz<nz){const a=iz*(nx+1)+ix,b=a+1,d=(iz+1)*(nx+1)+ix,e=d+1;indices.push(a,d,b,b,d,e);}}}
 const groundGeo=new THREE.BufferGeometry();groundGeo.setAttribute("position",new THREE.Float32BufferAttribute(verts,3));groundGeo.setAttribute("uv",new THREE.Float32BufferAttribute(uvs,2));groundGeo.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));groundGeo.setIndex(indices);groundGeo.computeVertexNormals();const groundMat=new THREE.MeshStandardMaterial({map:groundTexture,vertexColors:true,roughness:1});const ground=new THREE.Mesh(groundGeo,groundMat);ground.receiveShadow=true;scene.add(ground);
 // Soft fields and wetland strips carry the plain outward beyond the city; there is no floating board.
-const fields=new THREE.Group();scene.add(fields);for(let i=0;i<44;i++){const x=-126+((i*37)%250),z=-133+((i*53)%270);if(inPoly(x,z))continue;const w=7+(i%5)*2.3,d=9+(i%7)*2;const fm=[mats.field,mats.fieldLight,mats.fieldDark][i%3];const p=box(fields,x,.08,z,w,.035,d,fm,false,true);p.rotation.y=((i*13)%11)*.018;}
+const fields=new THREE.Group();fields.visible=false;scene.add(fields);for(let i=0;i<44;i++){const x=-126+((i*37)%250),z=-133+((i*53)%270);if(inPoly(x,z))continue;const w=7+(i%5)*2.3,d=9+(i%7)*2;const fm=[mats.field,mats.fieldLight,mats.fieldDark][i%3];const p=box(fields,x,.08,z,w,.035,d,fm,false,true);p.rotation.y=((i*13)%11)*.018;}
 const farmlandTracks=new THREE.Group();scene.add(farmlandTracks);for(let x=-130;x<130;x+=8){const pts=[];for(let z=-145;z<145;z+=6)pts.push([x+Math.sin(z*.06+x)*.8,groundH(x,z)+.11,z]);polyline(farmlandTracks,pts,0xd2c393,.22);}
 const waterShape=new THREE.Shape();function move(x,z){waterShape.moveTo(x,-z);}function bez(x1,z1,x2,z2,x3,z3){waterShape.bezierCurveTo(x1,-z1,x2,-z2,x3,-z3);}
 move(20,-82);bez(27,-66,31,-48,32,-31);bez(34,-14,33,3,29,18);bez(24,32,11,43,-5,49);bez(-21,52,-36,45,-45,39);waterShape.lineTo(-42,34);bez(-32,40,-20,44,-7,44);bez(8,43,19,34,24,20);bez(29,5,29,-12,28,-30);bez(27,-47,23,-65,15,-79);waterShape.closePath();
 const waterGeo=new THREE.ShapeGeometry(waterShape,36);waterGeo.rotateX(-Math.PI/2);const river=new THREE.Mesh(waterGeo,mats.water);river.position.y=.14;river.receiveShadow=true;scene.add(river);
-const waterRipples=new THREE.Group();scene.add(waterRipples);for(let j=0;j<50;j++){const z=-66+(j*2.35)%105;const x=31+Math.sin(j*.23)*1.7;if(j%3!==0)continue;const pts=[[x-.6,.19,z],[x-.18,.2,z+.1],[x+.35,.19,z+.15]];polyline(waterRipples,pts,0xc3ddd0,.018);}
+const waterRipples=new THREE.Group();scene.add(waterRipples);for(let j=0;j<50;j++){const z=-66+(j*2.35)%105;const x=riverCenterAt(z)+Math.sin(j*.23)*1.2;if(j%3!==0)continue;const pts=[[x-.6,.19,z],[x-.18,.2,z+.1],[x+.35,.19,z+.15]];polyline(waterRipples,pts,0xc3ddd0,.018);}
 const bankLines=new THREE.Group();scene.add(bankLines);line(bankLines,[[20,.21,-81],[27,.21,-65],[31,.21,-48],[32,.21,-31],[33,.21,-12],[30,.21,9],[25,.21,25],[12,.21,41],[-5,.21,48],[-21,.21,47],[-45,.21,39]],mat(0xa9a17a),.18);line(bankLines,[[15,.21,-79],[22,.21,-64],[26,.21,-47],[27,.21,-30],[28,.21,-12],[25,.21,8],[20,.21,24],[8,.21,37],[-7,.21,43],[-21,.21,42],[-42,.21,34]],mat(0xa9a17a),.13);
 // Moist reeds along the river edge.
-const reeds=new THREE.Group();scene.add(reeds);let seed=77;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};for(let i=0;i<420;i++){const z=-70+rnd()*130;const x=(z<15?33+Math.sin(z*.06)*2:22-rnd()*5);if(rnd()>.75)continue;const h=.25+rnd()*.5;const stalk=box(reeds,x,.2+h/2,z,.025,h,.025,mat(0x7e8650),false,false);stalk.rotation.z=(rnd()-.5)*.2;}
+const reeds=new THREE.Group();scene.add(reeds);let seed=77;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};for(let i=0;i<420;i++){const z=-70+rnd()*130;const x=(z<-40?18.5+(z+48)*.24:z<15?23+Math.sin(z*.06)*1.5:z<32?18-rnd()*2:10-rnd()*3);if(rnd()>.75)continue;const h=.25+rnd()*.5;const stalk=box(reeds,x,.2+h/2,z,.025,h,.025,mat(0x7e8650),false,false);stalk.rotation.z=(rnd()-.5)*.2;}
 // Roman road network digitized in simplified form from the published archaeological city plan.
 const roads=new THREE.Group();roads.position.y=.19;scene.add(roads);const xRoads=[-52,-42,-31,-20,-9,2,13,24,33];const zRoads=[-64,-53,-42,-31,-20,-9,2,13,24,35,43];
+function riverCenterAt(z){
+ if(z < -48) return 18.5+(z+48)*.24;
+ if(z < -31) return 18.5+(z+48)*.24;
+ if(z < -10) return 22.58+(z+31)*.055;
+ if(z <= 18) return 23.735-(z+10)*.15;
+ if(z <= 39) return 19.535-(z-18)*.38;
+ return 11.555-(z-39)*1.15;
+}
+function inRiverBand(x,z){if(z < -82 || z > 51)return false;return Math.abs(x-riverCenterAt(z))<3.45;}
+function roadSegments(start,end,step,accept){
+ const out=[];let a=null,last=null;
+ for(let v=start;v<=end+step*.25;v+=step){
+  if(accept(v)){if(a===null)a=v;last=v;}
+  else if(a!==null){if(last-a>=.9)out.push([a,last]);a=null;last=null;}
+ }
+ if(a!==null&&last-a>=.9)out.push([a,last]);
+ return out;
+}
 function spanRoadHorizontal(z,x1,x2,width,main){
- const xs=[];for(let x=x1;x<=x2;x+=.5)if(inPoly(x,z))xs.push(x);
- if(xs.length<2)return;const lo=Math.min(...xs),hi=Math.max(...xs),len=hi-lo,mid=(hi+lo)/2;
- box(roads,mid,.035,z,len,.07,width,main?mats.roadEdge:mats.road,false,true);
- if(main){box(roads,mid,.077,z,len,.025,.10,mats.road,false,false);box(roads,mid,.076,z-width*.43,len,.02,.035,mats.wallLight,false,false);box(roads,mid,.076,z+width*.43,len,.02,.035,mats.wallLight,false,false);}
+ const parts=roadSegments(x1,x2,.5,x=>inPoly(x,z)&&!inRiverBand(x,z));
+ parts.forEach(([lo,hi])=>{const len=hi-lo,mid=(hi+lo)/2;
+  box(roads,mid,.035,z,len,.07,width,main?mats.roadEdge:mats.road,false,true);
+  if(main){box(roads,mid,.077,z,len,.025,.10,mats.road,false,false);box(roads,mid,.076,z-width*.43,len,.02,.035,mats.wallLight,false,false);box(roads,mid,.076,z+width*.43,len,.02,.035,mats.wallLight,false,false);}
+ });
 }
 function spanRoadVertical(x,z1,z2,width,main){
- const zs=[];for(let z=z1;z<=z2;z+=.5)if(inPoly(x,z))zs.push(z);
- if(zs.length<2)return;const lo=Math.min(...zs),hi=Math.max(...zs),len=hi-lo,mid=(hi+lo)/2;
- box(roads,x,.035,mid,width,.07,len,main?mats.roadEdge:mats.road,false,true);
- if(main){box(roads,x,.077,mid,.10,.025,len,mats.road,false,false);box(roads,x-width*.43,.076,mid,.035,.02,len,mats.wallLight,false,false);box(roads,x+width*.43,.076,mid,.035,.02,len,mats.wallLight,false,false);}
+ const parts=roadSegments(z1,z2,.5,z=>inPoly(x,z)&&!inRiverBand(x,z));
+ parts.forEach(([lo,hi])=>{const len=hi-lo,mid=(hi+lo)/2;
+  box(roads,x,.035,mid,width,.07,len,main?mats.roadEdge:mats.road,false,true);
+  if(main){box(roads,x,.077,mid,.10,.025,len,mats.road,false,false);box(roads,x-width*.43,.076,mid,.035,.02,len,mats.wallLight,false,false);box(roads,x+width*.43,.076,mid,.035,.02,len,mats.wallLight,false,false);}
+ });
 }
 zRoads.forEach((z,i)=>spanRoadHorizontal(z,-56,36,(i===2||i===7)?1.05:.58,i===2||i===7));
 xRoads.forEach((x,i)=>spanRoadVertical(x,-75,49,(i===2||i===6)?1.0:.58,i===2||i===6));
-const ghostRoads=new THREE.Group();scene.add(ghostRoads);for(const x of xRoads)polyline(ghostRoads,[[x,.19,-66],[x,.19,42]],0xdfd4b9,.035);for(const z of zRoads)polyline(ghostRoads,[[-53,.19,z],[34,.19,z]],0xdfd4b9,.035);
+const ghostRoads=new THREE.Group();scene.add(ghostRoads);
+for(const x of xRoads){
+ const ps=roadSegments(-66,42,.6,z=>!inRiverBand(x,z));
+ ps.forEach(([a,b])=>polyline(ghostRoads,[[x,.19,a],[x,.19,b]],0xdfd4b9,.035));
+}
+for(const z of zRoads){
+ const ps=roadSegments(-53,34,.6,x=>!inRiverBand(x,z));
+ ps.forEach(([a,b])=>polyline(ghostRoads,[[a,.19,z],[b,.19,z]],0xdfd4b9,.035));
+}
 // Boundary follows the general city outline from the published plan; it is not a surveyed property line.
 const cityBoundary=new THREE.Group();scene.add(cityBoundary);const boundaryPts=cityPoly.concat([cityPoly[0]]).map(p=>[p[0],.32,p[1]]);line(cityBoundary,boundaryPts,mat(0xd7b77b),.12);
 // Small public squares and paved edges.
@@ -270,7 +301,7 @@ const pickables=[],hotspotMeshes={};const labels=new THREE.Group();scene.add(lab
 function makeLabel(text){const c=document.createElement("canvas");c.width=512;c.height=116;const q=c.getContext("2d");q.fillStyle="rgba(12,21,16,.92)";q.strokeStyle="rgba(217,183,118,.88)";q.lineWidth=3;q.beginPath();q.roundRect(5,5,502,106,5);q.fill();q.stroke();q.fillStyle="#f0dfbd";q.font="700 28px Arial";q.textAlign="center";q.textBaseline="middle";q.fillText(text.toUpperCase(),256,58);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false}));s.scale.set(8.7,1.95,1);return s;}
 for(const [key,d] of Object.entries(hotspotData)){const marker=new THREE.Mesh(new THREE.SphereGeometry(.5,18,12),new THREE.MeshStandardMaterial({color:0xf0cc7d,emissive:0x9e641e,emissiveIntensity:1.8,roughness:.3}));marker.position.set(d.pos[0],d.pos[1],d.pos[2]);marker.userData.siteKey=key;marker.userData.baseY=d.pos[1];scene.add(marker);const ring=new THREE.Mesh(new THREE.TorusGeometry(.82,.045,6,32),new THREE.MeshBasicMaterial({color:0xe5c27f,transparent:true,opacity:.85}));ring.position.set(d.pos[0],.4,d.pos[2]);ring.rotation.x=Math.PI/2;ring.userData.siteKey=key;ring.userData.isRing=true;scene.add(ring);const label=makeLabel(d.title);label.userData.siteKey=key;label.position.set(d.pos[0],d.pos[1]+2.05,d.pos[2]);labels.add(label);const pick={key,marker,ring,label};hotspotMeshes[key]=pick;pickables.push(marker,label);}
 let cameraGoal=camera.position.clone(),cameraTargetGoal=controls?controls.target.clone():homeTarget.clone(),cameraTransition=false;
-function selectSite(key,fly=true){const d=hotspotData[key];if(!d)return;$("detailName").textContent=d.title;$("detailKind").textContent=d.kind;$("detailCopy").textContent=d.copy;$("detailLink").href=d.source;$("detailLink").style.display="inline-block";document.querySelectorAll(".place-btn").forEach(b=>b.classList.toggle("active",b.dataset.site===key));if(fly&&controls){cameraGoal.set(d.focus[0]+23,26,d.focus[2]+27);cameraTargetGoal.set(d.focus[0],0,d.focus[2]);cameraTransition=true;}if(document.body.classList.contains("map-mode"))setMode("3d");}
+function selectSite(key,fly=true){const d=hotspotData[key];if(!d)return;$("detailName").textContent=d.title;$("detailKind").textContent=d.kind;$("detailCopy").textContent=d.copy;$("detailLink").href=d.source;$("detailLink").style.display="inline-block";document.querySelectorAll(".place-btn").forEach(b=>b.classList.toggle("active",b.dataset.site===key));if(fly&&controls){const p=rotateLocalPoint(d.focus[0],d.focus[2]);cameraGoal.set(p[0]+23,26,p[1]+27);cameraTargetGoal.set(p[0],0,p[1]);cameraTransition=true;}if(document.body.classList.contains("map-mode"))setMode("3d");}
 Object.keys(hotspotData).forEach(key=>{const btn=document.querySelector('[data-site="'+key+'"]');btn.addEventListener("click",()=>selectSite(key));});
 // Era descriptions are paired with actual 3D objects in this scene.
 const eras=[
@@ -302,7 +333,17 @@ function setEra(i){
  updateMapLayers();
 }
 function updateRootScales(dt){scene.traverse(o=>{if(o.userData&&o.userData.targetScale!==undefined&&o.scale){const target=o.userData.targetScale;const factor=1-Math.exp(-dt*2.3);o.scale.y+=(target-o.scale.y)*factor;o.userData.currentScale=o.scale.y;}});}
-function makeMap(){const center=[45.7722,13.3681];const map=L.map("map",{zoomControl:false,scrollWheelZoom:true,preferCanvas:true}).setView(center,15);const aerial=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'});const streets=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'© OpenStreetMap contributors'});aerial.addTo(map);L.control.zoom({position:"bottomright"}).addTo(map);L.control.scale({position:"bottomright",imperial:false}).addTo(map);const group=L.layerGroup().addTo(map);function mkIcon(kind){return L.divIcon({className:"",html:'<span style="display:block;width:15px;height:15px;border-radius:50%;background:'+(kind==="port"?"#81c8bd":kind==="basilica"?"#f1e3c2":"#d9b776")+';border:2px solid white;box-shadow:0 0 0 5px #d9b77635"></span>',iconSize:[25,25],iconAnchor:[12,12]});}function marker(ll,key){const d=hotspotData[key];const m=L.marker(ll,{icon:mkIcon(key)}).bindPopup('<strong>'+d.title+'</strong><br>'+d.copy+'<br><a href="'+d.source+'" target="_blank" rel="noreferrer">Archaeological source ↗</a><br><button class="map-preview" type="button">Focus in 3D</button>');m.on("popupopen",e=>{const b=e.popup.getElement().querySelector(".map-preview");if(b)b.addEventListener("click",()=>{setMode("3d");selectSite(key);},{once:true});});return m;}const markers={forum:marker([45.77366,13.36633],"forum"),port:marker([45.7744,13.3694],"port"),basilica:marker([45.76963,13.37095],"basilica"),amphitheatre:marker([45.7754,13.3658],"amphitheatre"),circus:marker([45.773,13.3636],"circus"),markets:marker([45.7685,13.37049],"markets"),titus:marker([45.771080,13.369676],"titus"),civilian:marker([45.7724,13.3679],"forum")};function update(){group.clearLayers();Object.values(markers).forEach(m=>group.addLayer(m));if(stageIndex>=1&&stageIndex<=3){L.polygon([[45.7780,13.3627],[45.7791,13.3686],[45.7768,13.3736],[45.7723,13.3760],[45.7675,13.3740],[45.7666,13.3680],[45.7696,13.3623],[45.7742,13.3608]],{color:"#d9b776",weight:2,dashArray:"7 7",fillColor:"#d9b776",fillOpacity:.04}).addTo(group);}if(stageIndex>=1&&stageIndex<=3){L.rectangle([[45.77366-.00025,13.36633-.00091],[45.77366+.00025,13.36633+.00091]],{color:"#d9b776",weight:2,fillColor:"#d9b776",fillOpacity:.22}).addTo(group);L.polyline([[45.77565,13.36882],[45.7750,13.36912],[45.7744,13.3694],[45.7738,13.36965],[45.77315,13.36998]],{color:"#81c8bd",weight:6,opacity:.8}).addTo(group);}if(stageIndex===3)L.circle([45.7732,13.3684],{radius:390,color:"#c95d43",weight:2,dashArray:"8 7",fillColor:"#c95d43",fillOpacity:.1}).addTo(group);}return {map,aerial,streets,update};}
+function makeMap(){const center=[45.7722,13.3681];const map=L.map("map",{zoomControl:false,scrollWheelZoom:true,preferCanvas:true}).setView(center,15);const aerial=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'});const streets=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'© OpenStreetMap contributors'});aerial.addTo(map);L.control.zoom({position:"bottomright"}).addTo(map);L.control.scale({position:"bottomright",imperial:false}).addTo(map);const group=L.layerGroup().addTo(map);function mkIcon(kind){return L.divIcon({className:"",html:'<span style="display:block;width:15px;height:15px;border-radius:50%;background:'+(kind==="port"?"#81c8bd":kind==="basilica"?"#f1e3c2":"#d9b776")+';border:2px solid white;box-shadow:0 0 0 5px #d9b77635"></span>',iconSize:[25,25],iconAnchor:[12,12]});}function marker(ll,key){const d=hotspotData[key];const m=L.marker(ll,{icon:mkIcon(key)}).bindPopup('<strong>'+d.title+'</strong><br>'+d.copy+'<br><a href="'+d.source+'" target="_blank" rel="noreferrer">Archaeological source ↗</a><br><button class="map-preview" type="button">Focus in 3D</button>');m.on("popupopen",e=>{const b=e.popup.getElement().querySelector(".map-preview");if(b)b.addEventListener("click",()=>{setMode("3d");selectSite(key);},{once:true});});return m;}const markers={forum:marker([45.77366,13.36633],"forum"),port:marker([45.7744,13.3694],"port"),basilica:marker([45.76963,13.37095],"basilica"),amphitheatre:marker([45.77216,13.36564],"amphitheatre"),circus:marker([45.77180,13.36341],"circus"),markets:marker([45.7685,13.37049],"markets"),titus:marker([45.771080,13.369676],"titus")};function update(){group.clearLayers();Object.values(markers).forEach(m=>group.addLayer(m));if(stageIndex>=1&&stageIndex<=3){L.polygon([[45.7780,13.3627],[45.7791,13.3686],[45.7768,13.3736],[45.7723,13.3760],[45.7675,13.3740],[45.7666,13.3680],[45.7696,13.3623],[45.7742,13.3608]],{color:"#d9b776",weight:2,dashArray:"7 7",fillColor:"#d9b776",fillOpacity:.04}).addTo(group);}if(stageIndex>=1&&stageIndex<=3){L.rectangle([[45.77366-.00025,13.36633-.00091],[45.77366+.00025,13.36633+.00091]],{color:"#d9b776",weight:2,fillColor:"#d9b776",fillOpacity:.22}).addTo(group);L.polyline([[45.77565,13.36882],[45.7750,13.36912],[45.7744,13.3694],[45.7738,13.36965],[45.77315,13.36998]],{color:"#81c8bd",weight:6,opacity:.8}).addTo(group);}if(stageIndex===3)L.circle([45.7732,13.3684],{radius:390,color:"#c95d43",weight:2,dashArray:"8 7",fillColor:"#c95d43",fillOpacity:.1}).addTo(group);}return {map,aerial,streets,update};}
+// Apply the plan’s global orientation to the entire world so every house, road, river and landmark stays registered together.
+const urbanRoot=new THREE.Group();
+urbanRoot.rotation.y=PLAN_ROTATION;
+urbanRoot.position.set(GEO_ANCHOR.x-(PLAN_C*GEO_ANCHOR.x+PLAN_S*GEO_ANCHOR.z),0,GEO_ANCHOR.z-(-PLAN_S*GEO_ANCHOR.x+PLAN_C*GEO_ANCHOR.z));
+for(const child of [...scene.children]){if(child.isLight)continue;scene.remove(child);urbanRoot.add(child);}
+scene.add(urbanRoot);
+// Keep the home target and initial camera in the same rotated coordinate system.
+const initialTarget=rotateLocalPoint(homeTarget.x,homeTarget.z);homeTarget.set(initialTarget[0],0,initialTarget[1]);
+const initialCamera=rotateLocalPoint(camera.position.x,camera.position.z);camera.position.set(initialCamera[0],camera.position.y,initialCamera[1]);camera.lookAt(homeTarget);
+if(controls){controls.target.copy(homeTarget);controls.update();}
 let mapApi=null;
 function updateMapLayers(){if(mapApi)mapApi.update();}
 function setMode(mode){const isMap=mode==="map";document.body.classList.toggle("map-mode",isMap);$("modeMap").classList.toggle("active",isMap);$("mode3d").classList.toggle("active",!isMap);if(isMap&&mapApi)setTimeout(()=>mapApi.map.invalidateSize(),180);}
