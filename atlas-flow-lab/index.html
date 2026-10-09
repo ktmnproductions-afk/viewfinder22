@@ -122,7 +122,7 @@ function stylePlaceLabels(){
   try{
    map.setLayoutProperty(id,'visibility',labelsOn?'visible':'none');
    map.setLayoutProperty(id,'text-size',size);
-   map.setLayoutProperty(id,'text-font',[['place_country_major','place_country_other','place_country_minor','place_city_large'].includes(id)?'Metropolis Bold':'Metropolis Regular']);
+   map.setLayoutProperty(id,'text-font',['Noto Sans Regular']);
    map.setLayoutProperty(id,'text-allow-overlap',false);
    map.setLayoutProperty(id,'text-ignore-placement',false);
    map.setLayoutProperty(id,'text-padding',3);
@@ -245,20 +245,10 @@ function exportArtwork(){
  });map.triggerRepaint();
 }
 function resetComposition(){setProjection('globe');map.flyTo({center:[12,27],zoom:1.45,pitch:0,bearing:0,speed:.7,curve:1.2});$('mainTitle').innerHTML='A living<br>planet.';$('mainSub').textContent='Currents, corridors and the invisible geometry of movement.';$('sideTitle').textContent='A world in motion.';$('sideCopy').textContent='The land is a geographic base. The moving particles reveal a stylized vector field, designed to make the invisible structure of flow legible.';flowMode='wind';$('fieldMode').value='wind';particleCount=+$('density').value;speedScale=+$('speed').value/100;resetParticles();pauseFlow(false)}
-async function initMap(){if(!window.maplibregl){$('loadStatus').textContent='LIBRARY FAILED';showStatus('Could not load MapLibre. Check the internet connection and reload.');return}
- $('loadStatus').textContent='LOADING STYLE';
- let baseStyle='https://tiles.openfreemap.org/styles/dark';
- try{
-  const response=await fetch(baseStyle,{cache:'no-cache'});
-  if(!response.ok)throw new Error('Could not fetch the vector map style');
-  const style=await response.json();
-  /* Metropolis is served as vector glyphs; browser CSS fonts alone cannot style MapLibre symbol layers. */
-  style.glyphs='https://fonts.openmaptiles.org/{fontstack}/{range}.pbf';
-  baseStyle=style;
- }catch(e){console.warn('Using the default OpenFreeMap glyph endpoint',e)}
- map=new maplibregl.Map({container:'map',style:baseStyle,center:[12,27],zoom:1.45,projection:{type:'globe'},pitch:0,bearing:0,minZoom:0.5,maxZoom:17,scrollZoom:{around:'center'},dragRotate:true,renderWorldCopies:false,attributionControl:true,canvasContextAttributes:{antialias:false,powerPreference:'high-performance',preserveDrawingBuffer:false},maxTileCacheZoomLevels:3,fadeDuration:120});
+function initMap(){if(!window.maplibregl){$('loadStatus').textContent='LIBRARY FAILED';showStatus('Could not load MapLibre. Check the internet connection and reload.');return}
+ map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/dark',center:[12,27],zoom:1.45,projection:{type:'globe'},pitch:0,bearing:0,minZoom:0.5,maxZoom:17,scrollZoom:{around:'center'},dragRotate:true,renderWorldCopies:false,attributionControl:true,canvasContextAttributes:{antialias:false,powerPreference:'high-performance',preserveDrawingBuffer:false},maxTileCacheZoomLevels:3,fadeDuration:120});
  map.addControl(new maplibregl.NavigationControl({showCompass:true,showZoom:true,visualizePitch:false}),'bottom-right');
- map.on('load',()=>{loaded=true;mapNode.classList.add('ready');$('loadStatus').textContent='VECTOR MAP READY';try{map.setProjection({type:'globe'});map.setFog({color:'#0b1928','high-color':'#17394b','space-color':'#02060d','horizon-blend':.12,'star-intensity':.28})}catch(e){}addSatelliteLayer();addOverlayLayers();applyTheme(theme);stylePlaceLabels();setCanvasSize();resetParticles();app.classList.add('flow-ready');updateMetrics();map.on('movestart',handleMoveStart);map.on('moveend',handleMoveEnd);map.on('zoomend',updateMetrics);if(!raf&&!paused)raf=requestAnimationFrame(renderFlow)});
+ map.on('load',()=>{loaded=true;mapNode.classList.add('ready');$('loadStatus').textContent='VECTOR MAP READY';try{map.setProjection({type:'globe'});map.setFog({color:'#0b1928','high-color':'#17394b','space-color':'#02060d','horizon-blend':.12,'star-intensity':.28)}catch(e){}addSatelliteLayer();addOverlayLayers();applyTheme(theme);stylePlaceLabels();setCanvasSize();resetParticles();app.classList.add('flow-ready');updateMetrics();map.on('movestart',handleMoveStart);map.on('moveend',handleMoveEnd);map.on('zoomend',updateMetrics);if(!raf&&!paused)raf=requestAnimationFrame(renderFlow)});
  map.on('error',e=>{if(!loaded){$('loadStatus').textContent='LOADING MAP';if(e&&e.error)console.warn('Basemap event:',e.error.message)}});
 }
 $('searchBtn').addEventListener('click',searchPlace);$('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlace()});$('globeBtn').addEventListener('click',()=>setProjection('globe'));$('flatBtn').addEventListener('click',()=>setProjection('mercator'));document.querySelectorAll('.style').forEach(b=>b.addEventListener('click',()=>applyTheme(b.dataset.theme)));
