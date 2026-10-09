@@ -265,7 +265,13 @@ function fitScoutingExtent(center,spots){
   if(map.getZoom()<9)map.flyTo({center:[center.lng,center.lat],zoom:10,duration:600});
   return;
  }
- const lngs=points.map(p=>p.lng),lats=points.map(p=>p.lat);
+ const unwrapLongitude=lng=>{
+  let value=lng;
+  while(value-center.lng>180)value-=360;
+  while(value-center.lng<-180)value+=360;
+  return value;
+ };
+ const lngs=points.map(p=>unwrapLongitude(p.lng)),lats=points.map(p=>p.lat);
  const bounds=[[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]];
  const mobile=window.innerWidth<680;
  const bottomPad=mobile?Math.round(window.innerHeight*0.58+20):54;
