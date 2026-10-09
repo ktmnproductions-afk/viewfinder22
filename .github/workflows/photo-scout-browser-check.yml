@@ -81,6 +81,32 @@ jobs:
             if (!afterClick.activeCenter || afterClick.scanCount < 1) {
               throw new Error('Clicking the geographic map did not start a scan: ' + JSON.stringify(afterClick));
             }
+            if (!(afterClick.parkingCount > 0) || !(afterClick.parkingMarkerCount > 0)) {
+              throw new Error('Parking records were found but no clickable Scout parking markers were shown: ' + JSON.stringify({
+                parkingCount:afterClick.parkingCount,
+                parkingMarkerCount:afterClick.parkingMarkerCount,
+                parkingSample:afterClick.parkingSample
+              }));
+            }
+            if (!(afterClick.parkingLabelLayersFiltered || []).includes('poi_r20')) {
+              throw new Error('The basemap parking-label replacement filter is missing: ' + JSON.stringify(afterClick.parkingLabelLayersFiltered));
+            }
+            if ((afterClick.parkingClusterMarkerCount || 0) > 0) {
+              const zoomBeforeParkingClick = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.map.getZoom());
+              await page.locator('.scout-marker.parking-cluster').first().click();
+              await page.waitForFunction((z) => window.__PHOTO_SCOUT_TEST__.map.getZoom() > z + 1.5, zoomBeforeParkingClick, { timeout: 8000 });
+              const parkingZoomResult = await page.evaluate(() => ({
+                zoom:window.__PHOTO_SCOUT_TEST__.map.getZoom(),
+                clusterCount:document.querySelectorAll('.scout-marker.parking-cluster').length,
+                markerCount:document.querySelectorAll('.scout-marker.parking').length
+              }));
+              console.log('PARKING_CLUSTER_ZOOM_TEST ' + JSON.stringify({zoomBeforeParkingClick,parkingZoomResult}));
+              if (!(parkingZoomResult.zoom > zoomBeforeParkingClick + 1.5)) {
+                throw new Error('Clicking a parking cluster did not zoom to separate parking places: ' + JSON.stringify(parkingZoomResult));
+              }
+              await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.map.jumpTo({center:[14.354223,45.37306],zoom:12.25}));
+              await page.waitForTimeout(350);
+            }
             const scenicCardCount = await page.locator('#scenicResults .spot-card').count();
             const scenicGroupCount = await page.locator('#scenicResults .scenic-group').count();
             const mapParkingDiagnostics = await page.evaluate(() => {
@@ -93,7 +119,7 @@ jobs:
                        ['parking','parking_space'].includes(String(p.subclass || '').toLowerCase()) ||
                        String(p.amenity || '').toLowerCase() === 'parking';
               }).slice(0, 12).map(f => ({id:f.id,geometry:f.geometry,properties:f.properties}));
-              const parkingLayers = (map.getStyle().layers || []).filter(l => /^poi_r\\d+$/i.test(l.id)).map(l => ({id:l.id,filter:l.filter}));
+              const parkingLayers = (map.getStyle().layers || []).filter(l => /^poi_r[0-9]+$/i.test(l.id)).map(l => ({id:l.id,filter:l.filter}));
               return { parkingFeatureCount: parking.length, parkingSamples: parking, appParkingCount:window.__PHOTO_SCOUT_TEST__.getState().basemapParkingCount, parkingLayers };
             });
             console.log('PHOTO_SCOUT_PARKING_DIAGNOSTICS ' + JSON.stringify({afterClick,mapParkingDiagnostics,scenicCardCount,scenicGroupCount}));
@@ -103,7 +129,7 @@ jobs:
             if (!(afterClick.scenicDistanceBands?.distant > 0)) {
               throw new Error('The wider search did not return any candidate 15 km or farther from the pin: ' + JSON.stringify(afterClick.scenicDistanceBands));
             }
-            const unwantedPhotoTitle = /(event|festival|concert|tournament|championship|competition|match|team|players?|skatehockey|football|soccer|basketball|volleyball|hockey|marathon|race|wedding|birthday|graduation|crowd|spectators?|audience|selfie|portrait|headshot|family|children|athletes?|school class|group photo|u(?:1[0-9]|2[0-3])\\b|award ceremony|celebration|party|conference|meeting|demonstration|protest)/i;
+            const unwantedPhotoTitle = /\b(event|festival|concert|tournament|championship|competition|match|team|players?|skatehockey|football|soccer|basketball|volleyball|hockey|marathon|race|bicycl\w*|cycling|biciklijad\w*|kolesar\w*|utrk\w*|dirk\w*|natjecanj\w*|utakmic\w*|turnir\w*|prired\w*|sejem\w*|wedding|birthday|graduation|crowd|spectators?|audience|selfie|portrait|headshot|family|children|athletes?|school class|group photo|tombstone|gravestone|cemetery|headstone|u(?:1[0-9]|2[0-3])\b|award ceremony|celebration|party|conference|meeting|demonstration|protest)\b/i;
             if ((afterClick.photoTitles || []).some(name => unwantedPhotoTitle.test(name))) {
               throw new Error('Unrelated event/person media leaked into the photo references: ' + JSON.stringify(afterClick.photoTitles));
             }
@@ -123,13 +149,16 @@ jobs:
               photoStatus: document.querySelector('#detailPhotoCount')?.textContent,
               compositionCards: document.querySelectorAll('#scenicSection .concept-card').length,
               photoIdeaLabVisible: !!document.querySelector('#aiVisualBlock')?.getBoundingClientRect().height,
+              autoSketchSrc: document.querySelector('#autoSketchImage')?.getAttribute('src') || '',
+              selectedSketchSrc: document.querySelector('#selectedConceptPreviewImg')?.getAttribute('src') || '',
+              detailHasJumpButton: !!document.querySelector('#jumpToPhotoIdeas'),
               hasGenerateButton: !!document.querySelector('#generateConcept'),
               hasActualImageSlot: !!document.querySelector('#generatedVisual'),
               imageProviderLoaded: !!window.puter?.ai?.txt2img,
               visible: !!document.querySelector('#spotDetail')?.getBoundingClientRect().height,
               markerWidth: getComputedStyle(document.querySelector('.scout-marker.photoSpot .dot-core')).width
             }));
-            if (!selectedSpot.title || !selectedSpot.hasShotPrompt || selectedSpot.compositionCards !== 3 || !selectedSpot.photoIdeaLabVisible || !selectedSpot.hasGenerateButton || !selectedSpot.hasActualImageSlot || !selectedSpot.visible) {
+            if (!selectedSpot.title || !selectedSpot.hasShotPrompt || selectedSpot.compositionCards !== 3 || !selectedSpot.photoIdeaLabVisible || !selectedSpot.autoSketchSrc.startsWith('data:image/svg+xml') || !selectedSpot.selectedSketchSrc.startsWith('data:image/svg+xml') || !selectedSpot.detailHasJumpButton || !selectedSpot.hasGenerateButton || !selectedSpot.hasActualImageSlot || !selectedSpot.visible) {
               throw new Error('Photo-spot detail panel did not contain the camera-specific workflow and image-generation control: ' + JSON.stringify(selectedSpot));
             }
             if (parseFloat(selectedSpot.markerWidth) < 30) {
