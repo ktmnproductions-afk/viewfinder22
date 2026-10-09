@@ -258,25 +258,12 @@ function updateRadius(){
 }
 function fitScoutingExtent(center,spots){
  if(!center||!map)return;
- const points=[center,...(spots||[]).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)).map(p=>({lat:p.lat,lng:p.lng}))];
- let farthest=0;
- points.slice(1).forEach(p=>{farthest=Math.max(farthest,haversine(center,p));});
- if(points.length<2||farthest<2500){
-  if(map.getZoom()<9)map.flyTo({center:[center.lng,center.lat],zoom:10,duration:600});
-  return;
- }
- const unwrapLongitude=lng=>{
-  let value=lng;
-  while(value-center.lng>180)value-=360;
-  while(value-center.lng<-180)value+=360;
-  return value;
- };
- const lngs=points.map(p=>unwrapLongitude(p.lng)),lats=points.map(p=>p.lat);
- const bounds=[[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]];
- const mobile=window.innerWidth<680;
- const bottomPad=mobile?Math.round(window.innerHeight*0.58+20):54;
- const padding=mobile?{top:150,bottom:bottomPad,left:18,right:18}:{top:95,bottom:60,left:435,right:65};
- map.fitBounds(bounds,{padding,maxZoom:farthest>12000?9.8:10.6,duration:850});
+ const farthest=Math.max(0,...(spots||[]).map(p=>haversine(center,{lat:p.lat,lng:p.lng})));
+ // Keep the full-screen map canvas intact. A fitBounds box that hugs a handful
+ // of points made the geography visually collapse to a small central rectangle.
+ // Zoom is selected by scout reach, but remains centred on the user's pin.
+ const zoom=farthest>=20000?9.7:farthest>=10000?10.2:farthest>=4000?10.7:11.2;
+ map.flyTo({center:[center.lng,center.lat],zoom,duration:700});
 }
 function haversine(a,b){
  const r=Math.PI/180, dLat=(b.lat-a.lat)*r,dLon=(b.lng-a.lng)*r;
@@ -828,11 +815,11 @@ $('searchForm').addEventListener('submit',async e=>{
   const places=await data.json();if(!places.length)throw new Error('No place found');
   const p=places[0],c={lat:Number(p.lat),lng:Number(p.lon)};
   $('placeSearch').value=p.display_name||q;
-  map.flyTo({center:[c.lng,c.lat],zoom:12,duration:900});
-  scanAt(c,{fly:false});
+  map.flyTo({center:[c.lng,c.lat],zoom:10.4,duration:800});
+  scanAt(c,{fly:true});
  }catch(err){setStatus('Place search failed','Try latitude, longitude or click a point directly on the map.','warn');}
 });
-$('radius').addEventListener('change',()=>{if(state.center)scanAt(state.center,{fly:false});});
+$('radius').addEventListener('change',()=>{if(state.center)scanAt(state.center,{fly:true});});
 $('useLocation').addEventListener('click',()=>{
  if(!navigator.geolocation){setStatus('Location unavailable','This browser does not expose geolocation. Click the map or search a place.','warn');return;}
  setStatus('Waiting for location permission','Allow location access in your browser if you want to scan your current position.','loading');
@@ -856,7 +843,7 @@ function saveCurrent(item){
 function renderSaved(){
  $('savedCount').textContent=state.saved.length;
  $('savedResults').innerHTML=state.saved.length?state.saved.map(s=>'<div class="saved-row"><button data-open-save="'+esc(s.id)+'">'+esc(s.name)+'</button><button data-remove-save="'+esc(s.id)+'" aria-label="Remove saved stop">Remove</button></div>').join(''):emptyHTML('Save a pin or selected place to build a road-trip list on this device.');
- $('savedResults').querySelectorAll('[data-open-save]').forEach(b=>b.addEventListener('click',()=>{const s=state.saved.find(x=>x.id===b.dataset.openSave);if(!s)return;map.flyTo({center:[s.lng,s.lat],zoom:12,duration:750});scanAt({lat:s.lat,lng:s.lng},{fly:false});}));
+ $('savedResults').querySelectorAll('[data-open-save]').forEach(b=>b.addEventListener('click',()=>{const s=state.saved.find(x=>x.id===b.dataset.openSave);if(!s)return;map.flyTo({center:[s.lng,s.lat],zoom:10.4,duration:750});scanAt({lat:s.lat,lng:s.lng},{fly:true});}));
  $('savedResults').querySelectorAll('[data-remove-save]').forEach(b=>b.addEventListener('click',()=>{state.saved=state.saved.filter(x=>x.id!==b.dataset.removeSave);try{localStorage.setItem('photo-scout-saved',JSON.stringify(state.saved));}catch(e){}renderSaved();}));
 }
 $('saveStop').addEventListener('click',()=>saveCurrent(null));
