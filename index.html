@@ -47,6 +47,15 @@
 .auto-sketch-img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#22392f}
 .auto-sketch-frame figcaption{padding:6px 8px;color:#acbcad;font-size:8px;line-height:1.4;border-top:1px solid rgba(220,239,215,.10)}
 .selected-concept-preview{margin-top:12px;padding:10px;border:1px solid #40533e;border-radius:11px;background:#18251c}
+.selected-parking-block{margin-top:12px;padding:11px;border:1px solid #40533e;border-radius:11px;background:#18251c}
+.parking-nearby-note{font-size:9px;line-height:1.45;color:#a7b6a8;margin:5px 0 8px}
+.parking-option{display:flex;align-items:center;gap:8px;padding:8px;margin-top:6px;border:1px solid #394c3b;border-radius:9px;background:#202e24}
+.parking-option-icon{display:flex;align-items:center;justify-content:center;flex:0 0 27px;height:27px;border:2px solid #e9fff1;border-radius:7px;background:#087a4c;color:#fff;font-size:12px;font-weight:900}
+.parking-option-main{min-width:0;flex:1}
+.parking-option-title{font-size:10px;font-weight:800;line-height:1.35;color:#edf3e8}
+.parking-option-meta{font-size:8px;line-height:1.4;color:#b0c0b2;margin-top:3px}
+.parking-option .btn{flex:0 0 auto;padding:6px 7px;font-size:8px}
+
 .selected-concept-img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border:1px solid #354a38;border-radius:8px;background:#22392f;margin:7px 0}
 .selected-concept-preview .btn{margin-top:7px}
 
@@ -123,6 +132,11 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
   <section class="detail" id="spotDetail">
     <div class="eyebrow" id="detailEyebrow">Selected location</div><h2 id="detailTitle">Your pin</h2><div class="spot-meta" id="detailMeta"></div>
     <div id="detailHistory"></div>
+    <div class="selected-parking-block">
+      <div class="section-heading"><h3>Parking near this spot</h3><span class="count" id="spotParkingCount">—</span></div>
+      <p id="spotParkingHint" class="parking-nearby-note">Choose a photo spot to search for mapped parking near that exact location.</p>
+      <div id="spotParkingResults"><div class="empty">Parking results will appear here after you select a place.</div></div>
+    </div>
     <div class="selected-concept-preview">
       <div class="section-heading"><h3>Suggested composition</h3><span class="count" id="selectedConceptLens">Canon R50</span></div>
       <img id="selectedConceptPreviewImg" class="selected-concept-img" alt="Illustrative composition sketch for this selected place">
@@ -216,7 +230,7 @@ const styleUrls = {
  dark:'https://tiles.openfreemap.org/styles/dark',
  fiord:'https://tiles.openfreemap.org/styles/fiord'
 };
-const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, detectedLocality:'', results:[], scenicSpots:[], photos:[], basemapParking:[], parkingFilteredLayers:new Set(), selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0};
+const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, detectedLocality:'', results:[], scenicSpots:[], photos:[], basemapParking:[], parkingFilteredLayers:new Set(), spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0};
 window.__PHOTO_SCOUT_TEST__ = {
  get map(){ return state.map; },
  get styleLoaded(){ return state.styleLoaded; },
@@ -727,7 +741,8 @@ function parkingCandidates(){
    parkingOrigin:'indexed'
   };
  });
- const seen=[...direct];
+ const selectedNearby=state.spotParkingTargetId&&state.selected&&state.selected.id===state.spotParkingTargetId?state.spotParking.map(p=>({...p,distance:center?haversine(center,{lat:p.lat,lng:p.lng}):p.distance, distanceFromSpot:p.distance, parkingOrigin:'near-selected'})):[];
+ const seen=[...direct,...selectedNearby];
  (state.basemapParking||[]).forEach(p=>{
   const dist=center?haversine(center,{lat:p.lat,lng:p.lng}):p.distance;
   if(!Number.isFinite(dist)||dist>radius)return;
@@ -735,6 +750,85 @@ function parkingCandidates(){
   seen.push({...p,distance:dist,parkingOrigin:'basemap'});
  });
  return seen.sort((a,b)=>(a.distance||0)-(b.distance||0));
+}
+function renderSpotParking(item){
+ const count=$('spotParkingCount'),hint=$('spotParkingHint'),container=$('spotParkingResults');
+ if(!count||!hint||!container)return;
+ const items=(state.spotParkingTargetId===item.id?state.spotParking:[]).slice().sort((a,b)=>a.distance-b.distance);
+ count.textContent=state.spotParkingLoading?(items.length?items.length+' found · checking more':'Searching…'):items.length+' found';
+ if(state.spotParkingLoading)hint.textContent=items.length?'Showing nearby mapped options while checking the map index for more parking close to this spot.':'Searching within 3.5 km of this selected place—not just around your original pin.';
+ else hint.textContent='Distances are from '+item.name+'. These are mapped parking features, not live availability; check legal access, signs, charges and opening on arrival.';
+ if(!items.length){
+  container.innerHTML=emptyHTML(state.spotParkingLoading?'Looking for mapped parking around this exact spot…':'No mapped parking feature was found within 3.5 km. That does not prove parking is unavailable; check the surrounding roads and local restrictions.');
+  if(!state.spotParkingLoading){
+   const href='https://www.google.com/maps/search/parking/@'+Number(item.lat).toFixed(6)+','+Number(item.lng).toFixed(6)+',15z';
+   container.innerHTML+='<p class="parking-nearby-note"><a class="footer-link" href="'+esc(href)+'" target="_blank" rel="noopener noreferrer">Check parking around this spot on the map ↗</a></p>';
+  }
+  return;
+ }
+ container.innerHTML=items.slice(0,5).map(p=>{
+  const nav='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.lat+','+p.lng)+'&travelmode=driving';
+  const source=p.sourceUrl||('https://www.openstreetmap.org/?mlat='+p.lat+'&mlon='+p.lng+'#map=18/'+p.lat+'/'+p.lng);
+  const label=/^unnamed mapped parking/i.test(p.name||'')||/^parking$/i.test(p.name||'')?'Mapped parking point':p.name;
+  return '<article class="parking-option"><div class="parking-option-icon">P</div><div class="parking-option-main"><div class="parking-option-title">'+esc(label)+'</div><div class="parking-option-meta">'+esc(distanceLabel(p.distance)+' from this spot · '+(p.source||'OpenStreetMap'))+'</div><div class="parking-option-meta">Mapped point only; verify public access and parking rules.</div><div class="parking-option-meta"><a class="footer-link" href="'+esc(safeLink(source))+'" target="_blank" rel="noopener noreferrer">Map data ↗</a></div></div><a class="btn small primary" href="'+esc(nav)+'" target="_blank" rel="noopener noreferrer">Drive ↗</a></article>';
+ }).join('');
+}
+async function loadParkingNearSelected(item){
+ const requestId=++state.spotParkingRequest;
+ state.spotParkingTargetId=item.id;
+ state.spotParkingLoading=true;
+ const local=parkingCandidates().map(p=>({...p,distance:haversine({lat:item.lat,lng:item.lng},{lat:p.lat,lng:p.lng}),parkingOrigin:'near-selected'})).filter(p=>Number.isFinite(p.distance)&&p.distance<=3500);
+ state.spotParking=local;
+ renderSpotParking(item);
+ const engine=await getRangefindEngine().catch(()=>null);
+ if(!engine||requestId!==state.spotParkingRequest||!state.selected||state.selected.id!==item.id){
+  if(requestId===state.spotParkingRequest&&state.selected&&state.selected.id===item.id){state.spotParkingLoading=false;renderSpotParking(item);}
+  return;
+ }
+ try{
+  const geo={near:{lat:item.lat,lon:item.lng,radiusMeters:3500,sort:'distance'}};
+  const responses=await Promise.allSettled([
+   engine.search({q:'parking',geo,size:80}),
+   engine.search({q:'',geo,size:100})
+  ]);
+  if(requestId!==state.spotParkingRequest||!state.selected||state.selected.id!==item.id)return;
+  const pool=[...local];
+  const seen=pool.map(p=>({lat:p.lat,lng:p.lng}));
+  responses.filter(r=>r.status==='fulfilled').flatMap(r=>r.value.results||[]).forEach((r,index)=>{
+   const details=r.details&&typeof r.details==='object'?r.details:{};
+   const tags={...details};
+   if(r.category&&r.type)tags[r.category]=r.type;
+   if(r.type&&!tags.type)tags.type=r.type;
+   const type=String(r.type||'').toLowerCase();
+   const parking=type==='parking'||type==='parking_space'||tags.amenity==='parking'||tags.amenity==='parking_space'||Boolean(tags.parking);
+   if(!parking)return;
+   const lat=Number(r.lat),lng=Number(r.lon??r.lng);
+   if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
+   const distance=haversine({lat:item.lat,lng:item.lng},{lat,lng});
+   if(distance>3500)return;
+   if(seen.some(p=>haversine(p,{lat,lng})<60))return;
+   seen.push({lat,lng});
+   const rawName=String(r.name||r.title||tags.name||tags['name:en']||'').trim();
+   const name=!rawName||/^parking(?: area)?$/i.test(rawName)?'Mapped parking point':rawName;
+   const url=r.url||(r.id?'https://www.openstreetmap.org/'+String(r.id):'https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lng+'#map=18/'+lat+'/'+lng);
+   pool.push({
+    id:'spot-parking-'+String(r.id||index)+'-'+Math.round(lat*100000)+'-'+Math.round(lng*100000),
+    name,lat,lng,distance,distanceFromSpot:distance,tags,
+    source:'OpenStreetMap via Rangefind',sourceUrl:url,
+    category:'parking',parkingOrigin:'near-selected',
+    summary:'Mapped parking feature near '+item.name+'. Public access, legal parking, charges, opening and availability are not confirmed.'
+   });
+  });
+  state.spotParking=pool.sort((a,b)=>a.distance-b.distance).slice(0,12);
+  state.spotParkingLoading=false;
+  renderSpotParking(item);
+  renderResults();
+  renderMarkers();
+ }catch(err){
+  if(requestId!==state.spotParkingRequest||!state.selected||state.selected.id!==item.id)return;
+  state.spotParkingLoading=false;
+  renderSpotParking(item);
+ }
 }
 function clusterParkingMarkers(items){
  if(!map||items.length<2)return items.map(p=>p);
@@ -861,7 +955,7 @@ function setStatus(title,msg,kind){
 async function scanAt(c,opts){
  if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng)||Math.abs(c.lat)>85||Math.abs(c.lng)>180){setStatus('Choose a valid map point','That coordinate cannot be scanned.','warn');return;}
  state.scanId++;const id=state.scanId;state.scanCount++;cancelPreviousRequests();
- state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.results=[];state.scenicSpots=[];state.photos=[];state.basemapParking=[];state.selected=null;
+ state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.results=[];state.scenicSpots=[];state.photos=[];state.basemapParking=[];state.spotParking=[];state.spotParkingTargetId=null;state.spotParkingLoading=false;state.spotParkingRequest++;state.selected=null;
  $('spotDetail').classList.remove('show');
  setActivePin(state.center);updateRadius();
  if(opts&&opts.fly&&map.getZoom()<8){map.flyTo({center:[c.lng,c.lat],zoom:9.5,duration:700});}
@@ -1194,6 +1288,8 @@ function selectItem(item){
  if(item.category==='parking')history='Mapped parking feature only. This does not confirm that parking is currently open, free, legal, safe, or available. Verify signage and restrictions on arrival.';
  const gear='Canon EOS R50 + RF-S 18–150mm: 18–24mm for a wide establishing frame, 35–70mm for city-with-context, 100–150mm to compress distant skyline and mountain layers.';
  $('detailHistory').innerHTML='<p>'+esc(history)+'</p>'+(item.category==='photoSpot'?'<p>'+esc(gear)+'</p>':'')+'<p><a class="footer-link" href="'+esc(safeLink(item.wikiUrl||item.sourceUrl||'#'))+'" target="_blank" rel="noopener">Open source / more history ↗</a></p>';
+ renderSpotParking(item);
+ loadParkingNearSelected(item);
  renderDetailPhotoRefs(item);
  updateSocialSearch(item.name+' '+(item.city||state.detectedLocality||''));
  const destination=item.lat+','+item.lng;
