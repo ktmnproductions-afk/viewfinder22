@@ -230,37 +230,70 @@ async function requestJSON(url,scanId,timeoutMs){
   state.controllers=state.controllers.filter(c=>c!==controller);
  }
 }
-async function overpassSearch(c,radius,id){
- const query='[out:json][timeout:18];('+
- 'nwr(around:'+radius+','+c.lat+','+c.lng+')["amenity"="parking"];'+
- 'nwr(around:'+radius+','+c.lat+','+c.lng+')["historic"];'+
- 'nwr(around:'+radius+','+c.lat+','+c.lng+')["heritage"];'+
- 'nwr(around:'+radius+','+c.lat+','+c.lng+')["tourism"~"attraction|museum|viewpoint|artwork|gallery"];'+
- 'nwr(around:'+radius+','+c.lat+','+c.lng+')["building"~"church|cathedral|castle|fort|ruins|monument"];'+
- 'nwr(around:'+radius+','+c.lat+','+c.lng+')["natural"~"peak|cliff|cave|waterfall|beach"];'+
- 'nwr(around:'+radius+','+c.lat+','+c.lng+')["man_made"~"lighthouse|tower|bridge"];'+
- ');out center tags 100;';
- const endpoints=['https://overpass-api.de/api/interpreter?data=','https://overpass.kumi.systems/api/interpreter?data='];
- let lastErr;
- for(const endpoint of endpoints){
-  try{
-   const data=await requestJSON(endpoint+encodeURIComponent(query),id,14000);
-   const raw=(data.elements||[]).map(el=>{
-    const tags=el.tags||{};
-    const lat=el.lat!=null?el.lat:(el.center&&el.center.lat);
-    const lng=el.lon!=null?el.lon:(el.center&&el.center.lon);
-    if(!Number.isFinite(lat)||!Number.isFinite(lng)||!tags.name) return null;
-    const c2={lat:lat,lng:lng}; const d=haversine(c,c2);
-    if(d>radius) return null;
-    return {id:'osm-'+el.type+'-'+el.id,name:tags.name,lat:lat,lng:lng,distance:d,tags:tags,source:'OpenStreetMap',sourceUrl:'https://www.openstreetmap.org/'+el.type+'/'+el.id,category:classify(tags),summary:tags.description||tags['description:en']||'',history:'',wikiUrl:tags.wikipedia?wikiURL(tags.wikipedia):'',license:'© OpenStreetMap contributors'};
-   }).filter(Boolean);
-   const dedup=new Map();
-   raw.sort((a,b)=>priority(b)-priority(a)||a.distance-b.distance);
-   raw.forEach(v=>{const key=v.category+'|'+v.name.toLowerCase().trim();if(!dedup.has(key))dedup.set(key,v);});
-   return Array.from(dedup.values()).sort((a,b)=>a.distance-b.distance).slice(0,100);
-  }catch(err){lastErr=err;if(id!==state.scanId) throw err;}
+let rangefindEnginePromise=null;
+async function getRangefindEngine(){
+ if(!rangefindEnginePromise){
+  rangefindEnginePromise=import('https://esm.sh/rangefind@0.5.0/browser').then(mod=>{
+   if(typeof mod.createSearch!=='function')throw new Error('Rangefind search engine failed to load');
+   return mod.createSearch({baseUrl:'https://osm.rangefind.dev/',multiRangeRequests:true,geoCapsules:true,geoCellIndexes:true});
+  }).catch(err=>{rangefindEnginePromise=null;throw err;});
  }
- throw lastErr||new Error('Place search unavailable');
+ return rangefindEnginePromise;
+}
+async function overpassSearch(c,radius,id){
+ // Use a browser-safe, cacheable global OSM index. Public Overpass query servers
+ // are best-effort and often time out or reject cross-origin browser requests.
+ const engine=await getRangefindEngine();
+ const response=await engine.search({
+  q:'',
+  geo:{near:{lat:c.lat,lon:c.lng,radiusMeters:radius},sort:'distance'},
+  size:100
+ });
+ if(id!==state.scanId)throw new Error('stale scan');
+ const rows=response.results||[];
+ const places=[];
+ const normalizeTags=r=>{
+  const d=r.details&&typeof r.details==='object'?r.details:{};
+  const t={...d};
+  if(r.category&&r.type)t[r.category]=r.type;
+  if(r.type && !t.type)t.type=r.type;
+  return t;
+ };
+ rows.forEach((r,index)=>{
+  const lat=Number(r.lat),lng=Number(r.lon??r.lng);
+  if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
+  const tags=normalizeTags(r);
+  const type=String(r.type||'').toLowerCase();
+  const categoryTag=String(r.category||'').toLowerCase();
+  const parking=type==='parking'||type==='parking_space'||tags.amenity==='parking'||tags.amenity==='parking_space'||Boolean(tags.parking);
+  const history=categoryTag==='historic'||Boolean(tags.historic)||Boolean(tags.heritage)||['museum','attraction','tourist_attraction','memorial','monument','archaeological_site','castle','ruins','fort','church','cathedral','place_of_worship'].includes(type);
+  const viewpoint=type==='viewpoint'||['peak','cliff','cave','waterfall','beach','spring'].includes(type)||categoryTag==='natural'&&['peak','cliff','cave','waterfall','beach'].includes(type);
+  const architecture=['church','cathedral','castle','fort','ruins','monument','lighthouse','tower','bridge','industrial','historic'].includes(type)||categoryTag==='building'&&Boolean(r.name);
+  let placeCategory=parking?'parking':history?'history':viewpoint?'viewpoint':architecture?'architecture':null;
+  if(!placeCategory)return;
+  const name=String(r.name||r.title||'').trim()||(parking?'Parking area':'');
+  if(!name)return;
+  const distance=Number.isFinite(Number(r.distanceMeters))?Number(r.distanceMeters):haversine(c,{lat,lng});
+  if(distance>radius)return;
+  const osmUrl=r.url||(r.id?'https://www.openstreetmap.org/'+String(r.id).replace('/','/'):'https://www.openstreetmap.org/');
+  const wikiTag=tags.wikipedia||tags['wikipedia:en']||'';
+  places.push({
+   id:'rf-'+String(r.id||index)+'-'+placeCategory,
+   name,lat,lng,distance,tags,source:'OpenStreetMap via Rangefind',sourceUrl:osmUrl,
+   category:placeCategory,summary:String(tags.description||tags['description:en']||''),
+   history:'',wikiUrl:wikiTag?wikiURL(String(wikiTag)):(tags.wikidata?'https://www.wikidata.org/wiki/'+tags.wikidata:''),
+   license:'© OpenStreetMap contributors'
+  });
+ });
+ const seen=new Set();
+ const deduped=places.sort((a,b)=>a.distance-b.distance).filter(p=>{
+  const key=p.category+'|'+normalizeNameForDedup(p.name)+'|'+p.lat.toFixed(4)+'|'+p.lng.toFixed(4);
+  if(seen.has(key))return false;seen.add(key);return true;
+ });
+ return deduped.slice(0,80);
+}
+function normalizeNameForDedup(name){
+ return String(name||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
 }
 function classify(t){
  if(t.amenity==='parking'||t.amenity==='parking_space'||t.parking) return 'parking';
