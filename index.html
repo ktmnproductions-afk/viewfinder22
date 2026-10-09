@@ -98,8 +98,8 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
 <footer>Map data © <a class="footer-link" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Vector basemap by <a class="footer-link" href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>. History links and photo licences are shown where available. Always verify road access, parking signs and private-property restrictions.</footer>
 </aside>
 <div class="map-credit">Made for curious photographers · Photo Scout</div>
-<script src="https://unpkg.com/maplibre-gl@6.13.0/dist/maplibre-gl.js"></script>
-<script>
+<script type="module">
+import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.13.0/dist/maplibre-gl.mjs';
 (function(){
 'use strict';
 const $ = id => document.getElementById(id);
@@ -130,7 +130,7 @@ const mapOk = () => {
  $('mapIssue').classList.remove('show');
  $('appState').textContent = 'Interactive map ready · click anywhere to scout';
 };
-if (!window.maplibregl) {
+if (!maplibregl || !maplibregl.Map) {
  mapError('The MapLibre map renderer did not load from its CDN. Check the connection and reload this page.');
  return;
 }
