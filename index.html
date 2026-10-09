@@ -65,6 +65,7 @@
 .scout-marker{border:0;display:grid;place-items:center;cursor:pointer;padding:0;outline:none;transition:transform .14s}.scout-marker:hover{transform:scale(1.16);z-index:30!important}.scout-marker .dot-core{display:grid;place-items:center;border:2px solid rgba(255,255,255,.96);box-shadow:0 2px 9px rgba(0,0,0,.35);font:850 10px/1 ui-sans-serif,system-ui;background:#26342c;color:#fff}.scout-marker.parking .dot-core{width:25px;height:25px;border-radius:8px;background:#19734f;color:#e6ffe9;border-color:#c7f8d4}.scout-marker.history .dot-core{width:15px;height:15px;border-radius:50%;background:#ed8b73;color:#263127;border-color:#fff0e9}.scout-marker.viewpoint .dot-core{width:18px;height:18px;border-radius:5px;transform:rotate(45deg);background:#f0b84f;color:#372c1b;border-color:#fff2cd}.scout-marker.viewpoint .dot-core span{transform:rotate(-45deg)}.scout-marker.architecture .dot-core{width:16px;height:16px;border-radius:4px;background:#76b7a4;border-color:#e8fff6}.scout-marker.photo .dot-core{width:22px;height:22px;border-radius:50%;background:#8560d6;color:#fff;border-color:#eee2ff;font-size:14px}.scout-marker.active-pin .dot-core{width:25px;height:25px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--lime);border:2px solid #17251b;color:#152018;box-shadow:0 3px 12px rgba(0,0,0,.55)}.scout-marker.active-pin .dot-core span{transform:rotate(45deg);font-size:12px}
 .scout-marker .dot-core{transition:transform .12s,box-shadow .12s}
 .scout-marker.parking .dot-core{width:31px;height:31px;border-radius:9px;border:3px solid #eafff0;background:#087a4c;color:#fff;font-size:13px;box-shadow:0 0 0 4px rgba(44,219,138,.23),0 4px 13px rgba(0,0,0,.55)}
+.scout-marker.parking-cluster .dot-core{width:36px;height:36px;border-radius:50%;border:3px solid #eafff0;background:#075b3e;color:#fff;font-size:11px;letter-spacing:-.4px;box-shadow:0 0 0 5px rgba(44,219,138,.28),0 5px 15px rgba(0,0,0,.62)}
 .scout-marker.history .dot-core{width:25px;height:25px;border-radius:50%;border:3px solid #fff7f1;background:#ff765a;color:#30160f;font-size:11px;box-shadow:0 0 0 4px rgba(255,111,83,.24),0 4px 13px rgba(0,0,0,.50)}
 .scout-marker.architecture .dot-core{width:23px;height:23px;border-radius:6px;border:3px solid #eafffa;background:#218c7d;color:#fff;font-size:10px;box-shadow:0 0 0 3px rgba(65,210,187,.18),0 4px 12px rgba(0,0,0,.45)}
 .scout-marker.viewpoint .dot-core{width:28px;height:28px;border-radius:6px;border:3px solid #fff4cb;background:#ffc247;color:#3a2600;font-size:11px;box-shadow:0 0 0 4px rgba(255,194,71,.22),0 4px 13px rgba(0,0,0,.55)}
@@ -254,6 +255,7 @@ map.on('sourcedata', function(e){
 });
 map.on('idle', function(){ refreshBasemapParking(); });
 map.on('moveend', function(){ refreshBasemapParking(); });
+map.on('zoomend', function(){ renderMarkers(); });
 map.on('load', function(){
  state.styleLoaded = true;
  suppressBasemapParkingSymbols();
@@ -299,11 +301,11 @@ function updateRadius(){
 }
 function fitScoutingExtent(center,spots){
  if(!center||!map)return;
- const farthest=Math.max(0,...(spots||[]).map(p=>haversine(center,{lat:p.lat,lng:p.lng})));
- // Keep the full-screen map canvas intact. A fitBounds box that hugs a handful
- // of points made the geography visually collapse to a small central rectangle.
- // Zoom is selected by scout reach, but remains centred on the user's pin.
- const zoom=farthest>=20000?9.7:farthest>=10000?10.2:farthest>=4000?10.7:11.2;
+ // Keep the user's pinned town at a useful street-and-neighbourhood scale.
+ // Long-distance candidates remain in the list and can be opened individually;
+ // they must not force the whole screen to zoom out and hide parking markers.
+ const km=Number(state.radius||10000)/1000;
+ const zoom=km>=20?11.2:km>=10?12.25:km>=5?13.05:13.6;
  map.flyTo({center:[center.lng,center.lat],zoom,duration:700});
 }
 function haversine(a,b){
@@ -1042,7 +1044,10 @@ function selectItem(item){
  $('shotPrompt').value=shotPrompt(item);
  resetGeneratedConcept();
  updateConceptTargetName();
- if(map.getZoom()<11)map.flyTo({center:[item.lng,item.lat],zoom:item.category==='photoSpot'?10.5:12,duration:650});
+ const viewZoom=item.category==='parking'?16:item.category==='photoSpot'?13:item.category==='viewpoint'?14:15.2;
+ const mapCenter=map.getCenter();
+ const offsetKm=haversine({lat:mapCenter.lat,lng:mapCenter.lng},{lat:item.lat,lng:item.lng});
+ if(offsetKm>180||Math.abs(map.getZoom()-viewZoom)>0.75)map.flyTo({center:[item.lng,item.lat],zoom:viewZoom,duration:750});
  renderResults();
  renderMarkers();
  $('spotDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
