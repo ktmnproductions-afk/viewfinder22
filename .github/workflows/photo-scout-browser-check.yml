@@ -71,10 +71,10 @@ jobs:
             if (!initial.styleLoaded || initial.styleSources < 1 || successfulVectorTiles.length < 1) {
               throw new Error('No successful live vector map tiles: ' + JSON.stringify({initial,tileResponses}));
             }
-            await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.map.jumpTo({ center: [14.43, 45.33], zoom: 12 }));
-            await page.waitForTimeout(500);
+            await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.map.jumpTo({ center: [14.34873, 45.37306], zoom: 13 }));
+            await page.waitForTimeout(700);
             const rect = await page.locator('#map').boundingBox();
-            await page.mouse.click(Math.min(rect.x + rect.width * 0.72, 1500), rect.y + rect.height * 0.50);
+            await page.mouse.click(Math.min(rect.x + rect.width * 0.54, 1500), rect.y + rect.height * 0.50);
             await page.waitForFunction(() => window.__PHOTO_SCOUT_TEST__?.scanCount >= 1, null, { timeout: 5000 });
             await page.waitForFunction(() => ['Photo stop ready', 'Stop research ready', 'Partial results loaded'].includes(document.querySelector('#statusTitle')?.textContent), null, { timeout: 90000 });
             const afterClick = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.getState());
@@ -107,14 +107,15 @@ jobs:
               hasShotPrompt: (document.querySelector('#shotPrompt')?.value || '').includes('Canon EOS R50'),
               photoCount: document.querySelectorAll('#detailPhotoRefs .detail-photo').length,
               photoStatus: document.querySelector('#detailPhotoCount')?.textContent,
-              compositionCards: document.querySelectorAll('#spotDetail .concept-card').length,
+              compositionCards: document.querySelectorAll('#scenicSection .concept-card').length,
+              photoIdeaLabVisible: !!document.querySelector('#aiVisualBlock')?.getBoundingClientRect().height,
               hasGenerateButton: !!document.querySelector('#generateConcept'),
               hasActualImageSlot: !!document.querySelector('#generatedVisual'),
               imageProviderLoaded: !!window.puter?.ai?.txt2img,
               visible: !!document.querySelector('#spotDetail')?.getBoundingClientRect().height,
               markerWidth: getComputedStyle(document.querySelector('.scout-marker.photoSpot .dot-core')).width
             }));
-            if (!selectedSpot.title || !selectedSpot.hasShotPrompt || selectedSpot.compositionCards !== 3 || !selectedSpot.hasGenerateButton || !selectedSpot.hasActualImageSlot || !selectedSpot.visible) {
+            if (!selectedSpot.title || !selectedSpot.hasShotPrompt || selectedSpot.compositionCards !== 3 || !selectedSpot.photoIdeaLabVisible || !selectedSpot.hasGenerateButton || !selectedSpot.hasActualImageSlot || !selectedSpot.visible) {
               throw new Error('Photo-spot detail panel did not contain the camera-specific workflow and image-generation control: ' + JSON.stringify(selectedSpot));
             }
             if (parseFloat(selectedSpot.markerWidth) < 30) {
