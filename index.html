@@ -816,6 +816,65 @@ function shotPrompt(item){
  const evidence=item.category==='photoSpot'?'Mapped evidence: '+(item.why||'scenic feature candidate')+'. Do not invent a real structure or claim an unverified view. ':'';
  return 'Create a photorealistic visual reference for a real-world photography outing at '+item.name+'. Coordinates: '+Number(item.lat).toFixed(5)+', '+Number(item.lng).toFixed(5)+'. Genre: '+genre+'. '+evidence+gear+' '+framing+' Suggest an achievable camera position, clear foreground, layered depth, strong geometry, natural light and an editorial colour palette. Avoid generic travel-poster styling, oversaturation, text overlays, logos, fabricated architecture or impossible scenery. This is a creative illustration, not proof of the exact on-site view. Offer golden-hour and overcast/daylight options.';
 }
+function imageConceptPrompt(item,mode){
+ const locality=String(item.city||state.detectedLocality||'').trim();
+ const tags=item.tags||{};
+ const sceneType=item.category==='photoSpot'?(item.scenicKind||'landscape viewpoint'):item.category==='history'?'historic landmark and cultural detail':item.category==='architecture'?'architectural travel photograph':item.category==='viewpoint'?'landscape viewpoint':item.category==='parking'?'surrounding landscape or town, not the car park':'travel photography';
+ const modes={
+  wide:{lens:'18–24 mm on Canon EOS R50',composition:'A wide, immersive environmental composition. Put a strong foreground object or textured path in the lower third; let coastline, rooftops or ridgelines lead the eye into layered distance. Keep the horizon deliberate and the main subject clearly readable.'},
+  context:{lens:'35–70 mm on Canon EOS R50',composition:'A balanced editorial frame with the main landmark or subject, enough environment to establish the place, clean geometry and separation between foreground, subject and background. Avoid a generic tourist postcard composition.'},
+  compressed:{lens:'100–150 mm on Canon EOS R50',composition:'A compressed telephoto composition with distinct layers of rooftops, towers, coast, valley or mountain ridges, atmospheric perspective, and a graphic silhouette. Use distance to make repeated shapes align elegantly.'}
+ };
+ const selected=modes[mode]||modes.wide;
+ const facts=[item.name,locality].filter(Boolean).join(', ');
+ const details=String(item.summary||tags.description||tags.historic||tags.natural||tags.tourism||'').slice(0,300);
+ const evidence=item.category==='photoSpot'?'Map evidence describes this as '+sceneType+'. '+String(item.why||'The mapped feature may be a scenic subject.')+' ':'';
+ return 'Generate one high-quality photorealistic editorial travel photograph concept in a 16:9 landscape frame. Creative subject inspired by '+facts+' ('+Number(item.lat).toFixed(5)+', '+Number(item.lng).toFixed(5)+'). Scene category: '+sceneType+'. '+(details?'Known mapped detail: '+details+'. ':'')+evidence+'Camera plan: '+selected.lens+'. '+selected.composition+' Use believable natural light, restrained professional colour grading, realistic atmospheric depth, authentic textures, fine detail, and a strong magazine-photography composition. No text, captions, logos, watermarks, borders or collage. Do not invent precise geographic facts: this is an imagined shot concept inspired by the location, not a documentary reconstruction of its real view. If the exact architecture or line of sight is unknown, create a plausible respectful visual interpretation and do not state that it is what a photographer will literally see.';
+}
+function resetGeneratedConcept(){
+ const image=$('generatedVisual');
+ const wrap=$('generatedVisualWrap');
+ const status=$('conceptStatus');
+ const button=$('generateConcept');
+ if(image)image.removeAttribute('src');
+ if(wrap)wrap.hidden=true;
+ if(status)status.textContent='Choose a composition and press Generate image idea. The image is an artistic interpretation, not verified geography.';
+ if(button){button.disabled=false;button.textContent='Generate image idea';}
+}
+async function generateConcept(){
+ const item=state.selected;
+ const status=$('conceptStatus');
+ const button=$('generateConcept');
+ const wrap=$('generatedVisualWrap');
+ const image=$('generatedVisual');
+ if(!item){status.textContent='Choose a place or photo spot first.';return;}
+ if(!window.puter||!window.puter.ai||typeof window.puter.ai.txt2img!=='function'){
+  status.textContent='The image service has not loaded. Refresh the page and try again. The editable prompt is still available below.';
+  return;
+ }
+ const mode=$('conceptMode').value||'wide';
+ button.disabled=true;button.textContent='Generating…';
+ status.textContent='Creating a visual concept for '+item.name+'. This can take a little while; the selected model/provider may ask you to sign in or confirm usage.';
+ try{
+  const generated=await window.puter.ai.txt2img(imageConceptPrompt(item,mode),{
+   provider:'openai',
+   model:'gpt-image-2',
+   quality:'medium',
+   ratio:{w:16,h:9}
+  });
+  const src=typeof generated==='string'?generated:(generated&&generated.src?generated.src:'');
+  if(!src)throw new Error('The image provider returned no viewable image.');
+  image.src=src;
+  image.alt='AI-generated illustrative photo concept for '+item.name+'. Not a verified photograph of the real location.';
+  wrap.hidden=false;
+  status.textContent='Visual concept ready. This image is generated inspiration, not a verified view of the site. Check access and sightlines on arrival.';
+  wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+ }catch(err){
+  status.textContent='Image generation did not finish: '+String(err&&err.message||err).slice(0,180)+'. You can still copy the editable prompt below.';
+ }finally{
+  button.disabled=false;button.textContent='Generate another concept';
+ }
+}
 async function renderDetailPhotoRefs(item){
  const container=$('detailPhotoRefs');
  if(!container)return;
@@ -865,6 +924,7 @@ function selectItem(item){
  $('driveLink').href='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode=driving';
  $('driveLink').textContent=item.category==='parking'?'Navigate to parking ↗':item.category==='photoSpot'?'Navigate to photo spot ↗':'Drive to spot ↗';
  $('shotPrompt').value=shotPrompt(item);
+ resetGeneratedConcept();
  if(map.getZoom()<11)map.flyTo({center:[item.lng,item.lat],zoom:item.category==='photoSpot'?10.5:12,duration:650});
  renderResults();
  renderMarkers();
@@ -918,6 +978,10 @@ function renderSaved(){
 }
 $('saveStop').addEventListener('click',()=>saveCurrent(null));
 $('saveSelected').addEventListener('click',()=>saveCurrent(state.selected));
+$('generateConcept').addEventListener('click',generateConcept);
+$('conceptMode').addEventListener('change',()=>{
+ if($('generatedVisualWrap')&&!$('generatedVisualWrap').hidden)resetGeneratedConcept();
+});
 $('copyPrompt').addEventListener('click',async()=>{
  const text=$('shotPrompt').value;
  try{await navigator.clipboard.writeText(text);$('copyPrompt').textContent='Copied';setTimeout(()=>$('copyPrompt').textContent='Copy prompt',1300);}
