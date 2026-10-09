@@ -41,6 +41,17 @@
 .concept-lens{padding:3px 7px 0;color:var(--lime);font-size:9px;font-weight:800}
 .concept-card p{padding:0 7px 8px;margin:5px 0 0;font-size:8px;line-height:1.4;color:#aab9ad}
 .concept-note{font-size:9px;color:#93a497;line-height:1.45;margin-top:8px}
+.ai-visual-intro{font-size:10px;line-height:1.5;color:#b8c6b9;margin:7px 0 9px}
+.concept-controls{display:flex;gap:7px;align-items:stretch;margin:8px 0}
+.concept-controls select{flex:1;min-width:0;color:#eaf2e5;background:#18251c;border:1px solid #445845;border-radius:8px;padding:8px;font-size:10px}
+.concept-controls .btn{flex:0 0 auto;font-size:10px;padding:8px 10px}
+.concept-status{font-size:9px;line-height:1.5;color:#9fb09f;margin:5px 0 9px}
+.generated-visual-wrap{margin-top:8px;border:1px solid #4a6044;border-radius:10px;background:#101a13;overflow:hidden}
+.generated-visual-img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:linear-gradient(135deg,#34483b,#202d26)}
+.generated-visual-caption{padding:7px 9px;font-size:9px;line-height:1.4;color:#c6d3c4;border-top:1px solid rgba(220,239,215,.12)}
+.generated-visual-wrap[hidden]{display:none}
+#generateConcept:disabled{opacity:.65;cursor:wait}
+
 @media(max-width:680px){.detail-photo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.detail-photo img{height:62px}.concept-art{height:50px}.detail{margin-left:14px;margin-right:14px}}.detail h2{font-family:Georgia,serif;font-weight:500;font-size:22px;line-height:1.15;margin:3px 0 8px}.detail p{font-size:11px;line-height:1.6;color:#c0cdc1;margin:8px 0}.detail-actions{display:flex;gap:7px;flex-wrap:wrap;margin:11px 0}.detail-actions .btn{flex:1}.prompt-box{background:#111b14;border:1px solid #3b4b3b;border-radius:10px;padding:10px;margin-top:10px}.prompt-box textarea{width:100%;resize:vertical;min-height:110px;outline:none;border:0;background:transparent;color:#d5e1d5;font-size:10px;line-height:1.55}.prompt-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:9px;color:#9eae9f}.saved-row{display:flex;gap:6px;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid #344439;border-radius:9px;margin-top:6px;font-size:10px;color:#cfdbcf}.saved-row button{background:none;color:var(--lime);border:0;font-size:10px}
 .map-heading{position:fixed;z-index:5;left:430px;top:15px;background:rgba(18,28,23,.92);border:1px solid rgba(255,255,255,.11);padding:13px 17px;border-radius:13px;box-shadow:0 8px 28px rgba(18,32,20,.13);backdrop-filter:blur(14px);max-width:calc(100vw - 460px)}.map-heading .eyebrow{font-size:8px;margin-bottom:5px}.map-heading strong{font-family:Georgia,serif;font-size:21px;font-weight:500;color:#f2f5ed;letter-spacing:-.015em}.map-heading div:last-child{font-size:10px;color:#aab9ac;margin-top:5px}.map-styles{position:fixed;right:16px;top:15px;z-index:6;display:flex;gap:4px;padding:5px;border-radius:13px;background:rgba(18,28,23,.94);border:1px solid rgba(255,255,255,.11);box-shadow:0 8px 28px rgba(18,32,20,.14);backdrop-filter:blur(14px)}.map-style{border:0;background:transparent;color:#aebcaf;padding:8px 10px;border-radius:8px;font-size:10px}.map-style:hover,.map-style.active{background:#37482c;color:#e3f58b}.map-style.active{box-shadow:inset 0 0 0 1px rgba(217,243,107,.19)}.map-credit{position:fixed;right:12px;bottom:5px;z-index:5;font-size:9px;color:#445747;background:rgba(248,250,243,.86);padding:4px 7px;border-radius:5px;pointer-events:none}.map-issue{position:fixed;z-index:8;top:72px;right:15px;max-width:370px;background:rgba(27,36,29,.97);border:1px solid rgba(255,156,131,.35);border-radius:12px;padding:13px;color:#f3eee8;box-shadow:var(--shadow);display:none}.map-issue.show{display:block}.map-issue strong{font-size:12px}.map-issue p{margin:5px 0 10px;color:#c6c9bd;font-size:10px;line-height:1.5}.map-issue button{background:var(--lime);border:0;border-radius:8px;padding:7px 10px;font-weight:800;font-size:10px;color:#18221b}
 .scout-marker{border:0;display:grid;place-items:center;cursor:pointer;padding:0;outline:none;transition:transform .14s}.scout-marker:hover{transform:scale(1.16);z-index:30!important}.scout-marker .dot-core{display:grid;place-items:center;border:2px solid rgba(255,255,255,.96);box-shadow:0 2px 9px rgba(0,0,0,.35);font:850 10px/1 ui-sans-serif,system-ui;background:#26342c;color:#fff}.scout-marker.parking .dot-core{width:25px;height:25px;border-radius:8px;background:#19734f;color:#e6ffe9;border-color:#c7f8d4}.scout-marker.history .dot-core{width:15px;height:15px;border-radius:50%;background:#ed8b73;color:#263127;border-color:#fff0e9}.scout-marker.viewpoint .dot-core{width:18px;height:18px;border-radius:5px;transform:rotate(45deg);background:#f0b84f;color:#372c1b;border-color:#fff2cd}.scout-marker.viewpoint .dot-core span{transform:rotate(-45deg)}.scout-marker.architecture .dot-core{width:16px;height:16px;border-radius:4px;background:#76b7a4;border-color:#e8fff6}.scout-marker.photo .dot-core{width:22px;height:22px;border-radius:50%;background:#8560d6;color:#fff;border-color:#eee2ff;font-size:14px}.scout-marker.active-pin .dot-core{width:25px;height:25px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--lime);border:2px solid #17251b;color:#152018;box-shadow:0 3px 12px rgba(0,0,0,.55)}.scout-marker.active-pin .dot-core span{transform:rotate(45deg);font-size:12px}
@@ -97,13 +108,26 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
     <div class="eyebrow" id="detailEyebrow">Selected location</div><h2 id="detailTitle">Your pin</h2><div class="spot-meta" id="detailMeta"></div>
     <div id="detailHistory"></div>
     <div class="detail-reference-block"><div class="section-heading"><h3>Visual references for this stop</h3><span class="count" id="detailPhotoCount">—</span></div><div class="detail-photo-grid" id="detailPhotoRefs"><div class="empty">Drop a pin and select a spot to find source-linked image references.</div></div></div>
+    <div class="concept-block ai-visual-block" id="aiVisualBlock">
+      <div class="section-heading"><h3>Generate a visual photo idea</h3><span class="count">Actual image preview</span></div>
+      <p class="ai-visual-intro">Create a photorealistic composition concept for this selected place. It is an artistic interpretation, not proof of the actual view or a promise that the line of sight is clear.</p>
+      <div class="concept-controls">
+        <select id="conceptMode" aria-label="Choose a photo composition"><option value="wide">Wide landscape · 18–24 mm</option><option value="context">Subject with context · 35–70 mm</option><option value="compressed">Compressed layers · 100–150 mm</option></select>
+        <button class="btn primary" id="generateConcept" type="button">Generate image idea</button>
+      </div>
+      <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">Choose a composition and press Generate image idea. Image generation is optional and may require signing in or usage charges through the image provider.</div>
+      <div class="generated-visual-wrap" id="generatedVisualWrap" hidden>
+        <img class="generated-visual-img" id="generatedVisual" alt="AI-generated illustrative photography concept for the selected location">
+        <div class="generated-visual-caption">AI-generated concept · not a verified photograph of the real location</div>
+      </div>
+    </div>
     <div class="concept-block"><div class="section-heading"><h3>Three ways to frame it</h3><span class="count">Canon R50 · 18–150 mm</span></div>
       <div class="concept-grid">
         <article class="concept-card"><div class="concept-art wide"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Wide landscape</div><div class="concept-lens">18–24 mm</div><p>Build a foreground, then lead the eye into the city, coastline or hills.</p></article>
         <article class="concept-card"><div class="concept-art balanced"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">City with context</div><div class="concept-lens">35–70 mm</div><p>Keep the skyline readable while retaining the landscape around it.</p></article>
         <article class="concept-card"><div class="concept-art compressed"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Compressed layers</div><div class="concept-lens">100–150 mm</div><p>Stack rooftops, towers and mountain ridges into graphic layers.</p></article>
       </div>
-      <div class="concept-note">These are composition sketches, not photographs of the actual view. The prompt below describes a tailored AI visual reference for the selected spot.</div>
+      <div class="concept-note">These sketches compare lens/composition choices. Use the generated image above for a visible creative reference; the prompt below remains editable if you want to refine the result.</div>
     </div>
     <div class="detail-actions"><a class="btn primary" id="driveLink" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Drive to spot ↗</a><button class="btn" id="saveSelected">☆ Save spot</button></div>
     <div class="prompt-box"><div class="section-heading"><h3>AI shot reference</h3><span class="count">Editable prompt</span></div><textarea id="shotPrompt" aria-label="AI shot reference prompt"></textarea><div class="prompt-footer"><span>Use as a starting brief in your image tool.</span><button class="btn small" id="copyPrompt">Copy prompt</button></div></div>
@@ -148,6 +172,7 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
 <footer>Map data © <a class="footer-link" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Vector basemap by <a class="footer-link" href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>. History links and photo licences are shown where available. Always verify road access, parking signs and private-property restrictions.</footer>
 </aside>
 <div class="map-credit">Made for curious photographers · Photo Scout</div>
+<script src="https://js.puter.com/v2/"></script>
 <script type="module">
 import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.13.0/dist/maplibre-gl.mjs';
 (function(){
