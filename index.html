@@ -694,9 +694,19 @@ function suppressBasemapParkingSymbols(){
  });
 }
 function parkingCandidates(){
- const direct=state.results.filter(r=>r.category==='parking').map(p=>({...p,parkingOrigin:'indexed'}));
  const radius=state.radius||10000;
  const center=state.center;
+ const raw=state.results.filter(r=>r.category==='parking').sort((a,b)=>(a.distance||0)-(b.distance||0));
+ let unnamedIndex=0;
+ const direct=raw.map(p=>{
+  const generic=/^(parking|parking area|car park|parking lot|mapped parking area)$/i.test(String(p.name||'').trim());
+  if(generic)unnamedIndex++;
+  return {...p,
+   name:generic?'Unnamed mapped parking '+unnamedIndex:p.name,
+   summary:p.summary||'OpenStreetMap marks this coordinate as a parking feature. It does not confirm public access, charges, current opening, restrictions or available spaces. Check signs and access before parking.',
+   parkingOrigin:'indexed'
+  };
+ });
  const seen=[...direct];
  (state.basemapParking||[]).forEach(p=>{
   const dist=center?haversine(center,{lat:p.lat,lng:p.lng}):p.distance;
@@ -705,6 +715,32 @@ function parkingCandidates(){
   seen.push({...p,distance:dist,parkingOrigin:'basemap'});
  });
  return seen.sort((a,b)=>(a.distance||0)-(b.distance||0));
+}
+function clusterParkingMarkers(items){
+ if(!map||items.length<2)return items.map(p=>p);
+ // Icons should never stack on top of each other. At overview zoom, group nearby
+ // parking features into a count marker; zooming in splits the group back apart.
+ const clusterRadius=Math.max(18,420/Math.pow(2,Math.max(0,map.getZoom()-12)));
+ const groups=[];
+ items.forEach(item=>{
+  let group=groups.find(g=>g.some(p=>haversine({lat:p.lat,lng:p.lng},{lat:item.lat,lng:item.lng})<clusterRadius));
+  if(!group){group=[];groups.push(group);}
+  group.push(item);
+ });
+ return groups.map(group=>{
+  if(group.length===1)return group[0];
+  const lat=group.reduce((sum,p)=>sum+p.lat,0)/group.length;
+  const lng=group.reduce((sum,p)=>sum+p.lng,0)/group.length;
+  return {
+   id:'parking-cluster-'+group.map(p=>p.id).sort().join('|'),
+   name:group.length+' mapped parking areas',
+   lat,lng,distance:state.center?haversine(state.center,{lat,lng}):0,
+   category:'parking',parkingOrigin:'cluster',clusterSize:group.length,clusterMembers:group,
+   source:'OpenStreetMap parking features',
+   sourceUrl:group[0].sourceUrl,
+   summary:'This marker groups '+group.length+' mapped parking features close together. Click it to zoom in and separate the individual destinations. Current access, charges and availability are not verified.'
+  };
+ });
 }
 function refreshBasemapParking(){
  if(!map||!state.styleLoaded||!state.center)return;
@@ -747,23 +783,33 @@ function renderMarkers(){
  if(!state.map || !state.styleLoaded)return;
  clearMarkers();
  const parking=parkingCandidates().slice(0,50);
+ const parkingMarkers=clusterParkingMarkers(parking);
  const history=state.results.filter(r=>r.category==='history').slice(0,22);
  const viewpoints=state.results.filter(r=>r.category==='viewpoint').slice(0,12);
  const architecture=state.results.filter(r=>r.category==='architecture').slice(0,12);
  const protectedPlaces=[...parking,...history,...viewpoints,...architecture];
  // Do not let a scenic suggestion cover a real parking/history pin at the same spot.
  const scenic=state.scenicSpots.slice(0,24).filter(p=>!protectedPlaces.some(q=>haversine({lat:p.lat,lng:p.lng},{lat:q.lat,lng:q.lng})<85));
- const visible=[...parking,...history,...viewpoints,...architecture,...scenic];
+ const visible=[...parkingMarkers,...history,...viewpoints,...architecture,...scenic];
  const seen=new Set();
  visible.forEach(item=>{
   const cell=Math.round(item.lat*10000)+'|'+Math.round(item.lng*10000);
-  const key=cell;
-  if(seen.has(key))return;
-  seen.add(key);
-  const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.category==='parking'?(item.parkingOrigin==='basemap'?'Mapped parking · availability unverified · ':'Scout parking feature · ')+item.name+' · '+distanceLabel(item.distance):item.name+' · '+distanceLabel(item.distance);
+  if(seen.has(cell))return;
+  seen.add(cell);
+  const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas':item.parkingOrigin==='basemap'?'Mapped parking · availability unverified · ':'Scout parking feature · ')+item.name+' · '+distanceLabel(item.distance):item.name+' · '+distanceLabel(item.distance);
   const el=markerEl(item.category,label);
   if(item.parkingOrigin==='basemap')el.classList.add('basemap-parking');
-  el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
+  if(item.clusterMembers){
+   el.classList.add('parking-cluster');
+   el.querySelector('.dot-core').textContent='P'+item.clusterSize;
+   el.addEventListener('click',e=>{
+    e.preventDefault();e.stopPropagation();
+    const zoom=Math.min(18.5,Math.max(map.getZoom()+2.5,15.5));
+    map.flyTo({center:[item.lng,item.lat],zoom,duration:650});
+   });
+  }else{
+   el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
+  }
   const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
   state.markers.push(m);
  });
