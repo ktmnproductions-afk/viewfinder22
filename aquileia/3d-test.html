@@ -121,7 +121,7 @@ const cityBoundary=new THREE.Group();scene.add(cityBoundary);const boundaryPts=c
 const plazas=new THREE.Group();scene.add(plazas);
 function addGroundTile(parent,x,z,w,d,material,rotation=0){const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),material);m.rotation.x=-Math.PI/2;m.rotation.z=rotation;m.position.set(x,.27,z);m.receiveShadow=true;parent.add(m);return m;}
 const cityActors={early:[],houses:[],landmarks:[],walls:[],modern:[],ruins:[],trees:[]};
-function actor(group,era="house"){group.userData.targetScale=0.001;group.userData.currentScale=0.001;group.userData.era=era;group.position.y+=.15;return group;}
+function actor(group,era="house"){group.userData.targetScale=0.001;group.userData.currentScale=0.001;group.scale.y=0.001;group.userData.era=era;group.position.y+=.15;return group;}
 function gabledBlock(parent,x,z,w,d,wallH,rise,wallMaterial,roofMaterial,orientation=0){const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=orientation;parent.add(g);box(g,0,wallH/2,0,w,wallH,d,wallMaterial);const v=[-w/2,wallH,-d/2, 0,wallH+rise,-d/2, 0,wallH+rise,d/2, -w/2,wallH,d/2, 0,wallH+rise,-d/2, w/2,wallH,-d/2, w/2,wallH,d/2, 0,wallH+rise,d/2];const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(v,3));geo.setIndex([0,1,2,0,2,3,4,5,6,4,6,7]);geo.computeVertexNormals();const roof=new THREE.Mesh(geo,roofMaterial);roof.material.side=THREE.DoubleSide;roof.castShadow=true;roof.receiveShadow=true;g.add(roof);const fascia1=box(g,0,wallH+rise/2,-d/2-.035,w,.12,.1,wallMaterial,false,false);const fascia2=box(g,0,wallH+rise/2,d/2+.035,w,.12,.1,wallMaterial,false,false);const door=box(g,w*.22,wallH*.23,d/2+.035,w*.11,wallH*.44,.07,mats.dark,false,false);const win1=box(g,-w*.25,wallH*.58,d/2+.04,w*.11,.22,.05,mats.dark,false,false);const win2=box(g,w*.02,wallH*.58,d/2+.04,w*.11,.22,.05,mats.dark,false,false);return {group:g,roof,wall: g.children[0],door,windows:[win1,win2]};}
 function makeDomus(x,z,w,d,h,early=false){const g=actor(new THREE.Group(),early?"early":"house");g.position.set(x,groundH(x,z)+.2,z);scene.add(g);const wallMat=[mats.plaster,mats.plaster2,mats.wall][Math.floor(rnd()*3)],roofMat=[mats.roofRed,mats.roofRed2,mats.roofRed3][Math.floor(rnd()*3)];box(g,0,.12,0,w+.25,.22,d+.25,mats.edge2,false,true);
 const main=gabledBlock(g,0,.02,w,d,h,.42,wallMat,roofMat);g.userData.roofs=[main.roof];g.userData.originalY=h;
@@ -147,7 +147,22 @@ for(let bz=-62;bz<40;bz+=11){for(let bx=-50;bx<31;bx+=11){const count=2+Math.flo
 const forum=makeForum(),civic=makeCivicBasilica(),warehouse=makeWarehouse(27,-23,32),christianBasilica=makeBasilica(false),amphitheatre=makeRingLandmark("amphitheatre",-14,37,7.4,4.7,5,mats.wall,1),theatre=makeRingLandmark("theatre",-7,23,5.3,3.4,4,mats.wallLight,1),circus=makeCircus(),markets=landmarkGroup("markets",22,42,1);
 box(markets,0,.2,0,11,.4,5,mats.wall);for(let x=-4.5;x<=4.51;x+=2.2){gabledBlock(markets,x,0,1.6,4.3,1.9,.75,mats.plaster2,mats.roofRed2);for(let z=-1.3;z<=1.31;z+=1.3)box(markets,x+.83,.7,z,.04,.45,.04,mats.wood,false,false);}
 const modernBasilica=makeBasilica(true);
-cityActors.landmarks.push(forum,civic,warehouse,christianBasilica,amphitheatre,theatre,circus,markets); // shared registry
+// Smaller present-day buildings cluster around the surviving basilica; these are contextual, schematic models.
+function makeModernBuilding(x,z,w,d,h,orientation=0){
+ const g=actor(new THREE.Group(),"modern-building");g.position.set(x,groundH(x,z)+.2,z);g.rotation.y=orientation;scene.add(g);
+ box(g,0,.10,0,w+.16,.2,d+.16,mats.edge2,false,true);
+ gabledBlock(g,0,.12,w,d,h,.38,mats.modernWall,mats.modernRoof);
+ for(let xx=-w*.26;xx<=w*.27;xx+=w*.52)box(g,xx,h*.5,d*.5+.035,w*.13,.25,.045,mats.dark,false,false);
+ cityActors.modern.push(g);return g;
+}
+[
+ [6,15,2.5,2.8,1.05,.1],[10,12,2.1,2.7,.9,.2],[15,11,2.7,2.5,1.1,0],
+ [28,13,2.6,3.0,1.0,-.2],[32,18,2.4,2.6,1.15,.15],[33,24,2.7,2.4,.95,0],
+ [31,37,2.7,3.2,1.0,.3],[25,39,2.0,2.4,.9,0],[16,39,2.8,2.5,1.15,-.15],
+ [10,37,2.6,2.5,.9,.12],[5,33,2.3,2.8,1.1,.05],[3,24,2.7,2.5,1.0,.2],
+ [1,18,2.1,2.4,.85,0],[8,41,2.4,2.5,1.0,-.1],[31,10,2.3,2.8,1.05,0],
+ [29,34,2.5,2.5,.95,.18],[4,39,2.5,2.7,1.1,.12],[34,29,2.3,2.7,.9,-.1]
+].forEach(p=>makeModernBuilding(...p));
 // Early colonia huts and first streets, before the imperial city fills the plan.
 for(let i=0;i<22;i++){const x=-19+(i%6)*3.1+(rnd()-.5),z=-22+Math.floor(i/6)*3.0+(rnd()-.5);if(!inPoly(x,z)||skipLot(x,z))continue;const g=actor(new THREE.Group(),"early");g.position.set(x,groundH(x,z)+.2,z);cyl(g,0,.52,0,.95,1.1,1.05,mats.wood,9);const roof=new THREE.Mesh(new THREE.ConeGeometry(1.35,1.15,9),mat(0x8e7950));roof.position.y=1.48;roof.castShadow=true;g.add(roof);box(g,.25,.42,.95,.34,.78,.08,mats.dark,false,false);scene.add(g);cityActors.early.push(g);}
 // Landscape trees, planted as groups, return strongly in the present-day era.
@@ -173,7 +188,7 @@ const hotspotData={
 };
 const pickables=[],hotspotMeshes={};const labels=new THREE.Group();scene.add(labels);
 function makeLabel(text){const c=document.createElement("canvas");c.width=512;c.height=116;const q=c.getContext("2d");q.fillStyle="rgba(12,21,16,.92)";q.strokeStyle="rgba(217,183,118,.88)";q.lineWidth=3;q.beginPath();q.roundRect(5,5,502,106,5);q.fill();q.stroke();q.fillStyle="#f0dfbd";q.font="700 28px Arial";q.textAlign="center";q.textBaseline="middle";q.fillText(text.toUpperCase(),256,58);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false}));s.scale.set(8.7,1.95,1);return s;}
-for(const [key,d] of Object.entries(hotspotData)){const marker=new THREE.Mesh(new THREE.SphereGeometry(.5,18,12),new THREE.MeshStandardMaterial({color:0xf0cc7d,emissive:0x9e641e,emissiveIntensity:1.8,roughness:.3}));marker.position.set(d.pos[0],d.pos[1],d.pos[2]);marker.userData.siteKey=key;marker.userData.baseY=d.pos[1];scene.add(marker);const ring=new THREE.Mesh(new THREE.TorusGeometry(.82,.045,6,32),new THREE.MeshBasicMaterial({color:0xe5c27f,transparent:true,opacity:.85}));ring.position.set(d.pos[0],.4,d.pos[2]);ring.rotation.x=Math.PI/2;ring.userData.siteKey=key;ring.userData.isRing=true;scene.add(ring);const label=makeLabel(d.title);label.position.set(d.pos[0],d.pos[1]+2.05,d.pos[2]);labels.add(label);const pick={key,marker,ring,label};hotspotMeshes[key]=pick;pickables.push(marker,label);}
+for(const [key,d] of Object.entries(hotspotData)){const marker=new THREE.Mesh(new THREE.SphereGeometry(.5,18,12),new THREE.MeshStandardMaterial({color:0xf0cc7d,emissive:0x9e641e,emissiveIntensity:1.8,roughness:.3}));marker.position.set(d.pos[0],d.pos[1],d.pos[2]);marker.userData.siteKey=key;marker.userData.baseY=d.pos[1];scene.add(marker);const ring=new THREE.Mesh(new THREE.TorusGeometry(.82,.045,6,32),new THREE.MeshBasicMaterial({color:0xe5c27f,transparent:true,opacity:.85}));ring.position.set(d.pos[0],.4,d.pos[2]);ring.rotation.x=Math.PI/2;ring.userData.siteKey=key;ring.userData.isRing=true;scene.add(ring);const label=makeLabel(d.title);label.userData.siteKey=key;label.position.set(d.pos[0],d.pos[1]+2.05,d.pos[2]);labels.add(label);const pick={key,marker,ring,label};hotspotMeshes[key]=pick;pickables.push(marker,label);}
 function selectSite(key,fly=true){const d=hotspotData[key];if(!d)return;$("detailName").textContent=d.title;$("detailKind").textContent=d.kind;$("detailCopy").textContent=d.copy;$("detailLink").href=d.source;$("detailLink").style.display="inline-block";document.querySelectorAll(".place-btn").forEach(b=>b.classList.toggle("active",b.dataset.site===key));if(fly&&controls){const dest=new THREE.Vector3(d.focus[0]+23,26,d.focus[2]+27);camera.position.lerp(dest,.35);controls.target.set(d.focus[0],0,d.focus[2]);controls.update();}if(document.body.classList.contains("map-mode")){setMode("3d");map.flyTo([d.mapLat||45.773, d.mapLng||13.368],16,{duration:.6});}}
 Object.keys(hotspotData).forEach(key=>{const btn=document.querySelector('[data-site="'+key+'"]');btn.addEventListener("click",()=>selectSite(key));});
 // Era descriptions are paired with actual 3D objects in this scene.
@@ -199,7 +214,7 @@ function setEra(i){
  roadsActors.forEach(g=>setTarget(g,stageIndex===0?.08:stageIndex===4?g===farmlandTracks?1:.07:1));
  fields.scale.set(1,1,1);farmlandTracks.scale.set(1,1,1);
  cityActors.ruins.forEach(g=>setTarget(g,stageIndex===4?.95:.001));
- cityActors.trees.forEach(g=>setTarget(g,stageIndex===4?1:stageIndex===3?.5:.22));
+ cityActors.trees.forEach(g=>setTarget(g,stageIndex===4?1:stageIndex===3?.5:.22));cityActors.modern.forEach(g=>setTarget(g,stageIndex===4?.98:.001));
  fires.forEach(f=>{f.flame.visible=stageIndex===3;f.sprite.material.opacity=stageIndex===3?.75:0;f.sprite2.material.opacity=stageIndex===3?.52:0;});
  Object.entries(hotspotMeshes).forEach(([key,o])=>{const visible=stageIndex>0&&stageIndex<4||(stageIndex===4&&["basilica","markets","port","forum"].includes(key));o.marker.visible=visible;o.ring.visible=visible;o.label.visible=visible;});
  if(stageIndex===2){hotspotMeshes.basilica.label.material.opacity=1;}if(stageIndex===3){$("hudLabel").style.color="#ffb49a";}else{$("hudLabel").style.color="#f1d9a5";}
