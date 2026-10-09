@@ -300,6 +300,7 @@ fires.forEach(f=>{if(f.flame.visible){f.flame.scale.y=.75+Math.abs(Math.sin(t*7+
 Object.values(hotspotMeshes).forEach(o=>{if(o.marker.visible){const pulse=1+Math.sin(t*2.5+o.marker.position.x)*.12;o.marker.scale.setScalar(pulse);if(o.ring.userData.isRing)o.ring.scale.setScalar(1+Math.sin(t*2+o.ring.position.x)*.08);}});
 renderer.render(scene,camera);}
 requestAnimationFrame(animate);
+window.__AQUILEIA_TEST__={get stage(){return stageIndex;},get drawCalls(){return renderer.info.render.calls;},get sceneObjects(){return scene.children.length;},landmarks:Object.keys(hotspotData).length};
 setTimeout(()=>{$("loading").classList.add("hide");setTimeout(()=>$("loading").remove(),700);},850);
 })();
 </script></body></html>
