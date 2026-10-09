@@ -256,6 +256,22 @@ function updateRadius(){
  if(!state.styleLoaded || !map.getSource('scout-radius')) return;
  map.getSource('scout-radius').setData(circleGeoJSON(state.center,state.radius));
 }
+function fitScoutingExtent(center,spots){
+ if(!center||!map)return;
+ const points=[center,...(spots||[]).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)).map(p=>({lat:p.lat,lng:p.lng}))];
+ let farthest=0;
+ points.slice(1).forEach(p=>{farthest=Math.max(farthest,haversine(center,p));});
+ if(points.length<2||farthest<2500){
+  if(map.getZoom()<9)map.flyTo({center:[center.lng,center.lat],zoom:10,duration:600});
+  return;
+ }
+ const lngs=points.map(p=>p.lng),lats=points.map(p=>p.lat);
+ const bounds=[[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]];
+ const mobile=window.innerWidth<680;
+ const bottomPad=mobile?Math.round(window.innerHeight*0.58+20):54;
+ const padding=mobile?{top:150,bottom:bottomPad,left:18,right:18}:{top:95,bottom:60,left:435,right:65};
+ map.fitBounds(bounds,{padding,maxZoom:farthest>12000?9.8:10.6,duration:850});
+}
 function haversine(a,b){
  const r=Math.PI/180, dLat=(b.lat-a.lat)*r,dLon=(b.lng-a.lng)*r;
  const t=Math.sin(dLat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLon/2)**2;
@@ -630,7 +646,7 @@ async function scanAt(c,opts){
  state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.results=[];state.scenicSpots=[];state.photos=[];state.selected=null;
  $('spotDetail').classList.remove('show');
  setActivePin(state.center);updateRadius();
- if(opts&&opts.fly&&map.getZoom()<8){map.flyTo({center:[c.lng,c.lat],zoom:12,duration:850});}
+ if(opts&&opts.fly&&map.getZoom()<8){map.flyTo({center:[c.lng,c.lat],zoom:9.5,duration:700});}
  renderResults();renderPhotos();renderMarkers();
  setStatus('Scouting around your pin','Searching mapped parking and history nearby, plus a wider 25–30 km radius for landscape and city-view candidates.','loading');
  $('mapTitle').textContent='Exploring your stop';
@@ -719,6 +735,7 @@ async function scanAt(c,opts){
  }else{
   setStatus('Photo stop ready',state.results.length+' nearby places · '+parks+' parking features · '+histories+' history entries · '+state.scenicSpots.length+' photo-spot candidates within about '+scoutKm+' km · '+imageCount+' on-screen image refs. Check access and line of sight before driving.','');
  }
+ fitScoutingExtent(state.center,state.scenicSpots);
  mapOk();
 }
 function updateSocialSearch(query){
@@ -773,7 +790,7 @@ function selectItem(item){
  $('driveLink').href='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode=driving';
  $('driveLink').textContent=item.category==='parking'?'Navigate to parking ↗':item.category==='photoSpot'?'Navigate to photo spot ↗':'Drive to spot ↗';
  $('shotPrompt').value=shotPrompt(item);
- if(map.getZoom()<11)map.flyTo({center:[item.lng,item.lat],zoom:12,duration:650});
+ if(map.getZoom()<11)map.flyTo({center:[item.lng,item.lat],zoom:item.category==='photoSpot'?10.5:12,duration:650});
  renderResults();
  renderMarkers();
  $('spotDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
