@@ -42,6 +42,7 @@
 .concept-card p{padding:0 7px 8px;margin:5px 0 0;font-size:8px;line-height:1.4;color:#aab9ad}
 .concept-note{font-size:9px;color:#93a497;line-height:1.45;margin-top:8px}
 .ai-visual-intro{font-size:10px;line-height:1.5;color:#b8c6b9;margin:7px 0 9px}
+.ai-visual-block{margin:10px 0 12px;padding:11px;border:1px solid #40533e;border-radius:12px;background:linear-gradient(145deg,rgba(35,53,40,.78),rgba(19,31,23,.92))}
 .concept-controls{display:flex;gap:7px;align-items:stretch;margin:8px 0}
 .concept-controls select{flex:1;min-width:0;color:#eaf2e5;background:#18251c;border:1px solid #445845;border-radius:8px;padding:8px;font-size:10px}
 .concept-controls .btn{flex:0 0 auto;font-size:10px;padding:8px 10px}
@@ -108,28 +109,7 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
     <div class="eyebrow" id="detailEyebrow">Selected location</div><h2 id="detailTitle">Your pin</h2><div class="spot-meta" id="detailMeta"></div>
     <div id="detailHistory"></div>
     <div class="detail-reference-block"><div class="section-heading"><h3>Visual references for this stop</h3><span class="count" id="detailPhotoCount">—</span></div><div class="detail-photo-grid" id="detailPhotoRefs"><div class="empty">Drop a pin and select a spot to find source-linked image references.</div></div></div>
-    <div class="concept-block ai-visual-block" id="aiVisualBlock">
-      <div class="section-heading"><h3>Generate a visual photo idea</h3><span class="count">Actual image preview</span></div>
-      <p class="ai-visual-intro">Create a photorealistic composition concept for this selected place. It is an artistic interpretation, not proof of the actual view or a promise that the line of sight is clear.</p>
-      <div class="concept-controls">
-        <select id="conceptMode" aria-label="Choose a photo composition"><option value="wide">Wide landscape · 18–24 mm</option><option value="context">Subject with context · 35–70 mm</option><option value="compressed">Compressed layers · 100–150 mm</option></select>
-        <button class="btn primary" id="generateConcept" type="button">Generate image idea</button>
-      </div>
-      <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">Choose a composition and press Generate image idea. Image generation is optional and may require signing in or usage charges through the image provider.</div>
-      <div class="generated-visual-wrap" id="generatedVisualWrap" hidden>
-        <img class="generated-visual-img" id="generatedVisual" alt="AI-generated illustrative photography concept for the selected location">
-        <div class="generated-visual-caption">AI-generated concept · not a verified photograph of the real location</div>
-      </div>
-    </div>
-    <div class="concept-block"><div class="section-heading"><h3>Three ways to frame it</h3><span class="count">Canon R50 · 18–150 mm</span></div>
-      <div class="concept-grid">
-        <article class="concept-card"><div class="concept-art wide"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Wide landscape</div><div class="concept-lens">18–24 mm</div><p>Build a foreground, then lead the eye into the city, coastline or hills.</p></article>
-        <article class="concept-card"><div class="concept-art balanced"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">City with context</div><div class="concept-lens">35–70 mm</div><p>Keep the skyline readable while retaining the landscape around it.</p></article>
-        <article class="concept-card"><div class="concept-art compressed"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Compressed layers</div><div class="concept-lens">100–150 mm</div><p>Stack rooftops, towers and mountain ridges into graphic layers.</p></article>
-      </div>
-      <div class="concept-note">These sketches compare lens/composition choices. Use the generated image above for a visible creative reference; the prompt below remains editable if you want to refine the result.</div>
-    </div>
-    <div class="detail-actions"><a class="btn primary" id="driveLink" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Drive to spot ↗</a><button class="btn" id="saveSelected">☆ Save spot</button></div>
+        <div class="detail-actions"><a class="btn primary" id="driveLink" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Drive to spot ↗</a><button class="btn" id="saveSelected">☆ Save spot</button></div>
     <div class="prompt-box"><div class="section-heading"><h3>AI shot reference</h3><span class="count">Editable prompt</span></div><textarea id="shotPrompt" aria-label="AI shot reference prompt"></textarea><div class="prompt-footer"><span>Use as a starting brief in your image tool.</span><button class="btn small" id="copyPrompt">Copy prompt</button></div></div>
   </section>
   <section class="section">
@@ -144,6 +124,28 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
   <section class="section results-section" id="scenicSection">
     <div class="section-heading"><h3>Photo spots & wide views</h3><span class="count" id="scenicCount">—</span></div>
     <div class="status-msg" style="margin:-2px 0 9px">Scouting up to 25–30 km out for mapped viewpoints, hilltops, ridges, towers, waterfronts and other promising places for distant city or landscape frames. Suggestions are evidence-ranked, not guaranteed views.</div>
+<div class="concept-block ai-visual-block" id="aiVisualBlock">
+      <div class="section-heading"><h3>Photo idea lab</h3><span class="count" id="conceptTargetName">Pin a place to start</span></div>
+      <p class="ai-visual-intro">Create a photorealistic composition concept for this selected place. It is an artistic interpretation, not proof of the actual view or a promise that the line of sight is clear.</p>
+      <div class="concept-controls">
+        <select id="conceptMode" aria-label="Choose a photo composition"><option value="wide">Wide landscape · 18–24 mm</option><option value="context">Subject with context · 35–70 mm</option><option value="compressed">Compressed layers · 100–150 mm</option></select>
+        <button class="btn primary" id="generateConcept" type="button">Generate image idea</button>
+      </div>
+      <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">Shot sketches are ready immediately. Pick a spot or use the top-ranked candidate; generating a photorealistic AI image is optional and may require sign-in or usage charges.</div>
+      <div class="generated-visual-wrap" id="generatedVisualWrap" hidden>
+        <img class="generated-visual-img" id="generatedVisual" alt="AI-generated illustrative photography concept for the selected location">
+        <div class="generated-visual-caption">AI-generated concept · not a verified photograph of the real location</div>
+      </div>
+    </div>
+    <div class="concept-block"><div class="section-heading"><h3>Three ways to frame it</h3><span class="count">Canon R50 · 18–150 mm</span></div>
+      <div class="concept-grid">
+        <article class="concept-card"><div class="concept-art wide"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Wide landscape</div><div class="concept-lens">18–24 mm</div><p>Build a foreground, then lead the eye into the city, coastline or hills.</p></article>
+        <article class="concept-card"><div class="concept-art balanced"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">City with context</div><div class="concept-lens">35–70 mm</div><p>Keep the skyline readable while retaining the landscape around it.</p></article>
+        <article class="concept-card"><div class="concept-art compressed"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Compressed layers</div><div class="concept-lens">100–150 mm</div><p>Stack rooftops, towers and mountain ridges into graphic layers.</p></article>
+      </div>
+      <div class="concept-note">These are instant Canon R50 shot concepts, not photos of the actual location. Generate a photorealistic visual idea above, then refine it with the editable prompt in the selected-spot panel.</div>
+    </div>
+
     <div class="result-list" id="scenicResults"><div class="empty">Drop a pin to scout for real mapped viewpoints and elevated landscape candidates around the city—not only inside it.</div></div>
   </section>
   <section class="section results-section">
@@ -623,6 +625,7 @@ function renderScenicSpots(){
   $('scenicResults').innerHTML=emptyHTML(state.center?'No mapped lookout or strong scenic feature found in the wider radius. Try 20–30 km. We will not invent a camera position where the map data has none.':'Drop a pin to search beyond the city centre for hilltops, ridges, viewpoints and landscape frames.');
  }
  wireCards($('scenicResults'),state.scenicSpots);
+ updateConceptTargetName();
 }
 function renderResults(){
  const shown=state.filter==='all'?state.results:state.results.filter(r=>r.category===state.filter);
@@ -841,8 +844,20 @@ function resetGeneratedConcept(){
  if(status)status.textContent='Choose a composition and press Generate image idea. The image is an artistic interpretation, not verified geography.';
  if(button){button.disabled=false;button.textContent='Generate image idea';}
 }
+function currentConceptTarget(){
+ if(state.selected)return state.selected;
+ if(state.scenicSpots.length)return state.scenicSpots[0];
+ if(state.center)return {id:'pin-'+state.scanCount,name:'Pinned photo location',lat:state.center.lat,lng:state.center.lng,distance:0,category:'photoSpot',scenicKind:'landscape',city:state.detectedLocality||'',source:'Your map pin',why:'Creative shot ideas for this pinned area. Terrain direction and line of sight have not been verified.'};
+ return null;
+}
+function updateConceptTargetName(){
+ const label=$('conceptTargetName');
+ if(!label)return;
+ const item=currentConceptTarget();
+ label.textContent=item?'For: '+item.name:'Pin a place to start';
+}
 async function generateConcept(){
- const item=state.selected;
+ const item=currentConceptTarget();
  const status=$('conceptStatus');
  const button=$('generateConcept');
  const wrap=$('generatedVisualWrap');
@@ -925,6 +940,7 @@ function selectItem(item){
  $('driveLink').textContent=item.category==='parking'?'Navigate to parking ↗':item.category==='photoSpot'?'Navigate to photo spot ↗':'Drive to spot ↗';
  $('shotPrompt').value=shotPrompt(item);
  resetGeneratedConcept();
+ updateConceptTargetName();
  if(map.getZoom()<11)map.flyTo({center:[item.lng,item.lat],zoom:item.category==='photoSpot'?10.5:12,duration:650});
  renderResults();
  renderMarkers();
