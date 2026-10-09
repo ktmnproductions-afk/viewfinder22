@@ -134,7 +134,7 @@ window.__PHOTO_SCOUT_TEST__ = {
  get styleLoaded(){ return state.styleLoaded; },
  get vectorTileSuccesses(){ return state.vectorTileSuccesses; },
  get scanCount(){ return state.scanCount; },
- getState(){ return {styleLoaded:state.styleLoaded, scanCount:state.scanCount, activeCenter:state.center, resultCount:state.results.length, parkingCount:state.results.filter(r=>r.category==='parking').length, historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicSample:state.scenicSpots.slice(0,5).map(r=>({name:r.name,category:r.category,score:r.scenicScore,why:r.why,distance:r.distance})), photoCount:state.photos.length, geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapErrors:state.mapErrors}; },
+ getState(){ return {styleLoaded:state.styleLoaded, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, resultCount:state.results.length, parkingCount:state.results.filter(r=>r.category==='parking').length, historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,why:r.why,distance:r.distance})), photoCount:state.photos.length, geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapErrors:state.mapErrors}; },
  scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); }
 };
 const mapError = message => {
@@ -575,7 +575,7 @@ function setStatus(title,msg,kind){
 async function scanAt(c,opts){
  if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng)||Math.abs(c.lat)>85||Math.abs(c.lng)>180){setStatus('Choose a valid map point','That coordinate cannot be scanned.','warn');return;}
  state.scanId++;const id=state.scanId;state.scanCount++;cancelPreviousRequests();
- state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.results=[];state.scenicSpots=[];state.photos=[];state.selected=null;
+ state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.results=[];state.scenicSpots=[];state.photos=[];state.selected=null;
  $('spotDetail').classList.remove('show');
  setActivePin(state.center);updateRadius();
  if(opts&&opts.fly&&map.getZoom()<8){map.flyTo({center:[c.lng,c.lat],zoom:12,duration:850});}
