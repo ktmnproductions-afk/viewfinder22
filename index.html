@@ -741,8 +741,12 @@ function parkingCandidates(){
    parkingOrigin:'indexed'
   };
  });
- const selectedNearby=state.spotParkingTargetId&&state.selected&&state.selected.id===state.spotParkingTargetId?state.spotParking.map(p=>({...p,distance:center?haversine(center,{lat:p.lat,lng:p.lng}):p.distance, distanceFromSpot:p.distance, parkingOrigin:'near-selected'})):[];
- const seen=[...direct,...selectedNearby];
+ const selectedNearby=state.spotParkingTargetId&&state.selected&&state.selected.id===state.spotParkingTargetId?state.spotParking.map(p=>({...p,distance:center?haversine(center,{lat:p.lat,lng:p.lng}):p.distance,distanceFromSpot:p.distance,parkingOrigin:'near-selected'})):[];
+ const seen=[...direct];
+ selectedNearby.forEach(p=>{
+  const duplicate=seen.some(q=>haversine({lat:q.lat,lng:q.lng},{lat:p.lat,lng:p.lng})<65);
+  if(!duplicate)seen.push(p);
+ });
  (state.basemapParking||[]).forEach(p=>{
   const dist=center?haversine(center,{lat:p.lat,lng:p.lng}):p.distance;
   if(!Number.isFinite(dist)||dist>radius)return;
@@ -932,7 +936,8 @@ function renderMarkers(){
    el.addEventListener('click',e=>{
     e.preventDefault();e.stopPropagation();
     const zoom=Math.min(18.5,Math.max(map.getZoom()+2.5,15.5));
-    map.flyTo({center:[item.lng,item.lat],zoom,duration:650});
+    map.stop();
+    map.flyTo({center:[item.lng,item.lat],zoom,duration:650,essential:true});
    });
   }else{
    el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
