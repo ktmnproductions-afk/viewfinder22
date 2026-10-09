@@ -89,8 +89,18 @@ jobs:
             if (!(afterClick.scenicDistanceBands?.distant > 0)) {
               throw new Error('The wider search did not return any candidate 15 km or farther from the pin: ' + JSON.stringify(afterClick.scenicDistanceBands));
             }
-            await page.locator('#scenicResults .spot-card').first().click();
+            const unwantedPhotoTitle = /(event|festival|concert|tournament|championship|competition|match|team|players?|skatehockey|football|soccer|basketball|volleyball|hockey|marathon|race|wedding|birthday|graduation|crowd|spectators?|audience|selfie|portrait|headshot|family|children|athletes?|school class|group photo|u(?:1[0-9]|2[0-3])\\b|award ceremony|celebration|party|conference|meeting|demonstration|protest)/i;
+            if ((afterClick.photoTitles || []).some(name => unwantedPhotoTitle.test(name))) {
+              throw new Error('Unrelated event/person media leaked into the photo references: ' + JSON.stringify(afterClick.photoTitles));
+            }
+            if ((afterClick.mapPhotoMarkerCount || 0) !== 0) {
+              throw new Error('Photo upload coordinates should not be plotted as recommended places: ' + afterClick.mapPhotoMarkerCount);
+            }
+            const sablicPick = page.locator('#scenicResults .spot-card').filter({hasText:/Sablićevo/i});
+            if (await sablicPick.count()) await sablicPick.first().click();
+            else await page.locator('#scenicResults .spot-card').first().click();
             await page.waitForFunction(() => document.querySelector('#spotDetail')?.classList.contains('show'), null, { timeout: 5000 });
+            await page.waitForFunction(() => document.querySelectorAll('#detailPhotoRefs .detail-photo').length > 0 || /No suitable source-linked image matched|No image refs/i.test(document.querySelector('#detailPhotoRefs')?.textContent || ''), null, { timeout: 30000 });
             const selectedSpot = await page.evaluate(() => ({
               title: document.querySelector('#detailTitle')?.textContent,
               eyebrow: document.querySelector('#detailEyebrow')?.textContent,
@@ -98,15 +108,41 @@ jobs:
               photoCount: document.querySelectorAll('#detailPhotoRefs .detail-photo').length,
               photoStatus: document.querySelector('#detailPhotoCount')?.textContent,
               compositionCards: document.querySelectorAll('#spotDetail .concept-card').length,
-              scenicGroupHeadings: [...document.querySelectorAll('#scenicResults .scenic-group-title')].map(x=>x.textContent),
+              hasGenerateButton: !!document.querySelector('#generateConcept'),
+              hasActualImageSlot: !!document.querySelector('#generatedVisual'),
+              imageProviderLoaded: !!window.puter?.ai?.txt2img,
               visible: !!document.querySelector('#spotDetail')?.getBoundingClientRect().height,
               markerWidth: getComputedStyle(document.querySelector('.scout-marker.photoSpot .dot-core')).width
             }));
-            if (!selectedSpot.title || !selectedSpot.hasShotPrompt || selectedSpot.compositionCards !== 3 || selectedSpot.photoCount < 1 || !selectedSpot.visible) {
-              throw new Error('Photo-spot detail panel did not contain the expected camera-specific workflow: ' + JSON.stringify(selectedSpot));
+            if (!selectedSpot.title || !selectedSpot.hasShotPrompt || selectedSpot.compositionCards !== 3 || !selectedSpot.hasGenerateButton || !selectedSpot.hasActualImageSlot || !selectedSpot.visible) {
+              throw new Error('Photo-spot detail panel did not contain the camera-specific workflow and image-generation control: ' + JSON.stringify(selectedSpot));
             }
             if (parseFloat(selectedSpot.markerWidth) < 30) {
               throw new Error('Photo-spot markers are still too small to notice: ' + JSON.stringify(selectedSpot));
+            }
+            // Mock only the provider response in this test so no real image request
+            // or user-billed generation occurs in CI. Exercise the actual UI/render path.
+            await page.evaluate(() => {
+              window.__lastImagePrompt = '';
+              window.puter = { ai: { txt2img: async (prompt, options) => {
+                window.__lastImagePrompt = prompt + '\\nMODEL_OPTIONS=' + JSON.stringify(options);
+                const image = document.createElement('img');
+                image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#223e50"/><stop offset="1" stop-color="#deb88b"/></linearGradient></defs><rect width="1280" height="720" fill="url(#sky)"/><circle cx="950" cy="150" r="70" fill="#fff0c2"/><path d="M0 430L230 250 420 400 625 210 810 390 1030 260 1280 420V720H0Z" fill="#718a83"/><path d="M0 520L180 460 380 500 580 400 760 500 1000 410 1280 505V720H0Z" fill="#263f39"/><path d="M360 540h560v180H360z" fill="#d2bc9d" opacity=".85"/></svg>');
+                return image;
+              } } };
+            });
+            await page.locator('#conceptMode').selectOption('compressed');
+            await page.locator('#generateConcept').click();
+            await page.waitForFunction(() => !document.querySelector('#generatedVisualWrap')?.hidden && document.querySelector('#generatedVisual')?.src.startsWith('data:image/svg+xml'), null, { timeout: 5000 });
+            const generation = await page.evaluate(() => ({
+              visible: !document.querySelector('#generatedVisualWrap')?.hidden,
+              imageSrc: document.querySelector('#generatedVisual')?.getAttribute('src') || '',
+              promptHasLens: /100–150 mm/.test(window.__lastImagePrompt || ''),
+              promptHasLandmark: (window.__lastImagePrompt || '').includes(document.querySelector('#detailTitle')?.textContent || ''),
+              status: document.querySelector('#conceptStatus')?.textContent
+            }));
+            if (!generation.visible || !generation.imageSrc.startsWith('data:image/') || !generation.promptHasLens || !generation.promptHasLandmark) {
+              throw new Error('AI visual preview did not render the selected scene/prompt: ' + JSON.stringify(generation));
             }
                         const rangefindProbe = await page.evaluate(async () => {
               try {
@@ -138,7 +174,7 @@ jobs:
             }
             await page.waitForTimeout(800);
             await page.screenshot({ path: 'artifacts/photo-scout-live-map.png', fullPage: false });
-            console.log(JSON.stringify({ initial, afterClick, selectedSpot, successfulVectorTiles:successfulVectorTiles.length, failedVectorTiles, observedMapProviderResponses:tileResponses.length, browserErrors:errors }, null, 2));
+            console.log(JSON.stringify({ initial, afterClick, selectedSpot, generation, successfulVectorTiles:successfulVectorTiles.length, failedVectorTiles, observedMapProviderResponses:tileResponses.length, browserErrors:errors }, null, 2));
             if (failedVectorTiles.length) throw new Error('Map vector tile requests failed: ' + JSON.stringify(failedVectorTiles.slice(0, 10)));
             if (errors.some(x => /maplibre|webgl/i.test(x))) throw new Error('Map renderer browser errors: ' + JSON.stringify(errors));
             await browser.close();
