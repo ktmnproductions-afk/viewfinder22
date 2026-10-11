@@ -1239,13 +1239,21 @@ async function generateConcept(){
  const image=$('generatedVisual');
  if(!item){status.textContent='Choose a place or photo spot first.';return;}
  if(!window.puter||!window.puter.ai||typeof window.puter.ai.txt2img!=='function'){
-  status.textContent='The image service has not loaded. Refresh the page and try again. The editable prompt is still available below.';
+  status.textContent='The image service has not loaded. Refresh the page and try again. Your instant composition sketch and editable prompt are still available.';
   return;
  }
  const mode=$('conceptMode').value||'wide';
  button.disabled=true;button.textContent='Generating…';
  status.textContent='Creating a visual concept for '+item.name+'. This can take a little while; the selected model/provider may ask you to sign in or confirm usage.';
  try{
+  // The SDK can request authentication automatically. Making it explicit here
+  // lets the visitor see why the image action is taking time and ensures any
+  // sign-in popup is triggered directly by their Generate button click.
+  if(window.puter.auth&&typeof window.puter.auth.isSignedIn==='function'&&!window.puter.auth.isSignedIn()){
+   status.textContent='Sign in to the image service in the popup, then Photo Scout will generate the requested concept. Your instant shot sketch remains available meanwhile.';
+   if(typeof window.puter.auth.signIn==='function')await window.puter.auth.signIn();
+  }
+  status.textContent='Generating a '+(mode==='wide'?'wide landscape':mode==='context'?'subject-with-context':'compressed-layers')+' image for '+item.name+'. This usually takes a little while; provider sign-in or usage charges may apply.';
   const generationPromise=window.puter.ai.txt2img(imageConceptPrompt(item,mode),{
    provider:'openai',
    model:'gpt-image-2.5-flare',
@@ -1264,7 +1272,7 @@ async function generateConcept(){
   status.textContent='Visual concept ready. This image is generated inspiration, not a verified view of the site. Check access and sightlines on arrival.';
   wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
  }catch(err){
-  status.textContent='Image generation did not finish: '+String(err&&err.message||err).slice(0,180)+'. You can still copy the editable prompt below.';
+  status.textContent='The photorealistic image service did not finish: '+String(err&&err.message||err).slice(0,180)+'. Your instant place-specific shot sketch is still available above, and the prompt remains editable below.';
  }finally{
   button.disabled=false;button.textContent='Generate another concept';
  }
@@ -1308,7 +1316,7 @@ function selectItem(item){
  let history=item.history||item.summary||'No short history summary is available for this place yet. Open the source record to inspect the mapped details.';
  if(item.category==='photoSpot')history='WHY IT IS SUGGESTED: '+(item.why||'The mapped feature may work as a scenic photo subject.')+' This is a data-based scouting candidate, not a guarantee of an unobstructed view. Check the route, public access, terrain, private land and safe stopping before travelling. The point is a mapped feature, not necessarily the exact place where a photographer should stand.';
  if(item.category==='photo') history='Image reference by '+(item.artist||'an unlisted photographer')+'. Licence: '+(item.license||'see the original file page')+'. '+(item.geotagged?'This image is geotagged near this coordinate; the exact camera position is not independently confirmed.':'This image matches the area/topic but has no verified shooting coordinates.');
- if(item.category==='parking')history='Mapped parking feature only. This does not confirm that parking is currently open, free, legal, safe, or available. Verify signage and restrictions on arrival.';
+ if(item.category==='parking')history='Mapped parking area/point from OpenStreetMap data. The marker may indicate the centre of a mapped lot, not its vehicle entrance. This does not confirm that parking is currently open, free, legal, safe, or available. Check the source geometry, approach road, access signs and restrictions before driving in.';
  const gear='Canon EOS R50 + RF-S 18–150mm: 18–24mm for a wide establishing frame, 35–70mm for city-with-context, 100–150mm to compress distant skyline and mountain layers.';
  $('detailHistory').innerHTML='<p>'+esc(history)+'</p>'+(item.category==='photoSpot'?'<p>'+esc(gear)+'</p>':'')+'<p><a class="footer-link" href="'+esc(safeLink(item.wikiUrl||item.sourceUrl||'#'))+'" target="_blank" rel="noopener">Open source / more history ↗</a></p>';
  renderSpotParking(item);
@@ -1317,7 +1325,7 @@ function selectItem(item){
  updateSocialSearch(item.name+' '+(item.city||state.detectedLocality||''));
  const destination=item.lat+','+item.lng;
  $('driveLink').href='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode=driving';
- $('driveLink').textContent=item.category==='parking'?'Navigate to parking ↗':item.category==='photoSpot'?'Navigate to photo spot ↗':'Drive to spot ↗';
+ $('driveLink').textContent=item.category==='parking'?'Route to mapped parking point ↗':item.category==='photoSpot'?'Navigate to photo spot ↗':'Drive to spot ↗';
  $('shotPrompt').value=shotPrompt(item);
  resetGeneratedConcept();
  updateConceptTargetName();
