@@ -129,7 +129,7 @@ jobs:
             if (!(afterClick.scenicDistanceBands?.distant > 0)) {
               throw new Error('The wider search did not return any candidate 15 km or farther from the pin: ' + JSON.stringify(afterClick.scenicDistanceBands));
             }
-            const unwantedPhotoTitle = /\b(event|festival|concert|tournament|championship|competition|match|team|players?|skatehockey|football|soccer|basketball|volleyball|hockey|marathon|race|bicycl\w*|cycling|biciklijad\w*|kolesar\w*|utrk\w*|dirk\w*|natjecanj\w*|utakmic\w*|turnir\w*|prired\w*|sejem\w*|wedding|birthday|graduation|crowd|spectators?|audience|selfie|portrait|headshot|family|children|athletes?|school class|group photo|tombstone|gravestone|cemetery|headstone|u(?:1[0-9]|2[0-3])\b|award ceremony|celebration|party|conference|meeting|demonstration|protest)\b/i;
+            const unwantedPhotoTitle = /\b(event|festival|concert|tournament|championship|competition|match|team|players?|skatehockey|football|soccer|basketball|volleyball|hockey|marathon|race|bicycl\w*|cycling|biciklijad\w*|kolesar\w*|utrk\w*|dirk\w*|natjecanj\w*|utakmic\w*|turnir\w*|prired\w*|sejem\w*|wedding|birthday|graduation|crowd|spectators?|audience|selfie|portrait|headshot|family|children|athletes?|school class|group photo|tombstone|gravestone|cemetery|headstone|u(?:1[0-9]|2[0-3])\b|award ceremony|celebration|party|conference|meeting|demonstration|protest|zvoncari|zvončari|maškare|maskare|karneval|carnival|pust|fešta|festa|proslava|svetkovina|procession|parade)\b/i;
             if ((afterClick.photoTitles || []).some(name => unwantedPhotoTitle.test(name))) {
               throw new Error('Unrelated event/person media leaked into the photo references: ' + JSON.stringify(afterClick.photoTitles));
             }
