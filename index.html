@@ -129,6 +129,30 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
   <section class="section">
     <div class="status-box" id="statusBox"><div class="status-icon">✣</div><div class="status-copy"><div class="status-title" id="statusTitle">Pick a point on the map</div><div class="status-msg" id="statusMsg">Click a place, town, mountain or coastline. We'll search around that exact point.</div></div></div>
   </section>
+  <section class="section idea-lab-section" id="photoIdeaLabSection">
+    <div class="concept-block ai-visual-block" id="aiVisualBlock">
+          <div class="section-heading"><h3>Photo idea lab</h3><span class="count" id="conceptTargetName">Pin a place to start</span></div>
+          <p class="ai-visual-intro" id="photoIdeaSummary">Three composition ideas for the best candidate near your pin. The AI image is an artistic interpretation, not proof of the actual view or a promise that the line of sight is clear.</p>
+          <figure class="auto-sketch-frame">
+            <img id="autoSketchImage" class="auto-sketch-img" alt="Automatically generated illustrative composition sketch for the selected place">
+            <figcaption id="autoSketchCaption">Instant shot sketch · illustrative, not an actual view</figcaption>
+          </figure>
+          <div class="concept-controls">
+            <select id="conceptMode" aria-label="Choose a photo composition"><option value="wide">Wide landscape · 18–24 mm</option><option value="context">Subject with context · 35–70 mm</option><option value="compressed">Compressed layers · 100–150 mm</option></select>
+            <button class="btn primary" id="generateConcept" type="button">Generate image idea</button>
+          </div>
+          <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">Shot sketches are ready immediately. Pick a spot or use the top-ranked candidate; generating a photorealistic AI image is optional and may require sign-in or usage charges.</div>
+          <div class="generated-visual-wrap" id="generatedVisualWrap" hidden>
+            <img class="generated-visual-img" id="generatedVisual" alt="AI-generated illustrative photography concept for the selected location">
+            <div class="generated-visual-caption">AI-generated concept · not a verified photograph of the real location</div>
+          </div>
+          <div class="reference-gallery">
+            <div class="section-heading"><h3>Place-matched reference images</h3><span class="count" id="photoCount">—</span></div>
+            <p class="reference-gallery-note">Images are matched by place or subject title. Random geotagged event uploads are excluded; a reference is inspiration, not a verified camera position.</p>
+            <div class="photos" id="photoResults"><div class="empty" style="grid-column:1/-1">Drop a pin to find source-linked images of the town, landmarks and nearby landscape.</div></div>
+          </div>
+        </div>
+  </section>
   <section class="detail" id="spotDetail">
     <div class="eyebrow" id="detailEyebrow">Selected location</div><h2 id="detailTitle">Your pin</h2><div class="spot-meta" id="detailMeta"></div>
     <div id="detailHistory"></div>
@@ -162,28 +186,6 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
   <section class="section results-section" id="scenicSection">
     <div class="section-heading"><h3>Photo spots & wide views</h3><span class="count" id="scenicCount">—</span></div>
     <div class="status-msg" style="margin:-2px 0 9px">Scouting up to 25–30 km out for mapped viewpoints, hilltops, ridges, towers, waterfronts and other promising places for distant city or landscape frames. Suggestions are evidence-ranked, not guaranteed views.</div>
-<div class="concept-block ai-visual-block" id="aiVisualBlock">
-      <div class="section-heading"><h3>Photo idea lab</h3><span class="count" id="conceptTargetName">Pin a place to start</span></div>
-      <p class="ai-visual-intro" id="photoIdeaSummary">Three composition ideas for the best candidate near your pin. The AI image is an artistic interpretation, not proof of the actual view or a promise that the line of sight is clear.</p>
-      <figure class="auto-sketch-frame">
-        <img id="autoSketchImage" class="auto-sketch-img" alt="Automatically generated illustrative composition sketch for the selected place">
-        <figcaption id="autoSketchCaption">Instant shot sketch · illustrative, not an actual view</figcaption>
-      </figure>
-      <div class="concept-controls">
-        <select id="conceptMode" aria-label="Choose a photo composition"><option value="wide">Wide landscape · 18–24 mm</option><option value="context">Subject with context · 35–70 mm</option><option value="compressed">Compressed layers · 100–150 mm</option></select>
-        <button class="btn primary" id="generateConcept" type="button">Generate image idea</button>
-      </div>
-      <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">Shot sketches are ready immediately. Pick a spot or use the top-ranked candidate; generating a photorealistic AI image is optional and may require sign-in or usage charges.</div>
-      <div class="generated-visual-wrap" id="generatedVisualWrap" hidden>
-        <img class="generated-visual-img" id="generatedVisual" alt="AI-generated illustrative photography concept for the selected location">
-        <div class="generated-visual-caption">AI-generated concept · not a verified photograph of the real location</div>
-      </div>
-      <div class="reference-gallery">
-        <div class="section-heading"><h3>Place-matched reference images</h3><span class="count" id="photoCount">—</span></div>
-        <p class="reference-gallery-note">Images are matched by place or subject title. Random geotagged event uploads are excluded; a reference is inspiration, not a verified camera position.</p>
-        <div class="photos" id="photoResults"><div class="empty" style="grid-column:1/-1">Drop a pin to find source-linked images of the town, landmarks and nearby landscape.</div></div>
-      </div>
-    </div>
     <div class="concept-block"><div class="section-heading"><h3>Three ways to frame it</h3><span class="count">Canon R50 · 18–150 mm</span></div>
       <div class="concept-grid">
         <article class="concept-card"><div class="concept-art wide"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Wide landscape</div><div class="concept-lens">18–24 mm</div><p id="ideaWideCopy">Use a foreground edge to lead into the town, coast or hills; keep the horizon deliberate.</p></article>
@@ -420,7 +422,7 @@ async function overpassSearch(c,radius,id){
   const tags=normalizeTags(r);
   const type=String(r.type||'').toLowerCase();
   const categoryTag=String(r.category||'').toLowerCase();
-  const parking=type==='parking'||type==='parking_space'||tags.amenity==='parking'||tags.amenity==='parking_space'||Boolean(tags.parking);
+  const parking=tags.amenity==='parking'||tags.amenity==='parking_space';
   const history=categoryTag==='historic'||Boolean(tags.historic)||Boolean(tags.heritage)||['museum','attraction','tourist_attraction','memorial','monument','archaeological_site','castle','ruins','fort','church','cathedral','place_of_worship','monastery','chapel'].includes(type);
   const viewpoint=type==='viewpoint'||['peak','hill','ridge','mountain','cliff','cave','waterfall','beach','spring','lookout'].includes(type)||tags.tourism==='viewpoint'||tags.natural==='peak'||tags.natural==='hill'||tags.natural==='ridge';
   const architecture=['church','cathedral','castle','fort','ruins','monument','lighthouse','tower','bridge','industrial','historic','palace','townhall','city_hall'].includes(type)||categoryTag==='building'&&Boolean(r.name);
@@ -699,7 +701,7 @@ function renderResults(){
 }
 function renderPhotos(){
  $('photoCount').textContent=state.photos.length+' matched images';
- $('photoResults').innerHTML=state.photos.length?state.photos.slice(0,3).map(p=>'<article class="photo-card"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original photo and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="photo-caption">'+esc(p.name)+'<div class="photo-license">Title-matched place/subject reference · not a verified camera position</div><div class="photo-license">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Check original file page')+'</div></div></a></article>').join(''):emptyHTML(state.center?'No suitable landmark/topic-matched photo references returned. We will not substitute unrelated event or personal images. Try another nearby landmark or use the external Instagram/Pinterest searches.':'Drop a pin to look for place- and subject-matched visual references.');
+ $('photoResults').innerHTML=state.photos.length?state.photos.slice(0,3).map(p=>'<article class="photo-card"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original photo and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="photo-caption">'+esc(p.name)+'<div class="photo-license">Title-matched place/subject reference · not a verified camera position</div><div class="photo-license">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Check original file page')+'</div></div></a></article>').join(''):emptyHTML(state.center?'No suitable landmark/topic-matched references returned from the image archive. We will not substitute unrelated event or personal images. The location-specific shot sketches remain available above.':'Drop a pin to look for place- and subject-matched visual references.');
 }
 function markerEl(category,label){
  const el=document.createElement('button'); el.type='button'; el.className='scout-marker '+category;
@@ -715,7 +717,7 @@ function suppressBasemapParkingSymbols(){
  if(!map||!state.styleLoaded)return;
  const layers=(map.getStyle()&&map.getStyle().layers)||[];
  layers.forEach(layer=>{
-  if(layer.type!=='symbol'||layer['source-layer']!=='poi'||!/^poi_r\d+$/i.test(layer.id)||state.parkingFilteredLayers.has(layer.id))return;
+  if(layer.type!=='symbol'||layer['source-layer']!=='poi'||state.parkingFilteredLayers.has(layer.id))return;
   const existing=layer.filter||['all'];
   // Replace the basemap's blue parking P icons with the app's larger, clickable
   // green parking markers so users can tell Scout results apart from map labels.
@@ -723,7 +725,11 @@ function suppressBasemapParkingSymbols(){
    ['!=',['get','class'],'parking'],
    ['!=',['get','subclass'],'parking'],
    ['!=',['get','class'],'parking_space'],
-   ['!=',['get','subclass'],'parking_space']
+   ['!=',['get','subclass'],'parking_space'],
+   ['!=',['get','class'],'car_parking'],
+   ['!=',['get','subclass'],'car_parking'],
+   ['!=',['get','amenity'],'parking'],
+   ['!=',['get','amenity'],'parking_space']
   ]);
   state.parkingFilteredLayers.add(layer.id);
  });
@@ -815,7 +821,7 @@ async function loadParkingNearSelected(item){
    if(r.category&&r.type)tags[r.category]=r.type;
    if(r.type&&!tags.type)tags.type=r.type;
    const type=String(r.type||'').toLowerCase();
-   const parking=type==='parking'||type==='parking_space'||tags.amenity==='parking'||tags.amenity==='parking_space'||Boolean(tags.parking);
+   const parking=tags.amenity==='parking'||tags.amenity==='parking_space';
    if(!parking)return;
    const lat=Number(r.lat),lng=Number(r.lon??r.lng);
    if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
@@ -867,7 +873,7 @@ function clusterParkingMarkers(items){
    category:'parking',parkingOrigin:'cluster',clusterSize:group.length,clusterMembers:group,
    source:'OpenStreetMap parking features',
    sourceUrl:group[0].sourceUrl,
-   summary:'This marker groups '+group.length+' mapped parking features close together. Click it to zoom in and separate the individual destinations. Current access, charges and availability are not verified.'
+   summary:'This marker groups '+group.length+' mapped parking areas close together. Click to zoom in and separate them. Points may mark an area centre rather than an entrance; legal access and availability are not verified.'
   };
  });
 }
@@ -897,7 +903,7 @@ function refreshBasemapParking(){
    id:'basemap-parking-'+key,name,lat,lng,distance,
    category:'parking',parkingOrigin:'basemap',source:'OpenFreeMap / OpenStreetMap',
    sourceUrl:url,tags:{class:cls,subclass:sub,osm_id:p.osm_id||p.id||feature.id||''},
-   summary:'Mapped parking feature from the basemap. Its exact entrance, legal access, opening status and availability are not verified. Check road signs and access on arrival.',
+   summary:'Mapped parking area/point. The marker may indicate the mapped centre, not the vehicle entrance. Verify approach roads, legal access, restrictions and availability on arrival.',
    history:'',wikiUrl:url,license:'© OpenStreetMap contributors'
   });
  });
