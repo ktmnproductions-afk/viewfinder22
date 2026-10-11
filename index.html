@@ -950,10 +950,13 @@ function renderMarkers(){
    el.querySelector('.dot-core').textContent='P'+item.clusterSize;
    el.addEventListener('click',e=>{
     e.preventDefault();e.stopPropagation();
-    const zoom=Math.min(20.5,Math.max(map.getZoom()+3.5,15.5));
+    const currentZoom=map.getZoom();
+    const zoom=Math.min(19,Math.max(currentZoom+3.5,15.5));
+    // Use an immediate camera change for reliable tap expansion: the previous
+    // flyTo could be interrupted by the scan's pending overview animation.
     map.stop();
-    map.once('moveend',()=>renderMarkers());
-    map.flyTo({center:[item.lng,item.lat],zoom,duration:650,essential:true});
+    map.jumpTo({center:[item.lng,item.lat],zoom});
+    renderMarkers();
    });
   }else{
    el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
