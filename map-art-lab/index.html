@@ -89,10 +89,10 @@ function addSources(){
  if(!map.getSource('art-ocean'))map.addSource('art-ocean',{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:13,attribution:'Bathymetry and ocean basemap © Esri and data providers'});
  if(!map.getSource('art-satellite'))map.addSource('art-satellite',{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community'});
  const layers=map.getStyle().layers||[];
- const firstFill=layers.find(l=>l.type==='fill')?.id;
+ const firstLine=layers.find(l=>l.type==='line')?.id;
  const firstSymbol=layers.find(l=>l.type==='symbol')?.id;
- if(!map.getLayer('art-hillshade'))map.addLayer({id:'art-hillshade',type:'hillshade',source:'art-dem',layout:{visibility:'none'},paint:{'hillshade-exaggeration':.35,'hillshade-illumination-direction':315,'hillshade-illumination-anchor':'map','hillshade-shadow-color':'#16312c','hillshade-highlight-color':'#eef1d8','hillshade-accent-color':'#75938c'}},firstFill);
- if(!map.getLayer('art-ocean-raster'))map.addLayer({id:'art-ocean-raster',type:'raster',source:'art-ocean',layout:{visibility:'none'},paint:{'raster-opacity':.97,'raster-saturation':.12,'raster-contrast':.18,'raster-brightness-min':.02,'raster-brightness-max':.98}},firstSymbol);
+ if(!map.getLayer('art-hillshade'))map.addLayer({id:'art-hillshade',type:'hillshade',source:'art-dem',layout:{visibility:'none'},paint:{'hillshade-exaggeration':.35,'hillshade-illumination-direction':315,'hillshade-illumination-anchor':'map','hillshade-shadow-color':'#16312c','hillshade-highlight-color':'#eef1d8','hillshade-accent-color':'#75938c'}},firstLine||firstSymbol);
+ if(!map.getLayer('art-ocean-raster'))map.addLayer({id:'art-ocean-raster',type:'raster',source:'art-ocean',layout:{visibility:'none'},paint:{'raster-opacity':.97,'raster-saturation':.12,'raster-contrast':.18,'raster-brightness-min':.02,'raster-brightness-max':.98}},firstLine||firstSymbol);
  if(!map.getLayer('art-satellite'))map.addLayer({id:'art-satellite',type:'raster',source:'art-satellite',layout:{visibility:'none'},paint:{'raster-opacity':.48,'raster-saturation':-.05,'raster-contrast':.06,'raster-brightness-min':.08,'raster-brightness-max':.98}},firstSymbol);
 }
 function paint(layer,prop,val){try{map.setPaintProperty(layer.id,prop,val)}catch(e){}}
@@ -100,7 +100,7 @@ function layout(layer,prop,val){try{map.setLayoutProperty(layer.id,prop,val)}cat
 function restyle(t){
  if(!map||!map.isStyleLoaded())return;
  const layers=map.getStyle().layers||[];
- const liquid=t==='depths';
+ const liquid=theme==='depths';
  layers.forEach(l=>{
   const id=(l.id||'').toLowerCase(),src=(l['source-layer']||'').toLowerCase();
   if(['art-hillshade','art-ocean-raster','art-satellite'].includes(id))return;
@@ -131,8 +131,8 @@ function restyle(t){
    else if(src==='boundary'||/boundary|border/.test(id))c=t.border;
    if(/contour/.test(id))c=t.major;
    paint(l,'line-color',c);
-   paint(l,'line-opacity',t==='marble'?.72:(t==='antique'?.67:.78));
-   if(t==='marble'&&/motorway|primary|trunk/.test(id))paint(l,'line-width',['interpolate',['linear'],['zoom'],4,.35,9,.75,14,1.1]);
+   paint(l,'line-opacity',theme==='marble'?.72:(theme==='antique'?.67:.78));
+   if(theme==='marble'&&/motorway|primary|trunk/.test(id))paint(l,'line-width',['interpolate',['linear'],['zoom'],4,.35,9,.75,14,1.1]);
   }
   if(l.type==='symbol'&&l.layout?.['text-field']){
    if(/poi|housenumber|airport|aeroway|highway_name|road_oneway/.test(id)){layout(l,'visibility','none');return}
@@ -144,25 +144,25 @@ function restyle(t){
    else if(/village|suburb|other/.test(id)){layout(l,'text-size',['interpolate',['linear'],['zoom'],8,8.4,11,9.8,14,11.8]);layout(l,'text-letter-spacing',0)}
    layout(l,'text-font',['Noto Sans Regular']);
    layout(l,'text-transform',/city|town|village|suburb/.test(id)?'none':'uppercase');
-   paint(l,'text-color',color);paint(l,'text-halo-color',halo);paint(l,'text-halo-width',t==='marble'?.5:.8);paint(l,'text-halo-blur',.12);paint(l,'text-opacity',.97);
+   paint(l,'text-color',color);paint(l,'text-halo-color',halo);paint(l,'text-halo-width',theme==='marble'?.5:.8);paint(l,'text-halo-blur',.12);paint(l,'text-opacity',.97);
   }
  });
  const hill=map.getLayer('art-hillshade');
  if(hill){
   layout({id:'art-hillshade'},'visibility',(!liquid&&t.terrain && terrainOn)?'visible':'none');
-  paint({id:'art-hillshade'},'hillshade-shadow-color',t==='antique'?'#9d8764':(t==='marble'?'#020303':(t==='bio'?'#405941':'#133b49')));
-  paint({id:'art-hillshade'},'hillshade-highlight-color',t==='antique'?'#f4e7c8':(t==='marble'?'#655239':(t==='bio'?'#d9e3bd':'#71d0d5')));
-  paint({id:'art-hillshade'},'hillshade-accent-color',t==='antique'?'#ab9674':(t==='marble'?'#ab8959':(t==='bio'?'#8ea57e':'#3c7b83')));
-  paint({id:'art-hillshade'},'hillshade-exaggeration',t==='glass'?.58:(t==='antique'?.22:(t==='bio'?.3:.45)));
+  paint({id:'art-hillshade'},'hillshade-shadow-color',theme==='antique'?'#9d8764':(theme==='marble'?'#020303':(theme==='bio'?'#405941':'#133b49')));
+  paint({id:'art-hillshade'},'hillshade-highlight-color',theme==='antique'?'#f4e7c8':(theme==='marble'?'#655239':(theme==='bio'?'#d9e3bd':'#71d0d5')));
+  paint({id:'art-hillshade'},'hillshade-accent-color',theme==='antique'?'#ab9674':(theme==='marble'?'#ab8959':(theme==='bio'?'#8ea57e':'#3c7b83')));
+  paint({id:'art-hillshade'},'hillshade-exaggeration',theme==='glass'?.58:(theme==='antique'?.22:(theme==='bio'?.3:.45)));
  }
  if(map.getLayer('art-ocean-raster'))layout({id:'art-ocean-raster'},'visibility',liquid?'visible':'none');
  if(map.getLayer('art-satellite'))layout({id:'art-satellite'},'visibility',satelliteOn&&!liquid?'visible':'none');
  if(liquid){terrainOn=false;try{map.setTerrain(null)}catch(e){}}
- else if(t.terrain&&terrainOn){try{map.setTerrain({source:'art-dem',exaggeration:t==='glass'?.75:(t==='antique'?.25:.35)})}catch(e){say('2D terrain shading active')}}
+ else if(t.terrain&&terrainOn){try{map.setTerrain({source:'art-dem',exaggeration:theme==='glass'?.75:(theme==='antique'?.25:.35)})}catch(e){say('2D terrain shading active')}}
  else {try{map.setTerrain(null)}catch(e){}}
- $('mapWash').style.opacity=t==='watercolor'?.5:(t==='glass'?.22:(t==='antique'?.33:(t==='marble'?.1:(t==='bio'?.12:.04)));
- document.body.style.setProperty('--title-color',t==='watercolor'||t==='antique'||t==='bio'?'#f7f0df':'#f0eee2');
- document.body.style.setProperty('--title-accent',t==='antique'?'#dfc9a0':(t==='bio'?'#cde2b8':(t==='watercolor'?'#d5ead7':'#b1e0dd')));
+ $('mapWash').style.opacity=theme==='watercolor'?.5:(theme==='glass'?.22:(theme==='antique'?.33:(theme==='marble'?.1:(theme==='bio'?.12:.04)));
+ document.body.style.setProperty('--title-color',theme==='watercolor'||theme==='antique'||theme==='bio'?'#f7f0df':'#f0eee2');
+ document.body.style.setProperty('--title-accent',theme==='antique'?'#dfc9a0':(theme==='bio'?'#cde2b8':(theme==='watercolor'?'#d5ead7':'#b1e0dd')));
  document.body.style.setProperty('--map-bg',t.bg);
  map.setFog({color:liquid?'#051323':t.bg,'high-color':liquid?'#0b3450':t.water,'space-color':liquid?'#020617':t.bg,'horizon-blend':.08,'star-intensity':0});
  const pitch=t.pitch+(terrainOn&&t.terrain&&t!=='antique'?0:0);
@@ -179,7 +179,7 @@ function choose(name){theme=name;const t=STYLES[theme];if(!loaded){return}try{ma
 function init(){if(!window.maplibregl){say('MAP LIBRARY NOT LOADED');return}
  map=new maplibregl.Map({container:'map',style:OPEN,center:[13.1,45.3],zoom:5.25,pitch:42,bearing:-8,projection:{type:'mercator'},attributionControl:true,canvasContextAttributes:{antialias:true,powerPreference:'high-performance',preserveDrawingBuffer:false},fadeDuration:120,renderWorldCopies:false});
  map.addControl(new maplibregl.NavigationControl({showCompass:true,showZoom:true,visualizePitch:false}),'bottom-right');
- map.on('load',()=>{loaded=true;try{addSources();}catch(e){console.warn(e)};restyle(STYLES[theme]);say('REAL GEOGRAPHY READY');});
+ map.on('load',()=>{loaded=true;say('MAP LOADED · APPLYING STYLE');try{addSources();}catch(e){console.error('Map Art Lab source setup failed:',e);say('MAP LOADED · LAYER WARNING')}try{restyle(STYLES[theme]);say('REAL GEOGRAPHY READY')}catch(e){console.error('Map Art Lab style failed:',e);say('MAP LOADED · STYLE WARNING')}});
  map.on('error',e=>{if(e?.error)console.warn('Map data layer:',e.error.message)});
 }
 document.querySelectorAll('.stylecard').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.style)));
