@@ -95,6 +95,27 @@
 footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;border-top:1px solid var(--line);flex:0 0 auto}.footer-link{color:#aebfae;text-decoration:underline;text-underline-offset:2px}
 @media(max-width:900px){.sidebar{width:350px}.map-heading{left:380px}.map-style{padding:7px 8px}.map-styles{right:10px;top:10px}.map-heading{top:10px}}
 @media(max-width:680px){.sidebar{left:8px;right:8px;bottom:8px;top:auto;width:auto;max-width:none;max-height:58dvh;border-radius:18px}.brand{padding:12px 14px 10px}.brand-symbol{width:30px;height:30px}.brand-name{font-size:13px}.brand p{font-size:11px;margin-top:7px}.brand-sub{font-size:8px}.online-state{margin-top:7px}.section{padding:12px 14px 0}.map-heading{left:8px;top:8px;max-width:calc(100vw - 16px);padding:10px 12px}.map-heading strong{font-size:17px}.map-heading .eyebrow{margin-bottom:2px}.map-heading div:last-child{display:none}.map-styles{top:8px;right:8px;transform:translateY(68px);gap:2px;padding:3px}.map-style{font-size:9px;padding:6px 7px}.map-credit{bottom:calc(58dvh + 12px);font-size:8px}.maplibregl-ctrl-bottom-right{bottom:calc(58dvh + 10px)!important}.map-issue{top:126px;right:8px;left:8px;max-width:none}.detail{margin-left:14px;margin-right:14px}.utility-row .btn{font-size:10px;padding:8px 6px}}
+
+/* Phase 1: calmer, compact sidebar hierarchy */
+.brand{padding:14px 17px 10px}.brand p{font-size:11px;line-height:1.4;margin:8px 0 0}.online-state{margin-top:8px}.marker-legend{margin-top:8px;gap:9px;font-size:8px}
+.legend-dot.mapped{background:#76b7a4}.legend-dot.candidate{background:var(--lime)}
+.panel-scroll{padding-bottom:22px}.section{padding:12px 16px 0}.search-section{padding-top:14px}.status-section{padding-top:11px}
+.source-key-note{font-size:9px;line-height:1.45;color:#91a296;margin:8px 1px 0}
+.nav-panel{margin:12px 16px 0;border:1px solid rgba(237,244,232,.12);border-radius:13px;background:rgba(31,45,36,.52);overflow:hidden}
+.nav-panel>summary{list-style:none;display:grid;grid-template-columns:minmax(0,1fr) auto 12px;align-items:center;column-gap:7px;padding:12px;cursor:pointer;user-select:none;color:#eaf1e5;font-size:12px;font-weight:760}
+.nav-panel>summary::-webkit-details-marker{display:none}.nav-panel>summary:focus-visible{outline:2px solid var(--lime);outline-offset:-3px;border-radius:11px}
+.nav-panel>summary::after{content:"+";grid-column:3;grid-row:1 / span 2;text-align:center;font-size:17px;font-weight:450;color:var(--lime)}
+.nav-panel[open]>summary::after{content:"−"}.nav-panel>summary .nav-title{grid-column:1;grid-row:1;min-width:0}
+.nav-panel>summary .nav-subtitle{grid-column:1;grid-row:2;font-size:9px;font-weight:500;line-height:1.35;color:#93a497;margin-top:3px}
+.nav-panel>summary .count{grid-column:2;grid-row:1 / span 2;max-width:128px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9px}
+.nav-panel[open]>summary{border-bottom:1px solid var(--line);background:rgba(217,243,107,.035)}.nav-panel-content{padding:12px}
+.nav-panel-content>.section,.nav-panel-content>.results-section{padding:0;margin:0}.nav-panel-content .concept-block{margin-top:0}
+.nav-panel-content .concept-block+.concept-block{margin-top:14px}.nav-panel-content .section-heading h3{font-size:9px}
+.nav-panel-note{font-size:10px;color:#9eafa0;line-height:1.5;margin:0 0 10px}.nav-panel .scenic-group+.scenic-group{margin-top:12px;padding-top:10px}
+.explore-section{padding-top:15px}.explore-section .eyebrow{margin-bottom:8px}.filter-note{font-size:9px;line-height:1.4;color:#8fa092;margin:8px 0 0}
+.idea-lab-section{padding:0}.idea-lab-section .ai-visual-block{margin:0}
+@media(max-width:680px){.brand{padding:10px 13px 8px}.brand p{margin-top:5px}.online-state{margin-top:6px}.marker-legend{gap:7px;margin-top:6px}.nav-panel{margin-left:12px;margin-right:12px}.nav-panel>summary{padding:11px 10px}.nav-panel>summary .count{max-width:96px}.nav-panel-content{padding:10px}.section{padding-left:13px;padding-right:13px}.source-key-note{font-size:8px}}
+
 </style>
 </head>
 <body>
@@ -111,48 +132,60 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
 <aside class="sidebar">
 <header class="brand">
   <div class="brand-line"><div class="brand-symbol">✣</div><div><div class="brand-name">PHOTO SCOUT</div><div class="brand-sub">Roadtrip photography planner</div></div></div>
-  <p>Drop a pin anywhere to discover car parks, history, visual references and shot ideas. Global by design.</p>
+  <p>Scout real places. Plan the frame. Save the stop.</p>
   <div class="online-state"><span class="live-dot"></span><span id="appState">Map loading · global search ready</span></div>
-  <div class="marker-legend"><span><i class="legend-dot scenic"></i> Photo spot</span><span><i class="legend-dot parking"></i> Parking</span><span><i class="legend-dot history"></i> History</span><span><i class="legend-dot view"></i> Viewpoint</span><span><i class="legend-dot photo"></i> Image reference</span></div>
+  <div class="marker-legend" aria-label="Information key"><span><i class="legend-dot mapped"></i> Mapped facts</span><span><i class="legend-dot candidate"></i> Photo candidates</span><span><i class="legend-dot photo"></i> AI concepts</span></div>
 </header>
 <div class="panel-scroll">
-  <section class="section">
-    <form id="searchForm">
-      <div class="search-row">
-        <div class="search-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="placeSearch" autocomplete="off" placeholder="Search a place or paste lat, lon" aria-label="Search place or coordinates"></div>
-        <button class="btn primary" type="submit">Go</button>
-      </div>
-    </form>
-    <div class="scan-options"><label for="radius">Scan radius</label><select id="radius"><option value="5000">5 km</option><option value="10000" selected>10 km</option><option value="20000">20 km</option><option value="30000">30 km</option></select></div>
+  <section class="section search-section" id="searchSection">
+    <div class="eyebrow">Find a place</div>
+    <form id="searchForm"><div class="search-row">
+      <div class="search-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="placeSearch" autocomplete="off" placeholder="Search a place or paste lat, lon" aria-label="Search place or coordinates"></div>
+      <button class="btn primary" type="submit">Go</button>
+    </div></form>
+    <div class="scan-options"><label for="radius">Search radius</label><select id="radius"><option value="5000">5 km</option><option value="10000" selected>10 km</option><option value="20000">20 km</option><option value="30000">30 km</option></select></div>
     <div class="utility-row"><button class="btn" id="useLocation">◎ Use my location</button><button class="btn" id="saveStop">☆ Save stop</button></div>
   </section>
-  <section class="section">
+  <section class="section status-section">
     <div class="status-box" id="statusBox"><div class="status-icon">✣</div><div class="status-copy"><div class="status-title" id="statusTitle">Pick a point on the map</div><div class="status-msg" id="statusMsg">Click a place, town, mountain or coastline. We'll search around that exact point.</div></div></div>
+    <div class="source-key-note">Mapped facts, inferred photo candidates and AI illustrations are kept distinct. Check source links, access and sightlines before travelling.</div>
   </section>
-  <section class="section idea-lab-section" id="photoIdeaLabSection">
-    <div class="concept-block ai-visual-block" id="aiVisualBlock">
-          <div class="section-heading"><h3>Photo idea lab</h3><span class="count" id="conceptTargetName">Pin a place to start</span></div>
-          <p class="ai-visual-intro" id="photoIdeaSummary">Three composition ideas for the best candidate near your pin. The AI image is an artistic interpretation, not proof of the actual view or a promise that the line of sight is clear.</p>
-          <figure class="auto-sketch-frame">
-            <img id="autoSketchImage" class="auto-sketch-img" alt="Automatically generated illustrative composition sketch for the selected place">
-            <figcaption id="autoSketchCaption">Instant shot sketch · illustrative, not an actual view</figcaption>
-          </figure>
-          <div class="concept-controls">
-            <select id="conceptMode" aria-label="Choose a photo composition"><option value="wide">Wide landscape · 18–24 mm</option><option value="context">Subject with context · 35–70 mm</option><option value="compressed">Compressed layers · 100–150 mm</option></select>
-            <button class="btn primary" id="generateConcept" type="button">Generate image idea</button>
+  <details class="nav-panel" id="photoIdeaDetails">
+    <summary><span class="nav-title">Photo Idea Lab</span><span class="nav-subtitle">Composition sketches · AI image · real references</span></summary>
+    <div class="nav-panel-content">      <section class="idea-lab-section" id="photoIdeaLabSection">
+          <div class="concept-block ai-visual-block" id="aiVisualBlock">
+                <div class="section-heading"><h3>Photo idea lab</h3><span class="count" id="conceptTargetName">Pin a place to start</span></div>
+                <p class="ai-visual-intro" id="photoIdeaSummary">Three composition ideas for the best candidate near your pin. The AI image is an artistic interpretation, not proof of the actual view or a promise that the line of sight is clear.</p>
+                <figure class="auto-sketch-frame">
+                  <img id="autoSketchImage" class="auto-sketch-img" alt="Automatically generated illustrative composition sketch for the selected place">
+                  <figcaption id="autoSketchCaption">Instant shot sketch · illustrative, not an actual view</figcaption>
+                </figure>
+                <div class="concept-controls">
+                  <select id="conceptMode" aria-label="Choose a photo composition"><option value="wide">Wide landscape · 18–24 mm</option><option value="context">Subject with context · 35–70 mm</option><option value="compressed">Compressed layers · 100–150 mm</option></select>
+                  <button class="btn primary" id="generateConcept" type="button">Generate image idea</button>
+                </div>
+                <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">Shot sketches are ready immediately. Pick a spot or use the top-ranked candidate; generating a photorealistic AI image is optional and may require sign-in or usage charges.</div>
+                <div class="generated-visual-wrap" id="generatedVisualWrap" hidden>
+                  <img class="generated-visual-img" id="generatedVisual" alt="AI-generated illustrative photography concept for the selected location">
+                  <div class="generated-visual-caption">AI-generated concept · not a verified photograph of the real location</div>
+                </div>
+                <div class="reference-gallery">
+                  <div class="section-heading"><h3>Place-matched reference images</h3><span class="count" id="photoCount">—</span></div>
+                  <p class="reference-gallery-note">Images are matched by place or subject title. Random geotagged event uploads are excluded; a reference is inspiration, not a verified camera position.</p>
+                  <div class="photos" id="photoResults"><div class="empty" style="grid-column:1/-1">Drop a pin to find source-linked images of the town, landmarks and nearby landscape.</div></div>
+                </div>
+              </div>
+        
+          <div class="concept-block"><div class="section-heading"><h3>Three ways to frame it</h3><span class="count">Canon R50 · 18–150 mm</span></div>
+            <div class="concept-grid">
+              <article class="concept-card"><div class="concept-art wide"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Wide landscape</div><div class="concept-lens">18–24 mm</div><p id="ideaWideCopy">Use a foreground edge to lead into the town, coast or hills; keep the horizon deliberate.</p></article>
+              <article class="concept-card"><div class="concept-art balanced"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">City with context</div><div class="concept-lens">35–70 mm</div><p id="ideaContextCopy">Balance the main subject with a band of surrounding landscape; avoid a postcard framing.</p></article>
+              <article class="concept-card"><div class="concept-art compressed"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Compressed layers</div><div class="concept-lens">100–150 mm</div><p id="ideaCompressedCopy">Use telephoto compression to stack rooftops, towers or ridgelines where visible.</p></article>
+            </div>
+            <div class="concept-note">These are instant Canon R50 shot concepts, not photos of the actual location. Generate a photorealistic visual idea above, then refine it with the editable prompt in the selected-spot panel.</div>
           </div>
-          <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">Shot sketches are ready immediately. Pick a spot or use the top-ranked candidate; generating a photorealistic AI image is optional and may require sign-in or usage charges.</div>
-          <div class="generated-visual-wrap" id="generatedVisualWrap" hidden>
-            <img class="generated-visual-img" id="generatedVisual" alt="AI-generated illustrative photography concept for the selected location">
-            <div class="generated-visual-caption">AI-generated concept · not a verified photograph of the real location</div>
-          </div>
-          <div class="reference-gallery">
-            <div class="section-heading"><h3>Place-matched reference images</h3><span class="count" id="photoCount">—</span></div>
-            <p class="reference-gallery-note">Images are matched by place or subject title. Random geotagged event uploads are excluded; a reference is inspiration, not a verified camera position.</p>
-            <div class="photos" id="photoResults"><div class="empty" style="grid-column:1/-1">Drop a pin to find source-linked images of the town, landmarks and nearby landscape.</div></div>
-          </div>
-        </div>
-  </section>
+        </section></div>
+  </details>
   <section class="detail" id="spotDetail">
     <div class="eyebrow" id="detailEyebrow">Selected location</div><h2 id="detailTitle">Your pin</h2><div class="spot-meta" id="detailMeta"></div>
     <div id="detailHistory"></div>
@@ -174,47 +207,41 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
         <div class="detail-actions"><a class="btn primary" id="driveLink" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Drive to spot ↗</a><button class="btn" id="saveSelected">☆ Save spot</button></div>
     <div class="prompt-box"><div class="section-heading"><h3>AI shot reference</h3><span class="count">Editable prompt</span></div><textarea id="shotPrompt" aria-label="AI shot reference prompt"></textarea><div class="prompt-footer"><span>Use as a starting brief in your image tool.</span><button class="btn small" id="copyPrompt">Copy prompt</button></div></div>
   </section>
-  <section class="section">
+  <section class="section explore-section">
+    <div class="eyebrow">Explore nearby</div>
     <div class="filter-row" id="filters">
-      <button class="filter-chip active" data-filter="all">All spots</button>
-      <button class="filter-chip" data-filter="parking">Parking</button>
-      <button class="filter-chip" data-filter="history">History</button>
-      <button class="filter-chip" data-filter="architecture">Architecture</button>
-      <button class="filter-chip" data-filter="viewpoint">Nature & views</button>
+      <button class="filter-chip active" data-filter="all">All spots</button><button class="filter-chip" data-filter="parking">Parking</button><button class="filter-chip" data-filter="history">History</button><button class="filter-chip" data-filter="architecture">Architecture</button><button class="filter-chip" data-filter="viewpoint">Nature & views</button>
     </div>
+    <p class="filter-note">Choose a type to focus the mapped places below. Photo-spot candidates are shown separately.</p>
   </section>
-  <section class="section results-section" id="scenicSection">
-    <div class="section-heading"><h3>Photo spots & wide views</h3><span class="count" id="scenicCount">—</span></div>
-    <div class="status-msg" style="margin:-2px 0 9px">Scouting up to 25–30 km out for mapped viewpoints, hilltops, ridges, towers, waterfronts and other promising places for distant city or landscape frames. Suggestions are evidence-ranked, not guaranteed views.</div>
-    <div class="concept-block"><div class="section-heading"><h3>Three ways to frame it</h3><span class="count">Canon R50 · 18–150 mm</span></div>
-      <div class="concept-grid">
-        <article class="concept-card"><div class="concept-art wide"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Wide landscape</div><div class="concept-lens">18–24 mm</div><p id="ideaWideCopy">Use a foreground edge to lead into the town, coast or hills; keep the horizon deliberate.</p></article>
-        <article class="concept-card"><div class="concept-art balanced"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">City with context</div><div class="concept-lens">35–70 mm</div><p id="ideaContextCopy">Balance the main subject with a band of surrounding landscape; avoid a postcard framing.</p></article>
-        <article class="concept-card"><div class="concept-art compressed"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Compressed layers</div><div class="concept-lens">100–150 mm</div><p id="ideaCompressedCopy">Use telephoto compression to stack rooftops, towers or ridgelines where visible.</p></article>
-      </div>
-      <div class="concept-note">These are instant Canon R50 shot concepts, not photos of the actual location. Generate a photorealistic visual idea above, then refine it with the editable prompt in the selected-spot panel.</div>
+  <details class="nav-panel" id="scenicDetails" open>
+    <summary><span class="nav-title">Photo spots & wide views</span><span class="count" id="scenicCount">—</span></summary>
+    <div class="nav-panel-content"><p class="nav-panel-note">Mapped features that may make good frames. A clear line of sight, safe access and the view itself are not guaranteed.</p>
+      <div class="result-list" id="scenicResults"><div class="empty">Drop a pin to scout real mapped viewpoints and elevated landscape candidates around the city—not only inside it.</div></div>
     </div>
-
-    <div class="result-list" id="scenicResults"><div class="empty">Drop a pin to scout for real mapped viewpoints and elevated landscape candidates around the city—not only inside it.</div></div>
-  </section>
-  <section class="section results-section">
-    <div class="section-heading"><h3>Parking near your stop</h3><span class="count" id="parkingCount">—</span></div>
-    <div class="result-list" id="parkingResults"><div class="empty">Choose a point on the map to find mapped parking. Parking legality and availability must be checked on site.</div></div>
-  </section>
-  <section class="section results-section">
-    <div class="section-heading"><h3>History & places nearby</h3><span class="count" id="historyCount">—</span></div>
-    <div class="result-list" id="historyResults"><div class="empty">Historical sites and nearby encyclopedia articles appear here when available.</div></div>
-  </section>
-  <section class="section results-section">
-    <div class="section-heading"><h3>Architecture & viewpoints</h3><span class="count" id="viewCount">—</span></div>
-    <div class="result-list" id="viewResults"><div class="empty">Look for viewpoints, interesting buildings and natural subjects around the pin.</div></div>
-  </section>
-  
-  <section class="section results-section">
-    <div class="section-heading"><h3>Saved stops</h3><span class="count" id="savedCount">0</span></div>
-    <div id="savedResults"><div class="empty">Save a pin or selected place to build a road-trip list on this device.</div></div>
-  </section>
-  
+  </details>
+  <details class="nav-panel" id="parkingPanel">
+    <summary><span class="nav-title">Parking near your stop</span><span class="count" id="parkingCount">—</span></summary>
+    <div class="nav-panel-content"><p class="nav-panel-note">Mapped parking features only—not live availability or confirmation of public access. Check signs and entrances locally.</p>
+      <div class="result-list" id="parkingResults"><div class="empty">Choose a point on the map to find mapped parking. Parking legality and availability must be checked on site.</div></div>
+    </div>
+  </details>
+  <details class="nav-panel" id="historyPanel">
+    <summary><span class="nav-title">History & places nearby</span><span class="count" id="historyCount">—</span></summary>
+    <div class="nav-panel-content"><p class="nav-panel-note">Mapped historic places and encyclopedia articles. Summaries link back to their source where available.</p>
+      <div class="result-list" id="historyResults"><div class="empty">Historical sites and nearby encyclopedia articles appear here when available.</div></div>
+    </div>
+  </details>
+  <details class="nav-panel" id="architecturePanel">
+    <summary><span class="nav-title">Architecture & viewpoints</span><span class="count" id="viewCount">—</span></summary>
+    <div class="nav-panel-content"><p class="nav-panel-note">Real mapped features with a source link. A tagged viewpoint still needs on-site visibility and access checks.</p>
+      <div class="result-list" id="viewResults"><div class="empty">Look for viewpoints, interesting buildings and natural subjects around the pin.</div></div>
+    </div>
+  </details>
+  <details class="nav-panel" id="savedStopsPanel">
+    <summary><span class="nav-title">Saved stops</span><span class="count" id="savedCount">0</span></summary>
+    <div class="nav-panel-content"><div id="savedResults"><div class="empty">Save a pin or selected place to build a road-trip list on this device.</div></div></div>
+  </details>
 </div>
 <footer>Map data © <a class="footer-link" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Vector basemap by <a class="footer-link" href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>. History links and photo licences are shown where available. Always verify road access, parking signs and private-property restrictions.</footer>
 </aside>
@@ -597,9 +624,9 @@ function photoTitleIsRelevant(title,query){
  const meaningful=IMAGE_SCENE_RE.test(clean);
  const qTokens=normalizedPhotoTitle(query).split(/\s+/).filter(t=>t.length>3&&!IMAGE_QUERY_STOPWORDS.has(t));
  const queryMatch=qTokens.some(t=>clean.includes(t));
- // Require either a recognizable photographic subject or a meaningful match
- // to the requested place/landmark. A coordinate tag alone is never enough.
- return meaningful||queryMatch;
+ // For geotag-only scans, require a meaningful scene title. For a text search,
+ // require a place/topic token match so unrelated landscapes do not leak in.
+ return qTokens.length ? queryMatch : meaningful;
 }
 function photoTitleScore(title,queries){
  const clean=normalizedPhotoTitle(title);
@@ -1056,13 +1083,13 @@ async function scanAt(c,opts){
   // with the place name itself instead of over-constraining it with 3 scene words.
   let terms=[];
   if(displayCity){
-   terms=[displayCity,displayCity+' Croatia',landmarkNames[0]||displayCity+' old town'];
+   // Never assume a country from the developer's home market.
+   terms=[displayCity,landmarkNames[0]||displayCity+' old town',landmarkNames[1]||landmarkNames[0]||displayCity+' architecture'];
   }else{
-   terms=landmarkNames.slice(0,2);
-   if(landmarkNames.length>0)terms.push(landmarkNames[0]+' Croatia');
-   if(!terms.length)terms=['Croatia landscape'];
+   // Prefer no match over unrelated imagery when there is no named local subject.
+   terms=landmarkNames.slice(0,3);
   }
-  terms=terms.slice(0,3);
+  terms=[...new Set(terms.map(t=>String(t||'').trim()).filter(Boolean))].slice(0,3);
   try{
    const matched=await commonsTextSearch(terms,c,id);
    if(id!==state.scanId)return;
@@ -1385,16 +1412,23 @@ $('useLocation').addEventListener('click',()=>{
 });
 map.on('click',e=>scanAt({lat:e.lngLat.lat,lng:e.lngLat.lng},{fly:true}));
 document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>{
- state.filter=btn.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b===btn));renderResults();
-}));
-function loadSaved(){try{state.saved=JSON.parse(localStorage.getItem('photo-scout-saved')||'[]');if(!Array.isArray(state.saved))state.saved=[];}catch(e){state.saved=[];}renderSaved();}
+  state.filter=btn.dataset.filter;
+  document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b===btn));
+  ['scenicDetails','parkingPanel','historyPanel','architecturePanel'].forEach(id=>{const el=$(id);if(el)el.open=false;});
+  if(state.filter==='all'||state.filter==='viewpoint')$('scenicDetails').open=true;
+  if(state.filter==='parking')$('parkingPanel').open=true;
+  if(state.filter==='history')$('historyPanel').open=true;
+  if(state.filter==='architecture'||state.filter==='viewpoint')$('architecturePanel').open=true;
+  renderResults();
+ }));
+ function loadSaved(){try{state.saved=JSON.parse(localStorage.getItem('photo-scout-saved')||'[]');if(!Array.isArray(state.saved))state.saved=[];}catch(e){state.saved=[];}renderSaved();}
 function saveCurrent(item){
  const place=item?{lat:item.lat,lng:item.lng,name:item.name,category:item.category}:{lat:state.center&&state.center.lat,lng:state.center&&state.center.lng,name:'Photography stop '+(state.center?coordLabel(state.center):''),category:'pin'};
  if(!Number.isFinite(place.lat)||!Number.isFinite(place.lng)){setStatus('No pin to save','Click the map before saving a stop.','warn');return;}
  if(state.saved.some(s=>Math.abs(s.lat-place.lat)<0.00001&&Math.abs(s.lng-place.lng)<0.00001)){setStatus('Already saved','This location is already in your saved stops.','');return;}
  state.saved.unshift({...place,id:'saved-'+Date.now()});state.saved=state.saved.slice(0,50);
  try{localStorage.setItem('photo-scout-saved',JSON.stringify(state.saved));}catch(e){}
- renderSaved();setStatus('Stop saved','Added to Saved stops in this browser.','');
+ renderSaved();$('savedStopsPanel').open=true;setStatus('Stop saved','Added to Saved stops in this browser.','');
 }
 function renderSaved(){
  $('savedCount').textContent=state.saved.length;
@@ -1410,14 +1444,16 @@ $('conceptMode').addEventListener('change',()=>{
  if($('generatedVisualWrap')&&!$('generatedVisualWrap').hidden)resetGeneratedConcept();
 });
 $('jumpToPhotoIdeas').addEventListener('click',()=>{
- $('aiVisualBlock').scrollIntoView({behavior:'smooth',block:'start'});
-});
-$('generateSelectedConcept').addEventListener('click',()=>{
- updateConceptTargetName();
- $('aiVisualBlock').scrollIntoView({behavior:'smooth',block:'start'});
- generateConcept();
-});
-$('copyPrompt').addEventListener('click',async()=>{
+  $('photoIdeaDetails').open=true;
+  $('aiVisualBlock').scrollIntoView({behavior:'smooth',block:'start'});
+ });
+ $('generateSelectedConcept').addEventListener('click',()=>{
+  updateConceptTargetName();
+  $('photoIdeaDetails').open=true;
+  $('aiVisualBlock').scrollIntoView({behavior:'smooth',block:'start'});
+  generateConcept();
+ });
+ $('copyPrompt').addEventListener('click',async()=>{
  const text=$('shotPrompt').value;
  try{await navigator.clipboard.writeText(text);$('copyPrompt').textContent='Copied';setTimeout(()=>$('copyPrompt').textContent='Copy prompt',1300);}
  catch(e){$('shotPrompt').focus();$('shotPrompt').select();document.execCommand('copy');$('copyPrompt').textContent='Selected';}
