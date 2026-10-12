@@ -97,6 +97,15 @@ function addSources(){
 }
 function paint(layer,prop,val){try{map.setPaintProperty(layer.id,prop,val)}catch(e){}}
 function layout(layer,prop,val){try{map.setLayoutProperty(layer.id,prop,val)}catch(e){}}
+function syncPanel(t){
+ const liquid=theme==='depths';
+ $('terrainBtn').textContent='TERRAIN: '+(terrainOn&&!liquid?'ON':'OFF');
+ $('satelliteBtn').textContent='SATELLITE: '+(satelliteOn?'ON':'OFF');
+ $('mapKicker').textContent=t.kicker;$('mapHeadline').innerHTML=t.headline;$('mapSubtitle').textContent=t.subtitle;
+ setText('recipeNumber',t.n+' / 06');setText('recipeTitle',t.name);setText('recipeCopy',t.copy);setText('recipeMaterial',t.material);setText('recipeLayers',t.layers);setText('recipeMethod',t.method);
+ $('recipeSwatches').innerHTML=[t.bg,t.water,t.land,t.green,t.label].map(c=>'<i style="background:'+c+'"></i>').join('');
+ document.querySelectorAll('.stylecard').forEach(b=>b.classList.toggle('active',b.dataset.style===theme));
+}
 function restyle(t){
  if(!map||!map.isStyleLoaded())return;
  const layers=map.getStyle().layers||[];
@@ -164,18 +173,13 @@ function restyle(t){
  document.body.style.setProperty('--title-color',theme==='watercolor'||theme==='antique'||theme==='bio'?'#f7f0df':'#f0eee2');
  document.body.style.setProperty('--title-accent',theme==='antique'?'#dfc9a0':(theme==='bio'?'#cde2b8':(theme==='watercolor'?'#d5ead7':'#b1e0dd')));
  document.body.style.setProperty('--map-bg',t.bg);
- map.setFog({color:liquid?'#051323':t.bg,'high-color':liquid?'#0b3450':t.water,'space-color':liquid?'#020617':t.bg,'horizon-blend':.08,'star-intensity':0});
+ try{map.setFog({color:liquid?'#051323':t.bg,'high-color':liquid?'#0b3450':t.water,'space-color':liquid?'#020617':t.bg,'horizon-blend':.08,'star-intensity':0})}catch(e){console.debug('Fog not supported by this map projection',e)}
  const pitch=t.pitch+(terrainOn&&t.terrain&&t!=='antique'?0:0);
  try{map.easeTo({pitch,bearing:0,duration:550})}catch(e){}
- $('terrainBtn').textContent='TERRAIN: '+(terrainOn&&!liquid?'ON':'OFF');
- $('satelliteBtn').textContent='SATELLITE: '+(satelliteOn?'ON':'OFF');
- $('mapKicker').textContent=t.kicker;$('mapHeadline').innerHTML=t.headline;$('mapSubtitle').textContent=t.subtitle;
- setText('recipeNumber',t.n+' / 06');setText('recipeTitle',t.name);setText('recipeCopy',t.copy);setText('recipeMaterial',t.material);setText('recipeLayers',t.layers);setText('recipeMethod',t.method);
- $('recipeSwatches').innerHTML=[t.bg,t.water,t.land,t.green,t.label].map(c=>'<i style="background:'+c+'"></i>').join('');
- document.querySelectorAll('.stylecard').forEach(b=>b.classList.toggle('active',b.dataset.style===theme));
+ syncPanel(t);
  say(liquid?'BATHYMETRY LAYER':t.terrain&&terrainOn?'TERRAIN + VECTOR LAYERS':'VECTOR MAP READY');
 }
-function choose(name){theme=name;const t=STYLES[theme];if(!loaded){return}try{map.setProjection(t.projection)}catch(e){}restyle(t);if(theme==='depths')map.easeTo({center:[13.1,45.3],zoom:5.0,pitch:0,duration:650});}
+function choose(name){if(!STYLES[name])return;theme=name;const t=STYLES[theme];syncPanel(t);if(!loaded){say('WAITING FOR MAP TILES');return}try{map.setProjection(t.projection)}catch(e){}try{restyle(t);if(theme==='depths')map.easeTo({center:[13.1,45.3],zoom:5.0,pitch:0,duration:650})}catch(e){console.error('Style application failed for '+name,e);say('STYLE WARNING · '+name.toUpperCase())}}
 function init(){if(!window.maplibregl){say('MAP LIBRARY NOT LOADED');return}
  map=new maplibregl.Map({container:'map',style:OPEN,center:[13.1,45.3],zoom:5.25,pitch:42,bearing:-8,projection:{type:'mercator'},attributionControl:true,canvasContextAttributes:{antialias:true,powerPreference:'high-performance',preserveDrawingBuffer:false},fadeDuration:120,renderWorldCopies:false});
  map.addControl(new maplibregl.NavigationControl({showCompass:true,showZoom:true,visualizePitch:false}),'bottom-right');
