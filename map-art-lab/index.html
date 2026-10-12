@@ -158,6 +158,8 @@ function addArtLayers(){
  if(!map.getLayer('mapart-hillshade'))map.addLayer({id:'mapart-hillshade',type:'hillshade',source:'mapart-dem',layout:{visibility:'none'},paint:{'hillshade-exaggeration':.28,'hillshade-illumination-direction':315,'hillshade-illumination-anchor':'map','hillshade-shadow-color':'#10231f','hillshade-highlight-color':'#cdd9bf','hillshade-accent-color':'#668a7e'}},firstLine||firstSymbol);
  if(!map.getSource('mapart-ocean'))map.addSource('mapart-ocean',{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:16,attribution:'Ocean bathymetry © Esri, GEBCO and NOAA contributors'});
  if(!map.getLayer('mapart-ocean-layer'))map.addLayer({id:'mapart-ocean-layer',type:'raster',source:'mapart-ocean',layout:{visibility:'none'},paint:{'raster-opacity':.98,'raster-saturation':.05,'raster-contrast':.1,'raster-brightness-min':.03,'raster-brightness-max':1}},firstSymbol);
+ if(!map.getSource('mapart-satellite-src'))map.addSource('mapart-satellite-src',{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Imagery © Esri, Maxar, Earthstar Geographics and imagery providers'});
+ if(!map.getLayer('mapart-satellite-layer'))map.addLayer({id:'mapart-satellite-layer',type:'raster',source:'mapart-satellite-src',layout:{visibility:'none'},paint:{'raster-opacity':.84,'raster-saturation':-.08,'raster-contrast':.05,'raster-brightness-min':.07,'raster-brightness-max':1}},firstLine||firstSymbol);
 }
 function p(id,key,value){if(map.getLayer(id)){try{map.setPaintProperty(id,key,value)}catch(e){}}}
 function l(id,key,value){if(map.getLayer(id)){try{map.setLayoutProperty(id,key,value)}catch(e){}}}
@@ -184,7 +186,9 @@ function restyleVector(){
    p(id,'line-color',c);p(id,'line-opacity',op);
   }
   if(layer.type==='symbol'&&layer.layout?.['text-field']){
+   if(labelsOn&&originalVisibility.has(id))l(id,'visibility',originalVisibility.get(id));
    if(/poi|housenumber|airport|aeroway|highway_name|road_oneway/.test(key)){l(id,'visibility','none');return}
+   if(!labelsOn){l(id,'visibility','none');return}
    const nameLayer=(layer['source-layer']||'')==='place';
    let color=t.text,halo=light?'rgba(240,235,221,.92)':'rgba(1,7,12,.7)';
    if(/country|state|continent/.test(id)){l(id,'text-size',['interpolate',['linear'],['zoom'],0,10,3,12,5,14]);l(id,'text-letter-spacing',.13);halo=light?'rgba(240,235,221,.92)':'rgba(1,7,12,.78)'}
@@ -203,7 +207,8 @@ function restyleVector(){
   p('mapart-hillshade','hillshade-highlight-color',theme==='antique'?'#f3e5c5':theme==='marble'?'#645238':theme==='bio'?'#d6e2bc':'#78d0d3');
   p('mapart-hillshade','hillshade-accent-color',theme==='antique'?'#ad9874':theme==='marble'?'#b08b59':theme==='bio'?'#8ca37d':'#3c8087');
  }
- if(map.getLayer('atlas-imagery'))l('atlas-imagery','visibility',satOn&&theme!=='depths'?'visible':'none');
+ if(map.getLayer('mapart-satellite-layer'))l('mapart-satellite-layer','visibility',satOn&&theme!=='depths'?'visible':'none');
+ if(map.getLayer('atlas-imagery'))l('atlas-imagery','visibility','none');
  if(map.getLayer('mapart-ocean-layer'))l('mapart-ocean-layer','visibility',theme==='depths'&&oceanOn?'visible':'none');
  if(theme==='depths'){
   layers.forEach(layer=>{
@@ -220,7 +225,7 @@ function restyleVector(){
   try{map.setTerrain({source:'mapart-dem',exaggeration:theme==='glass'?.68:theme==='antique'?.2:theme==='bio'?.32:.34})}catch(e){console.warn('3D terrain unavailable',e)}
  }else{try{map.setTerrain(null)}catch(e){}}
  setSwitch('hillToggle',hillOn&&theme!=='depths');setSwitch('satToggle',satOn);setSwitch('terrainToggle',terrainOn);setSwitch('labelsToggle',labelsOn);setSwitch('oceanToggle',oceanOn&&theme==='depths');
- status(theme==='depths'?(oceanOn?'OCEAN BATHYMETRY LAYER':'BATHYMETRY OFF · VECTOR BASE'):terrainOn?'VECTOR + 3D TERRAIN':hillOn?'VECTOR + DEM HILLSHADE':'VECTOR MAP READY');
+ status(theme==='depths'?(oceanOn?'OCEAN BATHYMETRY LAYER':'BATHYMETRY OFF · VECTOR BASE'):(satOn?'SATELLITE + VECTOR LAYERS':terrainOn?'VECTOR + 3D TERRAIN':hillOn?'VECTOR + DEM HILLSHADE':'VECTOR MAP READY'));
 }
 function applyTheme(next){
  if(!THEMES[next])return;theme=next;syncPanel();
@@ -231,7 +236,7 @@ function applyTheme(next){
  for(const [id,visibility] of originalVisibility){if(map.getLayer(id))l(id,'visibility',visibility)}
  restyleVector();
  if(theme==='depths'){try{map.easeTo({center:[13.1,45.3],zoom:5.0,pitch:0,bearing:0,duration:500})}catch(e){}}
- else if(theme==='glass'&&terrainOn){try{map.easeTo({pitch:28,bearing:-4,duration:500})}catch(e){}}else{try{map.easeTo({pitch:0,bearing:0,duration:400})}catch(e){}}
+ else if(terrainOn){try{map.easeTo({pitch:theme==='antique'?18:(theme==='bio'?24:30),bearing:theme==='marble'?-4:-3,duration:500})}catch(e){}}else{try{map.easeTo({pitch:0,bearing:0,duration:400})}catch(e){}}
  syncPanel();
 }
 function setStatusOnLoad(){
