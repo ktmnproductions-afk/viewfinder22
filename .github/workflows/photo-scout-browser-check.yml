@@ -102,21 +102,24 @@ jobs:
             }
             if ((afterClick.parkingClusterMarkerCount || 0) > 0) {
               const zoomBeforeParkingClick = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.map.getZoom());
+              const clusterSemanticsBefore = await page.locator('.scout-marker.parking-cluster').first().evaluate(el => ({
+                text: el.querySelector('.dot-core')?.textContent || '',
+                title: el.title || '',
+                ariaLabel: el.getAttribute('aria-label') || ''
+              }));
+              if (clusterSemanticsBefore.text.startsWith('P') || !/not a destination/i.test(clusterSemanticsBefore.title)) {
+                throw new Error('A parking cluster looks like a real parking destination rather than a count-only zoom control: ' + JSON.stringify(clusterSemanticsBefore));
+              }
               await page.locator('.scout-marker.parking-cluster').first().click();
               await page.waitForFunction((z) => window.__PHOTO_SCOUT_TEST__.map.getZoom() > z + 1.5, zoomBeforeParkingClick, { timeout: 8000 });
               const parkingZoomResult = await page.evaluate(() => ({
                 zoom:window.__PHOTO_SCOUT_TEST__.map.getZoom(),
                 clusterCount:document.querySelectorAll('.scout-marker.parking-cluster').length,
-                markerCount:document.querySelectorAll('.scout-marker.parking').length,
-                clusterText:document.querySelector('.scout-marker.parking-cluster .dot-core')?.textContent || '',
-                clusterTitle:document.querySelector('.scout-marker.parking-cluster')?.title || ''
+                markerCount:document.querySelectorAll('.scout-marker.parking').length
               }));
-              console.log('PARKING_CLUSTER_ZOOM_TEST ' + JSON.stringify({zoomBeforeParkingClick,parkingZoomResult}));
+              console.log('PARKING_CLUSTER_ZOOM_TEST ' + JSON.stringify({zoomBeforeParkingClick,clusterSemanticsBefore,parkingZoomResult}));
               if (!(parkingZoomResult.zoom > zoomBeforeParkingClick + 1.5)) {
                 throw new Error('Clicking a parking cluster did not zoom to separate parking places: ' + JSON.stringify(parkingZoomResult));
-              }
-              if (parkingZoomResult.clusterText.startsWith('P') || !/not a destination/i.test(parkingZoomResult.clusterTitle)) {
-                throw new Error('A parking cluster still looks like a real parking destination rather than a count-only zoom control: ' + JSON.stringify(parkingZoomResult));
               }
               await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.map.jumpTo({center:[14.354223,45.37306],zoom:12.25}));
               await page.waitForTimeout(350);
