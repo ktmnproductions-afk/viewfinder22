@@ -182,9 +182,9 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
                 </figure>
                 <div class="concept-controls">
                   <select id="conceptMode" aria-label="Choose a photo composition"><option value="wide">Wide landscape · 18–24 mm</option><option value="context">Subject with context · 35–70 mm</option><option value="compressed">Compressed layers · 100–150 mm</option></select>
-                  <button class="btn primary" id="generateConcept" type="button">Generate location-based sketch</button>
+                  <button class="btn primary" id="generateConcept" type="button">Create sketch from real photo</button>
                 </div>
-                <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">The instant sketch above is schematic. AI sketches use a real, place-matched reference photo when one is available; the generator will not make a random text-only scene.</div>
+                <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">The instant sketch above is schematic. Create a pencil-style sketch directly from a real, place-matched reference photo; no unrelated generated scene is substituted.</div>
                 <div class="generated-visual-wrap" id="generatedVisualWrap" hidden>
                   <img class="generated-visual-img" id="generatedVisual" alt="AI-generated illustrative photography concept for the selected location">
                   <div class="generated-visual-caption">Pencil composition sketch from a place-matched reference · verify details against the source photo</div>
@@ -1298,45 +1298,68 @@ async function generateConcept(){
  const status=$('conceptStatus');
  const button=$('generateConcept');
  const wrap=$('generatedVisualWrap');
- const image=$('generatedVisual');
- if(!item){status.textContent='Choose a place or photo spot first.';return;}
- // Only use a photo reference explicitly matched to this exact selected item.
- // Never silently generate a generic text-only scene when no real reference exists.
+ const output=$('generatedVisual');
+ if(!item){status.textContent='Select a landmark or photo spot first.';return;}
  const selected=state.selected;
  const refs=selected&&selected.id===item.id?Array.from($('detailPhotoRefs')?.querySelectorAll('.detail-photo img')||[]):[];
- const reference=refs.find(img=>img.complete&&img.naturalWidth>0&&/^https?:/i.test(img.currentSrc||img.src));
+ const reference=refs.find(img=>/^https?:/i.test(img.currentSrc||img.src));
  if(!reference){
-  status.textContent='No place-matched reference photo is available for this selected spot yet. I will not generate a random scene. Keep the instant composition sketch above, or choose a landmark with a real source-linked reference image and try again.';
+  status.textContent='No place-matched reference photo is available for this selected spot. No random image will be generated. Try another landmark with a source-linked photo.';
   wrap.hidden=true;
   return;
  }
- const mode=$('conceptMode').value||'wide';
- const prompt=imageConceptPrompt(item,mode);
- const src='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?width=1024&height=576&seed='+Math.floor(Math.random()*1000000)+'&image='+encodeURIComponent(reference.currentSrc||reference.src);
- button.disabled=true;button.textContent='Sketching from reference…';
- status.textContent='Turning the matched reference photo of '+item.name+' into a pencil composition sketch. The original photo is being supplied as visual guidance; the result may still simplify or distort details.';
+ button.disabled=true;button.textContent='Drawing sketch…';
+ status.textContent='Converting the actual reference photo of '+item.name+' into a pencil-style composition sketch. This preserves the photo’s real visible layout rather than inventing a new location.';
  wrap.hidden=true;
- image.onload=null;image.onerror=null;
  try{
-  await new Promise((resolve,reject)=>{
-   let settled=false;
-   const finish=(fn,value)=>{if(settled)return;settled=true;window.clearTimeout(timer);image.onload=null;image.onerror=null;fn(value);};
-   const timer=window.setTimeout(()=>finish(reject,new Error('The image service did not return a sketch within 90 seconds. Please try again later.')),90000);
-   image.onload=()=>finish(resolve,true);
-   image.onerror=()=>finish(reject,new Error('The sketch service could not process this reference photo right now. Please try again later.'));
-   image.src=src;
-   if(image.complete&&image.naturalWidth>0)finish(resolve,true);
+  const sketchUrl=await new Promise((resolve,reject)=>{
+   const source=new Image();
+   source.crossOrigin='anonymous';
+   source.onload=()=>{
+    try{
+     const width=1024;
+     const height=Math.max(1,Math.round(width*source.naturalHeight/source.naturalWidth));
+     const canvas=document.createElement('canvas');
+     canvas.width=width;canvas.height=height;
+     const ctx=canvas.getContext('2d',{willReadFrequently:true});
+     if(!ctx)throw new Error('This browser could not create a sketch canvas.');
+     ctx.drawImage(source,0,0,width,height);
+     const original=ctx.getImageData(0,0,width,height);
+     const pixels=original.data;
+     const gray=new Float32Array(width*height);
+     for(let p=0,i=0;p<gray.length;p++,i+=4)gray[p]=pixels[i]*.299+pixels[i+1]*.587+pixels[i+2]*.114;
+     const out=ctx.createImageData(width,height);
+     for(let y=1;y<height-1;y++)for(let x=1;x<width-1;x++){
+      const p=y*width+x,i=p*4;
+      const gx=-gray[p-width-1]+gray[p-width+1]-2*gray[p-1]+2*gray[p+1]-gray[p+width-1]+gray[p+width+1];
+      const gy=-gray[p-width-1]-2*gray[p-width]-gray[p-width+1]+gray[p+width-1]+2*gray[p+width]+gray[p+width+1];
+      const edge=Math.min(210,Math.hypot(gx,gy)*.9);
+      const tone=gray[p];
+      const paper=Math.min(250,Math.max(218,246-(255-tone)*.14));
+      const ink=Math.max(28,Math.round(paper-edge-(255-tone)*.17));
+      out.data[i]=ink;out.data[i+1]=ink;out.data[i+2]=Math.min(255,ink+2);out.data[i+3]=255;
+     }
+     ctx.fillStyle='#f5f1e7';ctx.fillRect(0,0,width,height);
+     ctx.putImageData(out,0,0);
+     ctx.strokeStyle='rgba(60,67,58,.20)';ctx.lineWidth=1;
+     ctx.setLineDash([7,9]);
+     ctx.beginPath();ctx.moveTo(width/3,0);ctx.lineTo(width/3,height);ctx.moveTo(width*2/3,0);ctx.lineTo(width*2/3,height);ctx.moveTo(0,height/3);ctx.lineTo(width,height/3);ctx.moveTo(0,height*2/3);ctx.lineTo(width,height*2/3);ctx.stroke();
+     resolve(canvas.toDataURL('image/jpeg',.9));
+    }catch(e){reject(e);}
+   };
+   source.onerror=()=>reject(new Error('The reference photo could not be loaded. Open its source link or try another matching photo.'));
+   source.src=reference.currentSrc||reference.src;
   });
-  image.alt='AI-generated pencil composition sketch based on a matched reference photograph of '+item.name+'. Details may be altered; compare with the source image.';
+  output.src=sketchUrl;
+  output.alt='Pencil-style composition sketch derived directly from a source-linked reference photograph for '+item.name+'. The image preserves the source photograph layout; verify it against the original.';
   wrap.hidden=false;
-  status.textContent='Sketch ready from the place-matched reference photo. Compare it with the source image below; AI may alter details, so do not treat the sketch as an accurate survey.';
+  status.textContent='Sketch created from the real reference photo. It keeps the original image’s visible layout; it is a drawing aid, not proof that this exact viewpoint is accessible from your location.';
   wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
  }catch(err){
   wrap.hidden=true;
-  status.textContent=String(err&&err.message||err).slice(0,220)+' The source-linked reference photo and instant composition sketch remain available above.';
+  status.textContent=String(err&&err.message||err).slice(0,240)+' No substitute image was generated.';
  }finally{
-  image.onload=null;image.onerror=null;
-  button.disabled=false;button.textContent='Generate location-based sketch';
+  button.disabled=false;button.textContent='Create sketch from real photo';
  }
 }
 async function renderDetailPhotoRefs(item){
