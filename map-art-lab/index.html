@@ -130,7 +130,7 @@ function restyle(t){
    }else if(/building/.test(id+' '+src))c=t.building;
    else if(/residential|industrial|commercial|landuse/.test(id+' '+src))c=t.land;
    paint(l,'fill-color',c);
-   paint(l,'fill-opacity',/landcover|park|wood/.test(src+' '+id)?.88:1);
+   paint(l,'fill-opacity',/landcover|park|wood/.test(src+' '+id)? .88:1);
    paint(l,'fill-outline-color',t.border);
   }
   if(l.type==='line'){
@@ -140,7 +140,7 @@ function restyle(t){
    else if(src==='boundary'||/boundary|border/.test(id))c=t.border;
    if(/contour/.test(id))c=t.major;
    paint(l,'line-color',c);
-   paint(l,'line-opacity',theme==='marble'?.72:(theme==='antique'?.67:.78));
+   paint(l,'line-opacity',theme==='marble'? .72:(theme==='antique'? .67:.78));
    if(theme==='marble'&&/motorway|primary|trunk/.test(id))paint(l,'line-width',['interpolate',['linear'],['zoom'],4,.35,9,.75,14,1.1]);
   }
   if(l.type==='symbol'&&l.layout?.['text-field']){
@@ -153,7 +153,7 @@ function restyle(t){
    else if(/village|suburb|other/.test(id)){layout(l,'text-size',['interpolate',['linear'],['zoom'],8,8.4,11,9.8,14,11.8]);layout(l,'text-letter-spacing',0)}
    layout(l,'text-font',['Noto Sans Regular']);
    layout(l,'text-transform',/city|town|village|suburb/.test(id)?'none':'uppercase');
-   paint(l,'text-color',color);paint(l,'text-halo-color',halo);paint(l,'text-halo-width',theme==='marble'?.5:.8);paint(l,'text-halo-blur',.12);paint(l,'text-opacity',.97);
+   paint(l,'text-color',color);paint(l,'text-halo-color',halo);paint(l,'text-halo-width',theme==='marble'? .5:.8);paint(l,'text-halo-blur',.12);paint(l,'text-opacity',.97);
   }
  });
  const hill=map.getLayer('art-hillshade');
@@ -162,19 +162,19 @@ function restyle(t){
   paint({id:'art-hillshade'},'hillshade-shadow-color',theme==='antique'?'#9d8764':(theme==='marble'?'#020303':(theme==='bio'?'#405941':'#133b49')));
   paint({id:'art-hillshade'},'hillshade-highlight-color',theme==='antique'?'#f4e7c8':(theme==='marble'?'#655239':(theme==='bio'?'#d9e3bd':'#71d0d5')));
   paint({id:'art-hillshade'},'hillshade-accent-color',theme==='antique'?'#ab9674':(theme==='marble'?'#ab8959':(theme==='bio'?'#8ea57e':'#3c7b83')));
-  paint({id:'art-hillshade'},'hillshade-exaggeration',theme==='glass'?.58:(theme==='antique'?.22:(theme==='bio'?.3:.45)));
+  paint({id:'art-hillshade'},'hillshade-exaggeration',theme==='glass'? .58:(theme==='antique'? .22:(theme==='bio'? .3:.45)));
  }
  if(map.getLayer('art-ocean-raster'))layout({id:'art-ocean-raster'},'visibility',liquid?'visible':'none');
  if(map.getLayer('art-satellite'))layout({id:'art-satellite'},'visibility',satelliteOn&&!liquid?'visible':'none');
  if(liquid){terrainOn=false;try{map.setTerrain(null)}catch(e){}}
- else if(t.terrain&&terrainOn){try{map.setTerrain({source:'art-dem',exaggeration:theme==='glass'?.75:(theme==='antique'?.25:.35)})}catch(e){say('2D terrain shading active')}}
+ else if(t.terrain&&terrainOn){try{map.setTerrain({source:'art-dem',exaggeration:theme==='glass'? .75:(theme==='antique'? .25:.35)})}catch(e){say('2D terrain shading active')}}
  else {try{map.setTerrain(null)}catch(e){}}
- $('mapWash').style.opacity=theme==='watercolor'?.5:(theme==='glass'?.22:(theme==='antique'?.33:(theme==='marble'?.1:(theme==='bio'?.12:.04)));
+ $('mapWash').style.opacity=({watercolor:.5,glass:.22,antique:.33,marble:.1,bio:.12,depths:.04})[theme] ?? .04;
  document.body.style.setProperty('--title-color',theme==='watercolor'||theme==='antique'||theme==='bio'?'#f7f0df':'#f0eee2');
  document.body.style.setProperty('--title-accent',theme==='antique'?'#dfc9a0':(theme==='bio'?'#cde2b8':(theme==='watercolor'?'#d5ead7':'#b1e0dd')));
  document.body.style.setProperty('--map-bg',t.bg);
  try{map.setFog({color:liquid?'#051323':t.bg,'high-color':liquid?'#0b3450':t.water,'space-color':liquid?'#020617':t.bg,'horizon-blend':.08,'star-intensity':0})}catch(e){console.debug('Fog not supported by this map projection',e)}
- const pitch=t.pitch+(terrainOn&&t.terrain&&t!=='antique'?0:0);
+ const pitch=t.pitch;
  try{map.easeTo({pitch,bearing:0,duration:550})}catch(e){}
  syncPanel(t);
  say(liquid?'BATHYMETRY LAYER':t.terrain&&terrainOn?'TERRAIN + VECTOR LAYERS':'VECTOR MAP READY');
