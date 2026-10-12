@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Map Art Lab — Six real-world cartographic treatments</title>
+<link href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#18241f;--muted:#66756e;--paper:#f2eee3;--line:#c9d0c5;--accent:#568d81}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:"DM Sans",sans-serif;color:#f3f2e8;background:#07121a}
+#map{position:absolute;inset:0;background:#07121a}.map-wash{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.27;mix-blend-mode:soft-light;background:radial-gradient(ellipse at 22% 10%,#d9cfad33,transparent 42%),radial-gradient(ellipse at 78% 88%,#54b7c326,transparent 38%)}
+.grain{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:.08;mix-blend-mode:soft-light;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.42'/%3E%3C/svg%3E")}
+.topbar{position:absolute;z-index:10;left:20px;right:20px;top:16px;display:flex;align-items:center;justify-content:space-between;gap:16px;pointer-events:none}
+.brand{pointer-events:auto;display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid #ffffff20;border-radius:5px;background:#061018ca;backdrop-filter:blur(16px)}
+.brandmark{width:27px;height:27px;border:1px solid #c8d6c5;border-radius:50%;display:grid;place-items:center;color:#deeadc;font:italic 17px "Cormorant Garamond",serif}
+.brand strong{display:block;font-size:10px;letter-spacing:.25em;font-weight:600}.brand small{display:block;color:#9aaca9;font-size:8px;letter-spacing:.16em;text-transform:uppercase;margin-top:3px}
+.toptools{display:flex;gap:8px;pointer-events:auto}.pill{border:1px solid #ffffff27;background:#061018b8;color:#e2ebe5;border-radius:4px;padding:10px 13px;font:500 10px "DM Sans",sans-serif;letter-spacing:.08em;cursor:pointer}.pill:hover,.pill.active{background:#e8e2d0;color:#1c2a25;border-color:#e8e2d0}
+.sidebar{position:absolute;z-index:9;left:20px;top:82px;bottom:20px;width:332px;overflow:auto;padding:22px 19px 18px;background:rgba(7,16,21,.91);border:1px solid #ffffff1d;border-radius:7px;backdrop-filter:blur(20px);box-shadow:0 20px 70px #0003;scrollbar-width:thin;scrollbar-color:#49625b transparent}
+.eyebrow{font-size:8px;letter-spacing:.25em;text-transform:uppercase;color:#9fcec1;font-weight:700}.title{font:500 39px/.85 "Cormorant Garamond",serif;letter-spacing:-.035em;margin:12px 0 11px;color:#f0eee4}.intro{font:11px/1.65 "DM Sans",sans-serif;color:#aebcb4;margin:0;max-width:260px}.divider{height:1px;background:#ffffff18;margin:19px 0}.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.section-head span:first-child{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:#9db6ae;font-weight:700}.section-head span:last-child{font-size:8px;color:#778a83}
+.styles{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stylecard{position:relative;text-align:left;border:1px solid #ffffff22;border-radius:4px;padding:0;background:#0a171d;color:#e8eee8;cursor:pointer;overflow:hidden;min-width:0;transition:border-color .2s,transform .2s}.stylecard:hover{transform:translateY(-1px);border-color:#e6e2cf88}.stylecard.active{border-color:#c9e0d5;box-shadow:0 0 0 1px #c9e0d52b}
+.swatch{height:61px;position:relative;overflow:hidden;background:#091a22}.swatch:before{content:"";position:absolute;inset:-20%;background:radial-gradient(ellipse at 38% 32%,var(--c1),transparent 37%),radial-gradient(ellipse at 70% 65%,var(--c2),transparent 45%),linear-gradient(135deg,var(--c3),var(--c4));transform:rotate(-8deg) scale(1.12)}.swatch:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(148deg,transparent 0 9px,#ffffff25 10px,#00000003 11px,transparent 12px 19px);opacity:.55}
+.swatch i{position:absolute;z-index:1;left:9px;right:9px;top:26px;height:1px;background:linear-gradient(90deg,transparent,#e7ebd4cc,transparent);transform:rotate(-16deg)}.cardbody{padding:9px 10px 10px}.num{font:14px "Cormorant Garamond",serif;color:#a8cabc;float:right}.cardbody strong{display:block;font:500 15px/1.05 "Cormorant Garamond",serif;letter-spacing:.01em}.cardbody small{display:block;margin-top:5px;font-size:8px;line-height:1.4;color:#9baea5}
+.recipe{border:1px solid #ffffff1a;border-radius:4px;padding:12px 12px 13px;background:#ffffff06}.recipe-title{font:500 23px/.98 "Cormorant Garamond",serif;margin:0 0 6px}.recipe-copy{font-size:10px;line-height:1.55;color:#afbeb7;margin:0 0 11px}.swatches{display:flex;gap:5px;margin:8px 0 11px}.swatches i{height:18px;flex:1;border-radius:2px;border:1px solid #ffffff2b}.recipe dt{font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:#8eaaa0;margin-top:10px}.recipe dd{margin:3px 0 0;font-size:9px;line-height:1.45;color:#d4ddd5}.recipe-actions{display:flex;gap:7px;margin-top:13px}.recipe-actions button{flex:1}.secondary{background:transparent}
+.controls{display:flex;align-items:center;gap:7px;margin-top:12px}.status{font-size:8px;color:#88d6c1;letter-spacing:.15em;text-transform:uppercase;display:flex;align-items:center;gap:7px}.dot{width:5px;height:5px;border-radius:50%;background:#75dfc3;box-shadow:0 0 9px #75dfc3}
+.map-title{position:absolute;z-index:5;right:39px;top:102px;max-width:350px;text-align:right;pointer-events:none;text-shadow:0 2px 24px #0710194a}.map-title .kicker{font:700 8px "DM Sans",sans-serif;letter-spacing:.27em;text-transform:uppercase;color:var(--title-accent,#d0decc)}.map-title h1{font:500 clamp(40px,5vw,76px)/.78 "Cormorant Garamond",serif;letter-spacing:-.045em;margin:10px 0 10px;color:var(--title-color,#f0eee2)}.map-title p{font-size:9px;letter-spacing:.14em;text-transform:uppercase;line-height:1.7;margin:0;color:var(--title-accent,#d0decc)}
+.credits{position:absolute;z-index:6;right:24px;bottom:18px;padding:8px 11px;border-radius:3px;background:#051018c9;color:#b4c1bb;font-size:8px;letter-spacing:.04em;max-width:55vw}
+.maplibregl-ctrl-group{background:#08151dcc!important;border:1px solid #ffffff25!important;border-radius:4px!important;overflow:hidden}.maplibregl-ctrl-group button{filter:invert(.9)}.maplibregl-ctrl-attrib{background:#061018bd!important;color:#a6b5af!important}.maplibregl-ctrl-attrib a{color:#cfdbd3!important}
+@media(max-width:800px){.sidebar{width:min(325px,calc(100vw - 28px));left:14px;top:84px;bottom:14px;padding:17px}.topbar{left:14px;right:14px;top:12px}.toptools .pill:nth-child(n+2){display:none}.map-title{right:18px;top:auto;bottom:48px;max-width:calc(100vw - 370px)}.map-title h1{font-size:39px}.credits{display:none}}
+@media(max-width:520px){.map-title{display:none}.sidebar{width:calc(100vw - 28px)}.brand small{display:none}.topbar{gap:5px}.brand{padding:8px}.toptools .pill{padding:9px}}
+</style>
+</head>
+<body>
+<div id="map"></div><div class="map-wash" id="mapWash"></div><div class="grain"></div>
+<div class="topbar">
+ <div class="brand"><div class="brandmark">M</div><div><strong>MAP ART LAB</strong><small>Real geography · six material studies</small></div></div>
+ <div class="toptools"><button class="pill" id="flatBtn">FLAT VIEW</button><button class="pill" id="globeBtn">GLOBE VIEW</button><button class="pill" id="exportBtn">EXPORT STYLE JSON ↗</button></div>
+</div>
+<aside class="sidebar">
+ <div class="eyebrow">Cartographic experiments / 01–06</div>
+ <h2 class="title">Same Earth.<br>Six different worlds.</h2>
+ <p class="intro">A working style lab built on actual vector-tile geography, with real elevation and seafloor relief. Choose a treatment; the landforms and coastlines stay geographically grounded.</p>
+ <div class="divider"></div>
+ <div class="section-head"><span>Choose a material</span><span>6 studies</span></div>
+ <div class="styles">
+  <button class="stylecard" data-style="watercolor" style="--c1:#e7d8b5;--c2:#84bdb6;--c3:#8d9d77;--c4:#d9c9a5"><div class="swatch"><i></i></div><div class="cardbody"><span class="num">02</span><strong>Aquarelle Earth</strong><small>Mineral wash · paper grain</small></div></button>
+  <button class="stylecard active" data-style="glass" style="--c1:#9ce7e9;--c2:#1c7c8b;--c3:#061923;--c4:#143c4b"><div class="swatch"><i></i></div><div class="cardbody"><span class="num">03</span><strong>Glass Topography</strong><small>Translucent relief · cold light</small></div></button>
+  <button class="stylecard" data-style="antique" style="--c1:#d6c29d;--c2:#8d795b;--c3:#eee1c6;--c4:#9c8a6a"><div class="swatch"><i></i></div><div class="cardbody"><span class="num">05</span><strong>Antique Relief</strong><small>Engraved lines · warm paper</small></div></button>
+  <button class="stylecard" data-style="marble" style="--c1:#403c35;--c2:#d0a46b;--c3:#040607;--c4:#1a1d1c"><div class="swatch"><i></i></div><div class="cardbody"><span class="num">06</span><strong>Black Marble</strong><small>Charcoal · thin brass</small></div></button>
+  <button class="stylecard" data-style="bio" style="--c1:#b5cf98;--c2:#579a83;--c3:#1c4338;--c4:#b9bea0"><div class="swatch"><i></i></div><div class="cardbody"><span class="num">07</span><strong>Biophilic</strong><small>Living greens · clear water</small></div></button>
+  <button class="stylecard" data-style="depths" style="--c1:#43d0ed;--c2:#10547e;--c3:#020b1d;--c4:#0e3851"><div class="swatch"><i></i></div><div class="cardbody"><span class="num">08</span><strong>Liquid Depths</strong><small>Bathymetry · abyssal blue</small></div></button>
+ </div>
+ <div class="divider"></div>
+ <div class="section-head"><span>Rendering recipe</span><span id="recipeNumber">03 / 06</span></div>
+ <section class="recipe">
+  <h3 class="recipe-title" id="recipeTitle">Glass Topography</h3>
+  <p class="recipe-copy" id="recipeCopy">Cool, translucent landform study with actual elevation shading. Terrain is exaggerated gently; labels and roads stay restrained.</p>
+  <div class="swatches" id="recipeSwatches"><i style="background:#071923"></i><i style="background:#113a49"></i><i style="background:#55bac5"></i><i style="background:#d4eee5"></i><i style="background:#6a8c8d"></i></div>
+  <dl>
+   <dt>Material + light</dt><dd id="recipeMaterial">Cold glass · grazing cyan rim light · low specular bloom</dd>
+   <dt>Geographic layer</dt><dd id="recipeLayers">Vector terrain + AWS elevation tiles + soft hillshade</dd>
+   <dt>How to render it well</dt><dd id="recipeMethod">Use shallow camera pitch, moderate terrain exaggeration and a very narrow highlight. Keep city labels lighter than the terrain.</dd>
+  </dl>
+  <div class="recipe-actions"><button class="pill" id="terrainBtn">TERRAIN: ON</button><button class="pill secondary" id="satelliteBtn">SATELLITE: OFF</button></div>
+ </section>
+ <div class="controls"><span class="status"><i class="dot"></i><span id="status">LOADING REAL GEOGRAPHY</span></span></div>
+ <p style="font-size:8px;line-height:1.6;color:#788d86;margin:12px 0 0">Visual experiments only. The material treatments are stylistic; geographic shapes, labels, elevation tiles and bathymetry basemap come from real mapped sources. Imagery and terrain carry their own provider credits.</p>
+</aside>
+<div class="map-title"><div class="kicker" id="mapKicker">Field study / 03 · glass relief</div><h1 id="mapHeadline">The shape<br>beneath.</h1><p id="mapSubtitle">Northern Adriatic · Alps to abyss</p></div>
+<div class="credits">© OpenFreeMap contributors · Elevation tiles © AWS Open Data · Ocean bathymetry © Esri/GEBCO providers as attributed</div>
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const STYLES={
+ watercolor:{n:'02',name:'Aquarelle Earth',kicker:'Material study / 02 · aquarelle',headline:'A coast<br>in watercolour.',subtitle:'Paper grain · mineral wash · alpine pigment',bg:'#e8e0cc',water:'#94c4c0',land:'#d7ccb1',green:'#b9c6a2',forest:'#7c9980',river:'#78aaa9',roads:'#b38c70',major:'#9a7159',border:'#8e9a83',building:'#e8deca',label:'#344640',halo:'rgba(242,235,215,.72)',terrain:false,shade:false,pitch:0,projection:'mercator',copy:'Paper-white land and mineral-blue water, with muted green cover and very thin warm boundaries. The paper grain is an overlay; the coast and place geometry remain real.',material:'Cold-press paper · granulated pigment · soft dry-brush edges',layers:'OpenFreeMap vectors + real landcover + optional elevation relief',method:'Keep water bright, use a three-colour land ramp, draw coastlines with a fine warm edge, then composite a restrained paper grain above the map.'},
+ glass:{n:'03',name:'Glass Topography',kicker:'Material study / 03 · glass relief',headline:'The shape<br>beneath.',subtitle:'Northern Adriatic · Alps to abyss',bg:'#071923',water:'#0b2d3b',land:'#10272f',green:'#1a3a37',forest:'#205248',river:'#377b85',roads:'#29535b',major:'#4f8e98',border:'#4e8589',building:'#244149',label:'#d8f1e9',halo:'rgba(3,14,20,.66)',terrain:true,shade:true,pitch:42,projection:'mercator',copy:'Cool translucent landform study with actual elevation shading. Terrain is moderately exaggerated; roads and labels stay restrained.',material:'Cold glass · grazing cyan rim light · narrow highlight',layers:'Vector geography + AWS Terrarium elevation tiles + hillshade',method:'Use a shallow 3D camera, moderate terrain exaggeration and a restrained cyan highlight. Avoid thick glows: the landform should carry the image.'},
+ antique:{n:'05',name:'Antique Relief',kicker:'Material study / 05 · engraved atlas',headline:'An atlas<br>remembered.',subtitle:'Warm paper · engraved relief · fine linework',bg:'#e6d7b8',water:'#c3cdbf',land:'#e3d6b7',green:'#c0bea0',forest:'#9ca58c',river:'#96ada5',roads:'#9b8061',major:'#8a6c51',border:'#a18e70',building:'#d6c6a5',label:'#514333',halo:'rgba(235,222,193,.88)',terrain:true,shade:true,pitch:0,projection:'mercator',copy:'An engraved-paper treatment built from real landforms: parchment background, desaturated vegetation, fine sepia borders and a soft relief layer.',material:'Aged rag paper · sepia ink · faint graphite grain',layers:'Vector base + actual elevation-derived hillshade; contour engraving can be added from DEM',method:'Build a multi-directional hillshade, keep the tonal range narrow, add contour isolines from an elevation model, then place typography in a separate layout.'},
+ marble:{n:'06',name:'Black Marble',kicker:'Material study / 06 · black marble',headline:'A dark<br>cartography.',subtitle:'Obsidian · brass seams · negative space',bg:'#030607',water:'#050b10',land:'#111714',green:'#16201a',forest:'#1c2c23',river:'#344b44',roads:'#8f7148',major:'#c7a56e',border:'#6f5a3b',building:'#191c17',label:'#e0d4be',halo:'rgba(2,5,6,.82)',terrain:true,shade:true,pitch:30,projection:'mercator',copy:'A luxury low-key treatment. Geography is nearly black; real roads and borders become fine brass ink. The gold is a material choice, not fabricated route data.',material:'Blackened stone · brushed brass · soft directional grazing light',layers:'Real vector boundaries + roads + optional elevation-derived relief',method:'Do not make everything glow. Use almost-black fills, extremely fine warm linework, 2–3 gold tones at most, and wide negative space.'},
+ bio:{n:'07',name:'Biophilic',kicker:'Material study / 07 · biophilic',headline:'A living<br>landscape.',subtitle:'Forest canopy · limestone · clear water',bg:'#dce4cf',water:'#79b6ad',land:'#d9ddc5',green:'#abc89a',forest:'#6f9b7b',river:'#69a9a6',roads:'#c4b18d',major:'#9a8869',border:'#90a493',building:'#d1d4c0',label:'#243f35',halo:'rgba(233,238,216,.75)',terrain:true,shade:true,pitch:27,projection:'mercator',copy:'A living, lush map: real woodland and park classifications set the green structure, pale stone land keeps the picture calm, and water remains clear.',material:'Moss · fern · limestone · glazed teal water',layers:'OpenFreeMap landcover and parks + real elevation + subtle hillshade',method:'Use several greens instead of one green; reserve the darkest colour for woodland, lighten unclassified land, and let hillshade supply the depth.'},
+ depths:{n:'08',name:'Liquid Depths',kicker:'Material study / 08 · bathymetry',headline:'The sea<br>has a shape.',subtitle:'Seafloor relief · abyssal blue · depth contours',bg:'#020b1a',water:'#0b3550',land:'#10241e',green:'#142b22',forest:'#1c3228',river:'#15506b',roads:'#6e8a7b',major:'#7dd5e7',border:'#426c7b',building:'#152b2b',label:'#d7f4f4',halo:'rgba(1,8,21,.78)',terrain:false,shade:false,pitch:0,projection:'mercator',copy:'The ocean is the hero: an actual ocean basemap contributes seafloor texture and bathymetric contours; geographic labels stay sparse above it.',material:'Abyssal ink · translucent cyan · deep-sea contour glow',layers:'Esri World Ocean Base raster + place labels and selected borders from OpenFreeMap',method:'Use bathymetry as the base artwork, hide distracting land-cover/road layers, preserve coast and borders, then use only a few fine cyan depth accents.'}
+};
+let map=null,loaded=false,theme='glass',terrainOn=true,satelliteOn=false,styleApplied=false;
+const OPEN='https://tiles.openfreemap.org/styles/bright';
+function say(t){$('status').textContent=t}
+function setText(id,text){$(id).textContent=text}
+function addSources(){
+ if(!map.getSource('art-dem'))map.addSource('art-dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',maxzoom:15,attribution:'Terrain tiles © AWS Open Data'});
+ if(!map.getSource('art-ocean'))map.addSource('art-ocean',{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:13,attribution:'Bathymetry and ocean basemap © Esri and data providers'});
+ if(!map.getSource('art-satellite'))map.addSource('art-satellite',{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community'});
+ const layers=map.getStyle().layers||[];
+ const firstFill=layers.find(l=>l.type==='fill')?.id;
+ const firstSymbol=layers.find(l=>l.type==='symbol')?.id;
+ if(!map.getLayer('art-hillshade'))map.addLayer({id:'art-hillshade',type:'hillshade',source:'art-dem',layout:{visibility:'none'},paint:{'hillshade-exaggeration':.35,'hillshade-illumination-direction':315,'hillshade-illumination-anchor':'map','hillshade-shadow-color':'#16312c','hillshade-highlight-color':'#eef1d8','hillshade-accent-color':'#75938c'}},firstFill);
+ if(!map.getLayer('art-ocean-raster'))map.addLayer({id:'art-ocean-raster',type:'raster',source:'art-ocean',layout:{visibility:'none'},paint:{'raster-opacity':.97,'raster-saturation':.12,'raster-contrast':.18,'raster-brightness-min':.02,'raster-brightness-max':.98}},firstSymbol);
+ if(!map.getLayer('art-satellite'))map.addLayer({id:'art-satellite',type:'raster',source:'art-satellite',layout:{visibility:'none'},paint:{'raster-opacity':.48,'raster-saturation':-.05,'raster-contrast':.06,'raster-brightness-min':.08,'raster-brightness-max':.98}},firstSymbol);
+}
+function paint(layer,prop,val){try{map.setPaintProperty(layer.id,prop,val)}catch(e){}}
+function layout(layer,prop,val){try{map.setLayoutProperty(layer.id,prop,val)}catch(e){}}
+function restyle(t){
+ if(!map||!map.isStyleLoaded())return;
+ const layers=map.getStyle().layers||[];
+ const liquid=t==='depths';
+ layers.forEach(l=>{
+  const id=(l.id||'').toLowerCase(),src=(l['source-layer']||'').toLowerCase();
+  if(['art-hillshade','art-ocean-raster','art-satellite'].includes(id))return;
+  if(liquid){
+   if(l.type==='background'||l.type==='fill')layout(l,'visibility','none');
+   else if(l.type==='line'){const keep=/boundary|coast|waterway/.test(id+' '+src);layout(l,'visibility',keep?'visible':'none')}
+   else if(l.type==='symbol'){const keep=/place_|place-|country|state|city|town|village/.test(id);layout(l,'visibility',keep?'visible':'none')}
+   return;
+  }
+  layout(l,'visibility','visible');
+  if(l.type==='background')paint(l,'background-color',t.bg);
+  if(l.type==='fill'){
+   let c=t.land;
+   if(src==='water'||/water/.test(id))c=t.water;
+   else if(src==='landcover'||/wood|forest|grass|park|scrub|orchard|vineyard/.test(id+' '+src)){
+    if(/wood|forest|tree|orchard|vineyard/.test(id+' '+src))c=t.forest;
+    else c=t.green;
+   }else if(/building/.test(id+' '+src))c=t.building;
+   else if(/residential|industrial|commercial|landuse/.test(id+' '+src))c=t.land;
+   paint(l,'fill-color',c);
+   paint(l,'fill-opacity',/landcover|park|wood/.test(src+' '+id)?.88:1);
+   paint(l,'fill-outline-color',t.border);
+  }
+  if(l.type==='line'){
+   let c=t.border;
+   if(src==='waterway'||/waterway|river|canal/.test(id))c=t.river;
+   else if(src==='transportation'||/road|highway|motorway|railway/.test(id))c=/motorway|trunk|primary/.test(id)?t.major:t.roads;
+   else if(src==='boundary'||/boundary|border/.test(id))c=t.border;
+   if(/contour/.test(id))c=t.major;
+   paint(l,'line-color',c);
+   paint(l,'line-opacity',t==='marble'?.72:(t==='antique'?.67:.78));
+   if(t==='marble'&&/motorway|primary|trunk/.test(id))paint(l,'line-width',['interpolate',['linear'],['zoom'],4,.35,9,.75,14,1.1]);
+  }
+  if(l.type==='symbol'&&l.layout?.['text-field']){
+   if(/poi|housenumber|airport|aeroway|highway_name|road_oneway/.test(id)){layout(l,'visibility','none');return}
+   let color=t.label,halo=t.halo;
+   if(/country/.test(id)){color=t.label;layout(l,'text-size',['interpolate',['linear'],['zoom'],0,10.5,3,12,5,13.5]);layout(l,'text-letter-spacing',.12)}
+   else if(/city_large/.test(id)){layout(l,'text-size',['interpolate',['linear'],['zoom'],0,10,3,12,6,14,9,16]);layout(l,'text-letter-spacing',.01)}
+   else if(/city/.test(id)){layout(l,'text-size',['interpolate',['linear'],['zoom'],2,9,5,11.2,8,13.2,12,15.5]);layout(l,'text-letter-spacing',0)}
+   else if(/town/.test(id)){layout(l,'text-size',['interpolate',['linear'],['zoom'],4,8.8,7,10.4,11,12.7,15,14]);layout(l,'text-letter-spacing',0)}
+   else if(/village|suburb|other/.test(id)){layout(l,'text-size',['interpolate',['linear'],['zoom'],8,8.4,11,9.8,14,11.8]);layout(l,'text-letter-spacing',0)}
+   layout(l,'text-font',['Noto Sans Regular']);
+   layout(l,'text-transform',/city|town|village|suburb/.test(id)?'none':'uppercase');
+   paint(l,'text-color',color);paint(l,'text-halo-color',halo);paint(l,'text-halo-width',t==='marble'?.5:.8);paint(l,'text-halo-blur',.12);paint(l,'text-opacity',.97);
+  }
+ });
+ const hill=map.getLayer('art-hillshade');
+ if(hill){
+  layout({id:'art-hillshade'},'visibility',(!liquid&&t.terrain && terrainOn)?'visible':'none');
+  paint({id:'art-hillshade'},'hillshade-shadow-color',t==='antique'?'#9d8764':(t==='marble'?'#020303':(t==='bio'?'#405941':'#133b49')));
+  paint({id:'art-hillshade'},'hillshade-highlight-color',t==='antique'?'#f4e7c8':(t==='marble'?'#655239':(t==='bio'?'#d9e3bd':'#71d0d5')));
+  paint({id:'art-hillshade'},'hillshade-accent-color',t==='antique'?'#ab9674':(t==='marble'?'#ab8959':(t==='bio'?'#8ea57e':'#3c7b83')));
+  paint({id:'art-hillshade'},'hillshade-exaggeration',t==='glass'?.58:(t==='antique'?.22:(t==='bio'?.3:.45)));
+ }
+ if(map.getLayer('art-ocean-raster'))layout({id:'art-ocean-raster'},'visibility',liquid?'visible':'none');
+ if(map.getLayer('art-satellite'))layout({id:'art-satellite'},'visibility',satelliteOn&&!liquid?'visible':'none');
+ if(liquid){terrainOn=false;try{map.setTerrain(null)}catch(e){}}
+ else if(t.terrain&&terrainOn){try{map.setTerrain({source:'art-dem',exaggeration:t==='glass'?.75:(t==='antique'?.25:.35)})}catch(e){say('2D terrain shading active')}}
+ else {try{map.setTerrain(null)}catch(e){}}
+ $('mapWash').style.opacity=t==='watercolor'?.5:(t==='glass'?.22:(t==='antique'?.33:(t==='marble'?.1:(t==='bio'?.12:.04)));
+ document.body.style.setProperty('--title-color',t==='watercolor'||t==='antique'||t==='bio'?'#f7f0df':'#f0eee2');
+ document.body.style.setProperty('--title-accent',t==='antique'?'#dfc9a0':(t==='bio'?'#cde2b8':(t==='watercolor'?'#d5ead7':'#b1e0dd')));
+ document.body.style.setProperty('--map-bg',t.bg);
+ map.setFog({color:liquid?'#051323':t.bg,'high-color':liquid?'#0b3450':t.water,'space-color':liquid?'#020617':t.bg,'horizon-blend':.08,'star-intensity':0});
+ const pitch=t.pitch+(terrainOn&&t.terrain&&t!=='antique'?0:0);
+ try{map.easeTo({pitch,bearing:0,duration:550})}catch(e){}
+ $('terrainBtn').textContent='TERRAIN: '+(terrainOn&&!liquid?'ON':'OFF');
+ $('satelliteBtn').textContent='SATELLITE: '+(satelliteOn?'ON':'OFF');
+ $('mapKicker').textContent=t.kicker;$('mapHeadline').innerHTML=t.headline;$('mapSubtitle').textContent=t.subtitle;
+ setText('recipeNumber',t.n+' / 06');setText('recipeTitle',t.name);setText('recipeCopy',t.copy);setText('recipeMaterial',t.material);setText('recipeLayers',t.layers);setText('recipeMethod',t.method);
+ $('recipeSwatches').innerHTML=[t.bg,t.water,t.land,t.green,t.label].map(c=>'<i style="background:'+c+'"></i>').join('');
+ document.querySelectorAll('.stylecard').forEach(b=>b.classList.toggle('active',b.dataset.style===theme));
+ say(liquid?'BATHYMETRY LAYER':t.terrain&&terrainOn?'TERRAIN + VECTOR LAYERS':'VECTOR MAP READY');
+}
+function choose(name){theme=name;const t=STYLES[theme];if(!loaded){return}try{map.setProjection(t.projection)}catch(e){}restyle(t);if(theme==='depths')map.easeTo({center:[13.1,45.3],zoom:5.0,pitch:0,duration:650});}
+function init(){if(!window.maplibregl){say('MAP LIBRARY NOT LOADED');return}
+ map=new maplibregl.Map({container:'map',style:OPEN,center:[13.1,45.3],zoom:5.25,pitch:42,bearing:-8,projection:{type:'mercator'},attributionControl:true,canvasContextAttributes:{antialias:true,powerPreference:'high-performance',preserveDrawingBuffer:false},fadeDuration:120,renderWorldCopies:false});
+ map.addControl(new maplibregl.NavigationControl({showCompass:true,showZoom:true,visualizePitch:false}),'bottom-right');
+ map.on('load',()=>{loaded=true;try{addSources();}catch(e){console.warn(e)};restyle(STYLES[theme]);say('REAL GEOGRAPHY READY');});
+ map.on('error',e=>{if(e?.error)console.warn('Map data layer:',e.error.message)});
+}
+document.querySelectorAll('.stylecard').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.style)));
+$('flatBtn').addEventListener('click',()=>{try{map.setProjection('mercator');map.easeTo({pitch:0,bearing:0,duration:500})}catch(e){}});
+$('globeBtn').addEventListener('click',()=>{try{map.setProjection({type:'globe'});map.easeTo({pitch:0,bearing:0,duration:500})}catch(e){}});
+$('terrainBtn').addEventListener('click',()=>{terrainOn=!terrainOn;restyle(STYLES[theme])});
+$('satelliteBtn').addEventListener('click',()=>{satelliteOn=!satelliteOn;restyle(STYLES[theme])});
+$('exportBtn').addEventListener('click',()=>{if(!map)return;const blob=new Blob([JSON.stringify(map.getStyle(),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='map-art-'+theme+'-style.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)});
+init();
+})();
+</script>
+</body></html>
