@@ -170,7 +170,7 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
     <div class="status-box" id="statusBox"><div class="status-icon">✣</div><div class="status-copy"><div class="status-title" id="statusTitle">Pick a point on the map</div><div class="status-msg" id="statusMsg">Click a place, town, mountain or coastline. We'll search around that exact point.</div></div></div>
     <div class="source-key-note">Mapped facts, inferred photo candidates and AI illustrations are kept distinct. Check source links, access and sightlines before travelling.</div>
   </section>
-  <details class="nav-panel" id="photoIdeaDetails">
+  <details class="nav-panel" id="photoIdeaDetails" open>
     <summary><span class="nav-title">Photo Idea Lab</span><span class="nav-subtitle">Composition sketches · AI image · real references</span></summary>
     <div class="nav-panel-content">      <section class="idea-lab-section" id="photoIdeaLabSection">
           <div class="concept-block ai-visual-block" id="aiVisualBlock">
@@ -1362,6 +1362,8 @@ async function renderDetailPhotoRefs(item){
 }
 function selectItem(item){
  state.selected=item;
+ const photoIdeas=$('photoIdeaDetails');
+ if(photoIdeas)photoIdeas.open=true;
  $('spotDetail').classList.add('show');
  $('detailEyebrow').textContent=item.category==='photo'?'Visual reference · source-linked':item.category==='photoSpot'?'Photo spot candidate · evidence-ranked':item.category==='parking'?'Parking candidate · verify on arrival':item.category==='history'?'History & place · sourced summary':item.category==='viewpoint'?'Mapped viewpoint · verify the view':'Photographic subject · map data';
  $('detailTitle').textContent=item.name;
@@ -1405,7 +1407,8 @@ function selectItem(item){
  });
  renderResults();
  renderMarkers();
- if(isSmallScreen)$('spotDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
+ if(isSmallScreen){$('spotDetail').scrollIntoView({behavior:'smooth',block:'nearest'});}
+ else if(photoIdeas){photoIdeas.scrollIntoView({behavior:'smooth',block:'nearest'});}
 }
 function parseCoords(text){
  const m=text.trim().match(/^(-?\d{1,2}(?:\.\d+)?)\s*[,; ]\s*(-?\d{1,3}(?:\.\d+)?)$/);
@@ -1443,7 +1446,47 @@ $('useLocation').addEventListener('click',()=>{
   const c={lat:pos.coords.latitude,lng:pos.coords.longitude};map.flyTo({center:[c.lng,c.lat],zoom:13,duration:850});scanAt(c,{fly:false});
  },()=>setStatus('Could not read your location','You can still click anywhere on the map or search for a destination.','warn'),{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
 });
-map.on('click',e=>scanAt({lat:e.lngLat.lat,lng:e.lngLat.lng},{fly:true}));
+map.on('click',e=>{
+ // Prefer selecting a named basemap landmark when the user taps its label/feature.
+ // Custom Photo Scout markers stop propagation and are handled by their own click handlers.
+ let feature=null;
+ try{
+  const features=map.queryRenderedFeatures(e.point)||[];
+  const ranked=features.map(f=>{
+   const p=f.properties||{};
+   const name=p.name||p['name:en']||p.name_en||p.name_local||p.ref||'';
+   const layer=f.layer||{};
+   const sourceLayer=String(layer['source-layer']||'').toLowerCase();
+   const layerId=String(layer.id||'').toLowerCase();
+   let score=0;
+   if(name)score+=10;
+   if(/poi|place|housenumber|building|landuse|park|historic|tourism|natural/.test(sourceLayer+' '+layerId))score+=5;
+   if(p.historic||p.tourism||p.amenity||p.building||p.natural||p.place)score+=5;
+   if(/road|transportation|boundary|waterway/.test(sourceLayer+' '+layerId))score-=4;
+   return {f,name:String(name).trim(),score};
+  }).filter(x=>x.name&&x.score>=10).sort((a,b)=>b.score-a.score);
+  feature=ranked[0]||null;
+ }catch(err){}
+ if(feature){
+  const p=feature.f.properties||{};
+  const tags={};
+  ['historic','tourism','amenity','building','natural','place','description','wikidata','wikipedia','leisure'].forEach(k=>{if(p[k]!=null)tags[k]=p[k];});
+  const name=feature.name;
+  const kind=String(tags.historic||tags.tourism||tags.amenity||tags.building||tags.natural||tags.place||'').toLowerCase();
+  const category=/parking/.test(kind)?'parking':/viewpoint/.test(kind)?'viewpoint':/historic|castle|monument|archaeological|church|museum/.test(kind)?'history':/building|architecture/.test(kind)?'architecture':'architecture';
+  const item={id:'basemap-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+e.lngLat.lat.toFixed(5)+'-'+e.lngLat.lng.toFixed(5),name,lat:e.lngLat.lat,lng:e.lngLat.lng,distance:state.center?haversine(state.center,{lat:e.lngLat.lat,lng:e.lngLat.lng}):0,category,source:'Basemap label · exact feature geometry not verified',summary:'You selected the visible map label “'+name+'”. The map click gives an approximate point on the label, not necessarily the building entrance or exact footprint. Use the source links and verify the position before navigating.',tags,city:state.detectedLocality||''};
+  selectItem(item);
+  return;
+ }
+ scanAt({lat:e.lngLat.lat,lng:e.lngLat.lng},{fly:true});
+});
+map.on('mousemove',e=>{
+ try{
+  const features=map.queryRenderedFeatures(e.point)||[];
+  const named=features.some(f=>{const p=f.properties||{};return !!(p.name||p['name:en']||p.name_en||p.name_local);});
+  map.getCanvas().style.cursor=named?'pointer':'';
+ }catch(err){}
+});
 document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>{
   state.filter=btn.dataset.filter;
   document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b===btn));
