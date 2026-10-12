@@ -210,7 +210,7 @@ function restyleVector(){
  if(map.getLayer('mapart-satellite-layer'))l('mapart-satellite-layer','visibility',satOn&&theme!=='depths'?'visible':'none');
  if(map.getLayer('atlas-imagery'))l('atlas-imagery','visibility','none');
  if(map.getLayer('mapart-ocean-layer'))l('mapart-ocean-layer','visibility',theme==='depths'&&oceanOn?'visible':'none');
- if(theme==='depths'){
+ if(theme==='depths'&&oceanOn){
   layers.forEach(layer=>{
    const id=layer.id||'';
    if(id.startsWith('mapart-')||id.startsWith('atlas-'))return;
@@ -225,7 +225,7 @@ function restyleVector(){
   try{map.setTerrain({source:'mapart-dem',exaggeration:theme==='glass'?.68:theme==='antique'?.2:theme==='bio'?.32:.34})}catch(e){console.warn('3D terrain unavailable',e)}
  }else{try{map.setTerrain(null)}catch(e){}}
  setSwitch('hillToggle',hillOn&&theme!=='depths');setSwitch('satToggle',satOn);setSwitch('terrainToggle',terrainOn);setSwitch('labelsToggle',labelsOn);setSwitch('oceanToggle',oceanOn&&theme==='depths');
- status(theme==='depths'?(oceanOn?'OCEAN BATHYMETRY LAYER':'BATHYMETRY OFF · VECTOR BASE'):(satOn?'SATELLITE + VECTOR LAYERS':terrainOn?'VECTOR + 3D TERRAIN':hillOn?'VECTOR + DEM HILLSHADE':'VECTOR MAP READY'));
+ status(theme==='depths'?(oceanOn?'OCEAN BATHYMETRY LAYER':'BATHYMETRY OFF · VECTOR FALLBACK'):(satOn?'SATELLITE IMAGERY + VECTOR':terrainOn?'3D TERRAIN ENABLED':hillOn?'DEM HILLSHADE ON':'VECTOR MAP READY'));
 }
 function applyTheme(next){
  if(!THEMES[next])return;theme=next;syncPanel();
