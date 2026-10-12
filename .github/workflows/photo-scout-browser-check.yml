@@ -88,6 +88,15 @@ jobs:
                 parkingSample:afterClick.parkingSample
               }));
             }
+            const ideaLabAtPin = await page.evaluate(() => ({
+              visible: !!document.querySelector('#photoIdeaLabSection')?.getBoundingClientRect().height,
+              sketchSrc: document.querySelector('#autoSketchImage')?.getAttribute('src') || '',
+              target: document.querySelector('#conceptTargetName')?.textContent || '',
+              generateButton: !!document.querySelector('#generateConcept')
+            }));
+            if (!ideaLabAtPin.visible || !ideaLabAtPin.sketchSrc.startsWith('data:image/svg+xml') || !ideaLabAtPin.generateButton || /Pin a place to start/i.test(ideaLabAtPin.target)) {
+              throw new Error('Photo Idea Lab must show a location-specific sketch and generation control immediately after pin drop: ' + JSON.stringify(ideaLabAtPin));
+            }
             if (!(afterClick.parkingLabelLayersFiltered || []).includes('poi_r20')) {
               throw new Error('The basemap parking-label replacement filter is missing: ' + JSON.stringify(afterClick.parkingLabelLayersFiltered));
             }
@@ -98,11 +107,16 @@ jobs:
               const parkingZoomResult = await page.evaluate(() => ({
                 zoom:window.__PHOTO_SCOUT_TEST__.map.getZoom(),
                 clusterCount:document.querySelectorAll('.scout-marker.parking-cluster').length,
-                markerCount:document.querySelectorAll('.scout-marker.parking').length
+                markerCount:document.querySelectorAll('.scout-marker.parking').length,
+                clusterText:document.querySelector('.scout-marker.parking-cluster .dot-core')?.textContent || '',
+                clusterTitle:document.querySelector('.scout-marker.parking-cluster')?.title || ''
               }));
               console.log('PARKING_CLUSTER_ZOOM_TEST ' + JSON.stringify({zoomBeforeParkingClick,parkingZoomResult}));
               if (!(parkingZoomResult.zoom > zoomBeforeParkingClick + 1.5)) {
                 throw new Error('Clicking a parking cluster did not zoom to separate parking places: ' + JSON.stringify(parkingZoomResult));
+              }
+              if (parkingZoomResult.clusterText.startsWith('P') || !/not a destination/i.test(parkingZoomResult.clusterTitle)) {
+                throw new Error('A parking cluster still looks like a real parking destination rather than a count-only zoom control: ' + JSON.stringify(parkingZoomResult));
               }
               await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.map.jumpTo({center:[14.354223,45.37306],zoom:12.25}));
               await page.waitForTimeout(350);
