@@ -140,7 +140,7 @@ function status(t){$status.textContent=t}
 function setSwitch(id,on){const el=$(id);el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
 function syncPanel(){
  const t=THEMES[theme];
- $('recipeNo').textContent=t.no+' / 06';$('recipeTitle').textContent=t.name;$('recipeDesc').textContent=t.description;
+ $('recipeNo').textContent='STUDY '+t.no;$('recipeIndex').textContent=t.no;$('recipeTitle').textContent=t.name;$('recipeDesc').textContent=t.description;
  $('recipeMaterial').textContent=t.material;$('recipeLayers').textContent=t.layers;$('recipeMethod').textContent=t.method;
  $('palette').innerHTML=[t.background,t.water,t.land,t.green,t.text].map(c=>'<i style="background:'+c+'"></i>').join('');
  $('kicker').textContent=t.kicker;$('headline').innerHTML=t.headline;$('subtitle').textContent=t.subtitle;
@@ -220,7 +220,7 @@ function restyleVector(){
   try{map.setTerrain({source:'mapart-dem',exaggeration:theme==='glass'?.68:theme==='antique'?.2:theme==='bio'?.32:.34})}catch(e){console.warn('3D terrain unavailable',e)}
  }else{try{map.setTerrain(null)}catch(e){}}
  setSwitch('hillToggle',hillOn&&theme!=='depths');setSwitch('satToggle',satOn);setSwitch('terrainToggle',terrainOn);setSwitch('labelsToggle',labelsOn);setSwitch('oceanToggle',oceanOn&&theme==='depths');
- status(theme==='depths'?'OCEAN BATHYMETRY LAYER':terrainOn?'VECTOR + 3D TERRAIN':hillOn?'VECTOR + DEM HILLSHADE':'VECTOR MAP READY');
+ status(theme==='depths'?(oceanOn?'OCEAN BATHYMETRY LAYER':'BATHYMETRY OFF · VECTOR BASE'):terrainOn?'VECTOR + 3D TERRAIN':hillOn?'VECTOR + DEM HILLSHADE':'VECTOR MAP READY');
 }
 function applyTheme(next){
  if(!THEMES[next])return;theme=next;syncPanel();
