@@ -949,7 +949,7 @@ function renderMarkers(){
    el.classList.add('parking-cluster');
    el.querySelector('.dot-core').textContent='×'+item.clusterSize;
    el.setAttribute('aria-label',item.clusterSize+' nearby parking features, grouped for clarity. Not a destination; tap to zoom in.');
-   el.title=item.clusterSize+' nearby mapped parking features · tap to zoom and choose an actual point';
+   el.title=item.clusterSize+' nearby mapped parking features · cluster only, not a destination · tap to zoom and choose an actual point';
    el.addEventListener('click',e=>{
     e.preventDefault();e.stopPropagation();
     const currentZoom=map.getZoom();
