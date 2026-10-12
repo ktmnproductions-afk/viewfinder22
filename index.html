@@ -266,7 +266,6 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
 <footer>Map data © <a class="footer-link" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Vector basemap by <a class="footer-link" href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>. History links and photo licences are shown where available. Always verify road access, parking signs and private-property restrictions.</footer>
 </aside>
 <div class="map-credit">Made for curious photographers · Photo Scout</div>
-<script src="https://js.puter.com/v2/"></script>
 <script type="module">
 import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.13.0/dist/maplibre-gl.mjs';
 (function(){
@@ -1300,42 +1299,34 @@ async function generateConcept(){
  const wrap=$('generatedVisualWrap');
  const image=$('generatedVisual');
  if(!item){status.textContent='Choose a place or photo spot first.';return;}
- if(!window.puter||!window.puter.ai||typeof window.puter.ai.txt2img!=='function'){
-  status.textContent='The image service has not loaded. Refresh the page and try again. Your instant composition sketch and editable prompt are still available.';
-  return;
- }
  const mode=$('conceptMode').value||'wide';
+ const prompt=imageConceptPrompt(item,mode);
+ // Pollinations returns the generated image directly. No SDK, separate login,
+ // API key, or paid account is required for this anonymous endpoint.
+ const src='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?width=1024&height=576&nologo=true&seed='+Math.floor(Math.random()*1000000);
  button.disabled=true;button.textContent='Generating…';
- status.textContent='Creating a visual concept for '+item.name+'. This can take a little while; the selected model/provider may ask you to sign in or confirm usage.';
+ status.textContent='Generating a free visual concept for '+item.name+' without a separate login. It may take 10–30 seconds; free-service availability and limits can vary.';
+ wrap.hidden=true;
+ image.onload=null;image.onerror=null;
  try{
-  // The SDK can request authentication automatically. Making it explicit here
-  // lets the visitor see why the image action is taking time and ensures any
-  // sign-in popup is triggered directly by their Generate button click.
-  if(window.puter.auth&&typeof window.puter.auth.isSignedIn==='function'&&!window.puter.auth.isSignedIn()){
-   status.textContent='Sign in to the image service in the popup, then Photo Scout will generate the requested concept. Your instant shot sketch remains available meanwhile.';
-   if(typeof window.puter.auth.signIn==='function')await window.puter.auth.signIn();
-  }
-  status.textContent='Generating a '+(mode==='wide'?'wide landscape':mode==='context'?'subject-with-context':'compressed-layers')+' image for '+item.name+'. This usually takes a little while; provider sign-in or usage charges may apply.';
-  const generationPromise=window.puter.ai.txt2img(imageConceptPrompt(item,mode),{
-   provider:'openai',
-   model:'gpt-image-2.5-flare',
-   quality:'medium',
-   ratio:{w:16,h:9}
+  await new Promise((resolve,reject)=>{
+   let settled=false;
+   const finish=(fn,value)=>{if(settled)return;settled=true;window.clearTimeout(timer);image.onload=null;image.onerror=null;fn(value);};
+   const timer=window.setTimeout(()=>finish(reject,new Error('The free image service did not return an image within 90 seconds. Please try again later.')),90000);
+   image.onload=()=>finish(resolve,true);
+   image.onerror=()=>finish(reject,new Error('The free image service could not generate this image right now. Please try again later.'));
+   image.src=src;
+   if(image.complete&&image.naturalWidth>0)finish(resolve,true);
   });
-  const generated=await Promise.race([
-   generationPromise,
-   new Promise((resolve,reject)=>window.setTimeout(()=>reject(new Error('No image returned within 90 seconds. The image service may still be processing; avoid repeatedly starting new generations.')),90000))
-  ]);
-  const src=typeof generated==='string'?generated:(generated&&generated.src?generated.src:'');
-  if(!src)throw new Error('The image provider returned no viewable image.');
-  image.src=src;
-  image.alt='AI-generated illustrative photo concept for '+item.name+'. Not a verified photograph of the real location.';
+  image.alt='AI-generated illustrative photo concept inspired by '+item.name+'. Not a verified photograph or historically verified reconstruction of the real location.';
   wrap.hidden=false;
-  status.textContent='Visual concept ready. This image is generated inspiration, not a verified view of the site. Check access and sightlines on arrival.';
+  status.textContent='Visual concept ready. This is AI-generated inspiration, not a verified photograph of the real site. Check real access and sightlines on arrival.';
   wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
  }catch(err){
-  status.textContent='The photorealistic image service did not finish: '+String(err&&err.message||err).slice(0,180)+'. Your instant place-specific shot sketch is still available above, and the prompt remains editable below.';
+  wrap.hidden=true;
+  status.textContent=String(err&&err.message||err).slice(0,220)+' Your instant place-specific composition sketch and editable prompt remain available above.';
  }finally{
+  image.onload=null;image.onerror=null;
   button.disabled=false;button.textContent='Generate another concept';
  }
 }
