@@ -1303,7 +1303,7 @@ async function generateConcept(){
  const prompt=imageConceptPrompt(item,mode);
  // Pollinations returns the generated image directly. No SDK, separate login,
  // API key, or paid account is required for this anonymous endpoint.
- const src='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?width=1024&height=576&nologo=true&seed='+Math.floor(Math.random()*1000000);
+ const src='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?width=1024&height=576&seed='+Math.floor(Math.random()*1000000);
  button.disabled=true;button.textContent='Generating…';
  status.textContent='Generating a free visual concept for '+item.name+' without a separate login. It may take 10–30 seconds; free-service availability and limits can vary.';
  wrap.hidden=true;
