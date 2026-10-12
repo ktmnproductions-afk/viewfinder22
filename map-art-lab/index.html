@@ -23,8 +23,8 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07131a;col
 .top-actions{display:flex;gap:7px}
 .btn{border:1px solid #ffffff27;border-radius:4px;background:#071119df;color:#e6eee7;padding:9px 11px;font:600 9px "DM Sans",sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
 .btn:hover,.btn.active{background:#e8e2d2;color:#1a2921;border-color:#e8e2d2}
-.panel{position:absolute;z-index:8;left:16px;top:76px;bottom:15px;width:338px;overflow:auto;padding:19px 17px 16px;background:var(--panel);border:1px solid #ffffff20;border-radius:5px;backdrop-filter:blur(18px);box-shadow:0 18px 54px #0004;scrollbar-width:thin;scrollbar-color:#415a51 transparent}
-.eyebrow{font-size:8px;letter-spacing:.23em;text-transform:uppercase;color:#9bd3c3;font-weight:700}
+.panel{position:absolute;z-index:12;left:14px;top:72px;bottom:auto;width:292px;max-height:calc(100dvh - 88px);overflow:auto;padding:13px 13px 14px;background:var(--panel);border:1px solid #ffffff20;border-radius:5px;backdrop-filter:blur(18px);box-shadow:0 18px 54px #0005;scrollbar-width:thin;scrollbar-color:#415a51 transparent;transform:translateX(calc(-100% - 22px));opacity:0;visibility:hidden;pointer-events:none;transition:transform .22s ease,opacity .18s ease,visibility .22s}
+.panel.open{transform:translateX(0);opacity:1;visibility:visible;pointer-events:auto}.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:13px;padding-bottom:10px;border-bottom:1px solid #ffffff1d}.panel-head .eyebrow{margin-bottom:4px}.panel-title{font:500 22px/.95 "Cormorant Garamond",Georgia,serif;color:#f2eee3}.panel-close{border:1px solid #ffffff25;background:#101e24;color:#eaf0e9;border-radius:4px;font-size:20px;line-height:1;width:30px;height:30px;cursor:pointer}.panel-close:hover{background:#e8e2d2;color:#1a2921}.panel .eyebrow{font-size:7px;letter-spacing:.2em}.panel h1{font-size:30px;line-height:.9;margin:9px 0}.panel .intro{font-size:9px;line-height:1.5}.panel .rule{margin:11px 0}.panel .section-head{margin-bottom:7px}.panel .styles{gap:6px}.panel .style{min-height:77px;padding:6px;gap:4px}.panel .swatch{height:28px;flex-basis:28px}.panel .style .name{font-size:14px}.panel .style .desc{font-size:7px}.panel .recipe{padding:9px}.panel .recipe-top strong{font-size:21px}.panel .recipe p{font-size:8px;line-height:1.45;margin-bottom:7px}.panel .recipe-label{margin-top:7px}.panel .recipe-value{font-size:8px;line-height:1.4}.panel .palette{margin-top:8px}.panel .palette i{height:10px}.panel .layer-row{padding:7px 1px;font-size:9px}.panel .fineprint{font-size:7px;line-height:1.45}.eyebrow{font-size:8px;letter-spacing:.23em;text-transform:uppercase;color:#9bd3c3;font-weight:700}
 h1{font:500 36px/.88 "Cormorant Garamond",Georgia,serif;letter-spacing:-.03em;margin:11px 0 10px;color:#f2eee3}
 .intro{font-size:10px;line-height:1.62;color:#afbeb6;margin:0;max-width:290px}
 .rule{height:1px;background:#ffffff19;margin:16px 0}
@@ -71,18 +71,18 @@ h1{font:500 36px/.88 "Cormorant Garamond",Georgia,serif;letter-spacing:-.03em;ma
 .maplibregl-ctrl-group button{filter:invert(.88)}
 .maplibregl-ctrl-attrib{background:#061019df!important;color:#adbbb4!important}
 .maplibregl-ctrl-attrib a{color:#d0ddd4!important}
-@media(max-width:760px){.panel{left:12px;top:76px;bottom:12px;width:min(328px,calc(100vw - 24px));padding:16px}.topbar{left:12px;right:12px;top:10px}.top-actions .btn:nth-child(n+2){display:none}.map-title{right:14px;top:auto;bottom:45px;max-width:calc(100vw - 370px)}.map-title h2{font-size:38px}.credit{display:none}}
-@media(max-width:500px){.map-title{display:none}.panel{width:calc(100vw - 24px)}.brand{padding:8px}.brand small{display:none}}
+@media(max-width:760px){.panel{left:10px;top:65px;bottom:auto;width:min(294px,calc(100vw - 20px));max-height:calc(100dvh - 76px);padding:12px}.topbar{left:10px;right:10px;top:9px}.top-actions{gap:5px}.top-actions .btn{padding:8px 9px;font-size:8px}.top-actions #exportStyleBtn{display:none}.map-title{right:14px;top:auto;bottom:42px;max-width:calc(100vw - 42px)}.map-title h2{font-size:38px}.credit{display:none}}
+@media(max-width:500px){.map-title{display:none}.panel{width:min(315px,calc(100vw - 20px));max-height:calc(100dvh - 76px)}.brand{padding:8px}.brand small{display:none}.top-actions #terrainBtn{display:none}}
 </style>
 </head>
 <body>
 <div id="map"></div><div class="map-grain" id="mapGrain"></div>
 <header class="topbar">
  <div class="brand"><div class="brand-mark">M</div><div><strong>MAP ART LAB</strong><small>Six material studies · real geography</small></div></div>
- <div class="top-actions"><button class="btn" id="flatBtn">Flat view</button><button class="btn" id="terrainBtn">Terrain view</button><button class="btn" id="exportStyleBtn">Export style JSON ↗</button></div>
+ <div class="top-actions"><button class="btn active" id="panelToggle" aria-controls="controlPanel" aria-expanded="false">Styles & Layers</button><button class="btn" id="flatBtn">Flat view</button><button class="btn" id="terrainBtn">Terrain view</button><button class="btn" id="exportStyleBtn">Export style JSON ↗</button></div>
 </header>
-<aside class="panel">
- <div class="eyebrow">Cartographic rendering / 02–08</div>
+<aside class="panel" id="controlPanel" aria-label="Map styles and layers" aria-hidden="true">
+ <div class="panel-head"><div><div class="eyebrow">Map controls</div><div class="panel-title">Styles & Layers</div></div><button class="panel-close" id="panelClose" aria-label="Close styles and layers">×</button></div><div class="eyebrow">Cartographic rendering / 02–08</div>
  <h1>Same Earth.<br>Six different worlds.</h1>
  <p class="intro">Start with real vector geography. Change the cartographic materials, terrain shading and ocean-floor rendering as separate layers—not filters over a screenshot.</p>
  <div class="rule"></div>
@@ -253,7 +253,7 @@ function init(){
   map.on('error',e=>{if(e&&e.error)console.warn('Map resource error:',e.error.message)});
  }catch(e){console.error('Map init error',e);status('MAP INITIALIZATION FAILED')}
 }
-document.querySelectorAll('.style').forEach(b=>b.addEventListener('click',()=>applyTheme(b.dataset.theme)));
+const panel=$('controlPanel'),panelToggle=$('panelToggle');function setPanelOpen(open){panel.classList.toggle('open',open);panel.setAttribute('aria-hidden',String(!open));panelToggle.setAttribute('aria-expanded',String(open));panelToggle.classList.toggle('active',open)}panelToggle.addEventListener('click',()=>setPanelOpen(!panel.classList.contains('open')));$('panelClose').addEventListener('click',()=>setPanelOpen(false));document.addEventListener('keydown',e=>{if(e.key==='Escape')setPanelOpen(false)});document.addEventListener('click',e=>{if(panel.classList.contains('open')&&!panel.contains(e.target)&&!panelToggle.contains(e.target))setPanelOpen(false)});document.querySelectorAll('.style').forEach(b=>b.addEventListener('click',()=>{applyTheme(b.dataset.theme);setPanelOpen(false)}));
 $('flatBtn').addEventListener('click',()=>{if(map)map.easeTo({pitch:0,bearing:0,duration:400});$('flatBtn').classList.add('active');$('terrainBtn').classList.remove('active')});
 $('terrainBtn').addEventListener('click',()=>{terrainOn=!terrainOn;applyTheme(theme);if(terrainOn)map.easeTo({pitch:30,bearing:-4,duration:450});$('terrainBtn').classList.toggle('active',terrainOn)});
 $('hillToggle').addEventListener('click',()=>{hillOn=!hillOn;restyleVector()});
@@ -266,7 +266,7 @@ $('exportStyleBtn').addEventListener('click',()=>{
  try{const blob=new Blob([JSON.stringify(map.getStyle(),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='map-art-'+theme+'-style.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200);status('STYLE JSON EXPORTED')}catch(e){status('STYLE EXPORT FAILED')}
 });
 window.addEventListener('resize',()=>{if(map)map.resize()});
-syncPanel();init();
+syncPanel();setPanelOpen(false);init();
 })();
 </script>
 </body>
