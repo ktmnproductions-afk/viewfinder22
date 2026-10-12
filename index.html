@@ -12,7 +12,7 @@
 :root{--ink:#17211c;--panel:#17211c;--panel2:#202d26;--panel3:#28372f;--line:rgba(237,244,232,.12);--text:#edf2e8;--muted:#a7b5aa;--lime:#d9f36b;--lime2:#b7d943;--parking:#74d8a0;--history:#ff9c83;--view:#ffc86e;--photo:#c2a1ff;--shadow:0 18px 55px rgba(10,20,14,.24)}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#dfe7de;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:inherit}
 #map{position:fixed;inset:0;background:#dce6de}.maplibregl-canvas{outline:none}.maplibregl-ctrl-group{border:1px solid #d8e0d5!important;border-radius:12px!important;overflow:hidden;box-shadow:0 5px 22px rgba(20,40,25,.13)!important}.maplibregl-ctrl button{width:38px!important;height:38px!important}.maplibregl-ctrl-attrib{font-size:10px!important}
-.sidebar{position:fixed;z-index:10;left:14px;top:14px;bottom:14px;width:398px;max-width:calc(100vw - 28px);background:rgba(18,28,23,.97);border:1px solid rgba(255,255,255,.09);border-radius:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;backdrop-filter:blur(18px)}
+.sidebar{position:fixed;z-index:10;left:14px;top:14px;bottom:14px;width:340px;max-width:calc(100vw - 28px);background:rgba(18,28,23,.97);border:1px solid rgba(255,255,255,.09);border-radius:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;backdrop-filter:blur(18px)}
 .brand{padding:19px 20px 15px;border-bottom:1px solid var(--line);flex:0 0 auto}.brand-line{display:flex;align-items:center;gap:11px}.brand-symbol{width:36px;height:36px;border-radius:12px;background:#2b3a2f;border:1px solid #506640;color:var(--lime);display:grid;place-items:center;font-size:19px;box-shadow:inset 0 0 0 1px rgba(217,243,107,.06)}.brand-name{font-size:15px;letter-spacing:.13em;font-weight:850}.brand-sub{margin-top:4px;font-size:9px;letter-spacing:.17em;text-transform:uppercase;color:var(--lime);font-weight:800}.brand p{font-size:12px;line-height:1.55;color:var(--muted);margin:13px 0 0}.online-state{display:flex;align-items:center;gap:7px;font-size:10px;color:#b9c8bc;margin-top:12px}.live-dot{width:7px;height:7px;background:var(--lime);border-radius:50%;box-shadow:0 0 0 4px rgba(217,243,107,.10)}
 .panel-scroll{overflow:auto;min-height:0;flex:1;scrollbar-width:thin;scrollbar-color:#415448 transparent;padding-bottom:18px}.section{padding:16px 18px 0}.eyebrow{font-size:9px;font-weight:850;letter-spacing:.16em;text-transform:uppercase;color:var(--lime);margin:0 0 10px}.search-row{display:flex;gap:8px}.search-box{position:relative;flex:1;min-width:0}.search-box svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aebcaf;pointer-events:none}.search-box input{height:43px;width:100%;background:#0e1712;border:1px solid #34453a;border-radius:11px;color:#f4f7ef;padding:0 12px 0 38px;outline:none;font-size:12px}.search-box input:focus{border-color:#829a48;box-shadow:0 0 0 3px rgba(217,243,107,.09)}.search-box input::placeholder{color:#85958a}.btn{border:1px solid var(--line);border-radius:10px;background:var(--panel3);color:var(--text);padding:10px 12px;font-size:11px;font-weight:750;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;transition:background .15s,border-color .15s;white-space:nowrap}.btn:hover{background:#344739;border-color:#607653}.btn.primary{background:var(--lime);color:#17211c;border-color:var(--lime)}.btn.primary:hover{background:#e6ff80}.btn.ghost{background:transparent}.btn.small{font-size:10px;padding:7px 9px}.scan-options{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px}.scan-options label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#a9b8ad}.scan-options select{color:#f3f7ee;background:#202d26;border:1px solid #3d5042;border-radius:9px;font-size:11px;padding:7px 9px;outline:none}.utility-row{display:flex;gap:7px;margin-top:10px}.utility-row .btn{flex:1}
 .status-box{border:1px solid rgba(217,243,107,.2);background:rgba(217,243,107,.055);border-radius:11px;padding:11px 12px;display:flex;align-items:flex-start;gap:9px}.status-icon{color:var(--lime);font-size:15px;line-height:1.2}.status-copy{min-width:0;flex:1}.status-title{font-size:11px;font-weight:800}.status-msg{font-size:10px;color:#b7c4ba;line-height:1.5;margin-top:4px}.status-box.warn{background:rgba(255,156,131,.08);border-color:rgba(255,156,131,.22)}.status-box.warn .status-icon{color:var(--history)}
@@ -116,6 +116,25 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
 .idea-lab-section{padding:0}.idea-lab-section .ai-visual-block{margin:0}
 @media(max-width:680px){.brand{padding:10px 13px 8px}.brand p{margin-top:5px}.online-state{margin-top:6px}.marker-legend{gap:7px;margin-top:6px}.nav-panel{margin-left:12px;margin-right:12px}.nav-panel>summary{padding:11px 10px}.nav-panel>summary .count{max-width:96px}.nav-panel-content{padding:10px}.section{padding-left:13px;padding-right:13px}.source-key-note{font-size:8px}}
 
+
+/* Phase 1b: keep the map primary; sidebar can be tucked away at any time. */
+#sidebarToggle{position:fixed;z-index:20;left:366px;top:16px;display:flex;align-items:center;gap:7px;padding:10px 12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;background:rgba(18,28,23,.95);color:#edf2e8;box-shadow:0 8px 28px rgba(10,20,14,.22);backdrop-filter:blur(12px);font-size:11px;font-weight:700}
+#sidebarToggle .toggle-glyph{font-size:15px;color:var(--lime);line-height:1}
+body.sidebar-collapsed .sidebar{transform:translateX(calc(-100% - 24px));pointer-events:none}
+.sidebar{transition:transform .22s ease}
+body.sidebar-collapsed #sidebarToggle{left:14px}
+body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
+.map-heading{transition:left .22s ease,max-width .22s ease}
+@media(min-width:681px){.map-heading{left:370px;max-width:calc(100vw - 400px)}}
+@media(max-width:680px){
+ .sidebar{width:min(340px,calc(100vw - 28px));top:10px;bottom:10px;left:10px;max-height:calc(100dvh - 20px)}
+ #sidebarToggle{left:auto;right:10px;top:10px;padding:9px 11px}
+ body.sidebar-collapsed .sidebar{transform:translateX(calc(-100% - 20px))}
+ body.sidebar-collapsed #sidebarToggle{left:10px;right:auto}
+ .map-heading{left:10px!important;top:60px!important;max-width:calc(100vw - 20px)!important}
+ body:not(.sidebar-collapsed) .map-heading{left:10px!important;top:auto!important;bottom:12px!important;max-width:calc(100vw - 20px)!important}
+}
+
 </style>
 </head>
 <body>
@@ -129,7 +148,8 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
   <button class="map-style" data-style="fiord">Terrain</button>
 </div>
 <div id="mapIssue" class="map-issue"><strong>Basemap could not be loaded.</strong><p>The app is not using the blocked OpenStreetMap volunteer tile endpoint. Retry the vector map or check the connection.</p><button id="retryMap">Retry map</button></div>
-<aside class="sidebar">
+<button id="sidebarToggle" type="button" aria-controls="mainSidebar" aria-expanded="true" aria-label="Hide sidebar"><span class="toggle-glyph">☰</span><span id="sidebarToggleLabel">Hide menu</span></button>
+<aside class="sidebar" id="mainSidebar">
 <header class="brand">
   <div class="brand-line"><div class="brand-symbol">✣</div><div><div class="brand-name">PHOTO SCOUT</div><div class="brand-sub">Roadtrip photography planner</div></div></div>
   <p>Scout real places. Plan the frame. Save the stop.</p>
@@ -1372,13 +1392,11 @@ function selectItem(item){
  resetGeneratedConcept();
  updateConceptTargetName();
  const viewZoom=item.category==='parking'?16:item.category==='photoSpot'?13:item.category==='viewpoint'?14:15.2;
- const mapCenter=map.getCenter();
- const offsetKm=haversine({lat:mapCenter.lat,lng:mapCenter.lng},{lat:item.lat,lng:item.lng});
- if(offsetKm>180||Math.abs(map.getZoom()-viewZoom)>0.75){
-  map.stop();
-  map.once('moveend',()=>renderMarkers());
-  map.flyTo({center:[item.lng,item.lat],zoom:viewZoom,duration:750});
- }
+ // A result click is an explicit navigation action: always centre the map
+ // on that exact result, even when it is only a few metres from the current pin.
+ map.stop();
+ map.flyTo({center:[item.lng,item.lat],zoom:viewZoom,duration:650,essential:true});
+ map.once('moveend',()=>renderMarkers());
  renderResults();
  renderMarkers();
  $('spotDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -1388,6 +1406,15 @@ function parseCoords(text){
  if(!m)return null;
  const lat=Number(m[1]),lng=Number(m[2]);if(Math.abs(lat)>90||Math.abs(lng)>180)return null;return {lat,lng};
 }
+const sidebarToggle=$('sidebarToggle');
+sidebarToggle.addEventListener('click',()=>{
+ const collapsed=document.body.classList.toggle('sidebar-collapsed');
+ sidebarToggle.setAttribute('aria-expanded',String(!collapsed));
+ sidebarToggle.setAttribute('aria-label',collapsed?'Show sidebar':'Hide sidebar');
+ $('sidebarToggleLabel').textContent=collapsed?'Show menu':'Hide menu';
+ sidebarToggle.querySelector('.toggle-glyph').textContent=collapsed?'☷':'☰';
+ window.requestAnimationFrame(()=>{if(map)map.resize();});
+});
 $('searchForm').addEventListener('submit',async e=>{
  e.preventDefault();const q=$('placeSearch').value.trim();if(!q)return;
  const coord=parseCoords(q);if(coord){map.flyTo({center:[coord.lng,coord.lat],zoom:12,duration:800});scanAt(coord,{fly:false});return;}
