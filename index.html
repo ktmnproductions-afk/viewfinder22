@@ -182,12 +182,12 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
                 </figure>
                 <div class="concept-controls">
                   <select id="conceptMode" aria-label="Choose a photo composition"><option value="wide">Wide landscape · 18–24 mm</option><option value="context">Subject with context · 35–70 mm</option><option value="compressed">Compressed layers · 100–150 mm</option></select>
-                  <button class="btn primary" id="generateConcept" type="button">Generate image idea</button>
+                  <button class="btn primary" id="generateConcept" type="button">Generate location-based sketch</button>
                 </div>
-                <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">Shot sketches are ready immediately. Pick a spot or use the top-ranked candidate; generating a photorealistic AI image is optional and may require sign-in or usage charges.</div>
+                <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">The instant sketch above is schematic. AI sketches use a real, place-matched reference photo when one is available; the generator will not make a random text-only scene.</div>
                 <div class="generated-visual-wrap" id="generatedVisualWrap" hidden>
                   <img class="generated-visual-img" id="generatedVisual" alt="AI-generated illustrative photography concept for the selected location">
-                  <div class="generated-visual-caption">AI-generated concept · not a verified photograph of the real location</div>
+                  <div class="generated-visual-caption">Pencil composition sketch from a place-matched reference · verify details against the source photo</div>
                 </div>
                 <div class="reference-gallery">
                   <div class="section-heading"><h3>Place-matched reference images</h3><span class="count" id="photoCount">—</span></div>
@@ -1156,17 +1156,18 @@ function shotPrompt(item){
 function imageConceptPrompt(item,mode){
  const locality=String(item.city||state.detectedLocality||'').trim();
  const tags=item.tags||{};
- const sceneType=item.category==='photoSpot'?(item.scenicKind||'landscape viewpoint'):item.category==='history'?'historic landmark and cultural detail':item.category==='architecture'?'architectural travel photograph':item.category==='viewpoint'?'landscape viewpoint':item.category==='parking'?'surrounding landscape or town, not the car park':'travel photography';
+ const sceneType=item.category==='photoSpot'?(item.scenicKind||'landscape viewpoint'):item.category==='history'?'historic landmark and cultural detail':item.category==='architecture'?'architecture and built form':item.category==='viewpoint'?'landscape viewpoint':item.category==='parking'?'surrounding landscape or town, not the car park':'the selected mapped place';
  const modes={
-  wide:{lens:'18–24 mm on Canon EOS R50',composition:'A wide, immersive environmental composition. Put a strong foreground object or textured path in the lower third; let coastline, rooftops or ridgelines lead the eye into layered distance. Keep the horizon deliberate and the main subject clearly readable.'},
-  context:{lens:'35–70 mm on Canon EOS R50',composition:'A balanced editorial frame with the main landmark or subject, enough environment to establish the place, clean geometry and separation between foreground, subject and background. Avoid a generic tourist postcard composition.'},
-  compressed:{lens:'100–150 mm on Canon EOS R50',composition:'A compressed telephoto composition with distinct layers of rooftops, towers, coast, valley or mountain ridges, atmospheric perspective, and a graphic silhouette. Use distance to make repeated shapes align elegantly.'}
+  wide:{lens:'18–24 mm on Canon EOS R50',composition:'Sketch a wide establishing composition with a foreground line and layered depth; indicate a possible frame edge and rule-of-thirds guides lightly.'},
+  context:{lens:'35–70 mm on Canon EOS R50',composition:'Sketch a medium composition showing the recognizable main subject with enough surrounding context; show simple arrows for the eye path and a subtle framing guide.'},
+  compressed:{lens:'100–150 mm on Canon EOS R50',composition:'Sketch a compressed telephoto composition that simplifies the real scene into overlapping silhouettes and tonal layers; mark the crop/frame and visual alignment lightly.'}
  };
  const selected=modes[mode]||modes.wide;
  const facts=[item.name,locality].filter(Boolean).join(', ');
- const details=String(item.summary||tags.description||tags.historic||tags.natural||tags.tourism||'').slice(0,300);
- const evidence=item.category==='photoSpot'?'Map evidence describes this as '+sceneType+'. '+String(item.why||'The mapped feature may be a scenic subject.')+' ':'';
- return 'Generate one high-quality photorealistic editorial travel photograph concept in a 16:9 landscape frame. Creative subject inspired by '+facts+' ('+Number(item.lat).toFixed(5)+', '+Number(item.lng).toFixed(5)+'). Scene category: '+sceneType+'. '+(details?'Known mapped detail: '+details+'. ':'')+evidence+'Camera plan: '+selected.lens+'. '+selected.composition+' Use believable natural light, restrained professional colour grading, realistic atmospheric depth, authentic textures, fine detail, and a strong magazine-photography composition. No text, captions, logos, watermarks, borders or collage. Do not invent precise geographic facts: this is an imagined shot concept inspired by the location, not a documentary reconstruction of its real view. If the exact architecture or line of sight is unknown, create a plausible respectful visual interpretation and do not state that it is what a photographer will literally see.';
+ const details=String(item.summary||tags.description||tags.historic||tags.natural||tags.tourism||tags.building||'').slice(0,400);
+ const coordinates=Number(item.lat).toFixed(5)+', '+Number(item.lng).toFixed(5);
+ const evidence=item.category==='photoSpot'?'Mapped scouting note: '+String(item.why||'candidate photo spot; sightline not verified')+'. ':'';
+ return 'IMAGE-TO-IMAGE EDIT. Use the supplied real reference photograph as the source image and transform THAT SAME SCENE into a loose black-and-white pencil and fine-liner composition sketch for a photographer to draw/plan from. This is a sketch, never a photorealistic new image. Preserve the recognizable real buildings, silhouette, coastline/river/terrain, skyline, and spatial relationships visible in the reference. Do not replace the place with generic scenery, do not invent towers/buildings/mountains/water that are not visible, and do not change the landmark identity. Subject: '+facts+'. Map coordinate: '+coordinates+'. Place type: '+sceneType+'. '+(details?'Known map/source detail: '+details+'. ':'')+evidence+'Composition: '+selected.composition+' Lens intention: '+selected.lens+'. White/off-white paper, graphite linework, loose construction strokes, a few shaded tonal masses, hand-drawn arrows and a faint rule-of-thirds grid. Clean editorial field-notebook style, high contrast, readable, 16:9 landscape. No colour photograph, no painterly fantasy, no photorealistic reinterpretation, no text, labels, lettering, watermark, collage, or decorative frame. This is a composition study of the supplied reference photo, not a claim about any view outside that photo.';
 }
 function resetGeneratedConcept(){
  const image=$('generatedVisual');
@@ -1175,7 +1176,7 @@ function resetGeneratedConcept(){
  const button=$('generateConcept');
  if(image)image.removeAttribute('src');
  if(wrap)wrap.hidden=true;
- if(status)status.textContent='Choose a composition and press Generate image idea. The image is an artistic interpretation, not verified geography.';
+ if(status)status.textContent='Choose a composition. The AI sketch needs a real place-matched reference photo; it will not generate a random scene without one.';
  if(button){button.disabled=false;button.textContent='Generate image idea';}
 }
 function currentConceptTarget(){
@@ -1299,35 +1300,43 @@ async function generateConcept(){
  const wrap=$('generatedVisualWrap');
  const image=$('generatedVisual');
  if(!item){status.textContent='Choose a place or photo spot first.';return;}
+ // Only use a photo reference explicitly matched to this exact selected item.
+ // Never silently generate a generic text-only scene when no real reference exists.
+ const selected=state.selected;
+ const refs=selected&&selected.id===item.id?Array.from($('detailPhotoRefs')?.querySelectorAll('.detail-photo img')||[]):[];
+ const reference=refs.find(img=>img.complete&&img.naturalWidth>0&&/^https?:/i.test(img.currentSrc||img.src));
+ if(!reference){
+  status.textContent='No place-matched reference photo is available for this selected spot yet. I will not generate a random scene. Keep the instant composition sketch above, or choose a landmark with a real source-linked reference image and try again.';
+  wrap.hidden=true;
+  return;
+ }
  const mode=$('conceptMode').value||'wide';
  const prompt=imageConceptPrompt(item,mode);
- // Pollinations returns the generated image directly. No SDK, separate login,
- // API key, or paid account is required for this anonymous endpoint.
- const src='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?width=1024&height=576&seed='+Math.floor(Math.random()*1000000);
- button.disabled=true;button.textContent='Generating…';
- status.textContent='Generating a free visual concept for '+item.name+' without a separate login. It may take 10–30 seconds; free-service availability and limits can vary.';
+ const src='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?width=1024&height=576&seed='+Math.floor(Math.random()*1000000)+'&image='+encodeURIComponent(reference.currentSrc||reference.src);
+ button.disabled=true;button.textContent='Sketching from reference…';
+ status.textContent='Turning the matched reference photo of '+item.name+' into a pencil composition sketch. The original photo is being supplied as visual guidance; the result may still simplify or distort details.';
  wrap.hidden=true;
  image.onload=null;image.onerror=null;
  try{
   await new Promise((resolve,reject)=>{
    let settled=false;
    const finish=(fn,value)=>{if(settled)return;settled=true;window.clearTimeout(timer);image.onload=null;image.onerror=null;fn(value);};
-   const timer=window.setTimeout(()=>finish(reject,new Error('The free image service did not return an image within 90 seconds. Please try again later.')),90000);
+   const timer=window.setTimeout(()=>finish(reject,new Error('The image service did not return a sketch within 90 seconds. Please try again later.')),90000);
    image.onload=()=>finish(resolve,true);
-   image.onerror=()=>finish(reject,new Error('The free image service could not generate this image right now. Please try again later.'));
+   image.onerror=()=>finish(reject,new Error('The sketch service could not process this reference photo right now. Please try again later.'));
    image.src=src;
    if(image.complete&&image.naturalWidth>0)finish(resolve,true);
   });
-  image.alt='AI-generated illustrative photo concept inspired by '+item.name+'. Not a verified photograph or historically verified reconstruction of the real location.';
+  image.alt='AI-generated pencil composition sketch based on a matched reference photograph of '+item.name+'. Details may be altered; compare with the source image.';
   wrap.hidden=false;
-  status.textContent='Visual concept ready. This is AI-generated inspiration, not a verified photograph of the real site. Check real access and sightlines on arrival.';
+  status.textContent='Sketch ready from the place-matched reference photo. Compare it with the source image below; AI may alter details, so do not treat the sketch as an accurate survey.';
   wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
  }catch(err){
   wrap.hidden=true;
-  status.textContent=String(err&&err.message||err).slice(0,220)+' Your instant place-specific composition sketch and editable prompt remain available above.';
+  status.textContent=String(err&&err.message||err).slice(0,220)+' The source-linked reference photo and instant composition sketch remain available above.';
  }finally{
   image.onload=null;image.onerror=null;
-  button.disabled=false;button.textContent='Generate another concept';
+  button.disabled=false;button.textContent='Generate location-based sketch';
  }
 }
 async function renderDetailPhotoRefs(item){
