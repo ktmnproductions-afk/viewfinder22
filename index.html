@@ -220,6 +220,49 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
 .fieldguide-detail-cta .selected-concept-img{display:block;width:100%;height:auto;max-height:205px;object-fit:cover;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:#f5f2e8}
 .fieldguide-detail-cta .btn{width:100%}
 
+
+.field-guide-detail[hidden]{display:none!important}
+.field-guide-detail{position:fixed;inset:0;z-index:35;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(23,31,25,.58);backdrop-filter:blur(7px);overflow:auto}
+.field-guide-detail-shade{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;cursor:default}
+.field-guide-detail-panel{position:relative;z-index:1;width:min(1160px,100%);max-height:calc(100dvh - 44px);overflow:auto;background:#f8f6ee;border:1px solid #cfcfc1;box-shadow:0 24px 80px rgba(15,23,17,.25);color:#263027}
+.field-guide-detail-header{position:sticky;top:0;z-index:3;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:18px 22px 14px;background:rgba(248,246,238,.97);border-bottom:1px solid #dedbd0;backdrop-filter:blur(12px)}
+.field-guide-detail-header h2{margin:4px 0 3px;font:400 clamp(22px,3vw,34px)/1.1 Georgia,serif;letter-spacing:-.02em}
+.field-guide-detail-header p{margin:0;color:#858a7e;font:11px Inter,system-ui,sans-serif}
+.field-guide-detail-body{padding:18px 22px 24px}
+.field-guide-detail-grid{display:grid;grid-template-columns:minmax(250px,.78fr) minmax(0,1.22fr);gap:22px}
+.field-guide-detail-sketch{display:block;width:100%;height:auto;border:1px solid #ddd9cc;background:#f4f1e7}
+.field-guide-detail-kicker{margin:0 0 7px;color:#798270;font:9px Inter,system-ui,sans-serif;letter-spacing:.15em;text-transform:uppercase}
+.field-guide-detail-copy{margin:9px 0 14px;color:#6e776b;font:12px/1.65 Inter,system-ui,sans-serif}
+.field-guide-detail-tips{margin:8px 0 18px;padding-left:20px;font:12px/1.6 Georgia,serif;color:#354035}
+.field-guide-detail-tips li{padding-left:3px;margin:5px 0}
+.field-guide-detail-modes{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 15px}
+.field-guide-detail-modes button{border:1px solid #d7d7cb;background:#efede5;border-radius:5px;padding:7px 10px;color:#4c5549;font:10px Inter,system-ui,sans-serif;cursor:pointer}
+.field-guide-detail-modes button.active{background:#354535;color:#fbf9ee;border-color:#354535}
+.field-guide-detail-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start}
+.guide-detail-photo{min-width:0;border:1px solid #ddd9ce;background:#efede4}
+.guide-detail-photo img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:#e7e5db}
+.guide-detail-photo figcaption{padding:7px 8px;font:10px/1.4 Inter,system-ui,sans-serif;color:#626b5e;overflow-wrap:anywhere}
+.guide-detail-photo figcaption a{display:inline-block;margin-top:5px;color:#354535;text-decoration:underline;text-underline-offset:3px}
+.field-guide-detail-photo-empty{min-height:230px;grid-column:1/-1;padding:22px;display:flex;align-items:center;justify-content:center;text-align:center;background:#ecebe1;color:#7b8376;font:11px/1.55 Inter,system-ui,sans-serif}
+.field-guide-detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.field-guide-detail-actions .guide-map-link{font-size:11px;padding:10px 14px}
+.field-guide-detail .field-guide-status{padding:10px 0 0}
+.guide-card{cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.guide-card:hover{border-color:#abb49f;box-shadow:0 6px 18px rgba(46,58,43,.10)}
+.guide-card button,.guide-card a{position:relative;z-index:1}
+.guide-photo{cursor:default}
+.guide-photo-source{display:inline-block;margin-top:3px;color:#364534;text-decoration:underline;text-underline-offset:2px;font-size:8px}
+.guide-photo figcaption{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+@media(max-width:720px){
+ .field-guide-detail{padding:6px;align-items:flex-start}
+ .field-guide-detail-panel{max-height:calc(100dvh - 12px)}
+ .field-guide-detail-header{padding:13px 13px 10px}
+ .field-guide-detail-body{padding:13px}
+ .field-guide-detail-grid{grid-template-columns:minmax(0,1fr);gap:18px}
+ .field-guide-detail-photos{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .field-guide-detail-photo img{aspect-ratio:4/3}
+}
+
 </style>
 </head>
 <body>
@@ -263,6 +306,13 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
   <div class="field-guide-status" id="fieldGuideStatus" role="status" aria-live="polite">Loading the field guide… Reference images are sourced from Wikimedia Commons where available.</div>
   <section class="field-guide-grid" id="fieldGuideGrid" aria-label="Photography location cards"></section>
   <footer class="field-guide-footer">Photographs open to their original source pages for credits and licence details. Pencil panels are illustrative composition studies, not photographs or verified sightlines. Check current access, weather, opening times and local restrictions before travelling.</footer>
+  <div id="fieldGuideDetail" class="field-guide-detail" hidden role="dialog" aria-modal="true" aria-labelledby="fieldGuideDetailTitle">
+    <button class="field-guide-detail-shade" type="button" data-guide-detail-close aria-label="Close location ideas"></button>
+    <section class="field-guide-detail-panel">
+      <header class="field-guide-detail-header"><div><div class="field-guide-kicker">VISUAL FIELD NOTE</div><h2 id="fieldGuideDetailTitle">Photo ideas for this place</h2><p id="fieldGuideDetailLocality"></p></div><button id="fieldGuideDetailClose" class="field-guide-close" type="button" aria-label="Close location ideas">×</button></header>
+      <div id="fieldGuideDetailBody" class="field-guide-detail-body"></div>
+    </section>
+  </div>
 </main>
 <div class="map-styles" role="group" aria-label="Map style">
   <button class="map-style active" data-style="liberty">Atlas</button>
@@ -1795,22 +1845,29 @@ let fieldGuidePhotoLoadToken=0;
 let fieldGuideCardLookup={};
 let fieldGuideHasLoaded=false;
 function fieldGuideCardsForView(){
- const cards=FIELD_GUIDE_PLACES.map(x=>({...x,searchText:[x.name,x.locality,x.tag,...x.topics,...x.shotIdeas].join(' ').toLowerCase()}));
+ let cards=FIELD_GUIDE_PLACES.map(x=>({...x,searchText:[x.name,x.locality,x.tag,...x.topics,...x.shotIdeas].join(' ').toLowerCase()}));
  if(state.selected&&Number.isFinite(Number(state.selected.lat))&&Number.isFinite(Number(state.selected.lng))){
   const item=state.selected;
+  const normalized=String(item.name||'').trim().toLowerCase();
+  const existing=cards.find(x=>x.name.trim().toLowerCase()===normalized);
   const key='selected-'+String(item.id||'map-place').replace(/[^a-zA-Z0-9_-]/g,'-');
-  if(!cards.some(x=>x.name.toLowerCase()===String(item.name||'').toLowerCase())){
-   const category=item.category||'photoSpot';
-   const topics=['recommended','details'];
-   if(category==='history')topics.push('roman');
-   if(category==='viewpoint'||category==='photoSpot')topics.push('nature');
-   const locality=String(item.city||state.detectedLocality||coordLabel({lat:item.lat,lng:item.lng}));
-   const ideas=category==='history'?['Photograph the site in context before focusing on details','Use low side light to reveal stone and surface texture','Make a wide frame, then a tight architectural detail']:category==='architecture'?['Use clean verticals and a contextual wide frame','Look for repeated shapes, arches and reflections','Try a tight texture study at 100–150 mm']:['Use a foreground shape to lead into the scene','Build foreground, middle-ground and background layers','Try a compressed telephoto frame'];
-   cards.unshift({id:key,name:item.name||'Selected map place',locality,lat:Number(item.lat),lng:Number(item.lng),category,topics,tag:'YOUR SELECTED MAP PLACE',query:String(item.name||'')+' '+locality,tags:item.tags||{},shotIdeas:ideas,searchText:[item.name,locality,category,...ideas].join(' ').toLowerCase(),originalItem:item});
-  }
+  const category=item.category||'photoSpot';
+  const topics=existing?existing.topics.slice():['recommended','details'];
+  if(category==='history'&&!topics.includes('roman'))topics.push('roman');
+  if((category==='viewpoint'||category==='photoSpot')&&!topics.includes('nature'))topics.push('nature');
+  const locality=String(item.city||state.detectedLocality||(existing&&existing.locality)||coordLabel({lat:item.lat,lng:item.lng}));
+  const ideas=selectedShotIdeasFor(item);
+  const selectedCard={
+   ...(existing||{}),id:key,name:item.name||'Selected map place',locality,lat:Number(item.lat),lng:Number(item.lng),category,
+   topics,tag:existing&&existing.tag?existing.tag:'YOUR SELECTED MAP PLACE',
+   query:existing&&existing.query?existing.query:(String(item.name||'')+' '+locality),
+   tags:item.tags||{},shotIdeas:ideas,searchText:[item.name,locality,category,...topics,...ideas].join(' ').toLowerCase(),originalItem:item
+  };
+  cards=cards.filter(x=>x.name.trim().toLowerCase()!==normalized);
+  cards.unshift(selectedCard);
  }
  const query=$('guideSearch')?$('guideSearch').value.trim().toLowerCase():'';
- let filtered=cards.filter(card=>(fieldGuideActiveFilter==='all'||card.topics.includes(fieldGuideActiveFilter))&&(!query||card.searchText.includes(query)));
+ const filtered=cards.filter(card=>(fieldGuideActiveFilter==='all'||card.topics.includes(fieldGuideActiveFilter))&&(!query||card.searchText.includes(query)));
  const sort=$('guideSort')?.value||'featured';
  if(sort==='az')filtered.sort((a,b)=>a.name.localeCompare(b.name));
  else if(sort==='region')filtered.sort((a,b)=>a.locality.localeCompare(b.locality)||a.name.localeCompare(b.name));
@@ -1820,7 +1877,7 @@ function fieldGuidePhotoMarkup(card){
  const photos=fieldGuidePhotoCache[card.id];
  if(!photos||photos.loading)return '<div class="guide-photo-placeholder"><div><strong>Finding visual references</strong>Searching source-linked photos for this place. The sketch and shot ideas remain available while images load.</div></div>';
  if(!photos.length)return '<div class="guide-photo-placeholder"><div><strong>Sketch & shot ideas ready</strong>No matching Wikimedia Commons photos were found for this title. Your composition guide is still available; try the map for nearby references.</div></div>';
- return photos.slice(0,3).map(photo=>'<a class="guide-photo" href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original image and licence"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption>'+esc(photo.name)+' · '+esc(photo.license||'See source licence')+'</figcaption></a>').join('');
+ return photos.slice(0,3).map(photo=>'<figure class="guide-photo"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption><span>'+esc(photo.name)+'</span><a class="guide-photo-source" href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Photo source & licence ↗</a></figcaption></figure>').join('');
 }
 function fieldGuideCardHTML(card,index){
  const seed=index+21;
@@ -1876,7 +1933,8 @@ async function loadFieldGuidePhotos(force){
     else fieldGuidePhotoCache[card.id]=[];
    }
    const host=$('fieldGuideGrid').querySelector('[data-guide-photos-for="'+card.id.replace(/"/g,'')+'"]');
-   if(host)host.innerHTML=fieldGuidePhotoMarkup(card);
+   if(host){host.innerHTML=fieldGuidePhotoMarkup(card);bindFieldGuideImageFallbacks(host);}
+   if(fieldGuideDetailCardId===card.id&&!$('fieldGuideDetail').hidden)renderFieldGuideDetailBody(fieldGuideCardLookup[card.id]||card);
   }
  }
  await Promise.all([worker(),worker(),worker()]);
@@ -1884,6 +1942,68 @@ async function loadFieldGuidePhotos(force){
   const visible=fieldGuideCardsForView().filter(card=>!fieldGuidePhotoCache[card.id]);
   if(!$('fieldGuidePage').hidden&&visible.length)loadFieldGuidePhotos(false);
   $('fieldGuideStatus').textContent='Reference search finished · photo links lead to their original source pages. Local sketches and shot ideas remain available regardless of image-search results.';
+ }
+}
+
+let fieldGuideDetailCardId=null;
+let fieldGuideDetailMode='wide';
+function openFieldGuideDetail(cardId){
+ const card=fieldGuideCardLookup[cardId];
+ if(!card)return;
+ fieldGuideDetailCardId=cardId;
+ fieldGuideDetailMode='wide';
+ const modal=$('fieldGuideDetail');
+ const body=$('fieldGuideDetailBody');
+ if(!modal||!body)return;
+ modal.hidden=false;
+ modal.dataset.cardId=cardId;
+ $('fieldGuideDetailTitle').textContent=card.name;
+ $('fieldGuideDetailLocality').textContent=card.locality||'Selected map location';
+ renderFieldGuideDetailBody(card);
+ if(!fieldGuidePhotoCache[card.id])loadFieldGuidePhotos(false);
+ window.requestAnimationFrame(()=>{modal.querySelector('.field-guide-detail-panel')?.scrollTo(0,0);$('fieldGuideDetailClose')?.focus();});
+}
+function renderFieldGuideDetailBody(card){
+ const body=$('fieldGuideDetailBody');
+ if(!body||!card)return;
+ const sketch=conceptSketchData(card,fieldGuideDetailMode,card.id.length+fieldGuideDetailMode.length);
+ const lens=fieldGuideDetailMode==='context'?'35–70 mm':fieldGuideDetailMode==='compressed'?'100–150 mm':'18–24 mm';
+ const tips=card.originalItem?selectedShotIdeasFor(card.originalItem):(card.shotIdeas||[]);
+ const photos=fieldGuidePhotoCache[card.id];
+ let photoHTML='';
+ if(!photos||photos.loading){
+  photoHTML='<div class="field-guide-detail-photo-empty">Searching for photographs of '+esc(card.name)+'. The sketch and shot list are available now.</div>';
+ }else if(!photos.length){
+  photoHTML='<div class="field-guide-detail-photo-empty">No matching public source photographs returned for this exact place title. Try the map's nearby history/architecture results, or use the pencil composition study above.</div>';
+ }else{
+  photoHTML=photos.slice(0,6).map(photo=>'<figure class="guide-detail-photo"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption>'+esc(photo.name)+'<br>'+esc(photo.artist||'Photographer not listed')+'<br><a href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Source, credits & licence ↗</a></figcaption></figure>').join('');
+ }
+ body.innerHTML='<div class="field-guide-detail-grid">'+
+  '<section><div class="field-guide-detail-kicker">'+esc(card.tag||'PHOTO LOCATION')+'</div>'+
+  '<img class="field-guide-detail-sketch" src="'+esc(sketch)+'" alt="Illustrative '+esc(fieldGuideDetailMode)+' pencil composition study for '+esc(card.name)+'">'+
+  '<div class="field-guide-detail-modes" role="group" aria-label="Composition style"><button type="button" data-detail-mode="wide" class="'+(fieldGuideDetailMode==='wide'?'active':'')+'">Wide · 18–24 mm</button><button type="button" data-detail-mode="context" class="'+(fieldGuideDetailMode==='context'?'active':'')+'">Context · 35–70 mm</button><button type="button" data-detail-mode="compressed" class="'+(fieldGuideDetailMode==='compressed'?'active':'')+'">Compressed · 100–150 mm</button></div>'+
+  '<p class="field-guide-detail-copy">Illustrative composition study based on the place name and available map tags—not a verified photograph or guaranteed camera position. Use the composition to plan a frame, then check actual sightlines and safe public access.</p>'+
+  '<div class="field-guide-detail-kicker">SHOTS TO TRY WITH YOUR CANON R50</div><ol class="field-guide-detail-tips">'+tips.map(tip=>'<li>'+esc(tip)+'</li>').join('')+'</ol>'+
+  '<div class="field-guide-detail-actions"><button class="guide-map-link" type="button" data-guide-modal-map="'+esc(card.id)+'">Find this place on the map ↗</button></div></section>'+
+  '<section><div class="field-guide-detail-kicker">SOURCE-LINKED VISUAL REFERENCES</div><div class="field-guide-detail-photos">'+photoHTML+'</div><p class="field-guide-detail-copy">Clicking a location or image keeps you in this guide. Only the small “Source, credits & licence” links open the original archive page.</p></section></div>';
+ bindFieldGuideImageFallbacks(body);
+}
+function closeFieldGuideDetail(){
+ $('fieldGuideDetail').hidden=true;
+ fieldGuideDetailCardId=null;
+ $('fieldGuideDetailBody').innerHTML='';
+}
+function openSelectedFieldGuide(){
+ $('guideSearch').value='';
+ fieldGuideActiveFilter='all';
+ $('fieldGuideFilters').querySelectorAll('[data-guide-filter]').forEach(b=>b.classList.toggle('active',b.dataset.guideFilter==='all'));
+ openFieldGuide();
+ if(state.selected){
+  window.requestAnimationFrame(()=>{
+   const card=fieldGuideCardsForView().find(x=>x.originalItem&&x.originalItem.id===state.selected.id)||fieldGuideCardsForView().find(x=>x.name.toLowerCase()===String(state.selected.name||'').toLowerCase());
+   if(card)openFieldGuideDetail(card.id);
+   else if(state.selected)$('fieldGuideGrid').scrollIntoView({behavior:'smooth',block:'start'});
+  });
  }
 }
 function openFieldGuide(){
@@ -1902,7 +2022,7 @@ function closeFieldGuide(){
 $('headerIdeaButton').addEventListener('click',openFieldGuide);
 $('fieldGuideTopButton').addEventListener('click',openFieldGuide);
 $('sidebarOpenFieldGuide').addEventListener('click',openFieldGuide);
-$('selectedOpenFieldGuide').addEventListener('click',openFieldGuide);
+$('selectedOpenFieldGuide').addEventListener('click',openSelectedFieldGuide);
 $('fieldGuideMapButton').addEventListener('click',closeFieldGuide);
 $('fieldGuideClose').addEventListener('click',closeFieldGuide);
 $('guideSearch').addEventListener('input',renderFieldGuide);
@@ -1918,20 +2038,51 @@ $('fieldGuideFilters').querySelectorAll('[data-guide-filter]').forEach(button=>b
  renderFieldGuide();
 }));
 $('fieldGuideGrid').addEventListener('click',event=>{
- const button=event.target.closest('[data-guide-map]');
- if(!button)return;
- const card=fieldGuideCardLookup[button.dataset.guideMap];
- if(!card)return;
- closeFieldGuide();
- if(card.originalItem&&state.selected&&card.originalItem.id===state.selected.id){
-  map.flyTo({center:[card.lng,card.lat],zoom:Math.max(map.getZoom(),14.5),duration:850});
-  selectItem(card.originalItem);
- }else{
-  map.flyTo({center:[card.lng,card.lat],zoom:14,duration:850});
-  scanAt({lat:card.lat,lng:card.lng},{fly:false});
+ const mapButton=event.target.closest('[data-guide-map]');
+ if(mapButton){
+  const card=fieldGuideCardLookup[mapButton.dataset.guideMap];
+  if(!card)return;
+  closeFieldGuideDetail();
+  closeFieldGuide();
+  if(card.originalItem&&state.selected&&card.originalItem.id===state.selected.id){
+   map.flyTo({center:[card.lng,card.lat],zoom:Math.max(map.getZoom(),14.5),duration:850});
+   selectItem(card.originalItem);
+  }else{
+   map.flyTo({center:[card.lng,card.lat],zoom:14,duration:850});
+   scanAt({lat:card.lat,lng:card.lng},{fly:false});
+  }
+  return;
+ }
+ if(event.target.closest('a'))return;
+ const article=event.target.closest('[data-guide-card]');
+ if(article)openFieldGuideDetail(article.dataset.guideCard);
+});
+$('fieldGuideDetailClose').addEventListener('click',closeFieldGuideDetail);
+$('fieldGuideDetail').addEventListener('click',event=>{
+ if(event.target.closest('[data-guide-detail-close]'))closeFieldGuideDetail();
+ const modeButton=event.target.closest('[data-detail-mode]');
+ if(modeButton&&fieldGuideDetailCardId){
+  fieldGuideDetailMode=modeButton.dataset.detailMode;
+  const card=fieldGuideCardLookup[fieldGuideDetailCardId];
+  if(card)renderFieldGuideDetailBody(card);
+ }
+ const mapButton=event.target.closest('[data-guide-modal-map]');
+ if(mapButton){
+  const card=fieldGuideCardLookup[mapButton.dataset.guideModalMap];
+  if(!card)return;
+  closeFieldGuideDetail();
+  closeFieldGuide();
+  if(card.originalItem&&state.selected&&card.originalItem.id===state.selected.id){
+   map.flyTo({center:[card.lng,card.lat],zoom:Math.max(map.getZoom(),14.5),duration:850});
+   selectItem(card.originalItem);
+  }else{
+   map.flyTo({center:[card.lng,card.lat],zoom:14,duration:850});
+   scanAt({lat:card.lat,lng:card.lng},{fly:false});
+  }
  }
 });
-window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('fieldGuidePage').hidden)closeFieldGuide();});
+
+window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('fieldGuideDetail').hidden)closeFieldGuideDetail();else if(event.key==='Escape'&&!$('fieldGuidePage').hidden)closeFieldGuide();});
 renderFieldGuide();
 loadSaved();
 window.addEventListener('resize',()=>{if(map)map.resize();});
