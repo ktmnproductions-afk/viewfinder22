@@ -811,7 +811,6 @@ function renderScenicSpots(){
   $('scenicResults').innerHTML=emptyHTML(state.center?'No mapped lookout or strong scenic feature found in the wider radius. Try 20–30 km. We will not invent a camera position where the map data has none.':'Drop a pin to search beyond the city centre for hilltops, ridges, viewpoints and landscape frames.');
  }
  wireCards($('scenicResults'),state.scenicSpots);
- updateConceptTargetName();
 }
 function renderResults(){
  const shown=state.filter==='all'?state.results:state.results.filter(r=>r.category===state.filter);
