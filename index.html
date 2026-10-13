@@ -1974,7 +1974,7 @@ function renderFieldGuideDetailBody(card){
  if(!photos||photos.loading){
   photoHTML='<div class="field-guide-detail-photo-empty">Searching for photographs of '+esc(card.name)+'. The sketch and shot list are available now.</div>';
  }else if(!photos.length){
-  photoHTML='<div class="field-guide-detail-photo-empty">No matching public source photographs returned for this exact place title. Try the map's nearby history/architecture results, or use the pencil composition study above.</div>';
+  photoHTML='<div class="field-guide-detail-photo-empty">No matching public source photographs returned for this exact place title. Try nearby history/architecture results from the map, or use the pencil composition study above.</div>';
  }else{
   photoHTML=photos.slice(0,6).map(photo=>'<figure class="guide-detail-photo"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption>'+esc(photo.name)+'<br>'+esc(photo.artist||'Photographer not listed')+'<br><a href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Source, credits & licence ↗</a></figcaption></figure>').join('');
  }
