@@ -213,6 +213,7 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
 
 .fieldguide-launcher{margin:13px 13px 0;padding:14px;border:1px solid #d9ddce;border-radius:12px;background:linear-gradient(140deg,#f1f2e7,#e6eadc);color:#2e3a30}.fieldguide-launcher-kicker{font:9px Inter,system-ui,sans-serif;letter-spacing:.16em;color:#77816f}.fieldguide-launcher h3{font:20px Georgia,serif;font-weight:400;margin:6px 0}.fieldguide-launcher p{font:11px/1.55 Inter,system-ui,sans-serif;color:#687364;margin:0 0 11px}.fieldguide-launcher .btn{width:100%;white-space:normal}.fieldguide-detail-cta{margin-bottom:12px}.fieldguide-detail-cta p{font:11px/1.5 Inter,system-ui,sans-serif;color:#6f796b;margin:8px 0}
 
+.guide-photo-failed{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:140px;padding:8px;text-align:center;background:#e7e6dc;color:#72796d;font:10px/1.4 Inter,system-ui,sans-serif}.guide-photo-failed small{font-size:9px}
 </style>
 </head>
 <body>
@@ -1920,6 +1921,14 @@ function fieldGuideCardHTML(card,index){
   '<div class="guide-card-visuals"><div class="guide-photo-grid" data-guide-photos-for="'+esc(card.id)+'">'+fieldGuidePhotoMarkup(card)+'</div><div class="guide-card-photo-caption"><span>Reference images · verify view and access</span><span>'+esc(card.locality.split(',')[0])+'</span></div></div>'+
   '</article>';
 }
+function bindFieldGuideImageFallbacks(root){
+ root.querySelectorAll('.guide-photo img').forEach(img=>img.addEventListener('error',()=>{
+  const figure=img.closest('.guide-photo');
+  if(!figure)return;
+  figure.innerHTML='<div class="guide-photo-failed">Preview unavailable<br><small>Open another source image or use the pencil study.</small></div>';
+  figure.removeAttribute('href');
+ },{once:true}));
+}
 function renderFieldGuide(){
  const grid=$('fieldGuideGrid');
  if(!grid)return;
@@ -1927,14 +1936,15 @@ function renderFieldGuide(){
  fieldGuideCardLookup={};
  cards.forEach(card=>fieldGuideCardLookup[card.id]=card);
  grid.innerHTML=cards.length?cards.map(fieldGuideCardHTML).join(''):'<div class="field-guide-empty">No locations match that search. Try another place name or choose “All locations”.</div>';
+ bindFieldGuideImageFallbacks(grid);
  $('fieldGuideStatus').textContent=cards.length+' location'+(cards.length===1?'':'s')+' shown · source-linked photos load when available · sketches and shot lists do not require a service or sign-in.';
 }
 async function loadFieldGuidePhotos(force){
- if(fieldGuideHasLoaded&&!force)return;
- fieldGuideHasLoaded=true;
- const token=++fieldGuidePhotoLoadToken;
  const cards=fieldGuideCardsForView();
  const queue=cards.filter(card=>!fieldGuidePhotoCache[card.id]||force);
+ if(fieldGuideHasLoaded&&!force&&!queue.length)return;
+ fieldGuideHasLoaded=true;
+ const token=++fieldGuidePhotoLoadToken;
  queue.forEach(card=>fieldGuidePhotoCache[card.id]={loading:true});
  renderFieldGuide();
  let next=0;
@@ -1965,7 +1975,7 @@ function openFieldGuide(){
  $('fieldGuidePage').hidden=false;
  document.body.classList.add('field-guide-open');
  renderFieldGuide();
- if(!fieldGuideHasLoaded)loadFieldGuidePhotos(false);
+ loadFieldGuidePhotos(false);
  window.requestAnimationFrame(()=>{ $('fieldGuidePage').scrollTop=0; if(map)map.resize(); });
 }
 function closeFieldGuide(){
