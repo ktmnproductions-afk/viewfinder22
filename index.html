@@ -1444,15 +1444,17 @@ async function generateConcept(){
   status.textContent='The actual reference photo is shown in monochrome while AI sketch generation is attempted. No random scene will be substituted.';
  }
  try{
-  await new Promise((resolve,reject)=>{
+  const aiImageUrl=await new Promise((resolve,reject)=>{
+   const aiImage=new Image();
    let settled=false;
-   const finish=(fn,value)=>{if(settled)return;settled=true;window.clearTimeout(timer);output.onload=null;output.onerror=null;fn(value);};
+   const finish=(fn,value)=>{if(settled)return;settled=true;window.clearTimeout(timer);aiImage.onload=null;aiImage.onerror=null;fn(value);};
    const timer=window.setTimeout(()=>finish(reject,new Error('AI image service timed out')),30000);
-   output.onload=()=>finish(resolve,true);
-   output.onerror=()=>finish(reject,new Error('AI image service did not return an image'));
-   output.src=src;
-   if(output.complete&&output.naturalWidth>0)finish(resolve,true);
+   aiImage.onload=()=>finish(resolve,aiImage.src);
+   aiImage.onerror=()=>finish(reject,new Error('AI image service did not return an image'));
+   aiImage.src=src;
+   if(aiImage.complete&&aiImage.naturalWidth>0)finish(resolve,aiImage.src);
   });
+  output.src=aiImageUrl;
   output.style.filter='';
   output.alt='AI-generated pencil composition sketch based on the matched reference photograph of '+item.name+'. Compare with the original source; AI can alter details.';
   wrap.hidden=false;
