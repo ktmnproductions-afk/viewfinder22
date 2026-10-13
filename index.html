@@ -1492,6 +1492,35 @@ async function renderDetailPhotoRefs(item){
   const note='Matched by title/subject. This is a visual reference, not proof of the exact camera position.';
   return '<article class="detail-photo"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original image and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(note)+'</div><div class="detail-photo-note">'+esc(p.license||'Licence on source page')+'</div></a></article>';
  }).join('');
+ // Automatically make a pencil study from the actual matched reference thumbnail.
+ // This gives the photographer a visual starting idea without waiting for an external
+ // AI service. It is always labelled as a sketch of the reference photo, not proof
+ // that the view is visible from this exact pin.
+ const firstCard=container.querySelector('.detail-photo');
+ const firstImage=firstCard&&firstCard.querySelector('img');
+ if(firstImage){
+  const drawReferenceSketch=async()=>{
+   if(!state.selected||state.selected.id!==selectedId||firstImage.naturalWidth<80)return;
+   try{
+    const sketch=await createPhotoDerivedPencilSketch(firstImage);
+    if(!state.selected||state.selected.id!==selectedId)return;
+    const currentMode=$('conceptMode')?.value||'wide';
+    const auto=$('autoSketchImage'),detail=$('selectedConceptPreviewImg');
+    const caption=$('autoSketchCaption'),detailCaption=$('selectedConceptCaption');
+    if(auto){auto.src=sketch;auto.alt='Pencil field sketch of the matched reference photograph for '+item.name+'. Not verified as the exact view from the pin.';}
+    if(detail){detail.src=sketch;detail.alt='Pencil field sketch based on a matched reference photo for '+item.name+'. Not a verified site view.';}
+    if(caption)caption.textContent='Pencil sketch from a place-matched reference · '+(currentMode==='wide'?'wide frame 18–24 mm':currentMode==='context'?'context frame 35–70 mm':'compressed frame 100–150 mm');
+    if(detailCaption)detailCaption.textContent='Sketch of the reference image “'+String(finalRefs[0].name||'selected photo')+'”. Use it for composition inspiration; the image does not prove this exact view is visible from the mapped candidate.';
+    const status=$('conceptStatus');
+    if(status)status.textContent='Reference-based pencil sketch ready for '+item.name+'. Compare it with the source photo; the mapped spot’s actual line of sight is still unverified.';
+   }catch(err){
+    // Leave the always-visible subject-aware SVG sketch in place if cross-origin
+    // canvas access is blocked for a provider thumbnail.
+   }
+  };
+  firstImage.addEventListener('load',drawReferenceSketch,{once:true});
+  if(firstImage.complete&&firstImage.naturalWidth>80)drawReferenceSketch();
+ }
 }
 function selectItem(item){
  state.selected=item;
