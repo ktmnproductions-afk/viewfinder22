@@ -263,6 +263,7 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
  .field-guide-detail-photo img{aspect-ratio:4/3}
 }
 
+.detail-photo-source{display:inline-block;margin:2px 8px 8px;color:#c4d3bf;font:10px Inter,system-ui,sans-serif;text-decoration:underline;text-underline-offset:3px}.detail-photo>img{cursor:default}
 </style>
 </head>
 <body>
@@ -1596,7 +1597,7 @@ async function renderDetailPhotoRefs(item){
  }
  container.innerHTML=finalRefs.map(p=>{
   const note='Matched by title/subject. This is a visual reference, not proof of the exact camera position.';
-  return '<article class="detail-photo"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original image and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(note)+'</div><div class="detail-photo-note">'+esc(p.license||'Licence on source page')+'</div></a></article>';
+  return '<article class="detail-photo"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(note)+'</div><div class="detail-photo-note">'+esc(p.license||'Licence on source page')+'</div><a class="detail-photo-source" href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Original photo & licence ↗</a></article>';
  }).join('');
 
 }
