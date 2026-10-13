@@ -185,13 +185,7 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
                   <select id="conceptMode" aria-label="Choose a photo composition"><option value="wide">Wide landscape · 18–24 mm</option><option value="context">Subject with context · 35–70 mm</option><option value="compressed">Compressed layers · 100–150 mm</option></select>
                   <button class="btn primary" id="generateConcept" type="button">Generate AI pencil sketch</button>
                 </div>
-                <div class="concept-key-row">
-                  <label for="imageApiKey">Image-generation key for this tab</label>
-                  <input id="imageApiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste Pollinations API key" aria-describedby="imageApiKeyNote">
-                  <a href="https://enter.pollinations.ai/keys" target="_blank" rel="noopener noreferrer">Get API key ↗</a>
-                </div>
-                <p class="concept-key-note" id="imageApiKeyNote">The key is cleared from the field and held only in this tab's memory; it is not saved to local storage or committed to GitHub. Image requests are sent to Pollinations. This client-side key bridge is for personal testing, not a secure multi-user production setup.</p>
-                <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">Select a named landmark, wait for its matched reference photo, paste your Pollinations API key above, then generate an AI pencil sketch from that photograph.</div>
+                <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">Select a named landmark, wait for its matched reference photo, then generate a pencil sketch in this panel from that photograph.</div>
                 <div class="generated-visual-wrap" id="generatedVisualWrap" hidden>
                   <img class="generated-visual-img" id="generatedVisual" alt="AI-generated illustrative photography concept for the selected location">
                   <div class="generated-visual-caption">Pencil composition sketch from a place-matched reference · verify details against the source photo</div>
@@ -1183,7 +1177,7 @@ function resetGeneratedConcept(){
  const button=$('generateConcept');
  if(image)image.removeAttribute('src');
  if(wrap)wrap.hidden=true;
- if(status)status.textContent='Select a named landmark and wait for its matched reference photo. Generate an AI pencil sketch from that photograph; no random fallback is used.';
+ if(status)status.textContent='Select a named landmark and wait for its matched reference photo. Generate an AI pencil sketch in this panel; no random fallback is used.';
  if(button){button.disabled=false;button.textContent='Generate AI pencil sketch';}
 }
 function currentConceptTarget(){
@@ -1300,8 +1294,6 @@ function updateConceptTargetName(){
  if(compressed)compressed.textContent=isArchitecture?'At '+name+', use 100–150 mm to isolate repeating windows, roof textures, towers or graphic details; watch for converging verticals.':'At '+name+', use 100–150 mm to compress rooflines, distant hills or coastal layers if the sightline allows; try several heights for cleaner overlaps.';
  renderConceptSketch(item,$('conceptMode')?.value||'wide');
 }
-let photoScoutImageKey = '';
-
 async function generateConcept(){
  const item=currentConceptTarget();
  const status=$('conceptStatus');
@@ -1313,85 +1305,49 @@ async function generateConcept(){
  const refs=selected&&selected.id===item.id?Array.from($('detailPhotoRefs')?.querySelectorAll('.detail-photo img')||[]):[];
  const reference=refs.find(img=>/^https?:/i.test(img.currentSrc||img.src)&&img.complete&&img.naturalWidth>0);
  if(!reference){
-  status.textContent='No loaded, place-matched reference photo is available for this selected spot. Select a named landmark and wait for its reference thumbnails. No substitute scene will be generated.';
+  status.textContent='No loaded reference photo matched to this selected place yet. Wait for the reference thumbnails to load, or select a named landmark. No random text-only scene will be generated.';
   wrap.hidden=true;
   return;
  }
- if(!photoScoutImageKey){
-  const keyInput=$('imageApiKey');
-  const supplied=keyInput&&keyInput.value.trim();
-  if(!supplied){
-   status.innerHTML='An image-generation API key is required. Get one from <a href="https://enter.pollinations.ai/keys" target="_blank" rel="noopener noreferrer">Pollinations API keys</a>, paste it in the field above, then click Generate again. No key is built into this website.';
-   keyInput?.focus();
-   return;
-  }
-  photoScoutImageKey=supplied;
-  keyInput.value='';
- }
- button.disabled=true;button.textContent='Generating AI sketch…';
- status.textContent='Sending the selected landmark photo and your composition brief to the image-editing model. This may take a little while.';
+ const mode=$('conceptMode')?.value||'wide';
+ const prompt=imageConceptPrompt(item,mode);
+ const params=new URLSearchParams({
+  model:'kontext',
+  width:'1024',
+  height:'576',
+  nologo:'true',
+  seed:String(Math.floor(Math.random()*1000000)),
+  image:reference.currentSrc||reference.src
+ });
+ const src='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?'+params.toString();
+ button.disabled=true;
+ button.textContent='Sketching from real photo…';
+ status.textContent='Making a pencil sketch from the actual matched photo of '+item.name+'. The source photograph is sent as the image reference; the result appears in this small window below.';
  wrap.hidden=true;
+ output.onload=null;
+ output.onerror=null;
  try{
-  const sourceBlob=await new Promise((resolve,reject)=>{
-   const source=new Image();
-   source.crossOrigin='anonymous';
-   source.onload=()=>{
-    try{
-     const maxWidth=1024;
-     const scale=Math.min(1,maxWidth/source.naturalWidth);
-     const canvas=document.createElement('canvas');
-     canvas.width=Math.max(1,Math.round(source.naturalWidth*scale));
-     canvas.height=Math.max(1,Math.round(source.naturalHeight*scale));
-     const ctx=canvas.getContext('2d');
-     if(!ctx)throw new Error('This browser could not prepare the reference photo.');
-     ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
-     ctx.drawImage(source,0,0,canvas.width,canvas.height);
-     canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Could not prepare the reference image for upload.')),'image/png');
-    }catch(e){reject(e);}
-   };
-   source.onerror=()=>reject(new Error('The matched reference photo could not be loaded. Try another landmark photo.'));
-   source.src=reference.currentSrc||reference.src;
+  await new Promise((resolve,reject)=>{
+   let settled=false;
+   const finish=(fn,value)=>{if(settled)return;settled=true;window.clearTimeout(timer);output.onload=null;output.onerror=null;fn(value);};
+   const timer=window.setTimeout(()=>finish(reject,new Error('The image service did not return a sketch within 90 seconds. Please try again.')),90000);
+   output.onload=()=>finish(resolve,true);
+   output.onerror=()=>finish(reject,new Error('The image service could not create a sketch from this reference photo. The service may be unavailable or may reject the source image. Try another matched photo in a moment.'));
+   output.src=src;
+   if(output.complete&&output.naturalWidth>0)finish(resolve,true);
   });
-  const mode=$('conceptMode')?.value||'wide';
-  const lens=mode==='compressed'?'100–150 mm':mode==='context'?'35–70 mm':'18–24 mm';
-  const locality=String(item.city||state.detectedLocality||'').trim();
-  const form=new FormData();
-  form.append('image',sourceBlob,'landmark-reference.png');
-  form.append('model','kontext');
-  form.append('size','1024x1024');
-  form.append('output_format','png');
-  form.append('prompt',[
-   'EDIT THE SUPPLIED PHOTOGRAPH. Do not create a new scene from text. Convert this exact reference photograph into a high-quality hand-drawn architectural/landscape composition sketch in graphite pencil on warm off-white paper.',
-   'Preserve the photographed scene layout: keep the same camera angle, perspective, horizon, building silhouettes, rooflines, windows, columns, openings, foreground objects, shoreline and terrain contours that are visible in the source. Do not invent, move, remove or redesign buildings or landscape features. Do not add unobserved structures, people, roads or viewpoints.',
-   'Style: confident field-notebook drawing, precise architectural contour lines, light construction strokes, restrained cross-hatching and tonal shading, subtle rule-of-thirds guides and a few small composition arrows only. No colour photo look, no fantasy, no collage, no text, no lettering, no watermark, no decorative frame.',
-   'Selected real-world subject: '+String(item.name||'Selected landmark')+(locality?' — '+locality:'')+'. Camera concept for Canon R50, '+lens+'. The drawing is a visual planning aid based on the supplied photo; it must not imply that the photographer can access this exact viewpoint.'
-  ].join(' '));
-  const response=await fetch('https://gen.pollinations.ai/v1/images/edits',{
-   method:'POST',
-   headers:{Authorization:'Bearer '+photoScoutImageKey},
-   body:form
-  });
-  if(!response.ok){
-   let detail='';
-   try{const problem=await response.json();detail=problem.error?.message||problem.message||problem.detail||'';}catch(_){}
-   if(response.status===401){photoScoutImageKey='';throw new Error('Pollinations rejected this API key (401). Paste a valid key above and click Generate again.');}
-   if(response.status===402)throw new Error('The Pollinations account has no available image-generation balance for this request (402). Check its account/usage page.');
-   if(response.status===429)throw new Error('Image generation is rate-limited (429). Wait a little and retry.');
-   throw new Error('Image-editing service returned HTTP '+response.status+(detail?': '+String(detail).slice(0,180):'')+'.');
-  }
-  const result=await response.json();
-  const image=result.data&&result.data[0];
-  if(!image||(!image.b64_json&&!image.url))throw new Error('The image service responded but returned no usable image. Try again or choose another reference photo.');
-  output.src=image.b64_json?'data:image/'+(result.output_format||'png')+';base64,'+image.b64_json:image.url;
-  output.alt='AI-generated pencil composition sketch edited from the source-linked reference photo of '+item.name+'. AI output may alter details; compare with the original source.';
+  output.alt='AI-generated pencil composition sketch based on the matched reference photograph of '+item.name+'. Compare with the source image; AI can alter details.';
   wrap.hidden=false;
-  status.textContent='AI sketch generated from the selected reference photo. Compare architectural details with the source image: image models can still alter fine details and do not verify access or camera position.';
+  status.textContent='Sketch returned from the selected place-matched photo. Compare the drawing with the reference thumbnails; AI may still alter fine details.';
   wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
  }catch(err){
   wrap.hidden=true;
-  status.textContent=String(err&&err.message||err).slice(0,320)+' No random or synthetic fallback was substituted.';
+  status.textContent=String(err&&err.message||err).slice(0,280)+' No random substitute was shown.';
  }finally{
-  button.disabled=false;button.textContent='Generate AI pencil sketch';
+  output.onload=null;
+  output.onerror=null;
+  button.disabled=false;
+  button.textContent='Generate AI pencil sketch';
  }
 }
 async function renderDetailPhotoRefs(item){
