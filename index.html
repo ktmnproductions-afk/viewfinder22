@@ -177,11 +177,86 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
   .nav-panel>summary { padding:9px 10px; }
 }
 
+
+/* Editorial Photography Field Guide */
+.field-guide[hidden]{display:none!important}
+.field-guide{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;overflow:auto;background:#f5f3ea;color:#212b24;font-family:Georgia,"Times New Roman",serif;overscroll-behavior:contain}
+.field-guide *{box-sizing:border-box}
+.field-guide-header{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 22px 12px;border-bottom:1px solid #d8d6cc;background:rgba(248,247,240,.97);backdrop-filter:blur(16px)}
+.field-guide-brand{min-width:0}.field-guide-wordmark{font-size:clamp(16px,1.5vw,24px);letter-spacing:.10em;white-space:nowrap}.field-guide-wordmark span{padding:0 8px;color:#818578}.field-guide-wordmark b{font-size:.82em;font-weight:400;letter-spacing:.06em}.field-guide-deck{margin-top:4px;font:11px/1.35 Inter,system-ui,sans-serif;color:#777d72;letter-spacing:.03em}
+.field-guide-header-actions{display:flex;align-items:center;gap:9px;flex:0 0 auto}
+.field-guide-search{display:flex;align-items:center;gap:8px;width:min(250px,24vw);border:1px solid #d1d0c5;border-radius:7px;background:#faf9f4;padding:0 10px;height:38px;color:#4d574c}.field-guide-search>span{font-size:23px;line-height:1}.field-guide-search input{border:0;outline:none;min-width:0;width:100%;background:transparent;font:12px Inter,system-ui,sans-serif;color:#243126}.field-guide-search input::placeholder{color:#92978b}
+.field-guide-map-button,.field-guide-close{height:38px;border:1px solid #c7ccbd;border-radius:7px;background:#354535;color:#f7f5ec;padding:0 14px;font:600 12px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}.field-guide-close{width:38px;padding:0;font-size:24px;font-weight:400;background:transparent;color:#354535}
+.field-guide-toolbar{position:sticky;top:64px;z-index:4;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 18px;background:rgba(244,242,233,.97);border-bottom:1px solid #dedbd0;backdrop-filter:blur(12px)}
+.field-guide-filters{display:flex;gap:7px;overflow-x:auto;min-width:0;scrollbar-width:thin;padding:1px 0 3px}.guide-filter{flex:0 0 auto;border:1px solid #e1dfd5;border-radius:7px;background:#eeece4;color:#3b4439;padding:8px 12px;font:11px Georgia,serif;cursor:pointer;white-space:nowrap}.guide-filter:hover,.guide-filter.active{background:#354535;color:#fffdf3;border-color:#354535}
+.field-guide-sort{display:flex;align-items:center;gap:7px;white-space:nowrap;font:11px Inter,system-ui,sans-serif;color:#697366}.field-guide-sort select,.field-guide-sort button{border:1px solid #d3d3c9;border-radius:6px;background:#f9f8f1;padding:8px;color:#354535;font:11px Inter,system-ui,sans-serif}.field-guide-sort button{cursor:pointer}
+.field-guide-intro{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding:22px 24px 16px}.field-guide-kicker{font:10px Inter,system-ui,sans-serif;letter-spacing:.18em;color:#7c8773}.field-guide-intro h1{font-size:clamp(25px,3vw,42px);font-weight:400;line-height:1.05;letter-spacing:-.025em;margin:7px 0 8px}.field-guide-intro p{max-width:740px;margin:0;font:13px/1.55 Inter,system-ui,sans-serif;color:#70786e}
+.field-guide-gear{display:grid;gap:4px;flex:0 0 235px;border-left:1px solid #d8d6ca;padding:2px 0 2px 17px}.field-guide-gear span{font:9px Inter,system-ui,sans-serif;letter-spacing:.16em;color:#7f8978;margin-bottom:3px}.field-guide-gear strong{font:14px Georgia,serif;font-weight:400}.field-guide-gear small{font:10px/1.4 Inter,system-ui,sans-serif;color:#7b8177;margin-top:3px}
+.field-guide-status{padding:0 24px 11px;font:10px/1.4 Inter,system-ui,sans-serif;color:#848a7f}.field-guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0 16px 22px;align-content:start}
+.guide-card{display:grid;grid-template-columns:minmax(158px,.42fr) minmax(0,1fr);min-width:0;min-height:275px;border:1px solid #d8d6cc;border-radius:2px;background:#fbfaf4;overflow:hidden;box-shadow:0 2px 7px rgba(40,46,36,.035)}
+.guide-card-info{display:flex;flex-direction:column;min-width:0;padding:13px 12px 11px;border-right:1px solid #dad8ce}.guide-card-label{font:9px Inter,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#828a7b}.guide-card h2{margin:5px 0 4px;font-size:clamp(15px,1.22vw,20px);line-height:1.08;letter-spacing:.01em;text-transform:uppercase;font-weight:400;overflow-wrap:anywhere}.guide-card-location{font:10px/1.4 Inter,system-ui,sans-serif;color:#868b80;margin:0 0 7px}.guide-card-sketch{display:block;width:100%;height:94px;object-fit:cover;object-position:center;border:1px solid #e5e1d6;background:#f1efe5;filter:grayscale(.15)}
+.guide-card-ideas-title{margin:9px 0 4px;font:9px Inter,system-ui,sans-serif;letter-spacing:.13em;color:#7d8575;text-transform:uppercase}.guide-card-ideas{margin:0;padding:0 0 0 15px;font-size:11px;line-height:1.45;color:#4e554a}.guide-card-ideas li{padding-left:1px;margin:1px 0}
+.guide-card-actions{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:10px}.guide-map-link{border:0;background:#354535;color:#f6f4e9;border-radius:5px;padding:8px 10px;font:600 10px Inter,system-ui,sans-serif;cursor:pointer}.guide-more-link{font:10px Inter,system-ui,sans-serif;color:#727c6c;text-decoration:underline;text-underline-offset:3px}
+.guide-card-visuals{display:flex;flex-direction:column;min-width:0;min-height:0}.guide-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;flex:1;min-height:0;background:#ebe9df}.guide-photo{display:flex;flex-direction:column;min-width:0;min-height:0;background:#eeece2;overflow:hidden;text-decoration:none;color:#555c50}.guide-photo img{display:block;width:100%;height:100%;min-height:190px;flex:1;object-fit:cover;background:#e4e4da;transition:filter .2s}.guide-photo:hover img{filter:brightness(1.06)}.guide-photo figcaption{padding:5px 5px 6px;max-height:35px;overflow:hidden;font:8px/1.25 Inter,system-ui,sans-serif;color:#697165;background:#f2f0e7;overflow-wrap:anywhere}
+.guide-photo-placeholder{grid-column:1/-1;display:flex;align-items:center;justify-content:center;min-height:220px;padding:22px;text-align:center;font:11px/1.6 Inter,system-ui,sans-serif;color:#7b8276;background:linear-gradient(135deg,#e4e4da,#f3f1e8)}.guide-photo-placeholder strong{display:block;font-family:Georgia,serif;font-size:17px;font-weight:400;color:#5c6757;margin-bottom:6px}
+.guide-card-photo-caption{display:flex;justify-content:space-between;gap:8px;border-top:1px solid #d9d7cb;padding:7px 9px;font:9px/1.35 Inter,system-ui,sans-serif;color:#858a7e;background:#f7f5ee}.guide-card-photo-caption span:last-child{white-space:nowrap}
+.field-guide-footer{border-top:1px solid #d8d6cc;padding:16px 22px 23px;font:10px/1.6 Inter,system-ui,sans-serif;color:#888d81}
+.field-guide-empty{grid-column:1/-1;border:1px dashed #c9cabe;padding:34px 18px;text-align:center;font:13px/1.6 Inter,system-ui,sans-serif;color:#7a8275}
+@media(max-width:1000px){.field-guide-header{padding:12px 14px}.field-guide-wordmark{letter-spacing:.06em}.field-guide-toolbar{top:61px;padding:9px 12px}.field-guide-intro{padding:18px 16px 14px}.field-guide-grid{padding:0 10px 16px;gap:9px}.guide-card{grid-template-columns:minmax(140px,.42fr) minmax(0,1fr);min-height:250px}.guide-card-info{padding:10px}.guide-photo img{min-height:170px}.field-guide-gear{flex-basis:190px}}
+@media(max-width:720px){.field-guide-header{align-items:flex-start;gap:7px;padding:10px}.field-guide-wordmark{white-space:normal;font-size:16px;line-height:1.35}.field-guide-deck{font-size:9px}.field-guide-header-actions{gap:5px;align-items:center}.field-guide-search{width:36px;border:0;background:transparent;padding:0;justify-content:center}.field-guide-search>span{display:none}.field-guide-search input{position:absolute;top:64px;left:10px;width:calc(100% - 20px);height:36px;border:1px solid #d1d0c5;border-radius:6px;background:#fbfaf4;padding:0 10px;z-index:8}.field-guide-search input:not(:focus):placeholder-shown{opacity:.55}.field-guide-map-button{padding:0 9px;font-size:10px}.field-guide-close{width:31px;height:34px}.field-guide-toolbar{position:sticky;top:58px;align-items:flex-start;flex-direction:column;padding:45px 9px 8px;gap:6px}.field-guide-filters{width:100%;gap:5px}.guide-filter{font-size:10px;padding:7px 9px}.field-guide-sort{align-self:flex-end}.field-guide-intro{padding:15px 12px 12px;align-items:flex-start}.field-guide-intro h1{font-size:26px}.field-guide-intro p{font-size:11px}.field-guide-gear{display:none}.field-guide-status{padding:0 12px 10px}.field-guide-grid{grid-template-columns:minmax(0,1fr);padding:0 8px 16px;gap:9px}.guide-card{grid-template-columns: minmax(124px,.40fr) minmax(0,.60fr);min-height:235px}.guide-card h2{font-size:16px}.guide-card-sketch{height:74px}.guide-card-ideas{font-size:10px;line-height:1.35}.guide-photo-grid{gap:2px}.guide-photo img{min-height:154px}.guide-photo figcaption{font-size:7px;padding:4px}.guide-photo-placeholder{min-height:190px;padding:12px}.guide-card-photo-caption{font-size:8px;padding:6px}.field-guide-footer{padding:12px;font-size:9px}}
+@media(max-width:420px){.field-guide-wordmark{font-size:14px}.field-guide-deck{max-width:190px}.field-guide-header-actions{gap:3px}.field-guide-map-button{font-size:9px;padding:0 7px}.guide-card{grid-template-columns:minmax(116px,.42fr) minmax(0,.58fr)}.guide-card-info{padding:8px}.guide-card h2{font-size:14px}.guide-card-sketch{height:65px}.guide-card-ideas{font-size:9px}.guide-photo img{min-height:140px}}
+
+
+.field-guide-top-button{position:fixed;z-index:7;top:68px;right:16px;border:1px solid rgba(255,255,255,.22);border-radius:9px;background:rgba(248,247,240,.96);color:#263429;padding:9px 12px;font:650 11px Inter,system-ui,sans-serif;box-shadow:0 5px 18px rgba(17,28,19,.12);cursor:pointer}
+@media(max-width:680px){.field-guide-top-button{top:116px;right:8px;padding:8px 10px;font-size:10px}}
+
+
+.fieldguide-launcher{margin:13px 13px 0;padding:14px;border:1px solid #d9ddce;border-radius:12px;background:linear-gradient(140deg,#f1f2e7,#e6eadc);color:#2e3a30}.fieldguide-launcher-kicker{font:9px Inter,system-ui,sans-serif;letter-spacing:.16em;color:#77816f}.fieldguide-launcher h3{font:20px Georgia,serif;font-weight:400;margin:6px 0}.fieldguide-launcher p{font:11px/1.55 Inter,system-ui,sans-serif;color:#687364;margin:0 0 11px}.fieldguide-launcher .btn{width:100%;white-space:normal}.fieldguide-detail-cta{margin-bottom:12px}.fieldguide-detail-cta p{font:11px/1.5 Inter,system-ui,sans-serif;color:#6f796b;margin:8px 0}
+
 </style>
 </head>
 <body>
 <div id="map" aria-label="Interactive world map. Click a location to find parking, historical places and photography ideas."></div>
 <div class="map-heading"><div class="eyebrow">PHOTO SCOUT · WORLD MAP</div><strong id="mapTitle">Find a place worth photographing.</strong><div id="mapSubtitle">Search a destination or click the map to begin.</div></div>
+<main id="fieldGuidePage" class="field-guide" hidden aria-label="Photography field guide">
+  <header class="field-guide-header">
+    <div class="field-guide-brand">
+      <div class="field-guide-wordmark">PHOTO SCOUT <span>/</span> <b>FIELD GUIDE</b></div>
+      <div class="field-guide-deck">A visual notebook for places worth photographing</div>
+    </div>
+    <div class="field-guide-header-actions">
+      <label class="field-guide-search"><span aria-hidden="true">⌕</span><input id="guideSearch" type="search" placeholder="Search a location…" aria-label="Search field guide locations"></label>
+      <button id="fieldGuideMapButton" class="field-guide-map-button" type="button">↗ Back to map</button>
+      <button id="fieldGuideClose" class="field-guide-close" type="button" aria-label="Close field guide">×</button>
+    </div>
+  </header>
+  <div class="field-guide-toolbar">
+    <div id="fieldGuideFilters" class="field-guide-filters" aria-label="Filter field guide locations">
+      <button class="guide-filter active" type="button" data-guide-filter="all">All locations</button>
+      <button class="guide-filter" type="button" data-guide-filter="roman">Roman sites</button>
+      <button class="guide-filter" type="button" data-guide-filter="coast">Coast & lagoons</button>
+      <button class="guide-filter" type="button" data-guide-filter="nature">Nature</button>
+      <button class="guide-filter" type="button" data-guide-filter="villages">Villages & castles</button>
+      <button class="guide-filter" type="button" data-guide-filter="sunrise">Sunrise</button>
+      <button class="guide-filter" type="button" data-guide-filter="sunset">Sunset</button>
+      <button class="guide-filter" type="button" data-guide-filter="long-exposure">Long exposure</button>
+      <button class="guide-filter" type="button" data-guide-filter="details">Details</button>
+      <button class="guide-filter" type="button" data-guide-filter="recommended">Recommended</button>
+    </div>
+    <div class="field-guide-sort">
+      <label for="guideSort">Sort by</label>
+      <select id="guideSort"><option value="featured">Featured</option><option value="az">A–Z</option><option value="region">Region</option></select>
+      <button id="guideRefresh" type="button" title="Retry photo reference search">↻ Refresh</button>
+    </div>
+  </div>
+  <section class="field-guide-intro">
+    <div><div class="field-guide-kicker">FRIULI · ADRIATIC · KARST</div><h1>Look closer. Frame differently.</h1><p>Each stop pairs a pencil composition study with source-linked visual references and practical shot prompts. Start here for inspiration, then open the map to check the actual location.</p></div>
+    <div class="field-guide-gear"><span>YOUR KIT</span><strong>Canon EOS R50</strong><strong>RF-S 18–150 mm</strong><small>Wide landscapes · contextual frames · compressed layers</small></div>
+  </section>
+  <div class="field-guide-status" id="fieldGuideStatus" role="status" aria-live="polite">Loading the field guide… Reference images are sourced from Wikimedia Commons where available.</div>
+  <section class="field-guide-grid" id="fieldGuideGrid" aria-label="Photography location cards"></section>
+  <footer class="field-guide-footer">Photographs open to their original source pages for credits and licence details. Pencil panels are illustrative composition studies, not photographs or verified sightlines. Check current access, weather, opening times and local restrictions before travelling.</footer>
+</main>
 <div class="map-styles" role="group" aria-label="Map style">
   <button class="map-style active" data-style="liberty">Atlas</button>
   <button class="map-style" data-style="bright">Bright</button>
@@ -189,16 +264,17 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
   <button class="map-style" data-style="dark">Dark</button>
   <button class="map-style" data-style="fiord">Terrain</button>
 </div>
+<button id="fieldGuideTopButton" class="field-guide-top-button" type="button">Field guide ↗</button>
 <div id="mapIssue" class="map-issue"><strong>Basemap could not be loaded.</strong><p>The app is not using the blocked OpenStreetMap volunteer tile endpoint. Retry the vector map or check the connection.</p><button id="retryMap">Retry map</button></div>
 <button id="sidebarToggle" type="button" aria-controls="mainSidebar" aria-expanded="true" aria-label="Hide sidebar"><span class="toggle-glyph">☰</span><span id="sidebarToggleLabel">Hide menu</span></button>
 <aside class="sidebar" id="mainSidebar">
 <header class="brand">
-  <div class="brand-line"><div class="brand-symbol">✣</div><div><div class="brand-name">PHOTO SCOUT</div><div class="brand-sub">Roadtrip photography planner</div></div></div>
+  <div class="brand-line"><div class="brand-symbol">✣</div><div><div class="brand-name">PHOTO SCOUT</div><div class="brand-sub">Visual photography field guide</div></div></div>
   <p>Find places. Plan a frame. Save your stops.</p>
   <div class="online-state"><span class="live-dot"></span><span id="appState">Map loading · global search ready</span></div>
   <div class="marker-legend" aria-label="Map key"><span><i class="legend-dot mapped"></i> Mapped facts</span><span><i class="legend-dot candidate"></i> Photo candidates</span><span><i class="legend-dot parking"></i> Parking</span><span><i class="legend-dot photo"></i> Photo ideas</span></div>
   <div class="parking-legend-note">Green P = mapped parking. ×N = several nearby points. Check access and signs on arrival.</div>
-  <button class="btn primary small idea-lab-header-button" id="headerIdeaButton" type="button">✦ Photo ideas & sketch</button>
+  <button class="btn primary small idea-lab-header-button" id="headerIdeaButton" type="button">✦ Open Field Guide</button>
 </header>
 <div class="panel-scroll">
   <section class="section search-section" id="searchSection">
@@ -214,42 +290,12 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
     <div class="status-box" id="statusBox"><div class="status-icon">✣</div><div class="status-copy"><div class="status-title" id="statusTitle">Start with a place</div><div class="status-msg" id="statusMsg">Search for a city or landmark, or click anywhere on the map to explore nearby spots.</div></div></div>
     <div class="source-key-note">Start here: search or click the map → choose a nearby place → open Photo ideas for a sketch.</div>
   </section>
-  <details class="nav-panel" id="photoIdeaDetails">
-    <summary><span class="nav-title">Photo ideas & pencil sketch</span><span class="nav-subtitle">Shot concepts · source photos · sketch generator</span></summary>
-    <div class="nav-panel-content">      <section class="idea-lab-section" id="photoIdeaLabSection">
-          <div class="concept-block ai-visual-block" id="aiVisualBlock">
-                <div class="section-heading"><h3>Sketch ideas for this place</h3><span class="count" id="conceptTargetName">Choose a place</span></div>
-                <p class="ai-visual-intro" id="photoIdeaSummary">Choose a place and click Make pencil sketch. A matched reference photo is sketched when available; otherwise the app draws a new location-aware composition idea here. No sign-in is needed.</p>
-                <figure class="auto-sketch-frame">
-                  <img id="autoSketchImage" class="auto-sketch-img" alt="Automatically generated illustrative composition sketch for the selected place">
-                  <figcaption id="autoSketchCaption">Instant shot sketch · illustrative, not an actual view</figcaption>
-                </figure>
-                <div class="concept-controls">
-                  <select id="conceptMode" aria-label="Choose a photo composition"><option value="wide">Wide landscape · 18–24 mm</option><option value="context">Subject with context · 35–70 mm</option><option value="compressed">Compressed layers · 100–150 mm</option></select>
-                  <button class="btn primary" id="generateConcept" type="button">Make pencil sketch</button>
-                </div>
-                <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">Choose a landmark and reference photo first. Your sketch will stay here, beside the map.</div>
-                <div class="generated-visual-wrap" id="generatedVisualWrap" hidden>
-                  <img class="generated-visual-img" id="generatedVisual" alt="AI-generated illustrative photography concept for the selected location">
-                  <div class="generated-visual-caption">Pencil composition sketch from a place-matched reference · verify details against the source photo</div>
-                </div>
-                <div class="reference-gallery">
-                  <div class="section-heading"><h3>Place-matched reference images</h3><span class="count" id="photoCount">—</span></div>
-                  <p class="reference-gallery-note">Images are matched by place or subject title. Random geotagged event uploads are excluded; a reference is inspiration, not a verified camera position.</p>
-                  <div class="photos" id="photoResults"><div class="empty" style="grid-column:1/-1">Drop a pin to find source-linked images of the town, landmarks and nearby landscape.</div></div>
-                </div>
-              </div>
-        
-          <div class="concept-block"><div class="section-heading"><h3>Three ways to frame it</h3><span class="count">Canon R50 · 18–150 mm</span></div>
-            <div class="concept-grid">
-              <article class="concept-card"><div class="concept-art wide"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Wide landscape</div><div class="concept-lens">18–24 mm</div><p id="ideaWideCopy">Use a foreground edge to lead into the town, coast or hills; keep the horizon deliberate.</p></article>
-              <article class="concept-card"><div class="concept-art balanced"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">City with context</div><div class="concept-lens">35–70 mm</div><p id="ideaContextCopy">Balance the main subject with a band of surrounding landscape; avoid a postcard framing.</p></article>
-              <article class="concept-card"><div class="concept-art compressed"><span class="concept-sun"></span><span class="concept-ridge back"></span><span class="concept-ridge front"></span><span class="concept-city"></span></div><div class="concept-title">Compressed layers</div><div class="concept-lens">100–150 mm</div><p id="ideaCompressedCopy">Use telephoto compression to stack rooftops, towers or ridgelines where visible.</p></article>
-            </div>
-            <div class="concept-note">These are instant Canon R50 shot concepts, not photos of the actual location. Generate a photorealistic visual idea above, then refine it with the editable prompt in the selected-spot panel.</div>
-          </div>
-        </section></div>
-  </details>
+  <section class="fieldguide-launcher">
+    <div class="fieldguide-launcher-kicker">VISUAL FIELD GUIDE</div>
+    <h3>Find a frame worth making.</h3>
+    <p>Browse pencil composition studies, source-linked reference photos, and practical shot ideas for real locations around Friuli and beyond.</p>
+    <button class="btn primary" id="sidebarOpenFieldGuide" type="button">Explore photo locations ↗</button>
+  </section>
   <section class="detail" id="spotDetail">
     <div class="eyebrow" id="detailEyebrow">Selected location</div><h2 id="detailTitle">Your pin</h2><div class="spot-meta" id="detailMeta"></div>
     <div id="detailHistory"></div>
@@ -258,14 +304,10 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
       <p id="spotParkingHint" class="parking-nearby-note">Choose a photo spot to search for mapped parking near that exact location.</p>
       <div id="spotParkingResults"><div class="empty">Parking results will appear here after you select a place.</div></div>
     </div>
-    <div class="selected-concept-preview">
-      <div class="section-heading"><h3>Suggested composition</h3><span class="count" id="selectedConceptLens">Canon R50</span></div>
-      <img id="selectedConceptPreviewImg" class="selected-concept-img" alt="Illustrative composition sketch for this selected place">
-      <div id="selectedConceptCaption" class="concept-note">An instant sketch for this spot. It is not a verified photograph or visibility assessment.</div>
-      <div class="row" style="display:flex;gap:7px;flex-wrap:wrap">
-        <button class="btn small" id="jumpToPhotoIdeas" type="button">Open Photo Idea Lab ↑</button>
-        <button class="btn small primary" id="generateSelectedConcept" type="button">Make a shot sketch</button>
-      </div>
+    <div class="selected-concept-preview fieldguide-detail-cta">
+      <div class="section-heading"><h3>Photography field guide</h3><span class="count">Shot ideas & references</span></div>
+      <p class="concept-note">Explore visual references and composition ideas, then return to the map to check the location and access.</p>
+      <button class="btn primary" id="selectedOpenFieldGuide" type="button">Open ideas for this place ↗</button>
     </div>
     <div class="detail-reference-block"><div class="section-heading"><h3>Visual references for this stop</h3><span class="count" id="detailPhotoCount">—</span></div><div class="detail-photo-grid" id="detailPhotoRefs"><div class="empty">Drop a pin and select a spot to find source-linked image references.</div></div></div>
         <div class="detail-actions"><a class="btn primary" id="driveLink" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Drive to spot ↗</a><button class="btn" id="saveSelected">☆ Save spot</button></div>
@@ -1800,30 +1842,158 @@ function renderSaved(){
 }
 $('saveStop').addEventListener('click',()=>saveCurrent(null));
 $('saveSelected').addEventListener('click',()=>saveCurrent(state.selected));
-$('headerIdeaButton').addEventListener('click',()=>{
- $('photoIdeaDetails').open=true;
- $('photoIdeaLabSection').scrollIntoView({behavior:'smooth',block:'start'});
+
+const FIELD_GUIDE_PLACES=[
+ {id:'aquileia-forum',name:'Aquileia Roman Forum',locality:'Aquileia, Friuli',lat:45.7686,lng:13.3689,category:'history',topics:['roman','sunrise','sunset','details','recommended'],tag:'ARCHAEOLOGY',query:'Aquileia Roman Forum',tags:{historic:'archaeological_site'},shotIdeas:['Columns at sunrise or sunset','Leading lines through stone remains','Details and textures after rain','Low-angle shadows across paving']},
+ {id:'basilica-aquileia',name:'Basilica di Aquileia',locality:'Aquileia, Friuli',lat:45.7705,lng:13.3680,category:'architecture',topics:['roman','details','recommended'],tag:'SACRED ARCHITECTURE',query:'Basilica di Aquileia',tags:{building:'basilica',tourism:'attraction'},shotIdeas:['Mosaic details and abstract patterns','Play with light and shadows','Architectural lines and symmetry','Frame the tower through arches']},
+ {id:'roman-river-port',name:'Roman River Port',locality:'Aquileia, Friuli',lat:45.7669,lng:13.3700,category:'history',topics:['roman','coast','sunrise','long-exposure','details'],tag:'RIVER & ARCHAEOLOGY',query:'Aquileia Roman river port',tags:{waterway:'river'},shotIdeas:['Reflections and stone textures','Quay lines leading into the frame','Moody morning light or mist','Long exposure on the water where safe']},
+ {id:'via-sacra',name:'Via Sacra',locality:'Aquileia, Friuli',lat:45.7682,lng:13.3707,category:'history',topics:['roman','nature','sunrise','sunset','long-exposure','recommended'],tag:'ANCIENT ROUTE',query:'Via Sacra Aquileia',tags:{historic:'path'},shotIdeas:['Central path with strong leading lines','Cypress silhouettes and backlight','A person for scale from a safe public point','Atmospheric fog after rain']},
+ {id:'aquileia-necropolis',name:'Necropolis',locality:'Aquileia, Friuli',lat:45.7674,lng:13.3751,category:'history',topics:['roman','nature','details','recommended'],tag:'BURIAL GROUND',query:'Aquileia Roman necropolis',tags:{historic:'archaeological_site'},shotIdeas:['Ancient tombs and inscriptions','Nature reclaiming weathered stone','Dramatic side light and shadows','Close-up details with a clean background']},
+ {id:'domus-tito-macro',name:'Domus di Tito Macro',locality:'Aquileia, Friuli',lat:45.7689,lng:13.3664,category:'history',topics:['roman','details','recommended'],tag:'ROMAN DOMESTIC LIFE',query:'Domus di Tito Macro Aquileia',tags:{historic:'archaeological_site',building:'house'},shotIdeas:['Mosaic patterns and repeated geometry','Contrasts between ruin and nature','Tight details of floor surfaces','Use low side light to reveal texture']},
+ {id:'grado-lagoon',name:'Grado Lagoon',locality:'Grado, Friuli',lat:45.6768,lng:13.3889,category:'viewpoint',topics:['coast','nature','sunrise','sunset','long-exposure','recommended'],tag:'LAGOON & WILDLIFE',query:'Grado Lagoon Friuli',tags:{natural:'wetland'},shotIdeas:['Casoni and their reflections','Minimal silhouettes against pastel light','Sunrise or sunset colour bands','Birds, boats and weathered textures']},
+ {id:'isola-della-cona',name:'Isola della Cona',locality:'Staranzano, Friuli',lat:45.7157,lng:13.4872,category:'photoSpot',topics:['coast','nature','sunrise','sunset','details'],tag:'WETLAND & BIRDLIFE',query:'Isola della Cona birds',tags:{natural:'wetland',leisure:'nature_reserve'},shotIdeas:['Birds and their reflections from marked paths','Reeds as layered foreground silhouettes','Minimal frames at golden hour','Telephoto details without disturbing wildlife']},
+ {id:'duino-rilke',name:'Duino – Rilke Trail',locality:'Duino, Friuli',lat:45.7733,lng:13.6086,category:'viewpoint',topics:['coast','nature','sunset','details','recommended'],tag:'CLIFFSIDE TRAIL',query:'Rilke Trail Duino',tags:{natural:'cliff'},shotIdeas:['Dramatic cliffs and open sea','Castle views framed by branches','Panoramic coastline layers','Cloudy weather for textured water']},
+ {id:'val-rosandra',name:'Val Rosandra',locality:'Trieste, Friuli-Venezia Giulia',lat:45.6115,lng:13.8822,category:'viewpoint',topics:['nature','sunrise','details','long-exposure','recommended'],tag:'KARST VALLEY',query:'Val Rosandra waterfall',tags:{natural:'valley'},shotIdeas:['Layered limestone cliffs and forest','River details and small waterfalls','Long exposure with a tripod','Forest textures and filtered light']},
+ {id:'miramare',name:'Castello di Miramare',locality:'Trieste, Friuli-Venezia Giulia',lat:45.7049,lng:13.7124,category:'architecture',topics:['coast','villages','sunset','details','recommended'],tag:'CASTLE BY THE SEA',query:'Miramare Castle Trieste',tags:{historic:'castle',building:'castle'},shotIdeas:['Castle and sea in one layered frame','Reflections from the shoreline','Frame architecture through trees','Blue-hour details around the grounds']}
+];
+let fieldGuideActiveFilter='all';
+let fieldGuidePhotoCache={};
+let fieldGuidePhotoLoadToken=0;
+let fieldGuideCardLookup={};
+let fieldGuideHasLoaded=false;
+function fieldGuideCardsForView(){
+ const cards=FIELD_GUIDE_PLACES.map(x=>({...x,searchText:[x.name,x.locality,x.tag,...x.topics,...x.shotIdeas].join(' ').toLowerCase()}));
+ if(state.selected&&Number.isFinite(Number(state.selected.lat))&&Number.isFinite(Number(state.selected.lng))){
+  const item=state.selected;
+  const key='selected-'+String(item.id||'map-place').replace(/[^a-zA-Z0-9_-]/g,'-');
+  if(!cards.some(x=>x.name.toLowerCase()===String(item.name||'').toLowerCase())){
+   const category=item.category||'photoSpot';
+   const topics=['recommended','details'];
+   if(category==='history')topics.push('roman');
+   if(category==='viewpoint'||category==='photoSpot')topics.push('nature');
+   const locality=String(item.city||state.detectedLocality||coordLabel({lat:item.lat,lng:item.lng}));
+   const ideas=category==='history'?['Photograph the site in context before focusing on details','Use low side light to reveal stone and surface texture','Make a wide frame, then a tight architectural detail']:category==='architecture'?['Use clean verticals and a contextual wide frame','Look for repeated shapes, arches and reflections','Try a tight texture study at 100–150 mm']:['Use a foreground shape to lead into the scene','Build foreground, middle-ground and background layers','Try a compressed telephoto frame'];
+   cards.unshift({id:key,name:item.name||'Selected map place',locality,lat:Number(item.lat),lng:Number(item.lng),category,topics,tag:'YOUR SELECTED MAP PLACE',query:String(item.name||'')+' '+locality,tags:item.tags||{},shotIdeas:ideas,searchText:[item.name,locality,category,...ideas].join(' ').toLowerCase(),originalItem:item});
+  }
+ }
+ const query=$('guideSearch')?$('guideSearch').value.trim().toLowerCase():'';
+ let filtered=cards.filter(card=>(fieldGuideActiveFilter==='all'||card.topics.includes(fieldGuideActiveFilter))&&(!query||card.searchText.includes(query)));
+ const sort=$('guideSort')?.value||'featured';
+ if(sort==='az')filtered.sort((a,b)=>a.name.localeCompare(b.name));
+ else if(sort==='region')filtered.sort((a,b)=>a.locality.localeCompare(b.locality)||a.name.localeCompare(b.name));
+ return filtered;
+}
+function fieldGuidePhotoMarkup(card){
+ const photos=fieldGuidePhotoCache[card.id];
+ if(!photos||photos.loading)return '<div class="guide-photo-placeholder"><div><strong>Finding visual references</strong>Searching source-linked photos for this place. The sketch and shot ideas remain available while images load.</div></div>';
+ if(!photos.length)return '<div class="guide-photo-placeholder"><div><strong>Sketch & shot ideas ready</strong>No matching Wikimedia Commons photos were found for this title. Your composition guide is still available; try the map for nearby references.</div></div>';
+ return photos.slice(0,3).map(photo=>'<a class="guide-photo" href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original image and licence"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption>'+esc(photo.name)+' · '+esc(photo.license||'See source licence')+'</figcaption></a>').join('');
+}
+function fieldGuideCardHTML(card,index){
+ const seed=index+21;
+ const sketch=conceptSketchData(card,'wide',seed);
+ const ideas=(card.shotIdeas||[]).slice(0,4).map(idea=>'<li>'+esc(idea)+'</li>').join('');
+ return '<article class="guide-card" data-guide-card="'+esc(card.id)+'">'+
+  '<div class="guide-card-info"><div class="guide-card-label">'+esc(card.tag||'PHOTO LOCATION')+'</div><h2>'+esc(card.name)+'</h2><p class="guide-card-location">'+esc(card.locality)+'</p>'+
+  '<img class="guide-card-sketch" src="'+esc(sketch)+'" alt="Illustrative pencil composition study for '+esc(card.name)+'">'+
+  '<div class="guide-card-ideas-title">Ideas</div><ul class="guide-card-ideas">'+ideas+'</ul>'+
+  '<div class="guide-card-actions"><button class="guide-map-link" type="button" data-guide-map="'+esc(card.id)+'">View on map ↗</button></div></div>'+
+  '<div class="guide-card-visuals"><div class="guide-photo-grid" data-guide-photos-for="'+esc(card.id)+'">'+fieldGuidePhotoMarkup(card)+'</div><div class="guide-card-photo-caption"><span>Reference images · verify view and access</span><span>'+esc(card.locality.split(',')[0])+'</span></div></div>'+
+  '</article>';
+}
+function renderFieldGuide(){
+ const grid=$('fieldGuideGrid');
+ if(!grid)return;
+ const cards=fieldGuideCardsForView();
+ fieldGuideCardLookup={};
+ cards.forEach(card=>fieldGuideCardLookup[card.id]=card);
+ grid.innerHTML=cards.length?cards.map(fieldGuideCardHTML).join(''):'<div class="field-guide-empty">No locations match that search. Try another place name or choose “All locations”.</div>';
+ $('fieldGuideStatus').textContent=cards.length+' location'+(cards.length===1?'':'s')+' shown · source-linked photos load when available · sketches and shot lists do not require a service or sign-in.';
+}
+async function loadFieldGuidePhotos(force){
+ if(fieldGuideHasLoaded&&!force)return;
+ fieldGuideHasLoaded=true;
+ const token=++fieldGuidePhotoLoadToken;
+ const cards=fieldGuideCardsForView();
+ const queue=cards.filter(card=>!fieldGuidePhotoCache[card.id]||force);
+ queue.forEach(card=>fieldGuidePhotoCache[card.id]={loading:true});
+ renderFieldGuide();
+ let next=0;
+ async function worker(){
+  while(next<queue.length){
+   const card=queue[next++];
+   const scanId=state.scanId;
+   try{
+    const refs=await commonsTextSearch([card.query||card.name+' '+card.locality],{lat:card.lat,lng:card.lng},scanId);
+    if(token!==fieldGuidePhotoLoadToken)return;
+    fieldGuidePhotoCache[card.id]=refs.slice(0,3);
+   }catch(error){
+    if(token!==fieldGuidePhotoLoadToken)return;
+    fieldGuidePhotoCache[card.id]=[];
+   }
+   const host=$('fieldGuideGrid').querySelector('[data-guide-photos-for="'+card.id.replace(/"/g,'')+'"]');
+   if(host)host.innerHTML=fieldGuidePhotoMarkup(card);
+  }
+ }
+ await Promise.all([worker(),worker(),worker()]);
+ if(token===fieldGuidePhotoLoadToken){
+  const visible=fieldGuideCardsForView().filter(card=>!fieldGuidePhotoCache[card.id]);
+  if(visible.length)loadFieldGuidePhotos(false);
+  $('fieldGuideStatus').textContent='Reference search finished · photo links lead to their original source pages. Local sketches and shot ideas remain available regardless of image-search results.';
+ }
+}
+function openFieldGuide(){
+ $('fieldGuidePage').hidden=false;
+ document.body.classList.add('field-guide-open');
+ renderFieldGuide();
+ if(!fieldGuideHasLoaded)loadFieldGuidePhotos(false);
+ window.requestAnimationFrame(()=>{ $('fieldGuidePage').scrollTop=0; if(map)map.resize(); });
+}
+function closeFieldGuide(){
+ $('fieldGuidePage').hidden=true;
+ document.body.classList.remove('field-guide-open');
+ window.requestAnimationFrame(()=>{if(map)map.resize();});
+}
+
+$('headerIdeaButton').addEventListener('click',openFieldGuide);
+$('fieldGuideTopButton').addEventListener('click',openFieldGuide);
+$('sidebarOpenFieldGuide').addEventListener('click',openFieldGuide);
+$('selectedOpenFieldGuide').addEventListener('click',openFieldGuide);
+$('fieldGuideMapButton').addEventListener('click',closeFieldGuide);
+$('fieldGuideClose').addEventListener('click',closeFieldGuide);
+$('guideSearch').addEventListener('input',renderFieldGuide);
+$('guideSort').addEventListener('change',renderFieldGuide);
+$('guideRefresh').addEventListener('click',()=>{
+ guidePhotoCache={};
+ renderFieldGuide();
+ loadFieldGuidePhotos(true);
 });
-$('generateConcept').addEventListener('click',generateConcept);
-$('conceptMode').addEventListener('change',()=>{
- renderConceptSketch(currentConceptTarget(),$('conceptMode').value);
- if($('generatedVisualWrap')&&!$('generatedVisualWrap').hidden)resetGeneratedConcept();
+$('fieldGuideFilters').querySelectorAll('[data-guide-filter]').forEach(button=>button.addEventListener('click',()=>{
+ fieldGuideActiveFilter=button.dataset.guideFilter;
+ $('fieldGuideFilters').querySelectorAll('[data-guide-filter]').forEach(b=>b.classList.toggle('active',b===button));
+ renderFieldGuide();
+}));
+$('fieldGuideGrid').addEventListener('click',event=>{
+ const button=event.target.closest('[data-guide-map]');
+ if(!button)return;
+ const card=fieldGuideCardLookup[button.dataset.guideMap];
+ if(!card)return;
+ closeFieldGuide();
+ if(card.originalItem&&state.selected&&card.originalItem.id===state.selected.id){
+  map.flyTo({center:[card.lng,card.lat],zoom:Math.max(map.getZoom(),14.5),duration:850});
+  selectItem(card.originalItem);
+ }else{
+  map.flyTo({center:[card.lng,card.lat],zoom:14,duration:850});
+  scanAt({lat:card.lat,lng:card.lng},{fly:false});
+ }
 });
-$('jumpToPhotoIdeas').addEventListener('click',()=>{
-  $('photoIdeaDetails').open=true;
-  $('aiVisualBlock').scrollIntoView({behavior:'smooth',block:'start'});
- });
- $('generateSelectedConcept').addEventListener('click',()=>{
-  updateConceptTargetName();
-  $('photoIdeaDetails').open=true;
-  $('aiVisualBlock').scrollIntoView({behavior:'smooth',block:'start'});
-  generateConcept();
- });
+window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('fieldGuidePage').hidden)closeFieldGuide();});
  $('copyPrompt').addEventListener('click',async()=>{
  const text=$('shotPrompt').value;
  try{await navigator.clipboard.writeText(text);$('copyPrompt').textContent='Copied';setTimeout(()=>$('copyPrompt').textContent='Copy prompt',1300);}
  catch(e){$('shotPrompt').focus();$('shotPrompt').select();document.execCommand('copy');$('copyPrompt').textContent='Selected';}
 });
+renderFieldGuide();
 loadSaved();
 window.addEventListener('resize',()=>{if(map)map.resize();});
 })();
