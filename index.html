@@ -1611,6 +1611,11 @@ function selectedShotIdeasFor(item){
  const name=String(item&&item.name||'this place');
  const tags=item&&item.tags||{};
  const facts=[name,tags.natural,tags.waterway,tags.historic,tags.tourism,tags.building,tags.leisure,tags.highway,item&&item.scenicKind,item&&item.summary,item&&item.why].filter(Boolean).join(' ').toLowerCase();
+ if(/battle|battlefield|siege|historic field|war site/.test(facts))return [
+  'Wide · 18–24 mm: show the open landscape with a path or grass in the foreground.',
+  'Context · 35–70 mm: frame real terrain, a river bend or an existing marker.',
+  'Detail · 100–150 mm: compress tree lines and terrain folds; do not invent missing historic structures.'
+ ];
  if(/lagoon|wetland|marsh|reed|bird|isola della cona|wildlife/.test(facts))return [
   'Wide · 18–24 mm: layer reeds or a boardwalk in front of water and distant silhouettes.',
   'Context · 35–70 mm: frame one hut, bird or shoreline shape against reflected colour.',
@@ -1625,11 +1630,6 @@ function selectedShotIdeasFor(item){
   'Wide · 18–24 mm: use the path as a strong leading line into the scene.',
   'Context · 35–70 mm: frame a corridor of trees or columns with balanced symmetry.',
   'Detail · 100–150 mm: isolate repeated trunks, paving patterns or shafts of light.'
- ];
- if(/battle|battlefield|siege|historic field|war site/.test(facts))return [
-  'Wide · 18–24 mm: show the open landscape with a path or grass in the foreground.',
-  'Context · 35–70 mm: frame real terrain, a river bend or an existing marker.',
-  'Detail · 100–150 mm: compress tree lines and terrain folds; do not invent missing historic structures.'
  ];
  if(/lagoon|coast|sea|beach|island|adriatic|cliff|shore|lighthouse|duino|miramare/.test(facts))return [
   'Wide · 18–24 mm: combine shore, water and headland with a foreground edge.',
