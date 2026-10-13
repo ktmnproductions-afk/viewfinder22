@@ -1408,7 +1408,7 @@ function conceptSketchData(item,mode,variation){
   const y=668+Math.round(rand()*42);
   return '<path d="M'+x+' '+y+'l'+(29+Math.round(rand()*23))+' -'+(9+Math.round(rand()*12))+'" stroke="#85867b" stroke-width="1.2" opacity=".42"/>';
  }).join('');
- const sceneLabel={coast:'COASTAL LAYERS',mountain:'RIDGELINE STUDY',battlefield:'OPEN HISTORICAL LANDSCAPE',church:'ARCHITECTURE STUDY',castle:'FORTIFICATION STUDY',ruins:'ARCHAEOLOGICAL DETAIL',cross:'LANDMARK IN LANDSCAPE',monument:'MONUMENT & CONTEXT',urban:'URBAN FRAME',street:'STREET COMPOSITION',landscape:'LANDSCAPE COMPOSITION'}[scene]||'LOCATION COMPOSITION';
+ const sceneLabel=xmlEsc(({coast:'COASTAL LAYERS',mountain:'RIDGELINE STUDY',battlefield:'OPEN HISTORICAL LANDSCAPE',church:'ARCHITECTURE STUDY',castle:'FORTIFICATION STUDY',ruins:'ARCHAEOLOGICAL DETAIL',cross:'LANDMARK IN LANDSCAPE',monument:'MONUMENT & CONTEXT',architecture:'BUILDING COMPOSITION',urban:'URBAN FRAME',street:'STREET COMPOSITION',landscape:'LANDSCAPE COMPOSITION'}[scene]||'LOCATION COMPOSITION'));
  const variantLabel=modeValue==='wide'?'Wide environmental frame':modeValue==='context'?'Subject with context':'Telephoto layer study';
  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">'+
   '<defs><linearGradient id="paper" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#fbfaf5"/><stop offset="1" stop-color="#e9e5da"/></linearGradient><pattern id="grain" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M2 5l4 -1 M14 18l4 1 M7 22l2 -1" stroke="#7a796f" stroke-width=".7" opacity=".16"/></pattern></defs>'+
