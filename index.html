@@ -588,6 +588,12 @@ async function rangefindPlacesSearch(c,radius,id){
  const successful=responses.filter(r=>r.status==='fulfilled');
  if(!successful.length)throw (responses.find(r=>r.status==='rejected')?.reason||new Error('Rangefind search unavailable'));
  const rows=successful.flatMap(r=>r.value.results||[]);
+ const localityCounts=new Map();
+ rows.forEach(r=>{
+  const locality=String(r.city||r.town||r.village||r.municipality||r.suburb||'').trim();
+  if(locality)localityCounts.set(locality,(localityCounts.get(locality)||0)+1);
+ });
+ state.detectedLocality=[...localityCounts.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||state.detectedLocality||'';
  const places=[];
  const normalizeTags=r=>{
   const d=r.details&&typeof r.details==='object'?r.details:{};
@@ -637,12 +643,13 @@ async function overpassApiSearch(c,radius,id){
   'nwr'+around+'["highway"~"^(path|footway|track|pedestrian|steps)$"]["name"];'+
   'nwr'+around+'["waterway"~"^(river|canal|riverbank)$"]["name"];'+
   'nwr'+around+'["place"~"^(city|town|village|suburb|neighbourhood)$"]["name"];'+
-  ');out center tags 300;';
+  ');out center tags qt 300;';
  const endpoints=['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter'];
  let lastError=null;
  for(const endpoint of endpoints){
   if(id!==state.scanId)throw new Error('stale scan');
   const controller=new AbortController();
+  state.controllers.push(controller);
   const timer=window.setTimeout(()=>controller.abort(),22000);
   try{
    const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',signal:controller.signal,headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:'data='+encodeURIComponent(query)});
@@ -694,12 +701,11 @@ async function overpassApiSearch(c,radius,id){
   }catch(error){
    if(id!==state.scanId)throw error;
    lastError=error;
-  }finally{window.clearTimeout(timer);}
+  }finally{
+   window.clearTimeout(timer);
+   state.controllers=state.controllers.filter(c=>c!==controller);
+  }
  }
- try{
-  const rangefind=await rangefindPlacesSearch(c,radius,id);
-  if(rangefind.length)return rangefind;
- }catch(error){lastError=lastError||error;}
  throw lastError||new Error('No live map-data source is responding');
 }
 async function overpassSearch(c,radius,id){
@@ -1858,11 +1864,13 @@ function fieldGuideCardsForView(){
   if((category==='viewpoint'||category==='photoSpot')&&!topics.includes('nature'))topics.push('nature');
   const locality=String(item.city||state.detectedLocality||(existing&&existing.locality)||coordLabel({lat:item.lat,lng:item.lng}));
   const ideas=selectedShotIdeasFor(item);
+  const nearbyNames=state.results.filter(r=>r.category!=='parking'&&r.name&&Number.isFinite(Number(r.lat))&&Number.isFinite(Number(r.lng))).slice().sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,3).map(r=>r.name);
+  const searchQueries=existing&&existing.query?[existing.query,String(item.name||''),locality].filter(Boolean):[String(item.name||''),...nearbyNames,locality].filter(Boolean);
   const selectedCard={
    ...(existing||{}),id:key,name:item.name||'Selected map place',locality,lat:Number(item.lat),lng:Number(item.lng),category,
    topics,tag:existing&&existing.tag?existing.tag:'YOUR SELECTED MAP PLACE',
    query:existing&&existing.query?existing.query:(String(item.name||'')+' '+locality),
-   tags:item.tags||{},shotIdeas:ideas,searchText:[item.name,locality,category,...topics,...ideas].join(' ').toLowerCase(),originalItem:item
+   searchQueries,tags:item.tags||{},shotIdeas:ideas,searchText:[item.name,locality,category,...topics,...ideas].join(' ').toLowerCase(),originalItem:item
   };
   cards=cards.filter(x=>x.name.trim().toLowerCase()!==normalized);
   cards.unshift(selectedCard);
@@ -1924,7 +1932,7 @@ async function loadFieldGuidePhotos(force){
    const card=queue[next++];
    const scanId=state.scanId;
    try{
-    const refs=await commonsTextSearch([card.query||card.name+' '+card.locality],{lat:card.lat,lng:card.lng},scanId);
+    const refs=await commonsTextSearch(card.searchQueries||[card.query||card.name+' '+card.locality],{lat:card.lat,lng:card.lng},scanId);
     if(token!==fieldGuidePhotoLoadToken)return;
     fieldGuidePhotoCache[card.id]=refs.slice(0,3);
    }catch(error){
