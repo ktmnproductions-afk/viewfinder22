@@ -306,7 +306,7 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
   </section>
   <div class="field-guide-status" id="fieldGuideStatus" role="status" aria-live="polite">Loading the field guide… Reference images are sourced from Wikimedia Commons where available.</div>
   <section class="field-guide-grid" id="fieldGuideGrid" aria-label="Photography location cards"></section>
-  <footer class="field-guide-footer">Photographs open to their original source pages for credits and licence details. Pencil panels are illustrative composition studies, not photographs or verified sightlines. Check current access, weather, opening times and local restrictions before travelling.</footer>
+  <footer class="field-guide-footer">Reference photographs are displayed inside Photo Scout. Use the small source links for credits and licence details. Pencil panels are illustrative composition studies, not photographs or verified sightlines. Check current access, weather, opening times and local restrictions before travelling.</footer>
   <div id="fieldGuideDetail" class="field-guide-detail" hidden role="dialog" aria-modal="true" aria-labelledby="fieldGuideDetailTitle">
     <button class="field-guide-detail-shade" type="button" data-guide-detail-close aria-label="Close location ideas"></button>
     <section class="field-guide-detail-panel">
@@ -1901,11 +1901,10 @@ function fieldGuideCardHTML(card,index){
   '</article>';
 }
 function bindFieldGuideImageFallbacks(root){
- root.querySelectorAll('.guide-photo img').forEach(img=>img.addEventListener('error',()=>{
-  const figure=img.closest('.guide-photo');
+ root.querySelectorAll('.guide-photo img,.guide-detail-photo img').forEach(img=>img.addEventListener('error',()=>{
+  const figure=img.closest('.guide-photo,.guide-detail-photo');
   if(!figure)return;
-  figure.innerHTML='<div class="guide-photo-failed">Preview unavailable<br><small>Open another source image or use the pencil study.</small></div>';
-  figure.removeAttribute('href');
+  figure.innerHTML='<div class="guide-photo-failed">Preview unavailable<br><small>Use another reference or the pencil study.</small></div>';
  },{once:true}));
 }
 function renderFieldGuide(){
