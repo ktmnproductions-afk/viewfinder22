@@ -1287,7 +1287,7 @@ function xmlEsc(value){
 }
 function conceptSketchData(item,mode,variation){
  const name=String(item&&item.name||'Pinned photo location');
- const locality=String(item&&(item.city||state.detectedLocality)||'');
+ const locality=String(item&&(item.city||item.locality||state.detectedLocality)||'');
  const category=String(item&&item.category||'photoSpot');
  const tags=item&&item.tags||{};
  const facts=[name,locality,tags.natural,tags.tourism,tags.waterway,tags.building,tags.historic,tags.amenity,tags.leisure,item&&item.scenicKind,item&&item.summary,item&&item.history,item&&item.why].filter(Boolean).join(' ').toLowerCase();
@@ -1958,7 +1958,9 @@ async function loadFieldGuidePhotos(force){
     fieldGuidePhotoCache[card.id]=refs.slice(0,3);
    }catch(error){
     if(token!==fieldGuidePhotoLoadToken)return;
-    fieldGuidePhotoCache[card.id]=[];
+    const wasAborted=error&&((error.name==='AbortError')||/stale scan|abort/i.test(String(error.message||error)));
+    if(wasAborted)delete fieldGuidePhotoCache[card.id];
+    else fieldGuidePhotoCache[card.id]=[];
    }
    const host=$('fieldGuideGrid').querySelector('[data-guide-photos-for="'+card.id.replace(/"/g,'')+'"]');
    if(host)host.innerHTML=fieldGuidePhotoMarkup(card);
@@ -1967,7 +1969,7 @@ async function loadFieldGuidePhotos(force){
  await Promise.all([worker(),worker(),worker()]);
  if(token===fieldGuidePhotoLoadToken){
   const visible=fieldGuideCardsForView().filter(card=>!fieldGuidePhotoCache[card.id]);
-  if(visible.length)loadFieldGuidePhotos(false);
+  if(!$('fieldGuidePage').hidden&&visible.length)loadFieldGuidePhotos(false);
   $('fieldGuideStatus').textContent='Reference search finished · photo links lead to their original source pages. Local sketches and shot ideas remain available regardless of image-search results.';
  }
 }
