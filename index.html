@@ -282,7 +282,7 @@ const styleUrls = {
  dark:'https://tiles.openfreemap.org/styles/dark',
  fiord:'https://tiles.openfreemap.org/styles/fiord'
 };
-const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, detectedLocality:'', results:[], scenicSpots:[], photos:[], basemapParking:[], parkingFilteredLayers:new Set(), spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0};
+const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, detectedLocality:'', results:[], scenicSpots:[], photos:[], basemapParking:[], parkingFilteredLayers:new Set(), spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, referenceSketchId:null, referenceSketchMode:null, referenceSketchDataUrl:null, referenceSketchTitle:'', selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0};
 window.__PHOTO_SCOUT_TEST__ = {
  get map(){ return state.map; },
  get styleLoaded(){ return state.styleLoaded; },
@@ -1033,7 +1033,7 @@ function setStatus(title,msg,kind){
 async function scanAt(c,opts){
  if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng)||Math.abs(c.lat)>85||Math.abs(c.lng)>180){setStatus('Choose a valid map point','That coordinate cannot be scanned.','warn');return;}
  state.scanId++;const id=state.scanId;state.scanCount++;cancelPreviousRequests();
- state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.results=[];state.scenicSpots=[];state.photos=[];state.basemapParking=[];state.spotParking=[];state.spotParkingTargetId=null;state.spotParkingLoading=false;state.spotParkingRequest++;state.selected=null;
+ state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.referenceSketchId=null;state.referenceSketchMode=null;state.referenceSketchDataUrl=null;state.referenceSketchTitle='';state.results=[];state.scenicSpots=[];state.photos=[];state.basemapParking=[];state.spotParking=[];state.spotParkingTargetId=null;state.spotParkingLoading=false;state.spotParkingRequest++;state.selected=null;
  $('spotDetail').classList.remove('show');
  setActivePin(state.center);updateRadius();
  if(opts&&opts.fly&&map.getZoom()<8){map.flyTo({center:[c.lng,c.lat],zoom:9.5,duration:700});}
@@ -1308,16 +1308,17 @@ function conceptSketchData(item,mode){
 function renderConceptSketch(item,mode){
  if(!item||!Number.isFinite(Number(item.lat))||!Number.isFinite(Number(item.lng)))return;
  const chosen=mode||$('conceptMode')?.value||'wide';
- const src=conceptSketchData(item,chosen);
+ const hasSourceSketch=state.referenceSketchId===item.id&&state.referenceSketchMode===chosen&&!!state.referenceSketchDataUrl;
+ const src=hasSourceSketch?state.referenceSketchDataUrl:conceptSketchData(item,chosen);
  const image=$('autoSketchImage');
  const detailImage=$('selectedConceptPreviewImg');
  const caption=$('autoSketchCaption');
  const detailCaption=$('selectedConceptCaption');
  const lens=$('selectedConceptLens');
- if(image){image.src=src;image.alt='Illustrative '+chosen+' composition sketch for '+item.name+'; not a verified view.';}
- if(detailImage){detailImage.src=src;detailImage.alt='Illustrative composition sketch for '+item.name+'; not a verified view.';}
- if(caption)caption.textContent='Instant '+(chosen==='wide'?'wide landscape · 18–24 mm':chosen==='context'?'subject with context · 35–70 mm':'compressed layers · 100–150 mm')+' sketch · not an actual view';
- if(detailCaption)detailCaption.textContent='Shot idea for '+item.name+': '+(chosen==='wide'?'use foreground lines and layered depth.':chosen==='context'?'balance the subject with its surroundings.':'use telephoto compression for graphic layers.')+' Illustration only; visibility and access must be checked.';
+ if(image){image.src=src;image.alt=hasSourceSketch?'Pencil sketch rendered from the place-matched reference photo “'+state.referenceSketchTitle+'”. The location sightline is not independently verified.':'Illustrative '+chosen+' composition sketch for '+item.name+'; not a verified view.';}
+ if(detailImage){detailImage.src=src;detailImage.alt=hasSourceSketch?'Reference-photo pencil sketch for '+item.name+'; inspiration only, not a verified view.':'Illustrative composition sketch for '+item.name+'; not a verified view.';}
+ if(caption)caption.textContent=hasSourceSketch?'Pencil sketch of matched reference · '+state.referenceSketchTitle+' · compare with source': 'Instant '+(chosen==='wide'?'wide landscape · 18–24 mm':chosen==='context'?'subject with context · 35–70 mm':'compressed layers · 100–150 mm')+' sketch · illustrative only';
+ if(detailCaption)detailCaption.textContent=hasSourceSketch?'Sketch drawn from “'+state.referenceSketchTitle+'”. This source shows an example of the subject, not proof that the same view is visible from this pin.':'Shot idea for '+item.name+': '+(chosen==='wide'?'use foreground lines and layered depth.':chosen==='context'?'balance the subject with its surroundings.':'use telephoto compression for graphic layers.')+' Illustration only; visibility and access must be checked.';
  if(lens)lens.textContent='Canon R50 · '+(chosen==='wide'?'18–24 mm':chosen==='context'?'35–70 mm':'100–150 mm');
 }
 function updateConceptTargetName(){
@@ -1505,12 +1506,11 @@ async function renderDetailPhotoRefs(item){
     const sketch=await createPhotoDerivedPencilSketch(firstImage);
     if(!state.selected||state.selected.id!==selectedId)return;
     const currentMode=$('conceptMode')?.value||'wide';
-    const auto=$('autoSketchImage'),detail=$('selectedConceptPreviewImg');
-    const caption=$('autoSketchCaption'),detailCaption=$('selectedConceptCaption');
-    if(auto){auto.src=sketch;auto.alt='Pencil field sketch of the matched reference photograph for '+item.name+'. Not verified as the exact view from the pin.';}
-    if(detail){detail.src=sketch;detail.alt='Pencil field sketch based on a matched reference photo for '+item.name+'. Not a verified site view.';}
-    if(caption)caption.textContent='Pencil sketch from a place-matched reference · '+(currentMode==='wide'?'wide frame 18–24 mm':currentMode==='context'?'context frame 35–70 mm':'compressed frame 100–150 mm');
-    if(detailCaption)detailCaption.textContent='Sketch of the reference image “'+String(finalRefs[0].name||'selected photo')+'”. Use it for composition inspiration; the image does not prove this exact view is visible from the mapped candidate.';
+    state.referenceSketchId=selectedId;
+    state.referenceSketchMode=currentMode;
+    state.referenceSketchDataUrl=sketch;
+    state.referenceSketchTitle=String(finalRefs[0].name||'matched source photo');
+    renderConceptSketch(item,currentMode);
     const status=$('conceptStatus');
     if(status)status.textContent='Reference-based pencil sketch ready for '+item.name+'. Compare it with the source photo; the mapped spot’s actual line of sight is still unverified.';
    }catch(err){
