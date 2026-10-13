@@ -140,11 +140,48 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
 }
 
 .concept-key-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 6px}.concept-key-row label{font-size:.86rem;font-weight:600}.concept-key-row input{flex:1;min-width:220px;max-width:100%;padding:10px 12px;border:1px solid var(--line,#bbb);border-radius:8px;background:var(--panel,#fff);color:inherit}.concept-key-row a{font-size:.86rem}.concept-key-note{font-size:.78rem;line-height:1.45;opacity:.8;margin:4px 0 10px}
+
+/* User-friendly menu pass: smaller footprint, clearer sequence, map stays primary. */
+@media (min-width:681px) {
+  .sidebar { width:320px; }
+  #sidebarToggle { left:216px; top:18px; padding:7px 9px; font-size:10px; }
+  body.sidebar-collapsed #sidebarToggle { left:14px; top:16px; }
+  .map-heading { left:350px; max-width:calc(100vw - 380px); padding:11px 14px; }
+}
+.brand { padding:12px 14px 9px; }
+.brand p { margin-top:6px; }
+.parking-legend-note { font-size:8px; line-height:1.35; margin-top:6px; }
+.idea-lab-header-button { min-height:31px; margin-top:8px; }
+.section { padding-left:13px; padding-right:13px; }
+.search-section { padding-top:11px; }
+.search-box input { height:40px; }
+.nav-panel { margin-top:8px; }
+.nav-panel>summary { padding:10px 11px; }
+.nav-panel-content { padding:10px; }
+.filter-row { gap:5px; flex-wrap:nowrap; overflow-x:auto; padding:0 0 4px; scrollbar-width:thin; }
+.filter-chip { flex:0 0 auto; padding:7px 9px; }
+.filter-note { margin-top:4px; }
+#photoIdeaDetails:not([open]) { background:rgba(31,45,36,.62); }
+@media (max-width:680px) {
+  .sidebar { max-height:52dvh; }
+  .map-credit { bottom:calc(52dvh + 12px); }
+  .maplibregl-ctrl-bottom-right { bottom:calc(52dvh + 10px)!important; }
+  body:not(.sidebar-collapsed) .map-heading { display:none; }
+  .brand { padding:9px 12px 7px; }
+  .brand p { font-size:10px; }
+  .marker-legend { gap:6px; margin-top:5px; }
+  .parking-legend-note { margin-top:4px; }
+  .idea-lab-header-button { margin-top:6px; }
+  .status-section { padding-top:8px; }
+  .nav-panel { margin-top:7px; }
+  .nav-panel>summary { padding:9px 10px; }
+}
+
 </style>
 </head>
 <body>
 <div id="map" aria-label="Interactive world map. Click a location to find parking, historical places and photography ideas."></div>
-<div class="map-heading"><div class="eyebrow">Global discovery map</div><strong id="mapTitle">Explore places around your pin.</strong><div id="mapSubtitle">Click anywhere on the map to plan a photography stop.</div></div>
+<div class="map-heading"><div class="eyebrow">PHOTO SCOUT · WORLD MAP</div><strong id="mapTitle">Find a place worth photographing.</strong><div id="mapSubtitle">Search a destination or click the map to begin.</div></div>
 <div class="map-styles" role="group" aria-label="Map style">
   <button class="map-style active" data-style="liberty">Atlas</button>
   <button class="map-style" data-style="bright">Bright</button>
@@ -157,41 +194,41 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
 <aside class="sidebar" id="mainSidebar">
 <header class="brand">
   <div class="brand-line"><div class="brand-symbol">✣</div><div><div class="brand-name">PHOTO SCOUT</div><div class="brand-sub">Roadtrip photography planner</div></div></div>
-  <p>Scout real places. Plan the frame. Save the stop.</p>
+  <p>Find places. Plan a frame. Save your stops.</p>
   <div class="online-state"><span class="live-dot"></span><span id="appState">Map loading · global search ready</span></div>
   <div class="marker-legend" aria-label="Map key"><span><i class="legend-dot mapped"></i> Mapped facts</span><span><i class="legend-dot candidate"></i> Photo candidates</span><span><i class="legend-dot parking"></i> Parking</span><span><i class="legend-dot photo"></i> Photo ideas</span></div>
-  <div class="parking-legend-note">Green P = mapped parking candidate. ×N = a cluster count, not a parking space; tap it to zoom to individual points. The map does not confirm the entrance, access or availability.</div>
-  <button class="btn primary small idea-lab-header-button" id="headerIdeaButton" type="button">✦ Open Photo Idea Lab</button>
+  <div class="parking-legend-note">Green P = mapped parking. ×N = several nearby points. Check access and signs on arrival.</div>
+  <button class="btn primary small idea-lab-header-button" id="headerIdeaButton" type="button">✦ Photo ideas & sketch</button>
 </header>
 <div class="panel-scroll">
   <section class="section search-section" id="searchSection">
     <div class="eyebrow">Find a place</div>
     <form id="searchForm"><div class="search-row">
-      <div class="search-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="placeSearch" autocomplete="off" placeholder="Search a place or paste lat, lon" aria-label="Search place or coordinates"></div>
-      <button class="btn primary" type="submit">Go</button>
+      <div class="search-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="placeSearch" autocomplete="off" placeholder="City, landmark or lat, lon" aria-label="Search for a city, landmark or coordinates"></div>
+      <button class="btn primary" type="submit">Find</button>
     </div></form>
     <div class="scan-options"><label for="radius">Search radius</label><select id="radius"><option value="5000">5 km</option><option value="10000" selected>10 km</option><option value="20000">20 km</option><option value="30000">30 km</option></select></div>
     <div class="utility-row"><button class="btn" id="useLocation">◎ Use my location</button><button class="btn" id="saveStop">☆ Save stop</button></div>
   </section>
   <section class="section status-section">
-    <div class="status-box" id="statusBox"><div class="status-icon">✣</div><div class="status-copy"><div class="status-title" id="statusTitle">Pick a point on the map</div><div class="status-msg" id="statusMsg">Click a place, town, mountain or coastline. We'll search around that exact point.</div></div></div>
-    <div class="source-key-note">Mapped facts, inferred photo candidates and AI illustrations are kept distinct. Check source links, access and sightlines before travelling.</div>
+    <div class="status-box" id="statusBox"><div class="status-icon">✣</div><div class="status-copy"><div class="status-title" id="statusTitle">Start with a place</div><div class="status-msg" id="statusMsg">Search for a city or landmark, or click anywhere on the map to explore nearby spots.</div></div></div>
+    <div class="source-key-note">Start here: search or click the map → choose a nearby place → open Photo ideas for a sketch.</div>
   </section>
-  <details class="nav-panel" id="photoIdeaDetails" open>
-    <summary><span class="nav-title">Photo Idea Lab</span><span class="nav-subtitle">Composition sketches · AI image · real references</span></summary>
+  <details class="nav-panel" id="photoIdeaDetails">
+    <summary><span class="nav-title">Photo ideas & pencil sketch</span><span class="nav-subtitle">Shot concepts · source photos · AI sketch</span></summary>
     <div class="nav-panel-content">      <section class="idea-lab-section" id="photoIdeaLabSection">
           <div class="concept-block ai-visual-block" id="aiVisualBlock">
-                <div class="section-heading"><h3>Photo idea lab</h3><span class="count" id="conceptTargetName">Pin a place to start</span></div>
-                <p class="ai-visual-intro" id="photoIdeaSummary">Three composition ideas for the best candidate near your pin. The AI image is an artistic interpretation, not proof of the actual view or a promise that the line of sight is clear.</p>
+                <div class="section-heading"><h3>Sketch ideas for this place</h3><span class="count" id="conceptTargetName">Choose a place</span></div>
+                <p class="ai-visual-intro" id="photoIdeaSummary">Choose a nearby place to see photo references and create a pencil-style sketch in this panel. Sketches are inspiration, not proof of the exact view.</p>
                 <figure class="auto-sketch-frame">
                   <img id="autoSketchImage" class="auto-sketch-img" alt="Automatically generated illustrative composition sketch for the selected place">
                   <figcaption id="autoSketchCaption">Instant shot sketch · illustrative, not an actual view</figcaption>
                 </figure>
                 <div class="concept-controls">
                   <select id="conceptMode" aria-label="Choose a photo composition"><option value="wide">Wide landscape · 18–24 mm</option><option value="context">Subject with context · 35–70 mm</option><option value="compressed">Compressed layers · 100–150 mm</option></select>
-                  <button class="btn primary" id="generateConcept" type="button">Generate sketch idea</button>
+                  <button class="btn primary" id="generateConcept" type="button">Make pencil sketch</button>
                 </div>
-                <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">Select a named landmark, wait for its matched reference photo, then generate a pencil sketch in this panel from that photograph.</div>
+                <div class="concept-status" id="conceptStatus" role="status" aria-live="polite">Choose a landmark and reference photo first. Your sketch will stay here, beside the map.</div>
                 <div class="generated-visual-wrap" id="generatedVisualWrap" hidden>
                   <img class="generated-visual-img" id="generatedVisual" alt="AI-generated illustrative photography concept for the selected location">
                   <div class="generated-visual-caption">Pencil composition sketch from a place-matched reference · verify details against the source photo</div>
@@ -235,14 +272,14 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
     <div class="prompt-box"><div class="section-heading"><h3>AI shot reference</h3><span class="count">Editable prompt</span></div><textarea id="shotPrompt" aria-label="AI shot reference prompt"></textarea><div class="prompt-footer"><span>Use as a starting brief in your image tool.</span><button class="btn small" id="copyPrompt">Copy prompt</button></div></div>
   </section>
   <section class="section explore-section">
-    <div class="eyebrow">Explore nearby</div>
+    <div class="eyebrow">Filter nearby results</div>
     <div class="filter-row" id="filters">
-      <button class="filter-chip active" data-filter="all">All spots</button><button class="filter-chip" data-filter="parking">Parking</button><button class="filter-chip" data-filter="history">History</button><button class="filter-chip" data-filter="architecture">Architecture</button><button class="filter-chip" data-filter="viewpoint">Nature & views</button>
+      <button class="filter-chip active" data-filter="all">All</button><button class="filter-chip" data-filter="parking">Parking</button><button class="filter-chip" data-filter="history">History</button><button class="filter-chip" data-filter="architecture">Buildings</button><button class="filter-chip" data-filter="viewpoint">Views</button>
     </div>
-    <p class="filter-note">Choose a type to focus the mapped places below. Photo-spot candidates are shown separately.</p>
+    <p class="filter-note">Tap a category to narrow the results below.</p>
   </section>
-  <details class="nav-panel" id="scenicDetails" open>
-    <summary><span class="nav-title">Photo spots & wide views</span><span class="count" id="scenicCount">—</span></summary>
+  <details class="nav-panel" id="scenicDetails">
+    <summary><span class="nav-title">Scenic photo spots</span><span class="count" id="scenicCount">—</span></summary>
     <div class="nav-panel-content"><p class="nav-panel-note">Mapped features that may make good frames. A clear line of sight, safe access and the view itself are not guaranteed.</p>
       <div class="result-list" id="scenicResults"><div class="empty">Drop a pin to scout real mapped viewpoints and elevated landscape candidates around the city—not only inside it.</div></div>
     </div>
@@ -260,7 +297,7 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
     </div>
   </details>
   <details class="nav-panel" id="architecturePanel">
-    <summary><span class="nav-title">Architecture & viewpoints</span><span class="count" id="viewCount">—</span></summary>
+    <summary><span class="nav-title">Buildings & viewpoints</span><span class="count" id="viewCount">—</span></summary>
     <div class="nav-panel-content"><p class="nav-panel-note">Real mapped features with a source link. A tagged viewpoint still needs on-site visibility and access checks.</p>
       <div class="result-list" id="viewResults"><div class="empty">Look for viewpoints, interesting buildings and natural subjects around the pin.</div></div>
     </div>
