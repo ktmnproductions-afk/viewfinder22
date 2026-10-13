@@ -311,7 +311,7 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
     </div>
     <div class="detail-reference-block"><div class="section-heading"><h3>Visual references for this stop</h3><span class="count" id="detailPhotoCount">—</span></div><div class="detail-photo-grid" id="detailPhotoRefs"><div class="empty">Drop a pin and select a spot to find source-linked image references.</div></div></div>
         <div class="detail-actions"><a class="btn primary" id="driveLink" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Drive to spot ↗</a><button class="btn" id="saveSelected">☆ Save spot</button></div>
-    <div class="prompt-box"><div class="section-heading"><h3>AI shot reference</h3><span class="count">Editable prompt</span></div><textarea id="shotPrompt" aria-label="AI shot reference prompt"></textarea><div class="prompt-footer"><span>Use as a starting brief in your image tool.</span><button class="btn small" id="copyPrompt">Copy prompt</button></div></div>
+    <p class="concept-note detail-guide-note">For shot-specific ideas and visual examples, open the field guide above. Reference photos link back to their original source and licence.</p>
   </section>
   <section class="section explore-section">
     <div class="eyebrow">Filter nearby results</div>
@@ -1297,13 +1297,15 @@ function conceptSketchData(item,mode,variation){
  const isCross=/\b(cross|crucifix|wayside|roadside shrine|wayside shrine)\b/.test(facts);
  const isChurch=/church|chapel|basilica|cathedral|monastery|abbey|kapelle|kirche/.test(facts)||/^(church|chapel|cathedral|monastery)$/.test(String(tags.building||'').toLowerCase());
  const isCastle=/castle|fortress|fortification|citadel|palace|keep|bastion|castell|kaštel|kastel/.test(facts)||/^(castle|fort|palace)$/.test(String(tags.historic||'').toLowerCase());
- const isRuin=/ruin|archaeolog|roman|ancient|temple|amphitheatre|amphitheater|forum|aqueduct|colosseum|excavation|ruins/.test(facts)||/^(ruins|archaeological_site)$/.test(String(tags.historic||'').toLowerCase());
+ const isRuin=/ruin|archaeolog|roman|ancient|temple|amphitheatre|amphitheater|forum|aqueduct|colosseum|excavation|ruins|necropolis|tomb|grave|cemetery|mausoleum|burial/.test(facts)||/^(ruins|archaeological_site)$/.test(String(tags.historic||'').toLowerCase());
  const isMonument=/memorial|monument|obelisk|cenotaph|statue|tomb|grave|cemetery|mausoleum/.test(facts)||String(tags.historic||'').toLowerCase()==='memorial';
- const isArchitecture=category==='architecture'||isChurch||isCastle||isRuin||isCross||/town hall|city hall|palace|historic building|facade|mansion|manor house|bridge|railway station|tower/.test(facts);
+ const isArchitecture=category==='architecture'||isChurch||isCastle||isRuin||isCross||/town hall|city hall|palace|historic building|facade|mansion|manor house|bridge|railway station|tower|domus|villa|house|residence/.test(facts);
  const isUrban=/old town|old city|city centre|city center|cityscape|skyline|street|square|market|town hall|city hall|rooftops|downtown|historic centre|historic center|urban/.test(facts)||/^(city|town|square|street)$/.test(String(tags.place||'').toLowerCase());
  const isMountain=/mountain|alps|alpine|ridge|summit|peak|hill|mount |valley|glacier|pass\b|highlands|panorama|lookout|belvedere|viewpoint/.test(facts)||/^(peak|ridge|cliff|mountain|valley)$/.test(String(tags.natural||'').toLowerCase());
  const isRiver=/river|waterfall|watercourse|riverbank|stream|canal|waterway|elster/.test(facts)||!!tags.waterway;
- const scene=isBattle?'battlefield':isCoastal?'coast':isCross?'cross':isChurch?'church':isCastle?'castle':isRuin?'ruins':isMonument?'monument':isMountain?'mountain':isUrban?'urban':category==='parking'?'street':category==='viewpoint'?'mountain':category==='photoSpot'?'landscape':isArchitecture?'architecture':'landscape';
+ const isWetland=/wetland|lagoon|marsh|swamp|reedbed|birdwatch|birds|nature reserve|isola della cona/.test(facts)||/^(wetland|marsh|mud|tidalflat)$/.test(String(tags.natural||'').toLowerCase());
+ const isRoad=/via sacra|trail|footpath|pathway|roman road|avenue|boulevard|alley|promenade|roadside|route/.test(facts)||/^(path|footway|track|cycleway)$/.test(String(tags.highway||'').toLowerCase());
+ const scene=item&&item.guideScene?item.guideScene:isBattle?'battlefield':isWetland?'wetland':isRiver?'river':isCoastal?'coast':isRoad?'road':isCross?'cross':isChurch?'church':isCastle?'castle':isRuin?'ruins':isMonument?'monument':isMountain?'mountain':isUrban?'urban':category==='parking'?'street':category==='viewpoint'?'mountain':category==='photoSpot'?'landscape':isArchitecture?'architecture':'landscape';
  const title=xmlEsc(name.length>45?name.slice(0,42)+'…':name);
  const place=xmlEsc(locality.length>42?locality.slice(0,39)+'…':locality);
  let seed=2166136261;
@@ -1326,7 +1328,24 @@ function conceptSketchData(item,mode,variation){
   return '<g transform="translate('+x+' '+y+') scale('+scale+')" stroke="#4c5149" stroke-width="2.5" fill="#dedfd2"><path d="M0 0L-19 31H-7L-24 54H24L7 31H19Z"/><path d="M0 51V73" fill="none"/></g>';
  }
  let sceneArt='';
- if(scene==='coast'){
+ if(scene==='river'){
+  sceneArt='<path d="M0 320Q190 302 350 320T690 316T1000 320T1280 310V720H0Z" fill="#dfe7e2" stroke="#59635b" stroke-width="2"/>'+
+   '<path d="M0 365Q200 350 380 368T760 360T1280 365 M0 420Q200 405 380 423T760 415T1280 420 M0 477Q200 462 380 480T760 472T1280 477 M0 532Q200 517 380 535T760 527T1280 532" fill="none" stroke="#9aa49a" stroke-width="2"/>'+
+   '<path d="M0 385L160 375 310 391 450 378 610 394 770 380 930 395 1090 378 1280 391" fill="none" stroke="#62675e" stroke-width="3"/>'+
+   '<path d="M0 350L0 450L230 470L230 435 M1280 352V454L1010 474V435" fill="#e8e6db" stroke="#565a52" stroke-width="4"/>';
+  for(let n=0;n<7;n++){const x=85+n*175+Math.round(rand()*34);const y=405+Math.round(rand()*32);sceneArt+='<g stroke="#4f574e" stroke-width="2.5" fill="none"><path d="M'+x+' '+y+'v100"/><path d="M'+(x-10)+' '+y+'h20"/><path d="M'+(x-10)+' '+(y+100)+'h20"/></g>';}
+ }else if(scene==='wetland'){
+  sceneArt='<path d="M0 360Q200 340 390 360T780 350T1280 360V720H0Z" fill="#e5e8df" stroke="#70766b" stroke-width="2"/>'+
+   '<path d="M0 408Q240 395 430 410T850 405T1280 409 M0 462Q240 450 430 464T850 459T1280 463 M0 515Q240 502 430 517T850 511T1280 516" fill="none" stroke="#a0a699" stroke-width="2"/>'+
+   '<path d="M0 555Q260 530 480 560T930 549T1280 558V720H0Z" fill="#d7dace" stroke="#74786c" stroke-width="2"/>';
+  for(let n=0;n<28;n++){const x=Math.round(n*48+rand()*24);const y=470+Math.round(rand()*150);sceneArt+='<g stroke="#5e695c" stroke-width="2.4" fill="none"><path d="M'+x+' 720Q'+(x-6)+' '+(y+25)+' '+(x+Math.round((rand()-.5)*55))+' '+y+'"/><path d="M'+(x-4)+' '+(y+7)+'q-22 -13 -21 -34q22 8 21 34 M'+(x+3)+' '+(y+12)+'q22 -18 23 -38q-22 10 -23 38"/></g>';}
+  for(let n=0;n<3;n++){const x=180+n*430+Math.round(rand()*90);const y=270+Math.round(rand()*75);sceneArt+='<path d="M'+x+' '+y+'q12 -11 24 0q-12 -4 -24 0q-12 -11 -24 0q12 -4 24 0" fill="none" stroke="#555b51" stroke-width="3"/>';}
+ }else if(scene==='road'){
+  sceneArt+='<path d="M0 355L180 285 350 347 520 253 690 340 855 278 1040 341 1180 284 1280 321V720H0Z" fill="#e5e4d8" stroke="#6f746a" stroke-width="2"/>'+
+   '<path d="M0 720L430 478Q640 425 850 478L1280 720" fill="#d9d8cc" stroke="#575b52" stroke-width="3"/>'+
+   '<path d="M0 720L430 478Q640 425 850 478L1280 720" fill="none" stroke="#f8f5e9" stroke-width="2" stroke-dasharray="9 12"/>';
+  for(let side of [-1,1])for(let n=0;n<6;n++){const progress=.15+n*.13;const x=640+side*(160+progress*290);const y=320+progress*260;sceneArt+='<g transform="translate('+Math.round(x)+' '+Math.round(y)+') scale('+(0.28+progress*.8)+')" stroke="#5c6257" stroke-width="2.8" fill="#dfe0d3"><path d="M0 0L-26 40H-10L-31 69H31L10 40H26Z"/><path d="M0 64V90" fill="none"/></g>';}
+ }else if(scene==='coast'){
   sceneArt=ridge(315,80,10,'#deded2','#595d55')+
    '<path d="M0 344Q210 330 420 349T850 339T1280 348V720H0Z" fill="#e4e9e4" stroke="#61645c" stroke-width="2"/>'+
    '<path d="M0 390Q220 374 420 394T850 386T1280 396 M0 438Q220 422 420 442T850 434T1280 444 M0 486Q220 470 420 490T850 482T1280 492 M0 534Q220 518 420 538T850 530T1280 540" fill="none" stroke="#777c73" stroke-width="2" opacity=".78"/>'+
@@ -1450,7 +1469,7 @@ function conceptSketchData(item,mode,variation){
   const y=668+Math.round(rand()*42);
   return '<path d="M'+x+' '+y+'l'+(29+Math.round(rand()*23))+' -'+(9+Math.round(rand()*12))+'" stroke="#85867b" stroke-width="1.2" opacity=".42"/>';
  }).join('');
- const sceneLabel=xmlEsc(({coast:'COASTAL LAYERS',mountain:'RIDGELINE STUDY',battlefield:'OPEN HISTORICAL LANDSCAPE',church:'ARCHITECTURE STUDY',castle:'FORTIFICATION STUDY',ruins:'ARCHAEOLOGICAL DETAIL',cross:'LANDMARK IN LANDSCAPE',monument:'MONUMENT & CONTEXT',architecture:'BUILDING COMPOSITION',urban:'URBAN FRAME',street:'STREET COMPOSITION',landscape:'LANDSCAPE COMPOSITION'}[scene]||'LOCATION COMPOSITION'));
+ const sceneLabel=xmlEsc(({coast:'COASTAL LAYERS',river:'RIVER PORT & REFLECTIONS',wetland:'WETLAND & BIRDLIFE',road:'LEADING LINES',mountain:'RIDGELINE STUDY',battlefield:'OPEN HISTORICAL LANDSCAPE',church:'ARCHITECTURE STUDY',castle:'FORTIFICATION STUDY',ruins:'ARCHAEOLOGICAL DETAIL',cross:'LANDMARK IN LANDSCAPE',monument:'MONUMENT & CONTEXT',architecture:'BUILDING COMPOSITION',urban:'URBAN FRAME',street:'STREET COMPOSITION',landscape:'LANDSCAPE COMPOSITION'}[scene]||'LOCATION COMPOSITION'));
  const variantLabel=modeValue==='wide'?'Wide environmental frame':modeValue==='context'?'Subject with context':'Telephoto layer study';
  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">'+
   '<defs><linearGradient id="paper" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#fbfaf5"/><stop offset="1" stop-color="#e9e5da"/></linearGradient><pattern id="grain" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M2 5l4 -1 M14 18l4 1 M7 22l2 -1" stroke="#7a796f" stroke-width=".7" opacity=".16"/></pattern></defs>'+
@@ -1710,7 +1729,7 @@ function selectItem(item){
  const destination=item.lat+','+item.lng;
  $('driveLink').href='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode=driving';
  $('driveLink').textContent=item.category==='parking'?'Route to mapped parking point ↗':item.category==='photoSpot'?'Navigate to photo spot ↗':'Drive to spot ↗';
- $('shotPrompt').value=shotPrompt(item);
+ // The field guide replaces the old editable AI-image prompt.
  resetGeneratedConcept();
  updateConceptTargetName();
  const viewZoom=item.category==='parking'?16.5:item.category==='photoSpot'?14.8:item.category==='viewpoint'?15.5:16;
@@ -1846,12 +1865,12 @@ $('saveSelected').addEventListener('click',()=>saveCurrent(state.selected));
 const FIELD_GUIDE_PLACES=[
  {id:'aquileia-forum',name:'Aquileia Roman Forum',locality:'Aquileia, Friuli',lat:45.7686,lng:13.3689,category:'history',topics:['roman','sunrise','sunset','details','recommended'],tag:'ARCHAEOLOGY',query:'Aquileia Roman Forum',tags:{historic:'archaeological_site'},shotIdeas:['Columns at sunrise or sunset','Leading lines through stone remains','Details and textures after rain','Low-angle shadows across paving']},
  {id:'basilica-aquileia',name:'Basilica di Aquileia',locality:'Aquileia, Friuli',lat:45.7705,lng:13.3680,category:'architecture',topics:['roman','details','recommended'],tag:'SACRED ARCHITECTURE',query:'Basilica di Aquileia',tags:{building:'basilica',tourism:'attraction'},shotIdeas:['Mosaic details and abstract patterns','Play with light and shadows','Architectural lines and symmetry','Frame the tower through arches']},
- {id:'roman-river-port',name:'Roman River Port',locality:'Aquileia, Friuli',lat:45.7669,lng:13.3700,category:'history',topics:['roman','coast','sunrise','long-exposure','details'],tag:'RIVER & ARCHAEOLOGY',query:'Aquileia Roman river port',tags:{waterway:'river'},shotIdeas:['Reflections and stone textures','Quay lines leading into the frame','Moody morning light or mist','Long exposure on the water where safe']},
- {id:'via-sacra',name:'Via Sacra',locality:'Aquileia, Friuli',lat:45.7682,lng:13.3707,category:'history',topics:['roman','nature','sunrise','sunset','long-exposure','recommended'],tag:'ANCIENT ROUTE',query:'Via Sacra Aquileia',tags:{historic:'path'},shotIdeas:['Central path with strong leading lines','Cypress silhouettes and backlight','A person for scale from a safe public point','Atmospheric fog after rain']},
+ {id:'roman-river-port',name:'Roman River Port',locality:'Aquileia, Friuli',lat:45.7669,lng:13.3700,category:'history',topics:['roman','coast','sunrise','long-exposure','details'],tag:'RIVER & ARCHAEOLOGY',query:'Aquileia Roman river port',guideScene:'river',tags:{waterway:'river'},shotIdeas:['Reflections and stone textures','Quay lines leading into the frame','Moody morning light or mist','Long exposure on the water where safe']},
+ {id:'via-sacra',name:'Via Sacra',locality:'Aquileia, Friuli',lat:45.7682,lng:13.3707,category:'history',topics:['roman','nature','sunrise','sunset','long-exposure','recommended'],tag:'ANCIENT ROUTE',query:'Via Sacra Aquileia',guideScene:'road',tags:{historic:'path'},shotIdeas:['Central path with strong leading lines','Cypress silhouettes and backlight','A person for scale from a safe public point','Atmospheric fog after rain']},
  {id:'aquileia-necropolis',name:'Necropolis',locality:'Aquileia, Friuli',lat:45.7674,lng:13.3751,category:'history',topics:['roman','nature','details','recommended'],tag:'BURIAL GROUND',query:'Aquileia Roman necropolis',tags:{historic:'archaeological_site'},shotIdeas:['Ancient tombs and inscriptions','Nature reclaiming weathered stone','Dramatic side light and shadows','Close-up details with a clean background']},
  {id:'domus-tito-macro',name:'Domus di Tito Macro',locality:'Aquileia, Friuli',lat:45.7689,lng:13.3664,category:'history',topics:['roman','details','recommended'],tag:'ROMAN DOMESTIC LIFE',query:'Domus di Tito Macro Aquileia',tags:{historic:'archaeological_site',building:'house'},shotIdeas:['Mosaic patterns and repeated geometry','Contrasts between ruin and nature','Tight details of floor surfaces','Use low side light to reveal texture']},
  {id:'grado-lagoon',name:'Grado Lagoon',locality:'Grado, Friuli',lat:45.6768,lng:13.3889,category:'viewpoint',topics:['coast','nature','sunrise','sunset','long-exposure','recommended'],tag:'LAGOON & WILDLIFE',query:'Grado Lagoon Friuli',tags:{natural:'wetland'},shotIdeas:['Casoni and their reflections','Minimal silhouettes against pastel light','Sunrise or sunset colour bands','Birds, boats and weathered textures']},
- {id:'isola-della-cona',name:'Isola della Cona',locality:'Staranzano, Friuli',lat:45.7157,lng:13.4872,category:'photoSpot',topics:['coast','nature','sunrise','sunset','details'],tag:'WETLAND & BIRDLIFE',query:'Isola della Cona birds',tags:{natural:'wetland',leisure:'nature_reserve'},shotIdeas:['Birds and their reflections from marked paths','Reeds as layered foreground silhouettes','Minimal frames at golden hour','Telephoto details without disturbing wildlife']},
+ {id:'isola-della-cona',name:'Isola della Cona',locality:'Staranzano, Friuli',lat:45.7157,lng:13.4872,category:'photoSpot',topics:['coast','nature','sunrise','sunset','details'],tag:'WETLAND & BIRDLIFE',query:'Isola della Cona birds',guideScene:'wetland',tags:{natural:'wetland',leisure:'nature_reserve'},shotIdeas:['Birds and their reflections from marked paths','Reeds as layered foreground silhouettes','Minimal frames at golden hour','Telephoto details without disturbing wildlife']},
  {id:'duino-rilke',name:'Duino – Rilke Trail',locality:'Duino, Friuli',lat:45.7733,lng:13.6086,category:'viewpoint',topics:['coast','nature','sunset','details','recommended'],tag:'CLIFFSIDE TRAIL',query:'Rilke Trail Duino',tags:{natural:'cliff'},shotIdeas:['Dramatic cliffs and open sea','Castle views framed by branches','Panoramic coastline layers','Cloudy weather for textured water']},
  {id:'val-rosandra',name:'Val Rosandra',locality:'Trieste, Friuli-Venezia Giulia',lat:45.6115,lng:13.8822,category:'viewpoint',topics:['nature','sunrise','details','long-exposure','recommended'],tag:'KARST VALLEY',query:'Val Rosandra waterfall',tags:{natural:'valley'},shotIdeas:['Layered limestone cliffs and forest','River details and small waterfalls','Long exposure with a tripod','Forest textures and filtered light']},
  {id:'miramare',name:'Castello di Miramare',locality:'Trieste, Friuli-Venezia Giulia',lat:45.7049,lng:13.7124,category:'architecture',topics:['coast','villages','sunset','details','recommended'],tag:'CASTLE BY THE SEA',query:'Miramare Castle Trieste',tags:{historic:'castle',building:'castle'},shotIdeas:['Castle and sea in one layered frame','Reflections from the shoreline','Frame architecture through trees','Blue-hour details around the grounds']}
@@ -1988,11 +2007,6 @@ $('fieldGuideGrid').addEventListener('click',event=>{
  }
 });
 window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('fieldGuidePage').hidden)closeFieldGuide();});
- $('copyPrompt').addEventListener('click',async()=>{
- const text=$('shotPrompt').value;
- try{await navigator.clipboard.writeText(text);$('copyPrompt').textContent='Copied';setTimeout(()=>$('copyPrompt').textContent='Copy prompt',1300);}
- catch(e){$('shotPrompt').focus();$('shotPrompt').select();document.execCommand('copy');$('copyPrompt').textContent='Selected';}
-});
 renderFieldGuide();
 loadSaved();
 window.addEventListener('resize',()=>{if(map)map.resize();});
