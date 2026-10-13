@@ -1679,8 +1679,7 @@ function renderSelectedShotIdeas(item){
 }
 function selectItem(item,options){
  state.selected=item;
- const photoIdeas=$('photoIdeaDetails');
- // Keep the map-first menu compact. Photo ideas open only when the user asks for them.
+ // Map place selection updates the on-page photography idea and nearby references.
  $('spotDetail').classList.add('show');
  $('detailEyebrow').textContent=item.category==='photo'?'Visual reference · source-linked':item.category==='photoSpot'?'Photo spot candidate · evidence-ranked':item.category==='parking'?'Parking candidate · verify on arrival':item.category==='history'?'History & place · sourced summary':item.category==='viewpoint'?'Mapped viewpoint · verify the view':'Photographic subject · map data';
  $('detailTitle').textContent=item.name;
@@ -1955,6 +1954,31 @@ async function loadFieldGuidePhotos(force){
 
 let fieldGuideDetailCardId=null;
 let fieldGuideDetailMode='wide';
+function fieldGuideCardAsItem(card){
+ if(card.originalItem)return {...card.originalItem,lat:card.lat,lng:card.lng,city:card.locality||card.originalItem.city||'',tags:card.tags||card.originalItem.tags||{}};
+ return {
+  id:'guide-place-'+card.id,
+  name:card.name,
+  lat:Number(card.lat),lng:Number(card.lng),distance:0,
+  category:card.category||'photoSpot',
+  source:'Photo Scout field guide',
+  sourceUrl:'https://www.openstreetmap.org/?mlat='+Number(card.lat)+'&mlon='+Number(card.lng)+'#map=16/'+Number(card.lat)+'/'+Number(card.lng),
+  summary:'A photography field-guide stop. The accompanying sketch and suggestions are illustrative; compare them with real visual references and the actual location.',
+  tags:card.tags||{},city:card.locality||'',
+  scenicKind:card.category==='viewpoint'?'landscape viewpoint':undefined,
+  why:'Field-guide selection at this approximate coordinate. Check exact viewing position, public access and local restrictions on site.'
+ };
+}
+function showGuideCardOnMap(card){
+ if(!card)return;
+ const item=fieldGuideCardAsItem(card);
+ closeFieldGuideDetail();
+ closeFieldGuide();
+ map.stop();
+ map.flyTo({center:[item.lng,item.lat],zoom:Math.max(map.getZoom(),14),duration:850});
+ scanAt({lat:item.lat,lng:item.lng},{fly:false});
+ selectItem(item,{keepMapView:true});
+}
 function openFieldGuideDetail(cardId){
  const card=fieldGuideCardLookup[cardId];
  if(!card)return;
@@ -2022,6 +2046,7 @@ function openFieldGuide(){
  window.requestAnimationFrame(()=>{ $('fieldGuidePage').scrollTop=0; if(map)map.resize(); });
 }
 function closeFieldGuide(){
+ if(!$('fieldGuideDetail').hidden)closeFieldGuideDetail();
  $('fieldGuidePage').hidden=true;
  document.body.classList.remove('field-guide-open');
  window.requestAnimationFrame(()=>{if(map)map.resize();});
@@ -2048,23 +2073,14 @@ $('fieldGuideFilters').querySelectorAll('[data-guide-filter]').forEach(button=>b
 $('fieldGuideGrid').addEventListener('click',event=>{
  const mapButton=event.target.closest('[data-guide-map]');
  if(mapButton){
-  const card=fieldGuideCardLookup[mapButton.dataset.guideMap];
-  if(!card)return;
-  closeFieldGuideDetail();
-  closeFieldGuide();
-  if(card.originalItem&&state.selected&&card.originalItem.id===state.selected.id){
-   map.flyTo({center:[card.lng,card.lat],zoom:Math.max(map.getZoom(),14.5),duration:850});
-   selectItem(card.originalItem);
-  }else{
-   map.flyTo({center:[card.lng,card.lat],zoom:14,duration:850});
-   scanAt({lat:card.lat,lng:card.lng},{fly:false});
-  }
+  showGuideCardOnMap(fieldGuideCardLookup[mapButton.dataset.guideMap]);
   return;
  }
  if(event.target.closest('a'))return;
  const article=event.target.closest('[data-guide-card]');
  if(article)openFieldGuideDetail(article.dataset.guideCard);
 });
+
 $('fieldGuideDetailClose').addEventListener('click',closeFieldGuideDetail);
 $('fieldGuideDetail').addEventListener('click',event=>{
  if(event.target.closest('[data-guide-detail-close]'))closeFieldGuideDetail();
@@ -2075,19 +2091,7 @@ $('fieldGuideDetail').addEventListener('click',event=>{
   if(card)renderFieldGuideDetailBody(card);
  }
  const mapButton=event.target.closest('[data-guide-modal-map]');
- if(mapButton){
-  const card=fieldGuideCardLookup[mapButton.dataset.guideModalMap];
-  if(!card)return;
-  closeFieldGuideDetail();
-  closeFieldGuide();
-  if(card.originalItem&&state.selected&&card.originalItem.id===state.selected.id){
-   map.flyTo({center:[card.lng,card.lat],zoom:Math.max(map.getZoom(),14.5),duration:850});
-   selectItem(card.originalItem);
-  }else{
-   map.flyTo({center:[card.lng,card.lat],zoom:14,duration:850});
-   scanAt({lat:card.lat,lng:card.lng},{fly:false});
-  }
- }
+ if(mapButton)showGuideCardOnMap(fieldGuideCardLookup[mapButton.dataset.guideModalMap]);
 });
 
 window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('fieldGuideDetail').hidden)closeFieldGuideDetail();else if(event.key==='Escape'&&!$('fieldGuidePage').hidden)closeFieldGuide();});
