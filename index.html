@@ -1357,7 +1357,9 @@ async function scanAt(c,opts){
  const imageCount=state.photos.length;
  const themed=state.photos.filter(p=>!p.geotagged).length;
  const scoutKm=Math.max(25,Math.min(30,rad/1000*2));
- if(failures.size){
+ if(!state.results.length&&!parks&&!state.scenicSpots.length){
+  setStatus('No nearby features returned','Your clicked pin and in-app shot idea are still available. '+(failures.size?'Nearby data sources did not respond: '+Array.from(failures).join(', ')+'.':'No mapped features were returned around this coordinate; try a larger radius or click a nearby built-up area.'),'warn');
+ }else if(failures.size){
   setStatus('Partial results loaded',state.results.length+' nearby places · '+parks+' parking features · '+histories+' history entries · '+state.scenicSpots.length+' photo-spot candidates within about '+scoutKm+' km · '+imageCount+' images ('+themed+' inspiration refs). Some sources unavailable: '+Array.from(failures).join(', ')+'.','warn');
  }else{
   setStatus('Photo stop ready',state.results.length+' nearby places · '+parks+' parking features · '+histories+' history entries · '+state.scenicSpots.length+' photo-spot candidates within about '+scoutKm+' km · '+imageCount+' on-screen image refs. Check access and line of sight before driving.','');
