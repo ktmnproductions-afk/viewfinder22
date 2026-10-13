@@ -1183,8 +1183,8 @@ function resetGeneratedConcept(){
  const button=$('generateConcept');
  if(image)image.removeAttribute('src');
  if(wrap)wrap.hidden=true;
- if(status)status.textContent='Choose a composition. The AI sketch needs a real place-matched reference photo; it will not generate a random scene without one.';
- if(button){button.disabled=false;button.textContent='Generate image idea';}
+ if(status)status.textContent='Select a named landmark and wait for its matched reference photo. Generate an AI pencil sketch from that photograph; no random fallback is used.';
+ if(button){button.disabled=false;button.textContent='Generate AI pencil sketch';}
 }
 function currentConceptTarget(){
  // A parking point is useful for navigation but is not itself the photo subject.
@@ -1374,7 +1374,7 @@ async function generateConcept(){
   if(!response.ok){
    let detail='';
    try{const problem=await response.json();detail=problem.error?.message||problem.message||problem.detail||'';}catch(_){}
-   if(response.status===401)throw new Error('Pollinations rejected this API key (401). Check the key at enter.pollinations.ai and try again.');
+   if(response.status===401){photoScoutImageKey='';throw new Error('Pollinations rejected this API key (401). Paste a valid key above and click Generate again.');}
    if(response.status===402)throw new Error('The Pollinations account has no available image-generation balance for this request (402). Check its account/usage page.');
    if(response.status===429)throw new Error('Image generation is rate-limited (429). Wait a little and retry.');
    throw new Error('Image-editing service returned HTTP '+response.status+(detail?': '+String(detail).slice(0,180):'')+'.');
