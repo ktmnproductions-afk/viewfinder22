@@ -1221,7 +1221,7 @@ function resetGeneratedConcept(){
  if(image)image.removeAttribute('src');
  if(wrap)wrap.hidden=true;
  if(status)status.textContent='Select a named landmark and wait for its matched reference photo. Generate an AI pencil sketch in this panel; no random fallback is used.';
- if(button){button.disabled=false;button.textContent='Generate sketch idea';}
+ if(button){button.disabled=false;button.textContent='Make pencil sketch';}
 }
 function currentConceptTarget(){
  // A parking point is useful for navigation but is not itself the photo subject.
@@ -1442,25 +1442,27 @@ async function generateConcept(){
  const status=$('conceptStatus');
  const button=$('generateConcept');
  const wrap=$('generatedVisualWrap');
- const output=$('generatedVisual');
+ const output=$('autoSketchImage');
+ const duplicateOutput=$('generatedVisual');
+ if(wrap)wrap.hidden=true;
+ if(duplicateOutput){duplicateOutput.removeAttribute('src');duplicateOutput.style.filter='';}
  if(!item){status.textContent='Click the map or choose a photo spot first.';return;}
  const mode=$('conceptMode')?.value||'wide';
  const instantSketch=conceptSketchData(item,mode);
- // Always reveal a composition drawing first; external generation must never
- // gate access to the idea or leave the preview blank.
+ // Reuse the existing preview area: never add a second copy of the same sketch.
+ // The fallback is illustrative; a real AI result may replace this image only.
  output.src=instantSketch;
  output.style.filter='';
- output.alt='Instant subject-aware pencil field sketch for '+item.name+' using Canon EOS R50 composition ideas. Illustrative only, not a verified view.';
- wrap.hidden=false;
- status.textContent='Instant composition sketch ready for '+item.name+'. Checking for a place-matched reference photo for optional AI refinement…';
- wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+ output.alt='Local illustrative composition sketch for '+item.name+' using Canon EOS R50 composition ideas. Not an AI-generated image or verified view.';
+ if(wrap)wrap.hidden=true;
+ status.textContent='Composition guide ready for '+item.name+'. Checking for a place-matched photo before attempting image-to-image generation…';
  const selected=state.selected;
  const refs=selected&&selected.id===item.id?Array.from($('detailPhotoRefs')?.querySelectorAll('.detail-photo img')||[]):[];
  const reference=refs.find(img=>/^https?:/i.test(img.currentSrc||img.src)&&img.complete&&img.naturalWidth>80);
  if(!reference){
-  status.textContent='Your location-specific sketch is ready above. No loaded place-matched photograph is available for image-to-image AI, so I kept the sketch instead of using an unrelated image. The prompt below can be refined or copied.';
+  status.textContent='No place-matched reference photo was found, so no AI image was generated. The single image above is a local composition illustration. Connecting GPT image generation would let us generate from the place description, even when no reference photo is available.';
   button.disabled=false;
-  button.textContent='Create another sketch';
+  button.textContent='No reference photo found';
   return;
  }
  const prompt=imageConceptPrompt(item,mode);
@@ -1500,8 +1502,8 @@ async function generateConcept(){
   status.textContent='The instant sketch is ready, but the AI image service did not return an edit: '+String(aiError&&aiError.message||aiError).slice(0,120)+'. No random substitute was shown.';
  }finally{
   output.onload=null;output.onerror=null;
-  button.disabled=false;button.textContent='Create another sketch';
-  if(!wrap.hidden)wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+  button.disabled=false;button.textContent='Make pencil sketch';
+  // Keep the existing preview in place; do not scroll to or reveal a duplicate panel.
  }
 }
 async function renderDetailPhotoRefs(item){
