@@ -214,6 +214,12 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
 .fieldguide-launcher{margin:13px 13px 0;padding:14px;border:1px solid #d9ddce;border-radius:12px;background:linear-gradient(140deg,#f1f2e7,#e6eadc);color:#2e3a30}.fieldguide-launcher-kicker{font:9px Inter,system-ui,sans-serif;letter-spacing:.16em;color:#77816f}.fieldguide-launcher h3{font:20px Georgia,serif;font-weight:400;margin:6px 0}.fieldguide-launcher p{font:11px/1.55 Inter,system-ui,sans-serif;color:#687364;margin:0 0 11px}.fieldguide-launcher .btn{width:100%;white-space:normal}.fieldguide-detail-cta{margin-bottom:12px}.fieldguide-detail-cta p{font:11px/1.5 Inter,system-ui,sans-serif;color:#6f796b;margin:8px 0}
 
 .guide-photo-failed{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:140px;padding:8px;text-align:center;background:#e7e6dc;color:#72796d;font:10px/1.4 Inter,system-ui,sans-serif}.guide-photo-failed small{font-size:9px}
+
+.selected-shot-ideas{margin:8px 0 12px;padding-left:20px;color:#cbd4c8;font:11px/1.55 Inter,system-ui,sans-serif}
+.selected-shot-ideas li{padding-left:2px;margin:3px 0}
+.fieldguide-detail-cta .selected-concept-img{display:block;width:100%;height:auto;max-height:205px;object-fit:cover;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:#f5f2e8}
+.fieldguide-detail-cta .btn{width:100%}
+
 </style>
 </head>
 <body>
@@ -306,9 +312,11 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
       <div id="spotParkingResults"><div class="empty">Parking results will appear here after you select a place.</div></div>
     </div>
     <div class="selected-concept-preview fieldguide-detail-cta">
-      <div class="section-heading"><h3>Photography field guide</h3><span class="count">Shot ideas & references</span></div>
-      <p class="concept-note">Explore visual references and composition ideas, then return to the map to check the location and access.</p>
-      <button class="btn primary" id="selectedOpenFieldGuide" type="button">Open ideas for this place ↗</button>
+      <div class="section-heading"><h3>Photo idea for this spot</h3><span class="count" id="selectedIdeaLens">Canon R50 · 18–24 mm</span></div>
+      <img id="selectedLocalSketch" class="selected-concept-img" alt="Illustrative pencil composition for the selected map location">
+      <p class="concept-note" id="selectedLocalSketchCaption">A location-aware composition study. It is an idea for framing, not a verified photograph or exact sightline.</p>
+      <ol class="selected-shot-ideas" id="selectedShotIdeas"><li>Use the foreground to lead towards the subject.</li><li>Balance the main subject with surrounding context.</li><li>Look for a closer texture or detail frame.</li></ol>
+      <button class="btn primary" id="selectedOpenFieldGuide" type="button">More ideas & reference photos ↗</button>
     </div>
     <div class="detail-reference-block"><div class="section-heading"><h3>Visual references for this stop</h3><span class="count" id="detailPhotoCount">—</span></div><div class="detail-photo-grid" id="detailPhotoRefs"><div class="empty">Drop a pin and select a spot to find source-linked image references.</div></div></div>
         <div class="detail-actions"><a class="btn primary" id="driveLink" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Drive to spot ↗</a><button class="btn" id="saveSelected">☆ Save spot</button></div>
@@ -1542,7 +1550,77 @@ async function renderDetailPhotoRefs(item){
  }).join('');
 
 }
-function selectItem(item){
+function selectedShotIdeasFor(item){
+ const name=String(item&&item.name||'this place');
+ const tags=item&&item.tags||{};
+ const facts=[name,tags.natural,tags.waterway,tags.historic,tags.tourism,tags.building,tags.leisure,tags.highway,item&&item.scenicKind,item&&item.summary,item&&item.why].filter(Boolean).join(' ').toLowerCase();
+ if(/lagoon|wetland|marsh|reed|bird|isola della cona|wildlife/.test(facts))return [
+  'Wide · 18–24 mm: layer reeds or a boardwalk in front of water and distant silhouettes.',
+  'Context · 35–70 mm: frame one hut, bird or shoreline shape against reflected colour.',
+  'Detail · 100–150 mm: isolate a bird, reed pattern or reflection from a respectful distance.'
+ ];
+ if(/river port|river|canal|quay|harbour|harbor|waterway|elster/.test(facts))return [
+  'Wide · 18–24 mm: let the quay, path or riverbank lead the eye along the water.',
+  'Context · 35–70 mm: balance stonework with reflections and opposite-bank details.',
+  'Detail · 100–150 mm: compress mooring posts, repeating stone textures and reflections.'
+ ];
+ if(/via sacra|trail|footpath|pathway|roman road|avenue|cypress|tree-lined/.test(facts))return [
+  'Wide · 18–24 mm: use the path as a strong leading line into the scene.',
+  'Context · 35–70 mm: frame a corridor of trees or columns with balanced symmetry.',
+  'Detail · 100–150 mm: isolate repeated trunks, paving patterns or shafts of light.'
+ ];
+ if(/battle|battlefield|siege|historic field|war site/.test(facts))return [
+  'Wide · 18–24 mm: show the open landscape with a path or grass in the foreground.',
+  'Context · 35–70 mm: frame real terrain, a river bend or an existing marker.',
+  'Detail · 100–150 mm: compress tree lines and terrain folds; do not invent missing historic structures.'
+ ];
+ if(/lagoon|coast|sea|beach|island|adriatic|cliff|shore|lighthouse|duino|miramare/.test(facts))return [
+  'Wide · 18–24 mm: combine shore, water and headland with a foreground edge.',
+  'Context · 35–70 mm: balance a castle, boat or headland against the sea.',
+  'Detail · 100–150 mm: compress islands, cliffs and water bands into layered shapes.'
+ ];
+ if(/mountain|alps|ridge|summit|peak|hill|valley|waterfall|rosandra|forest|wood/.test(facts))return [
+  'Wide · 18–24 mm: add a trail, rock or water edge in the foreground for depth.',
+  'Context · 35–70 mm: frame a single ridge, waterfall or limestone wall with surroundings.',
+  'Detail · 100–150 mm: stack distant ridgelines or isolate repeating textures in rock and forest.'
+ ];
+ if(/necropolis|tomb|grave|burial|cemetery|mausoleum/.test(facts))return [
+  'Wide · 18–24 mm: show the tombs in their landscape without crowding the frame.',
+  'Context · 35–70 mm: use side light to separate stone monuments from vegetation.',
+  'Detail · 100–150 mm: capture inscriptions and weathered surfaces only where access permits.'
+ ];
+ if(/mosaic|domus|villa|forum|roman|ruin|archaeolog/.test(facts)||item.category==='history')return [
+  'Wide · 18–24 mm: establish the ruin and its surroundings; keep verticals clean.',
+  'Context · 35–70 mm: use columns, arches or walls to create a frame within the frame.',
+  'Detail · 100–150 mm: study mosaics, inscriptions, stone texture and repeating patterns.'
+ ];
+ if(/church|basilica|cathedral|chapel|castle|palace|architecture|building|tower|bridge|miramare/.test(facts)||item.category==='architecture')return [
+  'Wide · 18–24 mm: fit the structure into its setting, checking verticals and foreground clutter.',
+  'Context · 35–70 mm: frame an arch, facade or doorway with a little surrounding context.',
+  'Detail · 100–150 mm: isolate stone, windows, ornament and repeating architectural geometry.'
+ ];
+ return [
+  'Wide · 18–24 mm: build a foreground, clear main subject and layered background.',
+  'Context · 35–70 mm: balance the main subject with one or two supporting details.',
+  'Detail · 100–150 mm: look for textures, repeating shapes, silhouettes and compressed layers.'
+ ];
+}
+function renderSelectedShotIdeas(item){
+ if(!item)return;
+ const image=$('selectedLocalSketch');
+ const caption=$('selectedLocalSketchCaption');
+ const lens=$('selectedIdeaLens');
+ const list=$('selectedShotIdeas');
+ const variation=(state.scanCount||0)+String(item.id||item.name||'').length;
+ if(image){
+  image.src=conceptSketchData(item,'wide',variation);
+  image.alt='Illustrative pencil composition for '+String(item.name||'the selected spot')+'. The sketch suggests framing and is not a verified view.';
+ }
+ if(caption)caption.textContent='A location-aware composition study based on the place name and available map tags. Use it to plan a frame; confirm the real view and safe access on site.';
+ if(lens)lens.textContent='Canon R50 · 18–150 mm';
+ if(list)list.innerHTML=selectedShotIdeasFor(item).map(idea=>'<li>'+esc(idea)+'</li>').join('');
+}
+function selectItem(item,options){
  state.selected=item;
  const photoIdeas=$('photoIdeaDetails');
  // Keep the map-first menu compact. Photo ideas open only when the user asks for them.
@@ -1555,6 +1633,7 @@ function selectItem(item){
  if(item.category==='photo') history='Image reference by '+(item.artist||'an unlisted photographer')+'. Licence: '+(item.license||'see the original file page')+'. '+(item.geotagged?'This image is geotagged near this coordinate; the exact camera position is not independently confirmed.':'This image matches the area/topic but has no verified shooting coordinates.');
  if(item.category==='parking')history='Mapped parking area/point from OpenStreetMap data. The marker may indicate the centre of a mapped lot, not its vehicle entrance. This does not confirm that parking is currently open, free, legal, safe, or available. Check the source geometry, approach road, access signs and restrictions before driving in.';
  const gear='Canon EOS R50 + RF-S 18–150mm: 18–24mm for a wide establishing frame, 35–70mm for city-with-context, 100–150mm to compress distant skyline and mountain layers.';
+ renderSelectedShotIdeas(item);
  $('detailHistory').innerHTML='<p>'+esc(history)+'</p>'+(item.category==='photoSpot'?'<p>'+esc(gear)+'</p>':'')+'<p><a class="footer-link" href="'+esc(safeLink(item.wikiUrl||item.sourceUrl||'#'))+'" target="_blank" rel="noopener">Open source / more history ↗</a></p>';
  renderSpotParking(item);
  loadParkingNearSelected(item);
@@ -1566,26 +1645,26 @@ function selectItem(item){
  // The field guide replaces the old editable AI-image prompt.
  // Field-guide content is rendered when opened.
  const viewZoom=item.category==='parking'?16.5:item.category==='photoSpot'?14.8:item.category==='viewpoint'?15.5:16;
- // Selecting a menu result must produce an unmistakable camera move and leave
- // the chosen coordinate visible. On phones, tuck the menu away first so it
- // cannot cover the destination; on wider screens offset the target to the
- // open map area beside the compact sidebar.
- map.stop();
- const isSmallScreen=window.matchMedia('(max-width: 680px)').matches;
- const toggle=$('sidebarToggle');
- if(isSmallScreen&&!document.body.classList.contains('sidebar-collapsed')&&toggle)toggle.click();
- window.requestAnimationFrame(()=>{
-  if(!map)return;
-  map.resize();
-  map.flyTo({
-   center:[item.lng,item.lat],
-   zoom:Math.max(map.getZoom(),viewZoom),
-   offset:(!isSmallScreen&&!document.body.classList.contains('sidebar-collapsed'))?[150,0]:[0,0],
-   duration:900,
-   essential:true
+ // Results selected from lists focus the map. A direct click should keep
+ // its current framing so the user can immediately inspect the nearby results.
+ if(!(options&&options.keepMapView)){
+  map.stop();
+  const isSmallScreen=window.matchMedia('(max-width: 680px)').matches;
+  const toggle=$('sidebarToggle');
+  if(isSmallScreen&&!document.body.classList.contains('sidebar-collapsed')&&toggle)toggle.click();
+  window.requestAnimationFrame(()=>{
+   if(!map)return;
+   map.resize();
+   map.flyTo({
+    center:[item.lng,item.lat],
+    zoom:Math.max(map.getZoom(),viewZoom),
+    offset:(!isSmallScreen&&!document.body.classList.contains('sidebar-collapsed'))?[150,0]:[0,0],
+    duration:900,
+    essential:true
+   });
+   map.once('moveend',()=>renderMarkers());
   });
-  map.once('moveend',()=>renderMarkers());
- });
+ }
  renderResults();
  renderMarkers();
  $('spotDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -1627,38 +1706,40 @@ $('useLocation').addEventListener('click',()=>{
  },()=>setStatus('Could not read your location','You can still click anywhere on the map or search for a destination.','warn'),{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
 });
 map.on('click',e=>{
- // Prefer selecting a named basemap landmark when the user taps its label/feature.
- // Custom Photo Scout markers stop propagation and are handled by their own click handlers.
+ // Always scan the clicked coordinate first. Previously, any named basemap
+ // label selected a feature and returned early, skipping the nearby-place scan.
  let feature=null;
  try{
   const features=map.queryRenderedFeatures(e.point)||[];
   const ranked=features.map(f=>{
    const p=f.properties||{};
-   const name=p.name||p['name:en']||p.name_en||p.name_local||p.ref||'';
+   const name=p.name||p['name:en']||p.name_en||p.name_local||'';
    const layer=f.layer||{};
-   const sourceLayer=String(layer['source-layer']||'').toLowerCase();
-   const layerId=String(layer.id||'').toLowerCase();
+   const layerInfo=String(layer['source-layer']||'').toLowerCase()+' '+String(layer.id||'').toLowerCase();
    let score=0;
    if(name)score+=10;
-   if(/poi|place|housenumber|building|landuse|park|historic|tourism|natural/.test(sourceLayer+' '+layerId))score+=5;
+   if(/poi|place|building|landuse|park|historic|tourism|natural/.test(layerInfo))score+=5;
    if(p.historic||p.tourism||p.amenity||p.building||p.natural||p.place)score+=5;
-   if(/road|transportation|boundary|waterway/.test(sourceLayer+' '+layerId))score-=4;
+   if(/road|transportation|boundary|waterway/.test(layerInfo))score-=4;
    return {f,name:String(name).trim(),score};
   }).filter(x=>x.name&&x.score>=10).sort((a,b)=>b.score-a.score);
   feature=ranked[0]||null;
  }catch(err){}
+ const clicked={lat:e.lngLat.lat,lng:e.lngLat.lng};
+ scanAt(clicked,{fly:false});
+ let item;
  if(feature){
   const p=feature.f.properties||{};
   const tags={};
-  ['historic','tourism','amenity','building','natural','place','description','wikidata','wikipedia','leisure'].forEach(k=>{if(p[k]!=null)tags[k]=p[k];});
-  const name=feature.name;
+  ['historic','tourism','amenity','building','natural','place','description','wikidata','wikipedia','leisure','waterway','highway','man_made'].forEach(k=>{if(p[k]!=null)tags[k]=p[k];});
   const kind=String(tags.historic||tags.tourism||tags.amenity||tags.building||tags.natural||tags.place||'').toLowerCase();
-  const category=/parking/.test(kind)?'parking':/viewpoint/.test(kind)?'viewpoint':/historic|castle|monument|archaeological|church|museum/.test(kind)?'history':/building|architecture/.test(kind)?'architecture':'architecture';
-  const item={id:'basemap-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+e.lngLat.lat.toFixed(5)+'-'+e.lngLat.lng.toFixed(5),name,lat:e.lngLat.lat,lng:e.lngLat.lng,distance:state.center?haversine(state.center,{lat:e.lngLat.lat,lng:e.lngLat.lng}):0,category,source:'Basemap label · exact feature geometry not verified',summary:'You selected the visible map label “'+name+'”. The map click gives an approximate point on the label, not necessarily the building entrance or exact footprint. Use the source links and verify the position before navigating.',tags,city:state.detectedLocality||''};
-  selectItem(item);
-  return;
+  const category=/parking/.test(kind)?'parking':/viewpoint/.test(kind)?'viewpoint':/historic|castle|monument|archaeological|church|museum|roman/.test((kind+' '+feature.name).toLowerCase())?'history':/building|architecture|cathedral|basilica|palace|tower|bridge/.test((kind+' '+feature.name).toLowerCase())?'architecture':'photoSpot';
+  item={id:'basemap-'+feature.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+clicked.lat.toFixed(5)+'-'+clicked.lng.toFixed(5),name:feature.name,lat:clicked.lat,lng:clicked.lng,distance:0,category,source:'Selected basemap feature · nearby points are loading',summary:'You clicked the map label “'+feature.name+'”. The pin is the clicked map coordinate, not necessarily the building entrance or exact viewing position. Nearby mapped places are being loaded around this point.',tags,city:'',scenicKind:category==='photoSpot'?'landscape and local views':undefined,why:'Selected directly on the map. This is a starting point for finding nearby photographic subjects; verify the actual sightline and safe access.'};
+ }else{
+  const coords=clicked.lat.toFixed(5)+', '+clicked.lng.toFixed(5);
+  item={id:'map-pin-'+clicked.lat.toFixed(5)+'-'+clicked.lng.toFixed(5),name:'Map pin · '+coords,lat:clicked.lat,lng:clicked.lng,distance:0,category:'photoSpot',source:'Your selected map pin',summary:'A user-selected map coordinate. Nearby landmarks, architecture, nature and parking are being searched around this point.',tags:{},city:'',scenicKind:'local landscape and streetscape',why:'Creative ideas for the clicked area. The exact viewpoint and access are not verified.'};
  }
- scanAt({lat:e.lngLat.lat,lng:e.lngLat.lng},{fly:true});
+ selectItem(item,{keepMapView:true});
 });
 map.on('mousemove',e=>{
  try{
