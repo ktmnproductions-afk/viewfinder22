@@ -1294,6 +1294,63 @@ function updateConceptTargetName(){
  if(compressed)compressed.textContent=isArchitecture?'At '+name+', use 100–150 mm to isolate repeating windows, roof textures, towers or graphic details; watch for converging verticals.':'At '+name+', use 100–150 mm to compress rooflines, distant hills or coastal layers if the sightline allows; try several heights for cleaner overlaps.';
  renderConceptSketch(item,$('conceptMode')?.value||'wide');
 }
+async function createPhotoDerivedPencilSketch(reference){
+ return await new Promise((resolve,reject)=>{
+  const source=new Image();
+  source.crossOrigin='anonymous';
+  source.onload=()=>{
+   try{
+    const maxWidth=1280;
+    const scale=Math.min(1,maxWidth/source.naturalWidth);
+    const width=Math.max(1,Math.round(source.naturalWidth*scale));
+    const height=Math.max(1,Math.round(source.naturalHeight*scale));
+    const canvas=document.createElement('canvas');
+    canvas.width=width;canvas.height=height;
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+    if(!ctx)throw new Error('Canvas drawing is unavailable in this browser.');
+    ctx.drawImage(source,0,0,width,height);
+    const pixels=ctx.getImageData(0,0,width,height).data;
+    const count=width*height;
+    const gray=new Float32Array(count);
+    for(let p=0,i=0;p<count;p++,i+=4)gray[p]=pixels[i]*.299+pixels[i+1]*.587+pixels[i+2]*.114;
+    const out=ctx.createImageData(width,height);
+    const data=out.data;
+    for(let y=0;y<height;y++){
+     for(let x=0;x<width;x++){
+      const p=y*width+x,i=p*4;
+      const xm=Math.max(0,x-1),xp=Math.min(width-1,x+1),ym=Math.max(0,y-1),yp=Math.min(height-1,y+1);
+      const tl=gray[ym*width+xm],tc=gray[ym*width+x],tr=gray[ym*width+xp];
+      const ml=gray[y*width+xm],mr=gray[y*width+xp];
+      const bl=gray[yp*width+xm],bc=gray[yp*width+x],br=gray[yp*width+xp];
+      const gx=-tl+tr-2*ml+2*mr-bl+br;
+      const gy=-tl-2*tc-tr+bl+2*bc+br;
+      const edge=Math.min(205,Math.hypot(gx,gy)*.82);
+      const shade=(255-gray[p])*.13;
+      const paper=Math.min(251,Math.max(220,248-(255-gray[p])*.075));
+      const ink=Math.max(24,Math.min(252,Math.round(paper-edge-shade)));
+      data[i]=ink;
+      data[i+1]=Math.min(255,ink+1);
+      data[i+2]=Math.min(255,ink+3);
+      data[i+3]=255;
+     }
+    }
+    ctx.fillStyle='#f6f2e8';ctx.fillRect(0,0,width,height);
+    ctx.putImageData(out,0,0);
+    ctx.strokeStyle='rgba(90,83,69,.17)';ctx.lineWidth=Math.max(.7,width/1400);
+    ctx.setLineDash([Math.max(4,width/150),Math.max(5,width/110)]);
+    ctx.beginPath();
+    ctx.moveTo(width/3,0);ctx.lineTo(width/3,height);
+    ctx.moveTo(width*2/3,0);ctx.lineTo(width*2/3,height);
+    ctx.moveTo(0,height/3);ctx.lineTo(width,height/3);
+    ctx.moveTo(0,height*2/3);ctx.lineTo(width,height*2/3);
+    ctx.stroke();
+    resolve(canvas.toDataURL('image/jpeg',.94));
+   }catch(error){reject(error);}
+  };
+  source.onerror=()=>reject(new Error('The source photo could not be loaded for local sketch rendering.'));
+  source.src=reference.currentSrc||reference.src;
+ });
+}
 async function generateConcept(){
  const item=currentConceptTarget();
  const status=$('conceptStatus');
@@ -1316,38 +1373,48 @@ async function generateConcept(){
   width:'1024',
   height:'576',
   nologo:'true',
+  private:'true',
   seed:String(Math.floor(Math.random()*1000000)),
   image:reference.currentSrc||reference.src
  });
  const src='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?'+params.toString();
  button.disabled=true;
  button.textContent='Sketching from real photo…';
- status.textContent='Making a pencil sketch from the actual matched photo of '+item.name+'. The source photograph is sent as the image reference; the result appears in this small window below.';
+ status.textContent='Trying to create an AI pencil sketch using the actual matched photograph of '+item.name+'. If the image service is unavailable, the same photo will be rendered as a pencil sketch in this window.';
  wrap.hidden=true;
- output.onload=null;
- output.onerror=null;
+ output.onload=null;output.onerror=null;output.style.filter='';
  try{
   await new Promise((resolve,reject)=>{
    let settled=false;
    const finish=(fn,value)=>{if(settled)return;settled=true;window.clearTimeout(timer);output.onload=null;output.onerror=null;fn(value);};
-   const timer=window.setTimeout(()=>finish(reject,new Error('The image service did not return a sketch within 90 seconds. Please try again.')),90000);
+   const timer=window.setTimeout(()=>finish(reject,new Error('AI image service timed out')),45000);
    output.onload=()=>finish(resolve,true);
-   output.onerror=()=>finish(reject,new Error('The image service could not create a sketch from this reference photo. The service may be unavailable or may reject the source image. Try another matched photo in a moment.'));
+   output.onerror=()=>finish(reject,new Error('AI image service did not return an image'));
    output.src=src;
    if(output.complete&&output.naturalWidth>0)finish(resolve,true);
   });
-  output.alt='AI-generated pencil composition sketch based on the matched reference photograph of '+item.name+'. Compare with the source image; AI can alter details.';
+  output.alt='AI-generated pencil composition sketch based on the matched reference photograph of '+item.name+'. Compare with the original source; AI can alter details.';
   wrap.hidden=false;
-  status.textContent='Sketch returned from the selected place-matched photo. Compare the drawing with the reference thumbnails; AI may still alter fine details.';
-  wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
- }catch(err){
-  wrap.hidden=true;
-  status.textContent=String(err&&err.message||err).slice(0,280)+' No random substitute was shown.';
+  status.textContent='AI sketch returned using the selected place-matched reference photo. Compare fine details with the source image.';
+ }catch(aiError){
+  try{
+   const localSketch=await createPhotoDerivedPencilSketch(reference);
+   output.src=localSketch;
+   output.style.filter='';
+   output.alt='Pencil-style sketch rendered directly from the real reference photograph of '+item.name+'. The visible layout comes from the source image.';
+   wrap.hidden=false;
+   status.textContent='Showing a pencil sketch rendered directly from the real reference photo of '+item.name+'. The AI service did not return a usable image, so this sketch preserves the source photo instead of showing a random scene.';
+  }catch(localError){
+   output.src=reference.currentSrc||reference.src;
+   output.style.filter='grayscale(1) contrast(1.65) brightness(1.12)';
+   output.alt='Monochrome fallback of the real reference photograph of '+item.name+'.';
+   wrap.hidden=false;
+   status.textContent='The AI service and local sketch renderer both failed. Showing the actual matched photo in monochrome so no random image is substituted. Details: '+String(localError&&localError.message||localError).slice(0,130);
+  }
  }finally{
-  output.onload=null;
-  output.onerror=null;
-  button.disabled=false;
-  button.textContent='Generate AI pencil sketch';
+  output.onload=null;output.onerror=null;
+  button.disabled=false;button.textContent='Generate AI pencil sketch';
+  if(!wrap.hidden)wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
  }
 }
 async function renderDetailPhotoRefs(item){
