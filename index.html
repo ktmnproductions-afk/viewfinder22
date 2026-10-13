@@ -1242,106 +1242,177 @@ function currentConceptTarget(){
 function xmlEsc(value){
  return String(value==null?'':value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
 }
-function conceptSketchData(item,mode){
+function conceptSketchData(item,mode,variation){
  const name=String(item&&item.name||'Pinned photo location');
  const locality=String(item&&(item.city||state.detectedLocality)||'');
  const category=String(item&&item.category||'photoSpot');
  const tags=item&&item.tags||{};
- const facts=[name,locality,tags.natural,tags.tourism,tags.waterway,tags.building,tags.historic,item&&item.scenicKind].filter(Boolean).join(' ').toLowerCase();
+ const facts=[name,locality,tags.natural,tags.tourism,tags.waterway,tags.building,tags.historic,tags.amenity,tags.leisure,item&&item.scenicKind,item&&item.summary,item&&item.history,item&&item.why].filter(Boolean).join(' ').toLowerCase();
  const modeValue=mode||'wide';
  const lens=modeValue==='compressed'?'100–150 mm':modeValue==='context'?'35–70 mm':'18–24 mm';
- const isCoastal=/coast|sea|harbour|harbor|bay|marina|beach|waterfront|island|lighthouse|port|promenade|shore|kvarner|adriatic/.test(facts);
+ const isBattle=/battle|battlefield|battleground|siege|campaign|war memorial|historic battlefield|conflict site|military history/.test(facts);
+ const isCoastal=/coast|sea|harbour|harbor|bay|marina|beach|waterfront|island|lighthouse|port|promenade|shore|kvarner|adriatic|coastline/.test(facts)||/^(coastline|bay|beach)$/.test(String(tags.natural||'').toLowerCase());
  const isCross=/\b(cross|crucifix|wayside|roadside shrine|wayside shrine)\b/.test(facts);
- const isChurch=/church|chapel|basilica|cathedral|monastery|abbey/.test(facts);
- const isArchitecture=category==='architecture'||category==='history'||isChurch||/castle|monument|fort|historic building|architecture|kaštel|kastel/.test(facts);
- const isLookout=category==='photoSpot'||category==='viewpoint'||/viewpoint|lookout|peak|hill|ridge|mountain|panorama|vista|cityscape|skyline|belvedere/.test(facts);
- const useCityLayers=isLookout||/city|town|village|rooftops|skyline|kastav|rijeka|aquileia/.test(facts);
- const title=xmlEsc(name.length>42?name.slice(0,39)+'…':name);
+ const isChurch=/church|chapel|basilica|cathedral|monastery|abbey|kapelle|kirche/.test(facts)||/^(church|chapel|cathedral|monastery)$/.test(String(tags.building||'').toLowerCase());
+ const isCastle=/castle|fortress|fortification|citadel|palace|keep|bastion|castell|kaštel|kastel/.test(facts)||/^(castle|fort|palace)$/.test(String(tags.historic||'').toLowerCase());
+ const isRuin=/ruin|archaeolog|roman|ancient|temple|amphitheatre|amphitheater|forum|aqueduct|colosseum|excavation|ruins/.test(facts)||/^(ruins|archaeological_site)$/.test(String(tags.historic||'').toLowerCase());
+ const isMonument=/memorial|monument|obelisk|cenotaph|statue|tomb|grave|cemetery|mausoleum/.test(facts)||String(tags.historic||'').toLowerCase()==='memorial';
+ const isArchitecture=category==='architecture'||isChurch||isCastle||isRuin||isCross||/town hall|city hall|palace|historic building|facade|mansion|manor house|bridge|railway station|tower/.test(facts);
+ const isUrban=/old town|old city|city centre|city center|cityscape|skyline|street|square|market|town hall|city hall|rooftops|downtown|historic centre|historic center|urban/.test(facts)||/^(city|town|square|street)$/.test(String(tags.place||'').toLowerCase());
+ const isMountain=/mountain|alps|alpine|ridge|summit|peak|hill|mount |valley|glacier|pass\b|highlands|panorama|lookout|belvedere|viewpoint/.test(facts)||/^(peak|ridge|cliff|mountain|valley)$/.test(String(tags.natural||'').toLowerCase());
+ const isRiver=/river|waterfall|watercourse|riverbank|stream|canal|waterway|elster/.test(facts)||!!tags.waterway;
+ const scene=isCross?'cross':isChurch?'church':isCastle?'castle':isRuin?'ruins':isMonument?'monument':isCoastal?'coast':isBattle?'battlefield':isMountain?'mountain':isUrban?'urban':category==='parking'?'street':category==='viewpoint'?'mountain':category==='photoSpot'?'landscape':isArchitecture?'architecture':'landscape';
+ const title=xmlEsc(name.length>45?name.slice(0,42)+'…':name);
  const place=xmlEsc(locality.length>42?locality.slice(0,39)+'…':locality);
- let background='';
- if(isCoastal){
-  background='<path d="M0 360 Q120 330 245 365 T500 355 T770 362 T1030 350 T1280 358 L1280 720H0Z" fill="#eeece3" stroke="#545650" stroke-width="3"/>'+
-   '<path d="M0 388 Q160 370 310 392 T620 390 T930 388 T1280 382 M0 430 Q160 412 310 434 T620 432 T930 430 T1280 424 M0 475 Q160 457 310 479 T620 477 T930 475 T1280 469" fill="none" stroke="#787970" stroke-width="2" opacity=".7"/>'+
-   '<path d="M0 352 L130 280 245 320 370 248 490 330 630 270 760 335 910 278 1035 330 1155 275 1280 315" fill="none" stroke="#4e514b" stroke-width="4"/>';
- }else{
-  background='<path d="M0 386 L125 305 235 356 350 266 470 350 610 235 755 345 875 270 1010 352 1138 282 1280 355 L1280 720H0Z" fill="#e9e7dd" stroke="#676861" stroke-width="3"/>'+
-   '<path d="M0 427 L155 375 275 410 430 343 575 420 700 352 855 416 1008 366 1148 417 1280 380" fill="none" stroke="#77786f" stroke-width="2"/>'+
-   '<path d="M0 467 L165 428 300 457 450 405 590 462 740 408 880 464 1045 416 1185 461 1280 438" fill="none" stroke="#77786f" stroke-width="2"/>';
- }
- let city='';
- if(useCityLayers||isCoastal){
-  const pattern=[50,82,61,102,72,126,65,94,58,112,77,137,63,91,75,118,62,97,80,105];
-  for(let i=0;i<pattern.length;i++){
-   const x=80+i*58;
-   const h=pattern[i];
-   const y=(isCoastal?418:414)-h;
-   const roof=i%5===0?'<path d="M'+(x-4)+' '+(y+2)+'l29 -18 29 18" fill="#f0eee4" stroke="#4b4d47" stroke-width="3"/>':'';
-   city+='<g><rect x="'+x+'" y="'+y+'" width="48" height="'+h+'" fill="#efede4" stroke="#4e504a" stroke-width="2.5"/>'+roof+
-    '<path d="M'+(x+11)+' '+(y+17)+'v'+Math.max(16,h-26)+' M'+(x+25)+' '+(y+17)+'v'+Math.max(16,h-26)+' M'+(x+37)+' '+(y+17)+'v'+Math.max(16,h-26)+'" fill="none" stroke="#85857b" stroke-width="2"/></g>';
+ let seed=2166136261;
+ const seedText=name+'|'+locality+'|'+modeValue+'|'+String(variation||0);
+ for(let i=0;i<seedText.length;i++){seed^=seedText.charCodeAt(i);seed=Math.imul(seed,16777619);}
+ function rand(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;}
+ function ridge(base,amp,count,fill,stroke){
+  const pts=[];
+  for(let i=0;i<=count;i++){
+   const x=Math.round(1280*i/count);
+   let y=base+(rand()-.5)*amp;
+   if(i>0&&i<count&&rand()>.58)y-=amp*.38*rand();
+   pts.push([x,Math.round(y)]);
   }
+  const outline='M '+pts.map(p=>p[0]+' '+p[1]).join(' L ');
+  const area='M 0 720 L '+pts.map(p=>p[0]+' '+p[1]).join(' L ')+' L 1280 720 Z';
+  return '<path d="'+area+'" fill="'+fill+'" stroke="none"/><path d="'+outline+'" fill="none" stroke="'+(stroke||'#62645c')+'" stroke-width="2.5"/>';
  }
- let architecture='';
- if(isArchitecture&&!isCross){
-  const x=modeValue==='wide'?500:modeValue==='compressed'?700:570;
-  const scale=modeValue==='wide'?.78:modeValue==='compressed'?.66:1;
-  architecture='<g transform="translate('+x+' 0) scale('+scale+')" stroke="#454741" stroke-width="4" fill="#efede3">'+
-    '<path d="M-145 535V380L0 265 145 380V535Z"/>'+
-    '<path d="M-188 382L0 235 188 382" fill="none" stroke-width="6"/>'+
-    '<path d="M-72 535V428Q0 364 72 428V535Z" fill="#dad8ce"/>'+
-    '<path d="M-115 402h30v48h-30z M85 402h30v48H85z" fill="#dedccf"/>'+
-    '<path d="M-22 300v-82H22v82 M-34 218L0 176 34 218" fill="none"/>'+
-    '<path d="M-166 552H166" fill="none" stroke-width="3"/>'+
+ function tree(x,y,scale){
+  return '<g transform="translate('+x+' '+y+') scale('+scale+')" stroke="#4c5149" stroke-width="2.5" fill="#dedfd2"><path d="M0 0L-19 31H-7L-24 54H24L7 31H19Z"/><path d="M0 51V73" fill="none"/></g>';
+ }
+ let sceneArt='';
+ if(scene==='coast'){
+  sceneArt='<path d="M0 337Q210 323 420 342T850 332T1280 341V720H0Z" fill="#e4e9e4" stroke="#61645c" stroke-width="2"/>'+
+   ridge(380,65,10,'#deded2','#595d55')+
+   '<path d="M0 408Q220 391 420 412T850 404T1280 414 M0 458Q220 441 420 462T850 454T1280 464 M0 510Q220 493 420 514T850 506T1280 516" fill="none" stroke="#777c73" stroke-width="2" opacity=".78"/>'+
+   '<path d="M0 366L155 318 262 348 365 297 476 361 583 330 690 366 820 318 940 359 1077 312 1186 350 1280 330" fill="none" stroke="#555a52" stroke-width="3"/>';
+  if(rand()>.35)sceneArt+='<circle cx="'+Math.round(170+rand()*940)+'" cy="'+Math.round(155+rand()*70)+'" r="'+Math.round(20+rand()*16)+'" fill="#f6f1e3" stroke="#8b8c80" stroke-width="2"/>';
+ }else if(scene==='mountain'){
+  sceneArt+=ridge(440,175,8,'#e9e7db','#62645c');
+  sceneArt+=ridge(500,110,11,'#d8dace','#595e55');
+  sceneArt+=ridge(565,95,15,'#c9cec1','#555a52');
+  for(let n=0;n<9;n++){let x=30+n*145+rand()*48;let y=580+rand()*52;sceneArt+=tree(Math.round(x),Math.round(y),.6+rand()*.6);}
+  if(rand()>.4)sceneArt+='<path d="M0 618L165 587 310 620 450 583 620 622 800 586 970 625 1120 589 1280 617" fill="none" stroke="#767a70" stroke-width="2"/>';
+ }else if(scene==='battlefield'){
+  sceneArt+=ridge(350,60,13,'#eeece2','#8a897f');
+  sceneArt+=ridge(416,48,18,'#e4e2d6','#72746b');
+  sceneArt+='<path d="M0 435Q220 404 420 447T830 435T1280 448V720H0Z" fill="#e9e6da" stroke="#797a70" stroke-width="2"/>'+
+   '<path d="M0 494Q240 468 420 507T830 492T1280 504 M0 553Q240 527 420 566T830 551T1280 563" fill="none" stroke="#a0a092" stroke-width="1.5"/>';
+  if(isRiver){
+   sceneArt+='<path d="M1030 720C940 630 1080 570 930 512S775 433 870 371S1040 320 1006 282" fill="none" stroke="#cbd6d3" stroke-width="68"/><path d="M1030 720C940 630 1080 570 930 512S775 433 870 371S1040 320 1006 282" fill="none" stroke="#797f77" stroke-width="2.5"/><path d="M1020 720C930 630 1070 570 920 512S765 433 860 371S1030 320 996 282" fill="none" stroke="#f5f1e6" stroke-width="2" stroke-dasharray="8 13"/>';
+  }else{
+   sceneArt+='<path d="M1040 720C925 625 1005 570 885 512S730 433 815 371" fill="none" stroke="#aaa99b" stroke-width="34" opacity=".72"/><path d="M1040 720C925 625 1005 570 885 512S730 433 815 371" fill="none" stroke="#f4f0e5" stroke-width="2" stroke-dasharray="7 12"/>';
+  }
+  for(let n=0;n<9;n++){
+   const x=40+n*150+rand()*45,y=435+rand()*35;
+   sceneArt+='<g stroke="#666960" stroke-width="2" fill="none"><path d="M'+x+' '+(y+26)+'v-22m-9 8l9 -11 9 11"/><path d="M'+(x-8)+' '+(y+26)+'h16"/></g>';
+  }
+ }else if(scene==='church'){
+  const x=modeValue==='wide'?620:modeValue==='compressed'?745:640;
+  const sc=modeValue==='wide'?.82:modeValue==='compressed'?.9:1;
+  sceneArt+='<g transform="translate('+x+' 0) scale('+sc+') " stroke="#41453e" stroke-width="4" fill="#eeece2">'+
+   '<path d="M-180 565V392L-70 328V270H-22V328L90 392V565Z"/>'+
+   '<path d="M-202 395L-45 298 112 395" fill="#e7e4d8"/>'+
+   '<path d="M-70 298L-45 250L-20 298" fill="#e7e4d8"/>'+
+   '<path d="M-30 328V178H40V328Z"/><path d="M-42 178L5 115 52 178Z"/><path d="M-14 152V105H16V152"/>'+
+   '<path d="M-132 431Q-90 380 -48 431V565H-132Z" fill="#d7d7ca"/>'+
+   '<path d="M-8 403Q28 363 64 403V475H-8Z" fill="#d7d7ca"/>'+
+   '<path d="M-160 424H-139V469H-160Z M78 424H99V469H78Z" fill="#d7d7ca"/>'+
+   '<path d="M-194 565H122" fill="none"/>'+
    '</g>';
+ }else if(scene==='castle'){
+  const x=modeValue==='wide'?650:modeValue==='compressed'?700:640;
+  sceneArt+='<g transform="translate('+x+' 0)" stroke="#45483f" stroke-width="4" fill="#e8e6db">'+
+   '<path d="M-250 565V377H-165V332H-112V377H-45V347H8V377H110V328H166V377H245V565Z"/>'+
+   '<path d="M-250 377V335H-224V349H-202V335H-178V377 M-112 377V292H-84V307H-61V292H-35V377 M110 377V284H137V300H160V284H188V377 M214 377V336H240V350H265V336H277V377" fill="#deded2"/>'+
+   '<path d="M-35 565V472Q0 420 35 472V565Z" fill="#d1d2c6"/>'+
+   '<path d="M-205 413H-176V455H-205Z M-90 413H-61V455H-90Z M71 413H100V455H71Z M178 413H207V455H178Z" fill="#cfd0c4"/>'+
+   '<path d="M-267 565H270" fill="none"/>'+
+   '</g>';
+ }else if(scene==='ruins'){
+  const x=modeValue==='wide'?630:modeValue==='compressed'?710:650;
+  const sc=modeValue==='wide'?.86:1;
+  sceneArt+='<g transform="translate('+x+' 0) scale('+sc+')" stroke="#52554d" stroke-width="4" fill="#e8e5d9">'+
+   '<path d="M-230 565V375L-155 328 -86 352 -18 304 48 336 124 310 224 366V565Z"/>'+
+   '<path d="M-198 394V305H-164V394 M-100 378V280H-66V378 M0 370V292H34V370 M110 375V285H144V375 M190 397V332H220V397" fill="#d8d7ca"/>'+
+   '<path d="M-218 307L-181 276 -144 307 M-114 282L-83 250 -51 282 M-15 294L17 260 49 294 M95 287L127 254 159 287" fill="none"/>'+
+   '<path d="M-234 405L-12 405 222 416 M-242 458L-2 449 224 466 M-252 512L-12 500 237 515" fill="none" stroke="#8d8e82" stroke-width="2"/>'+
+   '<path d="M-260 565H250" fill="none"/>'+
+   '</g>';
+ }else if(scene==='cross'){
+  const x=modeValue==='wide'?450:modeValue==='context'?635:825;
+  const sc=modeValue==='wide'?.82:modeValue==='compressed'?.98:1.06;
+  sceneArt+='<g transform="translate('+x+' 420) scale('+sc+')" stroke="#42453e" stroke-width="5" fill="#e9e7dc">'+
+   '<path d="M-30 160L-19 120L-19 -90L19 -90L19 120L30 160Z"/>'+
+   '<path d="M-88 -12L-88 -43L88 -43L88 -12Z"/>'+
+   '<path d="M-50 160H50L65 188H-65Z"/><path d="M-78 188H78L94 210H-94Z"/>'+
+   '</g>';
+ }else if(scene==='monument'){
+  const x=modeValue==='wide'?480:modeValue==='compressed'?820:640;
+  sceneArt+='<g transform="translate('+x+' 0)" stroke="#484b44" stroke-width="4" fill="#e7e5d9">'+
+   '<path d="M-105 558H105L88 532H-88Z"/><path d="M-78 532L-53 322H53L78 532Z"/>'+
+   '<path d="M-53 322L0 236 53 322Z"/><path d="M-25 360V492 M25 360V492" fill="none" stroke="#99988d" stroke-width="2"/>'+
+   '<path d="M-130 558H130" fill="none"/>'+
+   '</g>';
+ }else if(scene==='urban'||scene==='street'){
+  const buildings=[];
+  for(let n=0;n<15;n++){
+   const x=35+n*84;
+   const h=75+Math.round(rand()*175);
+   const y=485-h;
+   const w=57+Math.round(rand()*16);
+   const roof=rand()>.5?'<path d="M'+(x-4)+' '+(y+3)+'l'+(w/2)+' -21 '+(w/2+4)+' 21" fill="#e7e5d9" stroke="#4f524a" stroke-width="2.5"/>':'';
+   let windows='';
+   for(let q=0;q<3;q++)windows+='<rect x="'+(x+9+q*15)+'" y="'+(y+19)+'" width="7" height="15" fill="#d2d2c6" stroke="#797b71" stroke-width="1"/>';
+   buildings.push('<g><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="#efede3" stroke="#4d5048" stroke-width="2.5"/>'+roof+windows+'<path d="M'+(x+8)+' '+(y+h-35)+'h'+(w-16)+'v35h-'+(w-16)+'z" fill="#d9d8cd" stroke="#777a70" stroke-width="1.5"/></g>');
+  }
+  sceneArt=buildings.join('')+'<path d="M0 488L1280 488" stroke="#676a61" stroke-width="3"/>';
+ }else{
+  sceneArt+=ridge(380,105,12,'#eeece2','#7b7c72');
+  sceneArt+=ridge(450,80,16,'#e3e2d6','#686b61');
+  sceneArt+='<path d="M0 488Q240 458 420 496T830 485T1280 496V720H0Z" fill="#eae7dc" stroke="#797a70" stroke-width="2"/>';
+  if(rand()>.25)sceneArt+=tree(140+rand()*210,520+rand()*40,.65+rand()*.35)+tree(1030+rand()*120,500+rand()*30,.7+rand()*.4);
  }
- let cross='';
- if(isCross){
-  const x=modeValue==='wide'?435:modeValue==='context'?635:805;
-  const sc=modeValue==='wide'?.78:modeValue==='compressed'?.94:1.08;
-  cross='<g transform="translate('+x+' 345) scale('+sc+')" stroke="#393b36" stroke-width="5" fill="#e4e1d7">'+
-    '<path d="M-34 198L-19 157L-19 -72L19 -72L19 157L34 198Z"/>'+
-    '<path d="M-92 1L-92 -29L92 -29L92 1Z"/>'+
-    '<path d="M-54 198H54L68 224H-68Z"/>'+
-    '<path d="M-78 224H78L94 246H-94Z"/>'+
-    '<path d="M-11 -61L0 -79L11 -61" fill="none" stroke-width="3"/>'+
-    '<path d="M-12 -14v144 M-55 -14h110" fill="none" stroke="#8a8980" stroke-width="2"/>'+
-   '</g><path d="M0 602L310 565 430 552 M1280 625L840 558 700 548" fill="none" stroke="#6e7068" stroke-width="3" stroke-dasharray="9 8"/>';
- }
- let lookout='';
- if(isLookout&&!isCross&&!isArchitecture){
-  const x=modeValue==='compressed'?850:640;
-  lookout='<g transform="translate('+x+' 0)" fill="none" stroke="#454741" stroke-width="4">'+
-   '<path d="M-220 568V495 M-145 560V482 M-70 555V480 M5 552V475 M80 555V480 M155 560V485 M220 568V495"/>'+
-   '<path d="M-220 495Q0 472 220 495 M-220 526Q0 505 220 526"/>'+
-   '<path d="M-220 568Q0 587 220 568" stroke-width="5"/>'+
-  '</g><path d="M0 648L200 608 385 620 570 585 755 618 950 590 1120 622 1280 600V720H0Z" fill="#dedbd0" stroke="#575952" stroke-width="3"/>';
+ if(scene!=='coast'&&scene!=='battlefield'&&scene!=='urban'&&scene!=='mountain'&&scene!=='landscape'&&scene!=='street') {
+  sceneArt+='<path d="M0 572Q260 544 430 574T850 568T1280 575V720H0Z" fill="#e8e5da" stroke="#78796f" stroke-width="2"/>';
  }
  let foreground='';
  if(modeValue==='wide'){
-  foreground='<path d="M0 600L150 565 300 600 450 552 610 600 760 565 920 611 1080 568 1190 595 1280 570V720H0Z" fill="#e7e4d8" stroke="#50534c" stroke-width="3"/>'+
-   '<path d="M180 720Q350 623 520 602Q680 585 840 635Q970 678 1080 720" fill="none" stroke="#575a52" stroke-width="26" opacity=".65"/>'+
-   '<path d="M180 720Q350 623 520 602Q680 585 840 635Q970 678 1080 720" fill="none" stroke="#f7f4ea" stroke-width="3" stroke-dasharray="10 10"/>';
+  foreground='<path d="M0 720L0 635Q170 585 315 624T620 613T950 625T1280 604V720Z" fill="#e0ded2" stroke="#6c6e64" stroke-width="2"/>'+
+   '<path d="M'+Math.round(210+rand()*150)+' 720Q'+Math.round(360+rand()*80)+' 635 '+Math.round(555+rand()*65)+' 614T'+Math.round(855+rand()*70)+' 647T'+Math.round(1090+rand()*80)+' 720" fill="none" stroke="#77796e" stroke-width="2.5" stroke-dasharray="5 10"/>'+
+   '<path d="M0 666Q220 640 380 665T760 657T1280 650" fill="none" stroke="#99998e" stroke-width="1.5"/>';
  }else if(modeValue==='context'){
-  foreground='<path d="M0 630Q320 596 640 628T1280 615V720H0Z" fill="#e9e6db" stroke="#55574f" stroke-width="3"/>';
+  foreground='<path d="M0 650Q250 625 440 652T840 646T1280 638V720H0Z" fill="#e6e3d7" stroke="#707268" stroke-width="2"/>'+
+   '<path d="M80 682H1200" stroke="#99998d" stroke-width="1.5" stroke-dasharray="4 9"/>';
  }else{
-  foreground='<rect x="250" y="190" width="780" height="410" fill="none" stroke="#4f514a" stroke-width="3"/>'+
-   '<path d="M640 190V600M250 395H1030" stroke="#77786e" stroke-width="2" stroke-dasharray="8 9"/>'+
-   '<path d="M0 633Q320 605 640 636T1280 620V720H0Z" fill="#e9e6db" stroke="#55574f" stroke-width="3"/>';
+  foreground='<rect x="245" y="165" width="790" height="435" fill="none" stroke="#4f5249" stroke-width="2.5"/>'+
+   '<path d="M640 165V600M245 382H1035" stroke="#77796f" stroke-width="1.6" stroke-dasharray="7 10" opacity=".75"/>'+
+   '<path d="M0 660Q250 638 450 661T850 653T1280 650V720H0Z" fill="#e6e3d7" stroke="#707268" stroke-width="2"/>';
  }
- const grid='<path d="M426 150V590 M853 150V590 M0 292H1280 M0 465H1280" stroke="#73746c" stroke-width="1.5" stroke-dasharray="6 12" opacity=".30"/>';
- const hatching=Array.from({length:18},(_,i)=>'<path d="M'+(40+i*70)+' 670l55 -28" stroke="#86867c" stroke-width="1.4" opacity=".45"/>').join('');
+ const grid='<path d="M426 150V590 M853 150V590 M0 292H1280 M0 465H1280" stroke="#73746c" stroke-width="1.2" stroke-dasharray="5 12" opacity=".22"/>';
+ const hatching=Array.from({length:22},(_,i)=>{
+  const x=24+i*58+Math.round(rand()*18);
+  const y=668+Math.round(rand()*42);
+  return '<path d="M'+x+' '+y+'l'+(29+Math.round(rand()*23))+' -'+(9+Math.round(rand()*12))+'" stroke="#85867b" stroke-width="1.2" opacity=".42"/>';
+ }).join('');
+ const sceneLabel={coast:'COASTAL LAYERS',mountain:'RIDGELINE STUDY',battlefield:'OPEN HISTORICAL LANDSCAPE',church:'ARCHITECTURE STUDY',castle:'FORTIFICATION STUDY',ruins:'ARCHAEOLOGICAL DETAIL',cross:'LANDMARK IN LANDSCAPE',monument:'MONUMENT & CONTEXT',urban:'URBAN FRAME',street:'STREET COMPOSITION',landscape:'LANDSCAPE COMPOSITION'}[scene]||'LOCATION COMPOSITION';
+ const variantLabel=modeValue==='wide'?'Wide environmental frame':modeValue==='context'?'Subject with context':'Telephoto layer study';
  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">'+
-  '<defs><linearGradient id="paper" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#fbfaf5"/><stop offset="1" stop-color="#e9e5da"/></linearGradient><pattern id="grain" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M2 5l4 -1 M14 18l4 1 M7 22l2 -1" stroke="#7a796f" stroke-width=".7" opacity=".18"/></pattern></defs>'+
+  '<defs><linearGradient id="paper" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#fbfaf5"/><stop offset="1" stop-color="#e9e5da"/></linearGradient><pattern id="grain" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M2 5l4 -1 M14 18l4 1 M7 22l2 -1" stroke="#7a796f" stroke-width=".7" opacity=".16"/></pattern></defs>'+
   '<rect width="1280" height="720" fill="url(#paper)"/><rect width="1280" height="720" fill="url(#grain)"/>'+
   '<rect x="34" y="32" width="1212" height="656" fill="none" stroke="#6d6e65" stroke-width="2"/>'+
   '<path d="M34 95V32H97 M1183 32H1246V95 M34 625V688H97 M1183 688H1246V625" fill="none" stroke="#353731" stroke-width="5"/>'+
-  background+city+architecture+cross+lookout+foreground+grid+hatching+
-  '<rect x="60" y="52" width="525" height="78" rx="2" fill="#f8f6ef" stroke="#88877c" stroke-width="1.5"/>'+
-  '<text x="79" y="79" font-family="Arial,sans-serif" font-size="13" letter-spacing="3" fill="#55574f">PHOTO SCOUT · COMPOSITION STUDY</text>'+
-  '<text x="79" y="108" font-family="Georgia,serif" font-size="25" fill="#292b27">'+title+'</text>'+
+  sceneArt+foreground+grid+hatching+
+  '<rect x="60" y="52" width="570" height="83" rx="2" fill="#f8f6ef" stroke="#88877c" stroke-width="1.5"/>'+
+  '<text x="79" y="78" font-family="Arial,sans-serif" font-size="13" letter-spacing="3" fill="#55574f">PHOTO SCOUT · '+sceneLabel+'</text>'+
+  '<text x="79" y="108" font-family="Georgia,serif" font-size="24" fill="#292b27">'+title+'</text>'+
   '<rect x="907" y="592" width="314" height="62" fill="#f8f6ef" stroke="#88877c" stroke-width="1.5"/>'+
   '<text x="927" y="618" font-family="Arial,sans-serif" font-size="19" fill="#292b27">Canon EOS R50 · '+lens+'</text>'+
-  '<text x="927" y="640" font-family="Arial,sans-serif" font-size="13" fill="#66675e">'+(modeValue==='wide'?'Wide environmental frame':modeValue==='context'?'Subject with context':'Telephoto layer study')+'</text>'+
-  '<text x="70" y="660" font-family="Arial,sans-serif" font-size="13" letter-spacing="1" fill="#63645c">'+place+' · illustrative only</text>'+
+  '<text x="927" y="640" font-family="Arial,sans-serif" font-size="13" fill="#66675e">'+variantLabel+'</text>'+
+  '<text x="70" y="660" font-family="Arial,sans-serif" font-size="13" letter-spacing="1" fill="#63645c">'+place+' · illustrative shot idea</text>'+
  '</svg>';
  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
@@ -1441,69 +1512,66 @@ async function generateConcept(){
  const item=currentConceptTarget();
  const status=$('conceptStatus');
  const button=$('generateConcept');
- const wrap=$('generatedVisualWrap');
  const output=$('autoSketchImage');
+ const caption=$('autoSketchCaption');
+ const detailOutput=$('selectedConceptPreviewImg');
+ const detailCaption=$('selectedConceptCaption');
+ const duplicateWrap=$('generatedVisualWrap');
  const duplicateOutput=$('generatedVisual');
- if(wrap)wrap.hidden=true;
- if(duplicateOutput){duplicateOutput.removeAttribute('src');duplicateOutput.style.filter='';}
- if(!item){status.textContent='Click the map or choose a photo spot first.';return;}
- const mode=$('conceptMode')?.value||'wide';
- const instantSketch=conceptSketchData(item,mode);
- // Reuse the existing preview area: never add a second copy of the same sketch.
- // The fallback is illustrative; a real AI result may replace this image only.
- output.src=instantSketch;
- output.style.filter='';
- output.alt='Local illustrative composition sketch for '+item.name+' using Canon EOS R50 composition ideas. Not an AI-generated image or verified view.';
- if(wrap)wrap.hidden=true;
- status.textContent='Composition guide ready for '+item.name+'. Checking for a place-matched photo before attempting image-to-image generation…';
- const selected=state.selected;
- const refs=selected&&selected.id===item.id?Array.from($('detailPhotoRefs')?.querySelectorAll('.detail-photo img')||[]):[];
- const reference=refs.find(img=>/^https?:/i.test(img.currentSrc||img.src)&&img.complete&&img.naturalWidth>80);
- if(!reference){
-  status.textContent='No place-matched reference photo was found, so no AI image was generated. The single image above is a local composition illustration. Connecting GPT image generation would let us generate from the place description, even when no reference photo is available.';
-  button.disabled=false;
-  button.textContent='No reference photo found';
+ if(!item){
+  status.textContent='Click the map or select a place first.';
   return;
  }
- const prompt=imageConceptPrompt(item,mode);
- const params=new URLSearchParams({
-  model:'kontext',width:'1024',height:'576',nologo:'true',private:'true',
-  seed:String(Math.floor(Math.random()*1000000)),image:reference.currentSrc||reference.src
- });
- const src='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?'+params.toString();
+ const mode=$('conceptMode')?.value||'wide';
  button.disabled=true;
- button.textContent='Trying AI pencil refinement…';
+ button.textContent='Drawing your sketch…';
+ status.textContent='Creating a '+(mode==='wide'?'wide landscape':mode==='context'?'subject-with-context':'telephoto composition')+' idea for '+item.name+'…';
+ if(duplicateWrap)duplicateWrap.hidden=true;
+ if(duplicateOutput){duplicateOutput.removeAttribute('src');duplicateOutput.style.filter='';}
  try{
-  try{
-   const localSketch=await createPhotoDerivedPencilSketch(reference);
-   output.src=localSketch;
-   output.alt='Pencil sketch rendered from the actual place-matched photograph of '+item.name+'.';
-   status.textContent='Pencil sketch from the matched source photo is visible. Trying AI refinement of that same scene; if the provider is unavailable, this source-based sketch stays on screen.';
-  }catch(localError){
-   output.src=instantSketch;
-   output.style.filter='';
-   status.textContent='Instant sketch ready. Trying AI refinement using a matched source photo; the instant sketch remains visible if the service fails.';
+  await new Promise(resolve=>window.requestAnimationFrame(()=>resolve()));
+  const selected=state.selected;
+  const refs=selected&&selected.id===item.id?Array.from($('detailPhotoRefs')?.querySelectorAll('.detail-photo img')||[]):[];
+  const reference=refs.find(img=>/^https?:/i.test(img.currentSrc||img.src)&&img.complete&&img.naturalWidth>80);
+  let madeFromPhoto=false;
+  if(reference){
+   try{
+    const photoSketch=await createPhotoDerivedPencilSketch(reference);
+    output.src=photoSketch;
+    output.alt='Pencil study drawn from the place-matched reference photograph “'+(reference.alt||item.name)+'”. It is a reference study, not proof of the view from this exact pin.';
+    if(caption)caption.textContent='Pencil study from matched photo · '+(reference.alt||item.name)+' · verify viewpoint';
+    if(detailOutput)detailOutput.src=photoSketch;
+    if(detailCaption)detailCaption.textContent='Pencil study derived from the matched reference photo. It shows that photo’s composition, not a verified line of sight from the selected map pin.';
+    state.referenceSketchId=item.id;
+    state.referenceSketchMode=mode;
+    state.referenceSketchDataUrl=photoSketch;
+    state.referenceSketchTitle=String(reference.alt||item.name);
+    madeFromPhoto=true;
+   }catch(photoError){
+    // Cross-origin canvas restrictions can occur; use a locally generated composition instead.
+   }
   }
-  const aiImageUrl=await new Promise((resolve,reject)=>{
-   const aiImage=new Image();
-   let settled=false;
-   const finish=(fn,value)=>{if(settled)return;settled=true;window.clearTimeout(timer);aiImage.onload=null;aiImage.onerror=null;fn(value);};
-   const timer=window.setTimeout(()=>finish(reject,new Error('AI image service timed out after 30 seconds')),30000);
-   aiImage.onload=()=>aiImage.naturalWidth>200?finish(resolve,aiImage.src):finish(reject,new Error('AI service returned an invalid image'));
-   aiImage.onerror=()=>finish(reject,new Error('AI image service did not return an image'));
-   aiImage.src=src;
-   if(aiImage.complete&&aiImage.naturalWidth>200)finish(resolve,aiImage.src);
-  });
-  output.src=aiImageUrl;
-  output.style.filter='';
-  output.alt='AI-generated pencil composition sketch based on the matched photograph of '+item.name+'. Compare details with the original source; AI can alter them.';
-  status.textContent='AI pencil sketch returned from the place-matched reference. Compare it with the original photo; fine details may change.';
- }catch(aiError){
-  status.textContent='The instant sketch is ready, but the AI image service did not return an edit: '+String(aiError&&aiError.message||aiError).slice(0,120)+'. No random substitute was shown.';
+  if(!madeFromPhoto){
+   const variation=(state.sketchGeneration=(state.sketchGeneration||0)+1);
+   const sketch=conceptSketchData(item,mode,variation);
+   output.src=sketch;
+   output.alt='Generated local vector composition sketch for '+item.name+'. Scene type is inferred from available place names and map tags; illustrative shot idea, not a verified view.';
+   if(caption)caption.textContent='Generated '+(mode==='wide'?'wide landscape':mode==='context'?'subject with context':'telephoto layer')+' composition · '+(item.city||state.detectedLocality||'selected location')+' · illustrative';
+   if(detailOutput)detailOutput.src=sketch;
+   if(detailCaption)detailCaption.textContent='A newly drawn, place-aware composition idea made locally from the selected place name and available map tags. It is not a photograph and the exact viewpoint is unverified.';
+   state.referenceSketchId=null;
+   state.referenceSketchMode=null;
+   state.referenceSketchDataUrl=null;
+   state.referenceSketchTitle='';
+  }
+  status.textContent=madeFromPhoto
+   ?'Pencil sketch created from a matched reference photo. No sign-in or external image service was used.'
+   :'Sketch idea created for '+item.name+'. The drawing uses available place names and map tags to choose a scene such as coast, mountains, ruins, architecture or an open historical landscape. It runs here with no sign-in, API key or API usage charge.';
+ }catch(error){
+  status.textContent='Could not draw the sketch in this browser: '+String(error&&error.message||error).slice(0,140)+'. Try another composition.';
  }finally{
-  output.onload=null;output.onerror=null;
-  button.disabled=false;button.textContent='Make pencil sketch';
-  // Keep the existing preview in place; do not scroll to or reveal a duplicate panel.
+  button.disabled=false;
+  button.textContent='Make pencil sketch';
  }
 }
 async function renderDetailPhotoRefs(item){
