@@ -1402,76 +1402,64 @@ async function generateConcept(){
  const button=$('generateConcept');
  const wrap=$('generatedVisualWrap');
  const output=$('generatedVisual');
- if(!item){status.textContent='Select a landmark or photo spot first.';return;}
+ if(!item){status.textContent='Click the map or choose a photo spot first.';return;}
+ const mode=$('conceptMode')?.value||'wide';
+ const instantSketch=conceptSketchData(item,mode);
+ // Always reveal a composition drawing first; external generation must never
+ // gate access to the idea or leave the preview blank.
+ output.src=instantSketch;
+ output.style.filter='';
+ output.alt='Instant subject-aware pencil field sketch for '+item.name+' using Canon EOS R50 composition ideas. Illustrative only, not a verified view.';
+ wrap.hidden=false;
+ status.textContent='Instant composition sketch ready for '+item.name+'. Checking for a place-matched reference photo for optional AI refinement…';
+ wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
  const selected=state.selected;
  const refs=selected&&selected.id===item.id?Array.from($('detailPhotoRefs')?.querySelectorAll('.detail-photo img')||[]):[];
- const reference=refs.find(img=>/^https?:/i.test(img.currentSrc||img.src)&&img.complete&&img.naturalWidth>0);
+ const reference=refs.find(img=>/^https?:/i.test(img.currentSrc||img.src)&&img.complete&&img.naturalWidth>80);
  if(!reference){
-  status.textContent='No loaded reference photo matched to this selected place yet. Wait for the reference thumbnails to load, or select a named landmark. No random text-only scene will be generated.';
-  wrap.hidden=true;
+  status.textContent='Your location-specific sketch is ready above. No loaded place-matched photograph is available for image-to-image AI, so I kept the sketch instead of using an unrelated image. The prompt below can be refined or copied.';
+  button.disabled=false;
+  button.textContent='Create another sketch';
   return;
  }
- const mode=$('conceptMode')?.value||'wide';
  const prompt=imageConceptPrompt(item,mode);
  const params=new URLSearchParams({
-  model:'kontext',
-  width:'1024',
-  height:'576',
-  nologo:'true',
-  private:'true',
-  seed:String(Math.floor(Math.random()*1000000)),
-  image:reference.currentSrc||reference.src
+  model:'kontext',width:'1024',height:'576',nologo:'true',private:'true',
+  seed:String(Math.floor(Math.random()*1000000)),image:reference.currentSrc||reference.src
  });
  const src='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?'+params.toString();
  button.disabled=true;
- button.textContent='Sketching from real photo…';
- output.onload=null;output.onerror=null;output.style.filter='';
- wrap.hidden=true;
- let localSketchReady=false;
+ button.textContent='Trying AI pencil refinement…';
  try{
-  const localSketch=await createPhotoDerivedPencilSketch(reference);
-  output.src=localSketch;
-  output.alt='Pencil-style sketch rendered directly from the real reference photograph of '+item.name+'. The visible layout comes from the source image.';
-  wrap.hidden=false;
-  localSketchReady=true;
-  status.textContent='Sketch ready from the actual reference photo of '+item.name+'. Trying an AI restyle using that same photo; the source-based sketch stays visible if AI is unavailable.';
-  wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
- }catch(localError){
-  output.src=reference.currentSrc||reference.src;
-  output.style.filter='grayscale(1) contrast(1.65) brightness(1.12)';
-  output.alt='Monochrome fallback of the real reference photograph of '+item.name+'.';
-  wrap.hidden=false;
-  status.textContent='The actual reference photo is shown in monochrome while AI sketch generation is attempted. No random scene will be substituted.';
- }
- try{
+  try{
+   const localSketch=await createPhotoDerivedPencilSketch(reference);
+   output.src=localSketch;
+   output.alt='Pencil sketch rendered from the actual place-matched photograph of '+item.name+'.';
+   status.textContent='Pencil sketch from the matched source photo is visible. Trying AI refinement of that same scene; if the provider is unavailable, this source-based sketch stays on screen.';
+  }catch(localError){
+   output.src=instantSketch;
+   output.style.filter='';
+   status.textContent='Instant sketch ready. Trying AI refinement using a matched source photo; the instant sketch remains visible if the service fails.';
+  }
   const aiImageUrl=await new Promise((resolve,reject)=>{
    const aiImage=new Image();
    let settled=false;
    const finish=(fn,value)=>{if(settled)return;settled=true;window.clearTimeout(timer);aiImage.onload=null;aiImage.onerror=null;fn(value);};
-   const timer=window.setTimeout(()=>finish(reject,new Error('AI image service timed out')),30000);
-   aiImage.onload=()=>finish(resolve,aiImage.src);
+   const timer=window.setTimeout(()=>finish(reject,new Error('AI image service timed out after 30 seconds')),30000);
+   aiImage.onload=()=>aiImage.naturalWidth>200?finish(resolve,aiImage.src):finish(reject,new Error('AI service returned an invalid image'));
    aiImage.onerror=()=>finish(reject,new Error('AI image service did not return an image'));
    aiImage.src=src;
-   if(aiImage.complete&&aiImage.naturalWidth>0)finish(resolve,aiImage.src);
+   if(aiImage.complete&&aiImage.naturalWidth>200)finish(resolve,aiImage.src);
   });
   output.src=aiImageUrl;
   output.style.filter='';
-  output.alt='AI-generated pencil composition sketch based on the matched reference photograph of '+item.name+'. Compare with the original source; AI can alter details.';
-  wrap.hidden=false;
-  status.textContent='AI sketch returned using the selected place-matched reference photo. Compare fine details with the source image.';
+  output.alt='AI-generated pencil composition sketch based on the matched photograph of '+item.name+'. Compare details with the original source; AI can alter them.';
+  status.textContent='AI pencil sketch returned from the place-matched reference. Compare it with the original photo; fine details may change.';
  }catch(aiError){
-  if(localSketchReady){
-   status.textContent='Kept the pencil sketch rendered directly from the real reference photo of '+item.name+'. The AI service did not return a usable edited image, so no random scene was shown.';
-  }else{
-   output.src=reference.currentSrc||reference.src;
-   output.style.filter='grayscale(1) contrast(1.65) brightness(1.12)';
-   output.alt='Monochrome fallback of the real reference photograph of '+item.name+'.';
-   wrap.hidden=false;
-   status.textContent='AI editing was unavailable. Showing the actual matched photo in monochrome rather than a random scene.';
-  }
+  status.textContent='The instant sketch is ready, but the AI image service did not return an edit: '+String(aiError&&aiError.message||aiError).slice(0,120)+'. No random substitute was shown.';
  }finally{
   output.onload=null;output.onerror=null;
-  button.disabled=false;button.textContent='Generate AI pencil sketch';
+  button.disabled=false;button.textContent='Create another sketch';
   if(!wrap.hidden)wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
  }
 }
