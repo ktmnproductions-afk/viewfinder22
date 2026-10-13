@@ -215,11 +215,11 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
     <div class="source-key-note">Start here: search or click the map → choose a nearby place → open Photo ideas for a sketch.</div>
   </section>
   <details class="nav-panel" id="photoIdeaDetails">
-    <summary><span class="nav-title">Photo ideas & pencil sketch</span><span class="nav-subtitle">Shot concepts · source photos · AI sketch</span></summary>
+    <summary><span class="nav-title">Photo ideas & pencil sketch</span><span class="nav-subtitle">Shot concepts · source photos · sketch generator</span></summary>
     <div class="nav-panel-content">      <section class="idea-lab-section" id="photoIdeaLabSection">
           <div class="concept-block ai-visual-block" id="aiVisualBlock">
                 <div class="section-heading"><h3>Sketch ideas for this place</h3><span class="count" id="conceptTargetName">Choose a place</span></div>
-                <p class="ai-visual-intro" id="photoIdeaSummary">Choose a nearby place to see photo references and create a pencil-style sketch in this panel. Sketches are inspiration, not proof of the exact view.</p>
+                <p class="ai-visual-intro" id="photoIdeaSummary">Choose a place and click Make pencil sketch. A matched reference photo is sketched when available; otherwise the app draws a new location-aware composition idea here. No sign-in is needed.</p>
                 <figure class="auto-sketch-frame">
                   <img id="autoSketchImage" class="auto-sketch-img" alt="Automatically generated illustrative composition sketch for the selected place">
                   <figcaption id="autoSketchCaption">Instant shot sketch · illustrative, not an actual view</figcaption>
@@ -1220,7 +1220,7 @@ function resetGeneratedConcept(){
  const button=$('generateConcept');
  if(image)image.removeAttribute('src');
  if(wrap)wrap.hidden=true;
- if(status)status.textContent='Select a named landmark and wait for its matched reference photo. Generate an AI pencil sketch in this panel; no random fallback is used.';
+ if(status)status.textContent='Choose a place and composition, then make a pencil sketch here. A matched source photo is used when available; otherwise a new local scene is drawn. No sign-in or API key needed.';
  if(button){button.disabled=false;button.textContent='Make pencil sketch';}
 }
 function currentConceptTarget(){
@@ -1439,16 +1439,20 @@ function updateConceptTargetName(){
  const summary=$('photoIdeaSummary');
  const wide=$('ideaWideCopy'),context=$('ideaContextCopy'),compressed=$('ideaCompressedCopy');
  if(!item){
-  if(summary)summary.textContent='Drop a pin to get three composition ideas tailored to a mapped place, with an optional AI-generated image preview.';
+  if(summary)summary.textContent='Drop a pin to get composition ideas. Generate a pencil sketch locally, using a matched reference photo when one is available.';
   return;
  }
  const name=item.name||'this location';
  const town=String(item.city||state.detectedLocality||'the surrounding area');
- const isArchitecture=item.category==='history'||item.category==='architecture';
+ const ideaFacts=[name,item.scenicKind,item.tags&&item.tags.building,item.tags&&item.tags.historic,item.tags&&item.tags.natural,item.summary,item.history].filter(Boolean).join(' ').toLowerCase();
+ const isArchitecture=item.category==='architecture'||/church|chapel|basilica|cathedral|castle|fortress|palace|ruin|archaeolog|roman forum|monument|tower|bridge|building|facade|temple/.test(ideaFacts);
+ const isBattle=/battle|battlefield|battleground|siege|campaign|war site|military history/.test(ideaFacts);
+ const isCoastal=/coast|sea|harbour|harbor|bay|marina|beach|waterfront|island|lighthouse|port|shore|adriatic/.test(ideaFacts);
+ const isMountain=/mountain|alps|ridge|summit|peak|hill|valley|glacier|pass|lookout|viewpoint|panorama/.test(ideaFacts);
  if(summary)summary.textContent='Shot plan for '+name+(town&&town!==name?' near '+town:'')+'. These are practical starting points for your Canon EOS R50 and 18–150 mm lens; confirm the real view and safe access on site.';
- if(wide)wide.textContent=isArchitecture?'At '+name+', use 18–24 mm to frame the whole structure with a foreground edge and clean verticals; leave room around the silhouette.':'At '+name+', use 18–24 mm with a path, wall or vegetation in the foreground, leading toward the town or ridgeline only if it is actually visible.';
- if(context)context.textContent=isArchitecture?'At '+name+', use 35–70 mm to isolate a facade, arch or architectural detail while retaining enough context to identify the place.':'At '+name+', use 35–70 mm to balance the main subject with the landscape behind it; build clear foreground, middle-ground and background layers.';
- if(compressed)compressed.textContent=isArchitecture?'At '+name+', use 100–150 mm to isolate repeating windows, roof textures, towers or graphic details; watch for converging verticals.':'At '+name+', use 100–150 mm to compress rooflines, distant hills or coastal layers if the sightline allows; try several heights for cleaner overlaps.';
+ if(wide)wide.textContent=isArchitecture?'At '+name+', use 18–24 mm to frame the structure with a foreground edge and clean verticals; leave breathing room around the silhouette.':isBattle?'At '+name+', use 18–24 mm to show the scale of the open site: foreground grasses or a path, broad middle-ground, and the real horizon. Avoid staging modern battle action as if it were historical evidence.':isCoastal?'At '+name+', use 18–24 mm to layer shore, water and headland; let a path or harbour edge lead into the frame if it is actually accessible.':isMountain?'At '+name+', use 18–24 mm to combine a foreground trail or rock with overlapping ridges; keep the horizon intentional.':'At '+name+', use 18–24 mm with a path, wall or vegetation in the foreground, leading toward the actual subject and background.';
+ if(context)context.textContent=isArchitecture?'At '+name+', use 35–70 mm to isolate a facade, arch or architectural detail while retaining enough context to identify the place.':isBattle?'At '+name+', use 35–70 mm to frame one distinctive terrain feature, river bend, marker or tree line against the wider field—only include details verified on location.':isCoastal?'At '+name+', use 35–70 mm to balance a headland, boat, breakwater or shoreline feature with the water behind it.':isMountain?'At '+name+', use 35–70 mm to balance one peak or ridge with nearby terrain and visible atmospheric layers.':'At '+name+', use 35–70 mm to balance the main subject with the surroundings and separate foreground, middle-ground and background.';
+ if(compressed)compressed.textContent=isArchitecture?'At '+name+', use 100–150 mm to isolate repeating windows, stone textures, towers or graphic details; watch for converging verticals.':isBattle?'At '+name+', use 100–150 mm to compress distant tree lines, terrain folds or a real landmark into layered bands—do not invent missing historic structures.':isCoastal?'At '+name+', use 100–150 mm to compress headlands, islands and water bands, using overlap to simplify the frame.':isMountain?'At '+name+', use 100–150 mm to compress successive ridges and isolate patterns in the slopes.':'At '+name+', use 100–150 mm to compress rooftops, trees or distant landscape layers where they are really visible.';
  renderConceptSketch(item,$('conceptMode')?.value||'wide');
 }
 async function createPhotoDerivedPencilSketch(reference){
