@@ -1565,7 +1565,7 @@ async function renderDetailPhotoRefs(item){
 function selectItem(item){
  state.selected=item;
  const photoIdeas=$('photoIdeaDetails');
- if(photoIdeas)photoIdeas.open=true;
+ // Keep the map-first menu compact. Photo ideas open only when the user asks for them.
  $('spotDetail').classList.add('show');
  $('detailEyebrow').textContent=item.category==='photo'?'Visual reference · source-linked':item.category==='photoSpot'?'Photo spot candidate · evidence-ranked':item.category==='parking'?'Parking candidate · verify on arrival':item.category==='history'?'History & place · sourced summary':item.category==='viewpoint'?'Mapped viewpoint · verify the view':'Photographic subject · map data';
  $('detailTitle').textContent=item.name;
@@ -1609,8 +1609,7 @@ function selectItem(item){
  });
  renderResults();
  renderMarkers();
- if(isSmallScreen){$('spotDetail').scrollIntoView({behavior:'smooth',block:'nearest'});}
- else if(photoIdeas){photoIdeas.scrollIntoView({behavior:'smooth',block:'nearest'});}
+ $('spotDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 function parseCoords(text){
  const m=text.trim().match(/^(-?\d{1,2}(?:\.\d+)?)\s*[,; ]\s*(-?\d{1,3}(?:\.\d+)?)$/);
