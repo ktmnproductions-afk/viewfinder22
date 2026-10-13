@@ -158,12 +158,25 @@ jobs:
             else await page.locator('#scenicResults .spot-card').first().click();
             await page.waitForFunction(() => document.querySelector('#spotDetail')?.classList.contains('show'), null, { timeout: 5000 });
             await page.waitForFunction(() => document.querySelectorAll('#detailPhotoRefs .detail-photo').length > 0 || /No suitable source-linked image matched|No image refs/i.test(document.querySelector('#detailPhotoRefs')?.textContent || ''), null, { timeout: 30000 });
+            // DOM cards alone don't prove the image URLs work. Wait for actual decoded thumbnails.
+            await page.waitForTimeout(3500);
+            const photoLoadDiagnostics = await page.evaluate(() => ({
+              items: [...document.querySelectorAll('#detailPhotoRefs .detail-photo')].map(card => ({
+                title: card.querySelector('img')?.alt || '',
+                src: card.querySelector('img')?.currentSrc || card.querySelector('img')?.src || '',
+                complete: !!card.querySelector('img')?.complete,
+                naturalWidth: card.querySelector('img')?.naturalWidth || 0,
+                naturalHeight: card.querySelector('img')?.naturalHeight || 0
+              }))
+            }));
+            console.log('PHOTO_SCOUT_REFERENCE_IMAGE_LOADS ' + JSON.stringify(photoLoadDiagnostics));
             await page.waitForFunction(() => document.querySelectorAll('#spotParkingResults .parking-option').length > 0 || /No mapped parking feature was found/.test(document.querySelector('#spotParkingResults')?.textContent || ''), null, { timeout: 18000 });
             const selectedSpot = await page.evaluate(() => ({
               title: document.querySelector('#detailTitle')?.textContent,
               eyebrow: document.querySelector('#detailEyebrow')?.textContent,
               hasShotPrompt: (document.querySelector('#shotPrompt')?.value || '').includes('Canon EOS R50'),
               photoCount: document.querySelectorAll('#detailPhotoRefs .detail-photo').length,
+              loadedPhotoCount: [...document.querySelectorAll('#detailPhotoRefs .detail-photo img')].filter(img => img.complete && img.naturalWidth > 80).length,
               photoStatus: document.querySelector('#detailPhotoCount')?.textContent,
               compositionCards: document.querySelectorAll('#photoIdeaDetails .concept-card').length,
               photoIdeaLabVisible: !!document.querySelector('#aiVisualBlock')?.getBoundingClientRect().height,
