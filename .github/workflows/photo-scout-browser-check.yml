@@ -197,7 +197,8 @@ jobs:
             , null, { timeout: 5000 });
             const generation = await page.evaluate(() => {
               const src = document.querySelector('#generatedVisual')?.getAttribute('src') || '';
-              const svg = src.startsWith('data:image/svg+xml,') ? decodeURIComponent(src.slice('data:image/svg+xml,'.length)) : '';
+              const comma = src.indexOf(',');
+              const svg = src.startsWith('data:image/svg+xml') && comma >= 0 ? decodeURIComponent(src.slice(comma + 1)) : '';
               return {
                 visible: !document.querySelector('#generatedVisualWrap')?.hidden,
                 imageSrc: src,
