@@ -94,6 +94,8 @@
 .scout-marker.active-pin .dot-core span{transform:rotate(45deg)}
 .marker-legend{display:flex;gap:9px;flex-wrap:wrap;font-size:9px;color:#bdc9bd;margin-top:10px}
 .marker-legend span{display:inline-flex;align-items:center;gap:4px}.legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.8)}.legend-dot.scenic{background:#d9f36b}.legend-dot.parking{background:#21b87a}.legend-dot.history{background:#ff765a}.legend-dot.view{background:#ffc247}.legend-dot.photo{background:#8d55ff}
+.parking-legend-note{font-size:9px;line-height:1.4;color:#9eafa1;margin-top:8px;border-left:2px solid #21b87a;padding-left:8px}
+
 footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;border-top:1px solid var(--line);flex:0 0 auto}.footer-link{color:#aebfae;text-decoration:underline;text-underline-offset:2px}
 @media(max-width:900px){.sidebar{width:350px}.map-heading{left:380px}.map-style{padding:7px 8px}.map-styles{right:10px;top:10px}.map-heading{top:10px}}
 @media(max-width:680px){.sidebar{left:8px;right:8px;bottom:8px;top:auto;width:auto;max-width:none;max-height:58dvh;border-radius:18px}.brand{padding:12px 14px 10px}.brand-symbol{width:30px;height:30px}.brand-name{font-size:13px}.brand p{font-size:11px;margin-top:7px}.brand-sub{font-size:8px}.online-state{margin-top:7px}.section{padding:12px 14px 0}.map-heading{left:8px;top:8px;max-width:calc(100vw - 16px);padding:10px 12px}.map-heading strong{font-size:17px}.map-heading .eyebrow{margin-bottom:2px}.map-heading div:last-child{display:none}.map-styles{top:8px;right:8px;transform:translateY(68px);gap:2px;padding:3px}.map-style{font-size:9px;padding:6px 7px}.map-credit{bottom:calc(58dvh + 12px);font-size:8px}.maplibregl-ctrl-bottom-right{bottom:calc(58dvh + 10px)!important}.map-issue{top:126px;right:8px;left:8px;max-width:none}.detail{margin-left:14px;margin-right:14px}.utility-row .btn{font-size:10px;padding:8px 6px}}
@@ -157,7 +159,8 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
   <div class="brand-line"><div class="brand-symbol">✣</div><div><div class="brand-name">PHOTO SCOUT</div><div class="brand-sub">Roadtrip photography planner</div></div></div>
   <p>Scout real places. Plan the frame. Save the stop.</p>
   <div class="online-state"><span class="live-dot"></span><span id="appState">Map loading · global search ready</span></div>
-  <div class="marker-legend" aria-label="Information key"><span><i class="legend-dot mapped"></i> Mapped facts</span><span><i class="legend-dot candidate"></i> Photo candidates</span><span><i class="legend-dot photo"></i> AI concepts</span></div>
+  <div class="marker-legend" aria-label="Map key"><span><i class="legend-dot mapped"></i> Mapped facts</span><span><i class="legend-dot candidate"></i> Photo candidates</span><span><i class="legend-dot parking"></i> Parking</span><span><i class="legend-dot photo"></i> Photo ideas</span></div>
+  <div class="parking-legend-note">Green P = mapped parking candidate. ×N = a cluster count, not a parking space; tap it to zoom to individual points. The map does not confirm the entrance, access or availability.</div>
   <button class="btn primary small idea-lab-header-button" id="headerIdeaButton" type="button">✦ Open Photo Idea Lab</button>
 </header>
 <div class="panel-scroll">
