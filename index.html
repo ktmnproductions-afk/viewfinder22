@@ -1250,7 +1250,7 @@ function conceptSketchData(item,mode,variation){
  const facts=[name,locality,tags.natural,tags.tourism,tags.waterway,tags.building,tags.historic,tags.amenity,tags.leisure,item&&item.scenicKind,item&&item.summary,item&&item.history,item&&item.why].filter(Boolean).join(' ').toLowerCase();
  const modeValue=mode||'wide';
  const lens=modeValue==='compressed'?'100–150 mm':modeValue==='context'?'35–70 mm':'18–24 mm';
- const isBattle=/battle|battlefield|battleground|siege|campaign|war memorial|historic battlefield|conflict site|military history/.test(facts);
+ const isBattle=/battle|battlefield|battleground|siege|campaign|historic battlefield|conflict site|military history|war site/.test(facts);
  const isCoastal=/coast|sea|harbour|harbor|bay|marina|beach|waterfront|island|lighthouse|port|promenade|shore|kvarner|adriatic|coastline/.test(facts)||/^(coastline|bay|beach)$/.test(String(tags.natural||'').toLowerCase());
  const isCross=/\b(cross|crucifix|wayside|roadside shrine|wayside shrine)\b/.test(facts);
  const isChurch=/church|chapel|basilica|cathedral|monastery|abbey|kapelle|kirche/.test(facts)||/^(church|chapel|cathedral|monastery)$/.test(String(tags.building||'').toLowerCase());
@@ -1261,7 +1261,7 @@ function conceptSketchData(item,mode,variation){
  const isUrban=/old town|old city|city centre|city center|cityscape|skyline|street|square|market|town hall|city hall|rooftops|downtown|historic centre|historic center|urban/.test(facts)||/^(city|town|square|street)$/.test(String(tags.place||'').toLowerCase());
  const isMountain=/mountain|alps|alpine|ridge|summit|peak|hill|mount |valley|glacier|pass\b|highlands|panorama|lookout|belvedere|viewpoint/.test(facts)||/^(peak|ridge|cliff|mountain|valley)$/.test(String(tags.natural||'').toLowerCase());
  const isRiver=/river|waterfall|watercourse|riverbank|stream|canal|waterway|elster/.test(facts)||!!tags.waterway;
- const scene=isCross?'cross':isChurch?'church':isCastle?'castle':isRuin?'ruins':isMonument?'monument':isCoastal?'coast':isBattle?'battlefield':isMountain?'mountain':isUrban?'urban':category==='parking'?'street':category==='viewpoint'?'mountain':category==='photoSpot'?'landscape':isArchitecture?'architecture':'landscape';
+ const scene=isBattle?'battlefield':isCoastal?'coast':isCross?'cross':isChurch?'church':isCastle?'castle':isRuin?'ruins':isMonument?'monument':isMountain?'mountain':isUrban?'urban':category==='parking'?'street':category==='viewpoint'?'mountain':category==='photoSpot'?'landscape':isArchitecture?'architecture':'landscape';
  const title=xmlEsc(name.length>45?name.slice(0,42)+'…':name);
  const place=xmlEsc(locality.length>42?locality.slice(0,39)+'…':locality);
  let seed=2166136261;
@@ -1285,9 +1285,9 @@ function conceptSketchData(item,mode,variation){
  }
  let sceneArt='';
  if(scene==='coast'){
-  sceneArt='<path d="M0 337Q210 323 420 342T850 332T1280 341V720H0Z" fill="#e4e9e4" stroke="#61645c" stroke-width="2"/>'+
-   ridge(380,65,10,'#deded2','#595d55')+
-   '<path d="M0 408Q220 391 420 412T850 404T1280 414 M0 458Q220 441 420 462T850 454T1280 464 M0 510Q220 493 420 514T850 506T1280 516" fill="none" stroke="#777c73" stroke-width="2" opacity=".78"/>'+
+  sceneArt=ridge(315,80,10,'#deded2','#595d55')+
+   '<path d="M0 344Q210 330 420 349T850 339T1280 348V720H0Z" fill="#e4e9e4" stroke="#61645c" stroke-width="2"/>'+
+   '<path d="M0 390Q220 374 420 394T850 386T1280 396 M0 438Q220 422 420 442T850 434T1280 444 M0 486Q220 470 420 490T850 482T1280 492 M0 534Q220 518 420 538T850 530T1280 540" fill="none" stroke="#777c73" stroke-width="2" opacity=".78"/>'+
    '<path d="M0 366L155 318 262 348 365 297 476 361 583 330 690 366 820 318 940 359 1077 312 1186 350 1280 330" fill="none" stroke="#555a52" stroke-width="3"/>';
   if(rand()>.35)sceneArt+='<circle cx="'+Math.round(170+rand()*940)+'" cy="'+Math.round(155+rand()*70)+'" r="'+Math.round(20+rand()*16)+'" fill="#f6f1e3" stroke="#8b8c80" stroke-width="2"/>';
  }else if(scene==='mountain'){
@@ -1310,6 +1310,16 @@ function conceptSketchData(item,mode,variation){
    const x=40+n*150+rand()*45,y=435+rand()*35;
    sceneArt+='<g stroke="#666960" stroke-width="2" fill="none"><path d="M'+x+' '+(y+26)+'v-22m-9 8l9 -11 9 11"/><path d="M'+(x-8)+' '+(y+26)+'h16"/></g>';
   }
+ }else if(scene==='architecture'){
+  const x=modeValue==='wide'?620:modeValue==='compressed'?730:640;
+  const sc=modeValue==='wide'?.82:modeValue==='compressed'?.92:1;
+  sceneArt+='<g transform="translate('+x+' 0) scale('+sc+')" stroke="#45483f" stroke-width="4" fill="#eeece2">'+
+   '<path d="M-210 565V355H210V565Z"/>'+
+   '<path d="M-226 355L-175 319H175L226 355Z"/>'+
+   '<path d="M-155 565V425Q-100 365 -45 425V565 M-10 565V425Q45 365 100 425V565" fill="#d6d6ca"/>'+
+   '<path d="M-185 388H-145V420H-185Z M-25 388H15V420H-25Z M135 388H175V420H135Z" fill="#d6d6ca"/>'+
+   '<path d="M-235 565H235" fill="none"/>'+
+   '</g>';
  }else if(scene==='church'){
   const x=modeValue==='wide'?620:modeValue==='compressed'?745:640;
   const sc=modeValue==='wide'?.82:modeValue==='compressed'?.9:1;
@@ -1444,11 +1454,12 @@ function updateConceptTargetName(){
  }
  const name=item.name||'this location';
  const town=String(item.city||state.detectedLocality||'the surrounding area');
- const ideaFacts=[name,item.scenicKind,item.tags&&item.tags.building,item.tags&&item.tags.historic,item.tags&&item.tags.natural,item.summary,item.history].filter(Boolean).join(' ').toLowerCase();
- const isArchitecture=item.category==='architecture'||/church|chapel|basilica|cathedral|castle|fortress|palace|ruin|archaeolog|roman forum|monument|tower|bridge|building|facade|temple/.test(ideaFacts);
- const isBattle=/battle|battlefield|battleground|siege|campaign|war site|military history/.test(ideaFacts);
- const isCoastal=/coast|sea|harbour|harbor|bay|marina|beach|waterfront|island|lighthouse|port|shore|adriatic/.test(ideaFacts);
- const isMountain=/mountain|alps|ridge|summit|peak|hill|valley|glacier|pass|lookout|viewpoint|panorama/.test(ideaFacts);
+ const placeFacts=[name,item.scenicKind,item.tags&&item.tags.building,item.tags&&item.tags.historic,item.tags&&item.tags.natural].filter(Boolean).join(' ').toLowerCase();
+ const contextFacts=[placeFacts,item.summary,item.why].filter(Boolean).join(' ').toLowerCase();
+ const isArchitecture=item.category==='architecture'||/church|chapel|basilica|cathedral|castle|fortress|palace|ruin|archaeolog|roman forum|monument|tower|bridge|building|facade|temple/.test(placeFacts);
+ const isBattle=/battle|battlefield|battleground|siege|campaign|war site|military history/.test(contextFacts);
+ const isCoastal=/coast|sea|harbour|harbor|bay|marina|beach|waterfront|island|lighthouse|port|shore|adriatic/.test(placeFacts);
+ const isMountain=/mountain|alps|ridge|summit|peak|hill|valley|glacier|pass|lookout|viewpoint|panorama/.test(placeFacts);
  if(summary)summary.textContent='Shot plan for '+name+(town&&town!==name?' near '+town:'')+'. These are practical starting points for your Canon EOS R50 and 18–150 mm lens; confirm the real view and safe access on site.';
  if(wide)wide.textContent=isArchitecture?'At '+name+', use 18–24 mm to frame the structure with a foreground edge and clean verticals; leave breathing room around the silhouette.':isBattle?'At '+name+', use 18–24 mm to show the scale of the open site: foreground grasses or a path, broad middle-ground, and the real horizon. Avoid staging modern battle action as if it were historical evidence.':isCoastal?'At '+name+', use 18–24 mm to layer shore, water and headland; let a path or harbour edge lead into the frame if it is actually accessible.':isMountain?'At '+name+', use 18–24 mm to combine a foreground trail or rock with overlapping ridges; keep the horizon intentional.':'At '+name+', use 18–24 mm with a path, wall or vegetation in the foreground, leading toward the actual subject and background.';
  if(context)context.textContent=isArchitecture?'At '+name+', use 35–70 mm to isolate a facade, arch or architectural detail while retaining enough context to identify the place.':isBattle?'At '+name+', use 35–70 mm to frame one distinctive terrain feature, river bend, marker or tree line against the wider field—only include details verified on location.':isCoastal?'At '+name+', use 35–70 mm to balance a headland, boat, breakwater or shoreline feature with the water behind it.':isMountain?'At '+name+', use 35–70 mm to balance one peak or ridge with nearby terrain and visible atmospheric layers.':'At '+name+', use 35–70 mm to balance the main subject with the surroundings and separate foreground, middle-ground and background.';
