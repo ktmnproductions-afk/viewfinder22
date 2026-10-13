@@ -165,7 +165,7 @@ jobs:
               hasShotPrompt: (document.querySelector('#shotPrompt')?.value || '').includes('Canon EOS R50'),
               photoCount: document.querySelectorAll('#detailPhotoRefs .detail-photo').length,
               photoStatus: document.querySelector('#detailPhotoCount')?.textContent,
-              compositionCards: document.querySelectorAll('#scenicSection .concept-card').length,
+              compositionCards: document.querySelectorAll('#photoIdeaDetails .concept-card').length,
               photoIdeaLabVisible: !!document.querySelector('#aiVisualBlock')?.getBoundingClientRect().height,
               autoSketchSrc: document.querySelector('#autoSketchImage')?.getAttribute('src') || '',
               selectedSketchSrc: document.querySelector('#selectedConceptPreviewImg')?.getAttribute('src') || '',
@@ -176,7 +176,7 @@ jobs:
               nearbyParkingStatus: document.querySelector('#spotParkingCount')?.textContent,
               hasGenerateButton: !!document.querySelector('#generateConcept'),
               hasActualImageSlot: !!document.querySelector('#generatedVisual'),
-              imageProviderLoaded: !!window.puter?.ai?.txt2img,
+              hasHeaderIdeaAccess: !!document.querySelector('#headerIdeaButton'),
               visible: !!document.querySelector('#spotDetail')?.getBoundingClientRect().height,
               markerWidth: getComputedStyle(document.querySelector('.scout-marker.photoSpot .dot-core')).width
             }));
@@ -186,48 +186,31 @@ jobs:
             if (parseFloat(selectedSpot.markerWidth) < 30) {
               throw new Error('Photo-spot markers are still too small to notice: ' + JSON.stringify(selectedSpot));
             }
-            const providerProbe = await page.evaluate(async () => {
-              try {
-                return await Promise.race([
-                  window.puter.ai.txt2img('Test-mode landscape image preview for Photo Scout', true).then(preview => ({
-                    ok: !!(preview && preview.src),
-                    sourcePrefix: preview && preview.src ? String(preview.src).slice(0, 32) : ''
-                  })).catch(e => ({ ok:false, error:String(e && e.message || e).slice(0,500) })),
-                  new Promise(resolve => setTimeout(() => resolve({ ok:false, timeout:true, error:'Provider test-mode request exceeded 20 seconds' }), 20000))
-                ]);
-              } catch (e) {
-                return { ok: false, error: String(e && e.message || e).slice(0, 500) };
-              }
-            });
-            console.log('PUTER_TEST_MODE_PROBE ' + JSON.stringify(providerProbe));
-            // This external no-credit probe is diagnostic only. The preview UI is
-            // independently tested below with a mocked response and generation remains
-            // opt-in at runtime; a provider timeout must not fail map/scouting checks.
-            // Mock the paid generation response in the UI test so CI doesn't make
-            // a real generation request or incur image-generation usage.
-            await page.evaluate(() => {
-              window.__lastImagePrompt = '';
-              window.puter = { ai: { txt2img: async (prompt, options) => {
-                window.__lastImagePrompt = prompt + '\\nMODEL_OPTIONS=' + JSON.stringify(options);
-                const image = document.createElement('img');
-                image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#223e50"/><stop offset="1" stop-color="#deb88b"/></linearGradient></defs><rect width="1280" height="720" fill="url(#sky)"/><circle cx="950" cy="150" r="70" fill="#fff0c2"/><path d="M0 430L230 250 420 400 625 210 810 390 1030 260 1280 420V720H0Z" fill="#718a83"/><path d="M0 520L180 460 380 500 580 400 760 500 1000 410 1280 505V720H0Z" fill="#263f39"/><path d="M360 540h560v180H360z" fill="#d2bc9d" opacity=".85"/></svg>');
-                return image;
-              } } };
-            });
+            // Abort the optional external AI call in CI. The app must still show
+            // its instant location-specific sketch without API keys or provider availability.
+            await page.route('https://image.pollinations.ai/**', route => route.abort());
             await page.locator('#conceptMode').selectOption('compressed');
             await page.locator('#generateConcept').click();
-            await page.waitForFunction(() => !document.querySelector('#generatedVisualWrap')?.hidden && document.querySelector('#generatedVisual')?.src.startsWith('data:image/svg+xml'), null, { timeout: 5000 });
-            const generation = await page.evaluate(() => ({
-              visible: !document.querySelector('#generatedVisualWrap')?.hidden,
-              imageSrc: document.querySelector('#generatedVisual')?.getAttribute('src') || '',
-              promptHasLens: /100–150 mm/.test(window.__lastImagePrompt || ''),
-              promptHasLandmark: (window.__lastImagePrompt || '').includes(document.querySelector('#detailTitle')?.textContent || ''),
-              status: document.querySelector('#conceptStatus')?.textContent
-            }));
-            if (!generation.visible || !generation.imageSrc.startsWith('data:image/') || !generation.promptHasLens || !generation.promptHasLandmark) {
-              throw new Error('AI visual preview did not render the selected scene/prompt: ' + JSON.stringify(generation));
+            await page.waitForFunction(() =>
+              !document.querySelector('#generatedVisualWrap')?.hidden &&
+              (document.querySelector('#generatedVisual')?.getAttribute('src') || '').startsWith('data:image/svg+xml')
+            , null, { timeout: 5000 });
+            const generation = await page.evaluate(() => {
+              const src = document.querySelector('#generatedVisual')?.getAttribute('src') || '';
+              const svg = src.startsWith('data:image/svg+xml,') ? decodeURIComponent(src.slice('data:image/svg+xml,'.length)) : '';
+              return {
+                visible: !document.querySelector('#generatedVisualWrap')?.hidden,
+                imageSrc: src,
+                sketchHasTitle: svg.includes(document.querySelector('#detailTitle')?.textContent || ''),
+                sketchHasCanon: svg.includes('Canon EOS R50'),
+                sketchHasLens: svg.includes('100–150 mm'),
+                status: document.querySelector('#conceptStatus')?.textContent
+              };
+            });
+            if (!generation.visible || !generation.imageSrc.startsWith('data:image/svg+xml') || !generation.sketchHasCanon || !generation.sketchHasLens) {
+              throw new Error('Clicking Generate sketch idea did not immediately render the location-specific composition sketch: ' + JSON.stringify(generation));
             }
-                        const rangefindProbe = await page.evaluate(async () => {
+            const rangefindProbe = await page.evaluate(async () => {
               try {
                 const { createSearch } = await import('https://esm.sh/rangefind@0.5.0/browser');
                 const engine = await createSearch({
