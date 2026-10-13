@@ -1228,60 +1228,6 @@ function updateSocialSearch(query){
  // is deliberately not used as a substitute for in-app visual inspiration.
  return;
 }
-function shotPrompt(item){
- let genre='editorial travel photography';
- if(item.category==='history')genre='historical architecture and cultural documentary photography';
- if(item.category==='parking')genre='a visual story of the surrounding place, not a photograph of the car park';
- if(item.category==='viewpoint')genre='landscape and viewpoint photography';
- if(item.category==='photoSpot')genre=(item.scenicKind||'landscape')+' photography designed to show a city or landscape from a strong position';
- if(item.category==='architecture')genre='urban architecture and street photography';
- const gear='Camera: Canon EOS R50 with RF-S 18–150mm lens. At 18–24mm include foreground and setting; 35–70mm balances subject and context; 100–150mm compresses distant rooftops, skyline layers and mountain ridges. Use f/8–f/11 for landscape depth in daylight; consider a tripod and low ISO for blue hour.';
- const framing=item.category==='photoSpot'?'Create two alternate compositions: (1) a wide environmental frame with foreground and city/landscape layers; (2) a compressed telephoto frame isolating rooftops, towers, ridgelines or repeating forms.':'Create one wide establishing frame and one tighter detail frame.';
- const evidence=item.category==='photoSpot'?'Mapped evidence: '+(item.why||'scenic feature candidate')+'. Do not invent a real structure or claim an unverified view. ':'';
- return 'Create a photorealistic visual reference for a real-world photography outing at '+item.name+'. Coordinates: '+Number(item.lat).toFixed(5)+', '+Number(item.lng).toFixed(5)+'. Genre: '+genre+'. '+evidence+gear+' '+framing+' Suggest an achievable camera position, clear foreground, layered depth, strong geometry, natural light and an editorial colour palette. Avoid generic travel-poster styling, oversaturation, text overlays, logos, fabricated architecture or impossible scenery. This is a creative illustration, not proof of the exact on-site view. Offer golden-hour and overcast/daylight options.';
-}
-function imageConceptPrompt(item,mode){
- const locality=String(item.city||state.detectedLocality||'').trim();
- const tags=item.tags||{};
- const sceneType=item.category==='photoSpot'?(item.scenicKind||'landscape viewpoint'):item.category==='history'?'historic landmark and cultural detail':item.category==='architecture'?'architecture and built form':item.category==='viewpoint'?'landscape viewpoint':item.category==='parking'?'surrounding landscape or town, not the car park':'the selected mapped place';
- const modes={
-  wide:{lens:'18–24 mm on Canon EOS R50',composition:'Sketch a wide establishing composition with a foreground line and layered depth; indicate a possible frame edge and rule-of-thirds guides lightly.'},
-  context:{lens:'35–70 mm on Canon EOS R50',composition:'Sketch a medium composition showing the recognizable main subject with enough surrounding context; show simple arrows for the eye path and a subtle framing guide.'},
-  compressed:{lens:'100–150 mm on Canon EOS R50',composition:'Sketch a compressed telephoto composition that simplifies the real scene into overlapping silhouettes and tonal layers; mark the crop/frame and visual alignment lightly.'}
- };
- const selected=modes[mode]||modes.wide;
- const facts=[item.name,locality].filter(Boolean).join(', ');
- const details=String(item.summary||tags.description||tags.historic||tags.natural||tags.tourism||tags.building||'').slice(0,400);
- const coordinates=Number(item.lat).toFixed(5)+', '+Number(item.lng).toFixed(5);
- const evidence=item.category==='photoSpot'?'Mapped scouting note: '+String(item.why||'candidate photo spot; sightline not verified')+'. ':'';
- return 'IMAGE-TO-IMAGE EDIT. Use the supplied real reference photograph as the source image and transform THAT SAME SCENE into a loose black-and-white pencil and fine-liner composition sketch for a photographer to draw/plan from. This is a sketch, never a photorealistic new image. Preserve the recognizable real buildings, silhouette, coastline/river/terrain, skyline, and spatial relationships visible in the reference. Do not replace the place with generic scenery, do not invent towers/buildings/mountains/water that are not visible, and do not change the landmark identity. Subject: '+facts+'. Map coordinate: '+coordinates+'. Place type: '+sceneType+'. '+(details?'Known map/source detail: '+details+'. ':'')+evidence+'Composition: '+selected.composition+' Lens intention: '+selected.lens+'. White/off-white paper, graphite linework, loose construction strokes, a few shaded tonal masses, hand-drawn arrows and a faint rule-of-thirds grid. Clean editorial field-notebook style, high contrast, readable, 16:9 landscape. No colour photograph, no painterly fantasy, no photorealistic reinterpretation, no text, labels, lettering, watermark, collage, or decorative frame. This is a composition study of the supplied reference photo, not a claim about any view outside that photo.';
-}
-function resetGeneratedConcept(){
- const image=$('generatedVisual');
- const wrap=$('generatedVisualWrap');
- const status=$('conceptStatus');
- const button=$('generateConcept');
- if(image)image.removeAttribute('src');
- if(wrap)wrap.hidden=true;
- if(status)status.textContent='Choose a place and composition, then make a pencil sketch here. A matched source photo is used when available; otherwise a new local scene is drawn. No sign-in or API key needed.';
- if(button){button.disabled=false;button.textContent='Make pencil sketch';}
-}
-function currentConceptTarget(){
- // A parking point is useful for navigation but is not itself the photo subject.
- // Prefer an explicitly selected photo/history subject, then the best mapped
- // scenic candidate, then a nearby historic/architectural subject, and finally
- // the user's pin. This keeps the Idea Lab useful even in historic cities with
- // no mapped viewpoint records.
- if(state.selected&&state.selected.category!=='parking')return state.selected;
- if(state.scenicSpots.length)return state.scenicSpots[0];
- const subjects=state.results.filter(r=>['history','architecture','viewpoint'].includes(r.category));
- if(subjects.length){
-  return subjects.slice().sort((a,b)=>(a.distance||0)-(b.distance||0))[0];
- }
- if(state.selected)return state.selected;
- if(state.center)return {id:'pin-'+state.scanCount,name:state.detectedLocality?'Photo ideas around '+state.detectedLocality:'Pinned photo location',lat:state.center.lat,lng:state.center.lng,distance:0,category:'photoSpot',scenicKind:'landscape and cityscape',city:state.detectedLocality||'',source:'Your map pin',why:'Creative shot ideas for the pinned area. Use nearby landmark/image references where available. Terrain direction and line of sight have not been verified.'};
- return null;
-}
 function xmlEsc(value){
  return String(value==null?'':value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
 }
@@ -1488,169 +1434,6 @@ function conceptSketchData(item,mode,variation){
  '</svg>';
  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
-function renderConceptSketch(item,mode){
- if(!item||!Number.isFinite(Number(item.lat))||!Number.isFinite(Number(item.lng)))return;
- const chosen=mode||$('conceptMode')?.value||'wide';
- const hasSourceSketch=state.referenceSketchId===item.id&&state.referenceSketchMode===chosen&&!!state.referenceSketchDataUrl;
- const src=hasSourceSketch?state.referenceSketchDataUrl:conceptSketchData(item,chosen);
- const image=$('autoSketchImage');
- const detailImage=$('selectedConceptPreviewImg');
- const caption=$('autoSketchCaption');
- const detailCaption=$('selectedConceptCaption');
- const lens=$('selectedConceptLens');
- if(image){image.src=src;image.alt=hasSourceSketch?'Pencil sketch rendered from the place-matched reference photo “'+state.referenceSketchTitle+'”. The location sightline is not independently verified.':'Illustrative '+chosen+' composition sketch for '+item.name+'; not a verified view.';}
- if(detailImage){detailImage.src=src;detailImage.alt=hasSourceSketch?'Reference-photo pencil sketch for '+item.name+'; inspiration only, not a verified view.':'Illustrative composition sketch for '+item.name+'; not a verified view.';}
- if(caption)caption.textContent=hasSourceSketch?'Pencil sketch of matched reference · '+state.referenceSketchTitle+' · compare with source': 'Instant '+(chosen==='wide'?'wide landscape · 18–24 mm':chosen==='context'?'subject with context · 35–70 mm':'compressed layers · 100–150 mm')+' sketch · illustrative only';
- if(detailCaption)detailCaption.textContent=hasSourceSketch?'Sketch drawn from “'+state.referenceSketchTitle+'”. This source shows an example of the subject, not proof that the same view is visible from this pin.':'Shot idea for '+item.name+': '+(chosen==='wide'?'use foreground lines and layered depth.':chosen==='context'?'balance the subject with its surroundings.':'use telephoto compression for graphic layers.')+' Illustration only; visibility and access must be checked.';
- if(lens)lens.textContent='Canon R50 · '+(chosen==='wide'?'18–24 mm':chosen==='context'?'35–70 mm':'100–150 mm');
-}
-function updateConceptTargetName(){
- const label=$('conceptTargetName');
- const item=currentConceptTarget();
- if(label)label.textContent=item?'For: '+item.name:'Pin a place to start';
- const summary=$('photoIdeaSummary');
- const wide=$('ideaWideCopy'),context=$('ideaContextCopy'),compressed=$('ideaCompressedCopy');
- if(!item){
-  if(summary)summary.textContent='Drop a pin to get composition ideas. Generate a pencil sketch locally, using a matched reference photo when one is available.';
-  return;
- }
- const name=item.name||'this location';
- const town=String(item.city||state.detectedLocality||'the surrounding area');
- const placeFacts=[name,item.scenicKind,item.tags&&item.tags.building,item.tags&&item.tags.historic,item.tags&&item.tags.natural].filter(Boolean).join(' ').toLowerCase();
- const contextFacts=[placeFacts,item.summary,item.why].filter(Boolean).join(' ').toLowerCase();
- const isArchitecture=item.category==='architecture'||/church|chapel|basilica|cathedral|castle|fortress|palace|ruin|archaeolog|roman forum|monument|tower|bridge|building|facade|temple/.test(placeFacts);
- const isBattle=/battle|battlefield|battleground|siege|campaign|war site|military history/.test(contextFacts);
- const isCoastal=/coast|sea|harbour|harbor|bay|marina|beach|waterfront|island|lighthouse|port|shore|adriatic/.test(placeFacts);
- const isMountain=/mountain|alps|ridge|summit|peak|hill|valley|glacier|pass|lookout|viewpoint|panorama/.test(placeFacts);
- if(summary)summary.textContent='Shot plan for '+name+(town&&town!==name?' near '+town:'')+'. These are practical starting points for your Canon EOS R50 and 18–150 mm lens; confirm the real view and safe access on site.';
- if(wide)wide.textContent=isArchitecture?'At '+name+', use 18–24 mm to frame the structure with a foreground edge and clean verticals; leave breathing room around the silhouette.':isBattle?'At '+name+', use 18–24 mm to show the scale of the open site: foreground grasses or a path, broad middle-ground, and the real horizon. Avoid staging modern battle action as if it were historical evidence.':isCoastal?'At '+name+', use 18–24 mm to layer shore, water and headland; let a path or harbour edge lead into the frame if it is actually accessible.':isMountain?'At '+name+', use 18–24 mm to combine a foreground trail or rock with overlapping ridges; keep the horizon intentional.':'At '+name+', use 18–24 mm with a path, wall or vegetation in the foreground, leading toward the actual subject and background.';
- if(context)context.textContent=isArchitecture?'At '+name+', use 35–70 mm to isolate a facade, arch or architectural detail while retaining enough context to identify the place.':isBattle?'At '+name+', use 35–70 mm to frame one distinctive terrain feature, river bend, marker or tree line against the wider field—only include details verified on location.':isCoastal?'At '+name+', use 35–70 mm to balance a headland, boat, breakwater or shoreline feature with the water behind it.':isMountain?'At '+name+', use 35–70 mm to balance one peak or ridge with nearby terrain and visible atmospheric layers.':'At '+name+', use 35–70 mm to balance the main subject with the surroundings and separate foreground, middle-ground and background.';
- if(compressed)compressed.textContent=isArchitecture?'At '+name+', use 100–150 mm to isolate repeating windows, stone textures, towers or graphic details; watch for converging verticals.':isBattle?'At '+name+', use 100–150 mm to compress distant tree lines, terrain folds or a real landmark into layered bands—do not invent missing historic structures.':isCoastal?'At '+name+', use 100–150 mm to compress headlands, islands and water bands, using overlap to simplify the frame.':isMountain?'At '+name+', use 100–150 mm to compress successive ridges and isolate patterns in the slopes.':'At '+name+', use 100–150 mm to compress rooftops, trees or distant landscape layers where they are really visible.';
- renderConceptSketch(item,$('conceptMode')?.value||'wide');
-}
-async function createPhotoDerivedPencilSketch(reference){
- return await new Promise((resolve,reject)=>{
-  const source=new Image();
-  source.crossOrigin='anonymous';
-  source.onload=()=>{
-   try{
-    const maxWidth=1280;
-    const scale=Math.min(1,maxWidth/source.naturalWidth);
-    const width=Math.max(1,Math.round(source.naturalWidth*scale));
-    const height=Math.max(1,Math.round(source.naturalHeight*scale));
-    const canvas=document.createElement('canvas');
-    canvas.width=width;canvas.height=height;
-    const ctx=canvas.getContext('2d',{willReadFrequently:true});
-    if(!ctx)throw new Error('Canvas drawing is unavailable in this browser.');
-    ctx.drawImage(source,0,0,width,height);
-    const pixels=ctx.getImageData(0,0,width,height).data;
-    const count=width*height;
-    const gray=new Float32Array(count);
-    for(let p=0,i=0;p<count;p++,i+=4)gray[p]=pixels[i]*.299+pixels[i+1]*.587+pixels[i+2]*.114;
-    const out=ctx.createImageData(width,height);
-    const data=out.data;
-    for(let y=0;y<height;y++){
-     for(let x=0;x<width;x++){
-      const p=y*width+x,i=p*4;
-      const xm=Math.max(0,x-1),xp=Math.min(width-1,x+1),ym=Math.max(0,y-1),yp=Math.min(height-1,y+1);
-      const tl=gray[ym*width+xm],tc=gray[ym*width+x],tr=gray[ym*width+xp];
-      const ml=gray[y*width+xm],mr=gray[y*width+xp];
-      const bl=gray[yp*width+xm],bc=gray[yp*width+x],br=gray[yp*width+xp];
-      const gx=-tl+tr-2*ml+2*mr-bl+br;
-      const gy=-tl-2*tc-tr+bl+2*bc+br;
-      const edge=Math.min(205,Math.hypot(gx,gy)*.82);
-      const shade=(255-gray[p])*.13;
-      const paper=Math.min(251,Math.max(220,248-(255-gray[p])*.075));
-      const ink=Math.max(24,Math.min(252,Math.round(paper-edge-shade)));
-      data[i]=ink;
-      data[i+1]=Math.min(255,ink+1);
-      data[i+2]=Math.min(255,ink+3);
-      data[i+3]=255;
-     }
-    }
-    ctx.fillStyle='#f6f2e8';ctx.fillRect(0,0,width,height);
-    ctx.putImageData(out,0,0);
-    ctx.strokeStyle='rgba(90,83,69,.17)';ctx.lineWidth=Math.max(.7,width/1400);
-    ctx.setLineDash([Math.max(4,width/150),Math.max(5,width/110)]);
-    ctx.beginPath();
-    ctx.moveTo(width/3,0);ctx.lineTo(width/3,height);
-    ctx.moveTo(width*2/3,0);ctx.lineTo(width*2/3,height);
-    ctx.moveTo(0,height/3);ctx.lineTo(width,height/3);
-    ctx.moveTo(0,height*2/3);ctx.lineTo(width,height*2/3);
-    ctx.stroke();
-    resolve(canvas.toDataURL('image/jpeg',.94));
-   }catch(error){reject(error);}
-  };
-  source.onerror=()=>reject(new Error('The source photo could not be loaded for local sketch rendering.'));
-  source.src=reference.currentSrc||reference.src;
- });
-}
-async function generateConcept(){
- const item=currentConceptTarget();
- const status=$('conceptStatus');
- const button=$('generateConcept');
- const output=$('autoSketchImage');
- const caption=$('autoSketchCaption');
- const detailOutput=$('selectedConceptPreviewImg');
- const detailCaption=$('selectedConceptCaption');
- const duplicateWrap=$('generatedVisualWrap');
- const duplicateOutput=$('generatedVisual');
- if(!item){
-  status.textContent='Click the map or select a place first.';
-  return;
- }
- const mode=$('conceptMode')?.value||'wide';
- button.disabled=true;
- button.textContent='Drawing your sketch…';
- status.textContent='Creating a '+(mode==='wide'?'wide landscape':mode==='context'?'subject-with-context':'telephoto composition')+' idea for '+item.name+'…';
- if(duplicateWrap)duplicateWrap.hidden=true;
- if(duplicateOutput){duplicateOutput.removeAttribute('src');duplicateOutput.style.filter='';}
- try{
-  await new Promise(resolve=>window.requestAnimationFrame(()=>resolve()));
-  const selected=state.selected;
-  const refs=selected&&selected.id===item.id?Array.from($('detailPhotoRefs')?.querySelectorAll('.detail-photo img')||[]):[];
-  const reference=refs.find(img=>/^https?:/i.test(img.currentSrc||img.src)&&img.complete&&img.naturalWidth>80);
-  let madeFromPhoto=false;
-  if(reference){
-   try{
-    const photoSketch=await createPhotoDerivedPencilSketch(reference);
-    output.src=photoSketch;
-    output.alt='Pencil study drawn from the place-matched reference photograph “'+(reference.alt||item.name)+'”. It is a reference study, not proof of the view from this exact pin.';
-    if(caption)caption.textContent='Pencil study from matched photo · '+(reference.alt||item.name)+' · verify viewpoint';
-    if(detailOutput)detailOutput.src=photoSketch;
-    if(detailCaption)detailCaption.textContent='Pencil study derived from the matched reference photo. It shows that photo’s composition, not a verified line of sight from the selected map pin.';
-    state.referenceSketchId=item.id;
-    state.referenceSketchMode=mode;
-    state.referenceSketchDataUrl=photoSketch;
-    state.referenceSketchTitle=String(reference.alt||item.name);
-    madeFromPhoto=true;
-   }catch(photoError){
-    // Cross-origin canvas restrictions can occur; use a locally generated composition instead.
-   }
-  }
-  if(!madeFromPhoto){
-   const variation=(state.sketchGeneration=(state.sketchGeneration||0)+1);
-   const sketch=conceptSketchData(item,mode,variation);
-   output.src=sketch;
-   output.alt='Generated local vector composition sketch for '+item.name+'. Scene type is inferred from available place names and map tags; illustrative shot idea, not a verified view.';
-   if(caption)caption.textContent='Generated '+(mode==='wide'?'wide landscape':mode==='context'?'subject with context':'telephoto layer')+' composition · '+(item.city||state.detectedLocality||'selected location')+' · illustrative';
-   if(detailOutput)detailOutput.src=sketch;
-   if(detailCaption)detailCaption.textContent='A newly drawn, place-aware composition idea made locally from the selected place name and available map tags. It is not a photograph and the exact viewpoint is unverified.';
-   state.referenceSketchId=null;
-   state.referenceSketchMode=null;
-   state.referenceSketchDataUrl=null;
-   state.referenceSketchTitle='';
-  }
-  status.textContent=madeFromPhoto
-   ?'Pencil sketch created from a matched reference photo. No sign-in or external image service was used.'
-   :'Sketch idea created for '+item.name+'. The drawing uses available place names and map tags to choose a scene such as coast, mountains, ruins, architecture or an open historical landscape. It runs here with no sign-in, API key or API usage charge.';
- }catch(error){
-  status.textContent='Could not draw the sketch in this browser: '+String(error&&error.message||error).slice(0,140)+'. Try another composition.';
- }finally{
-  button.disabled=false;
-  button.textContent='Make pencil sketch';
- }
-}
 async function renderDetailPhotoRefs(item){
  const container=$('detailPhotoRefs');
  if(!container)return;
@@ -1680,34 +1463,7 @@ async function renderDetailPhotoRefs(item){
   const note='Matched by title/subject. This is a visual reference, not proof of the exact camera position.';
   return '<article class="detail-photo"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original image and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(note)+'</div><div class="detail-photo-note">'+esc(p.license||'Licence on source page')+'</div></a></article>';
  }).join('');
- // Automatically make a pencil study from the actual matched reference thumbnail.
- // This gives the photographer a visual starting idea without waiting for an external
- // AI service. It is always labelled as a sketch of the reference photo, not proof
- // that the view is visible from this exact pin.
- const firstCard=container.querySelector('.detail-photo');
- const firstImage=firstCard&&firstCard.querySelector('img');
- if(firstImage){
-  const drawReferenceSketch=async()=>{
-   if(!state.selected||state.selected.id!==selectedId||firstImage.naturalWidth<80)return;
-   try{
-    const sketch=await createPhotoDerivedPencilSketch(firstImage);
-    if(!state.selected||state.selected.id!==selectedId)return;
-    const currentMode=$('conceptMode')?.value||'wide';
-    state.referenceSketchId=selectedId;
-    state.referenceSketchMode=currentMode;
-    state.referenceSketchDataUrl=sketch;
-    state.referenceSketchTitle=String(finalRefs[0].name||'matched source photo');
-    renderConceptSketch(item,currentMode);
-    const status=$('conceptStatus');
-    if(status)status.textContent='Reference-based pencil sketch ready for '+item.name+'. Compare it with the source photo; the mapped spot’s actual line of sight is still unverified.';
-   }catch(err){
-    // Leave the always-visible subject-aware SVG sketch in place if cross-origin
-    // canvas access is blocked for a provider thumbnail.
-   }
-  };
-  firstImage.addEventListener('load',drawReferenceSketch,{once:true});
-  if(firstImage.complete&&firstImage.naturalWidth>80)drawReferenceSketch();
- }
+
 }
 function selectItem(item){
  state.selected=item;
@@ -1731,8 +1487,7 @@ function selectItem(item){
  $('driveLink').href='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode=driving';
  $('driveLink').textContent=item.category==='parking'?'Route to mapped parking point ↗':item.category==='photoSpot'?'Navigate to photo spot ↗':'Drive to spot ↗';
  // The field guide replaces the old editable AI-image prompt.
- resetGeneratedConcept();
- updateConceptTargetName();
+ // Field-guide content is rendered when opened.
  const viewZoom=item.category==='parking'?16.5:item.category==='photoSpot'?14.8:item.category==='viewpoint'?15.5:16;
  // Selecting a menu result must produce an unmistakable camera move and leave
  // the chosen coordinate visible. On phones, tuck the menu away first so it
