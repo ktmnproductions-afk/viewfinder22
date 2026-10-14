@@ -1508,23 +1508,19 @@ function photoReferenceFitsPlace(photo,card,localityHint){
  const placeTokens=photoPlaceTokens(card&&card.name);
  const localityTokens=photoPlaceTokens(String(localityHint||card&&card.locality||'').split(',').join(' '));
  const meaningfulTitleTokens=photoPlaceTokens(title);
- const titleHasSelectedPlace=placeTokens.length>0&&placeTokens.every(token=>titleTokens.has(token));
- const titleHasLocality=localityTokens.some(token=>titleTokens.has(token));
  const genericSubject=/^(viewpoint|lookout|panorama|hill|peak|mountain|ridge|observation tower|belvedere|tower|park|beach|bridge|scenic view|unnamed mapped)/i.test(String(card&&card.name||'').trim());
- // Generic selected pins only accept imagery with an explicit locality token and
- // no other distinctive place-name terms. Named place cards require their actual
- // subject name, not a single shared word like "memorial" or "church".
- if(!genericSubject&&titleHasSelectedPlace)return true;
- if(genericSubject&&titleHasLocality&&titleHasSelectedPlace&&meaningfulTitleTokens.every(token=>namedPhotoTokenForLocation(token,placeTokens,localityTokens)))return true;
- // Geotags are fallback evidence only for untitled scenic files very close to the
- // subject; they cannot make a named photo of another town relevant.
+ const titleHasSubject=placeTokens.length>0&&placeTokens.every(token=>titleTokens.has(token));
+ const titleHasLocality=localityTokens.length>0&&localityTokens.some(token=>titleTokens.has(token));
+ // For a named place, the full subject name must occur. For a generic pin, the
+ // photo title must identify the selected locality and not name another place.
+ if(!genericSubject&&titleHasSubject)return true;
+ if(genericSubject&&titleHasSubject&&titleHasLocality&&meaningfulTitleTokens.every(token=>
+  placeTokens.includes(token)||localityTokens.includes(token)||IMAGE_REFERENCE_GENERIC_WORDS.has(token)
+ ))return true;
+ // Geotags are only a fallback for untitled files within a tight local radius.
  const distance=Number(photo&&photo.distance);
- if(photo&&photo.geotagged&&Number.isFinite(distance)&&distance<=1500&&
-    meaningfulTitleTokens.length===0)return true;
+ if(photo&&photo.geotagged&&Number.isFinite(distance)&&distance<=1500&&meaningfulTitleTokens.length===0)return true;
  return false;
-}
-function namedPhotoTokenForLocation(token,placeTokens,localityTokens){
- return placeTokens.includes(token)||localityTokens.includes(token)||IMAGE_REFERENCE_GENERIC_WORDS.has(token);
 }
 async function commonsSearch(c,radius,id){
  const url='https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggscoord='+c.lat+'|'+c.lng+'&ggsradius='+Math.min(radius,10000)+'&ggsnamespace=6&ggslimit=25&prop=coordinates%7Cimageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&format=json&origin=*';
