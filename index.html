@@ -1932,6 +1932,10 @@ function updateMapPinLegend(){
 }
 function renderMarkers(){
  if(!state.map || !state.styleLoaded)return;
+ // Do not replace marker nodes while geographic requests are still settling.
+ // scanAt clears the previous area once; the next full marker render happens
+ // after the source batch completes.
+ if(state.scanSourcesPending)return;
  clearMarkers();
  const parking=parkingCandidates().slice(0,60);
  const parkingMarkers=map.getZoom()>=14.5?parking:clusterParkingMarkers(parking);
@@ -2022,7 +2026,10 @@ async function scanAt(c,opts){
  if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng)||Math.abs(c.lat)>85||Math.abs(c.lng)>180){setStatus('Choose a valid map point','That coordinate cannot be scanned.','warn');return;}
  state.scanId++;const id=state.scanId;state.scanCount++;state.scanPending=true;state.scanSourcesPending=true;cancelPreviousRequests();
  state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.localityCandidates=[];state.locationConflictExclusions=[];state.results=[];state.scenicSpots=[];state.photos=[];state.basemapParking=[];state.spotParking=[];state.spotParkingTargetId=null;state.spotParkingLoading=false;state.spotParkingRequest++;state.selected=null;
-setActivePin(state.center);updateRadius();
+ // Remove the previous area's pins once, then hold the map layer stable until
+ // the complete geographic source batch is ready.
+ clearMarkers();
+ setActivePin(state.center);updateRadius();
  const pinUrl='https://www.openstreetmap.org/?mlat='+c.lat.toFixed(6)+'&mlon='+c.lng.toFixed(6)+'#map=16/'+c.lat.toFixed(6)+'/'+c.lng.toFixed(6);
  const pinItem={id:'user-pin-'+Date.now(),name:'Map pin · '+c.lat.toFixed(5)+', '+c.lng.toFixed(5),lat:c.lat,lng:c.lng,distance:null,category:'photoSpot',isUserPin:true,source:'Your map pin',sourceUrl:pinUrl,summary:'A user-selected coordinate. Nearby landmarks, parking and reference photos are researched separately; this pin alone does not prove a safe or public viewpoint.',why:'This is your chosen scouting coordinate, not a verified landmark or confirmed sightline. Use the generated framing ideas as a starting point, then check local access and the real view.',scenicKind:'location study',tags:{},city:''};
  // Map clicks / field-guide buttons provide the final selected item themselves,
@@ -2041,7 +2048,7 @@ setActivePin(state.center);updateRadius();
  // Basemap parking is viewport-derived: do not read/repaint it while a fly animation
  // is moving across old tiles. Moveend/idle refreshes it at the settled destination.
  if(!map.isMoving())refreshBasemapParking();
- renderResults();renderPhotos();renderMarkers();
+ renderResults();renderPhotos();
  setStatus('Scouting around your pin','Searching mapped parking and history nearby, plus a wider 25–30 km radius for landscape and city-view candidates.','loading');
  $('mapTitle').textContent=opts&&opts.initial?'Scout Rijeka & the Kvarner coast':'Exploring your stop';
  $('mapSubtitle').textContent=(opts&&opts.initial?'Nearby landmarks, viewpoints and parking are loading · ':'')+coordLabel(c)+' · '+(state.radius/1000)+' km local search + wider photo scouting';
@@ -2065,7 +2072,6 @@ setActivePin(state.center);updateRadius();
  }
  function applyLiveResults(){
   if(id!==state.scanId)return;
-  mergePlaces();
   // Status may update progressively, but the markers are rendered as one stable
   // set after the geography sources complete.
   if(state.selected&&state.selected.isUserPin){renderSelectedShotIdeas(state.selected);renderDetailPhotoRefs(state.selected);}
