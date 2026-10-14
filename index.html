@@ -2554,6 +2554,7 @@ function setupImageGeneration(){
  window.setTimeout(syncAIImageUI,1200);
 }
 function selectItem(item,options){
+ const previousSelectedId=state.selected&&state.selected.id;
  state.selected=item;
  state.markers.forEach(function(marker){
   const items=marker.__scoutItems||[];
@@ -2563,7 +2564,6 @@ function selectItem(item,options){
  const quick=$('pinActionStrip');
  if(quick){quick.hidden=false;$('pinActionTitle').textContent='Photo ideas · '+String(item.name||'your pin');}
  // Reset an old AI image so it can never look like it belongs to the newly selected pin.
- const previousSelectedId=state.selected&&state.selected.id;
  if(previousSelectedId!==item.id){
   const previousPreview=$('aiImageResult');
   const previousImage=$('aiImageOutput');
