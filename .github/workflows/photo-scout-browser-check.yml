@@ -321,6 +321,19 @@ jobs:
               if (inaccurateDistances.length) {
                 throw new Error('Displayed search distances disagree with the actual coordinates: ' + JSON.stringify(inaccurateDistances.slice(0,5)));
               }
+              const localityConflictDiagnostics = await page.evaluate(() => {
+                const state = window.__PHOTO_SCOUT_TEST__.getState();
+                const excluded = state.locationConflictExclusions || [];
+                const visibleNames = [...document.querySelectorAll('.spot-card .spot-title')].map(node => node.textContent || '');
+                return {
+                  excluded,
+                  exclusionLeak: excluded.filter(item => visibleNames.includes(item.name)),
+                  dominantLocality: state.detectedLocality
+                };
+              });
+              if (localityConflictDiagnostics.exclusionLeak.length) {
+                throw new Error('A feature with a conflicting named locality still appears as a nearby candidate: ' + JSON.stringify(localityConflictDiagnostics));
+              }
 
               await page.screenshot({ path: 'artifacts/photo-scout-live-map.png', fullPage: false });
               if (pageErrors.length) throw new Error('Browser runtime exceptions: ' + JSON.stringify(pageErrors));
@@ -338,6 +351,7 @@ jobs:
                 photoReferenceDiagnostics,
                 parkingDistanceDiagnostics,
                 distanceDiagnostics,
+                localityConflictDiagnostics,
                 parkingDiagnostics,
                 browserExceptions: pageErrors,
                 tileResponsesObserved: tileResponses.length
