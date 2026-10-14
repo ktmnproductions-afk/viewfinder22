@@ -1520,7 +1520,7 @@ function photoReferenceFitsPlace(photo,card,localityHint){
   if(subjectTokens.length===0&&allSubjectTokensMatch&&isSelectedLocalityTitle)return true;
   return false;
  }
- if(isSelectedLocalityTitle&&meaningfulTitleTokens.every(token=>
+ if(isSelectedLocalityTitle&&allSubjectTokensMatch&&meaningfulTitleTokens.every(token=>
   placeTokens.includes(token)||localityTokens.includes(token)||IMAGE_REFERENCE_GENERIC_WORDS.has(token)
  ))return true;
  // Geotags are only a fallback for untitled files within a tight local radius.
