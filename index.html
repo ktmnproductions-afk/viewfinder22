@@ -1435,7 +1435,7 @@ const IMAGE_REFERENCE_GENERIC_WORDS=new Set([
  'street','ulica','cesta','put','road','square','trg','church','chapel','basilica','cathedral','castle','palace','monument','memorial','bridge','ruins','roman','historic','historical','landmark','museum','building','architecture','viewpoint','landscape','panorama','old','town','city','village','grad','mjesni','odbor','county','region','municipality','district','kotar','gorski','photo','photograph','croatia','slovenia','italy','austria','friuli','istria'
 ]);
 function photoPlaceTokens(value){
- return normalizedPhotoTitle(value).split(/\s+/).filter(t=>t.length>3&&!IMAGE_REFERENCE_GENERIC_WORDS.has(t));
+ return normalizedPhotoTitle(value).split(/\s+/).filter(t=>t.length>3&&!/^\d+$/.test(t)&&!/^(img|dsc|dscn|pxl|imgp|pict)\d*$/i.test(t)&&!IMAGE_REFERENCE_GENERIC_WORDS.has(t));
 }
 function photoTitleIsRelevant(title,query){
  const clean=normalizedPhotoTitle(title);
@@ -2046,7 +2046,14 @@ setActivePin(state.center);updateRadius();
   try{
    const matched=await commonsTextSearch(terms,c,id);
    if(id!==state.scanId)return;
-   state.photos=matched.map(p=>({...p,geotagged:false,referenceType:'Matched by landmark/topic title. This is visual inspiration, not a verified camera position.'}));
+   // Search services can return files with misleading location metadata or broad
+   // titles. Keep only images whose title matches this locality or one of the
+   // actual nearby landmarks used for this scan.
+   const localSubjects=[displayCity,...landmarkNames].filter(Boolean);
+   const placeMatched=matched.filter(photo=>localSubjects.some(name=>
+    photoReferenceFitsPlace(photo,{name,locality:displayCity,category:'photoSpot'},displayCity)
+   ));
+   state.photos=placeMatched.map(p=>({...p,geotagged:false,referenceType:'Matched by local place/landmark title. Visual inspiration only; not a verified camera position.'}));
    completed.add('photos');
    failures.delete('photos');
   }catch(err){
