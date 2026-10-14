@@ -2110,7 +2110,7 @@ function closeFieldGuide(){
 }
 
 $('selectedOpenFieldGuide').addEventListener('click',openSelectedFieldGuide);
-$('quickIdeasBtn').addEventListener('click',openFieldGuide);
+$('quickIdeasBtn').addEventListener('click',openSelectedFieldGuide);
 $('quickSearchBtn').addEventListener('click',()=>{
  if(document.body.classList.contains('sidebar-collapsed'))$('sidebarToggle').click();
  window.requestAnimationFrame(()=>{$('searchSection').scrollIntoView({behavior:'smooth',block:'start'});$('placeSearch').focus();});
