@@ -1097,7 +1097,7 @@ async function rangefindPlacesSearch(c,radius,id){
   if(!category)return;
   const name=String(r.name||r.title||'').trim()||(parking?'Parking area':'');
   if(!name)return;
-  const distance=Number.isFinite(Number(r.distanceMeters))?Number(r.distanceMeters):haversine(c,{lat,lng});
+  const distance=haversine(c,{lat,lng}); // Always derive distance from returned coordinates; third-party index distance metadata is not trusted.
   if(distance>radius)return;
   places.push({id:'rf-'+String(r.id||index)+'-'+category,name,lat,lng,distance,tags,city:String(r.city||r.town||r.village||r.municipality||r.suburb||''),source:'OpenStreetMap via Rangefind',sourceUrl:r.url||(r.id?'https://www.openstreetmap.org/'+String(r.id):'https://www.openstreetmap.org/'),category,summary:String(tags.description||tags['description:en']||r.description||''),history:String(tags.wikipedia||tags['wikipedia:en']||''),wikiUrl:tags.wikipedia?wikiURL(tags.wikipedia):tags['wikipedia:en']?wikiURL(tags['wikipedia:en']):'',license:'© OpenStreetMap contributors'});
  });
@@ -1240,7 +1240,7 @@ async function scenicSearchIndexed(c,radius,id){
  successful.flatMap(r=>r.value.results||[]).forEach((r,index)=>{
   const lat=Number(r.lat),lng=Number(r.lon??r.lng);
   if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
-  const distance=Number.isFinite(Number(r.distanceMeters))?Number(r.distanceMeters):haversine(c,{lat,lng});
+  const distance=haversine(c,{lat,lng}); // Always derive distance from returned coordinates; third-party index distance metadata is not trusted.
   if(distance>scoutRadius)return;
   const tags=toTags(r);
   const type=String(r.type||'').toLowerCase();
