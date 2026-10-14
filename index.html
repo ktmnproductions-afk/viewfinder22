@@ -3248,7 +3248,19 @@ if(installAppButton)installAppButton.addEventListener('click',async function(){
  photoScoutInstallEvent=null;installAppButton.hidden=true;
 });
 window.addEventListener('appinstalled',function(){if(installAppButton)installAppButton.hidden=true;setStatus('Photo Scout installed','The app can now launch from your app menu or home screen.','');});
-if('serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(function(error){console.info('Offline app shell was not registered:',error&&error.message||error);});});
+if('serviceWorker' in navigator){
+ let refreshedForWorker=false;
+ navigator.serviceWorker.addEventListener('controllerchange',function(){
+  if(refreshedForWorker)return;
+  refreshedForWorker=true;
+  window.location.reload();
+ });
+ window.addEventListener('load',function(){
+  navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'}).then(function(registration){
+   return registration.update();
+  }).catch(function(error){console.info('Offline app shell update was not registered:',error&&error.message||error);});
+ });
+}
 
 renderFieldGuide();
 loadSaved();
