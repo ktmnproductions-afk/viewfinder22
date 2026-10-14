@@ -1520,6 +1520,14 @@ function photoReferenceFitsPlace(photo,card,localityHint){
     (placeTokens.length===1&&titleTokens.has(placeTokens[0])&&localityTokens.some(token=>titleTokens.has(token)))
   : localityTokens.length>0&&localityTokens.every(token=>titleTokens.has(token));
  if(hasStrongPlaceMatch)return true;
+ // The selected-pin card also carries its locality. Do not accept titles with an
+ // unrelated specific landmark merely because a generic town token overlaps.
+ const genericSubject=/^(viewpoint|lookout|panorama|hill|peak|mountain|ridge|observation tower|belvedere|tower|park|beach|bridge|scenic view|unnamed mapped)/i.test(String(card&&card.name||'').trim());
+ const onlyLocalityMatch=localityTokens.length>0&&localityTokens.every(token=>titleTokens.has(token));
+ if(onlyLocalityMatch&&!genericSubject){
+  const disjointSpecific=foreignPlaceTokens.filter(token=>token.length>5);
+  if(disjointSpecific.length)return false;
+ }
  // Geotags can supply scenic references only for the exact selected area, and
  // never when the title reveals another named place. Treat unknown/foreign title
  // words conservatively; a nearby coordinate is not proof of local relevance.
