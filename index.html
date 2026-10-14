@@ -1299,18 +1299,19 @@ function photoTitleScore(title,queries){
  return score;
 }
 function photoReferenceFitsPlace(photo,card,localityHint){
- if(photo&&photo.geotagged){
-  const distance=Number(photo.distance);
-  return Number.isFinite(distance)&&distance<=10000;
- }
  const titleTokens=new Set(normalizedPhotoTitle(photo&&photo.name).split(/\s+/));
  const placeTokens=photoPlaceTokens(card&&card.name);
- const locality=String(localityHint||card&&card.locality||'').split(',')[0].trim();
- const localityTokens=photoPlaceTokens(locality);
+ const localityTokens=photoPlaceTokens(String(localityHint||card&&card.locality||'').split(',').join(' '));
  const placeHit=placeTokens.some(token=>titleTokens.has(token));
  const localityHit=localityTokens.some(token=>titleTokens.has(token));
- if(placeTokens.length||localityTokens.length)return placeHit||localityHit;
- return !IMAGE_EVENT_OR_PERSON_RE.test(String(photo&&photo.name||''));
+ // Text- and geotag-sourced references must be consistent with this place.
+ // A coordinate alone is not proof: Commons occasionally has incorrect or broad
+ // location metadata. Reject files clearly named for another landmark/city.
+ if(placeHit||localityHit)return true;
+ const titlePlaceTokens=photoPlaceTokens(photo&&photo.name);
+ const distance=Number(photo&&photo.distance);
+ if(photo&&photo.geotagged&&Number.isFinite(distance)&&distance<=2500&&titlePlaceTokens.length===0&&!IMAGE_EVENT_OR_PERSON_RE.test(String(photo.name||'')))return true;
+ return false;
 }
 async function commonsSearch(c,radius,id){
  const url='https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggscoord='+c.lat+'|'+c.lng+'&ggsradius='+Math.min(radius,10000)+'&ggsnamespace=6&ggslimit=25&prop=coordinates%7Cimageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&format=json&origin=*';
