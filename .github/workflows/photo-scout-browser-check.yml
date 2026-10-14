@@ -210,7 +210,8 @@ jobs:
                 const container = map.getContainer();
                 const box = container.getBoundingClientRect();
                 const canvas = container.querySelector('canvas.maplibregl-canvas');
-                if (!canvas) return {emptyMapPatch:false,reason:'no MapLibre canvas'};
+                const canvasContainer = container.querySelector('.maplibregl-canvas-container');
+                if (!canvas || !canvasContainer) return {emptyMapPatch:false,reason:'no MapLibre canvas surface'};
                 const canvasBox = canvas.getBoundingClientRect();
                 const base = map.project([14.34873, 45.37306]);
                 const offsets = [];
@@ -228,9 +229,9 @@ jobs:
                   const hit=document.elementFromPoint(p.x,p.y);
                   // This guarantees the test click lands on the actual interactive map canvas,
                   // not a landmark button, its expanded name label, a sidebar or map control.
-                  if(hit===canvas){
+                  if(hit===canvas || hit===canvasContainer || canvasContainer.contains(hit)){
                     const ll=map.unproject([p.x-box.left,p.y-box.top]).toArray();
-                    return {x:p.x,y:p.y,width:window.innerWidth,height:window.innerHeight,lngLat:ll,emptyMapPatch:true,hit:'map-canvas'};
+                    return {x:p.x,y:p.y,width:window.innerWidth,height:window.innerHeight,lngLat:ll,emptyMapPatch:true,hit:hit===canvas?'canvas':hit===canvasContainer?'canvas-container':'map-canvas-child'};
                   }
                 }
                 return {x:base.x+box.left,y:base.y+box.top,width:window.innerWidth,height:window.innerHeight,emptyMapPatch:false,reason:'no unobstructed canvas coordinate'};
