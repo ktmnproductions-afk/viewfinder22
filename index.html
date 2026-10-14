@@ -831,7 +831,22 @@ window.__PHOTO_SCOUT_TEST__ = {
    state.scenicSpots=[make('fixture-photo-spot','Fixture Photo Spot','photoSpot',-0.0020,0.0020)];
    state.basemapParking=[];state.spotParking=[];state.selected=null;state.spotParkingTargetId=null;state.center={lat:c.lat,lng:c.lng};state.radius=10000;
    renderMarkers();
-   result={landmark:document.querySelectorAll('.scout-marker.history').length,architecture:document.querySelectorAll('.scout-marker.architecture').length,viewpoint:document.querySelectorAll('.scout-marker.viewpoint').length,photoSpot:document.querySelectorAll('.scout-marker.photoSpot').length,parking:document.querySelectorAll('.scout-marker.parking').length,svgIcons:document.querySelectorAll('.scout-marker .dot-core svg').length};
+   const markerRows=state.markers.map(marker=>{
+    const item=(marker.__scoutItems||[]).find(candidate=>candidate&&!candidate.clusterMembers);
+    const coordinate=marker.getLngLat();
+    const offset=typeof marker.getOffset==='function'?marker.getOffset():{x:0,y:0};
+    return {item,coordinate,offset};
+   }).filter(row=>row.item);
+   result={
+    landmark:document.querySelectorAll('.scout-marker.history').length,
+    architecture:document.querySelectorAll('.scout-marker.architecture').length,
+    viewpoint:document.querySelectorAll('.scout-marker.viewpoint').length,
+    photoSpot:document.querySelectorAll('.scout-marker.photoSpot').length,
+    parking:document.querySelectorAll('.scout-marker.parking').length,
+    svgIcons:document.querySelectorAll('.scout-marker .dot-core svg').length,
+    exactCoordinates:markerRows.length>0&&markerRows.every(row=>Math.abs(row.coordinate.lat-row.item.lat)<1e-8&&Math.abs(row.coordinate.lng-row.item.lng)<1e-8),
+    zeroOffsets:markerRows.length>0&&markerRows.every(row=>Math.abs(Number(row.offset.x)||0)<0.01&&Math.abs(Number(row.offset.y)||0)<0.01)
+   };
   }finally{
    clearMarkers();state.results=saved.results;state.scenicSpots=saved.scenicSpots;state.basemapParking=saved.basemapParking;state.spotParking=saved.spotParking;state.selected=saved.selected;state.spotParkingTargetId=saved.spotParkingTargetId;state.center=saved.center;state.radius=saved.radius;renderMarkers();
   }
