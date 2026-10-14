@@ -277,7 +277,7 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
 .scout-marker.active-pin .dot-core{width:34px;height:34px;border-radius:50% 50% 50% 8px;border:3px solid #17251b;background:#d9f36b;color:#17251b;box-shadow:0 0 0 6px rgba(217,243,107,.22),0 4px 14px rgba(0,0,0,.65);animation:active-pin-pulse 1.8s ease-out infinite}
 .scout-marker.active-pin .dot-core span{transform:rotate(45deg);font-size:15px}
 @keyframes active-pin-pulse{0%,100%{box-shadow:0 0 0 5px rgba(217,243,107,.18),0 4px 14px rgba(0,0,0,.65)}50%{box-shadow:0 0 0 10px rgba(217,243,107,.04),0 4px 14px rgba(0,0,0,.65)}}
-.field-guide{position:fixed;inset:70px 68px 14px auto;width:min(880px,calc(100vw - 360px));height:calc(100dvh - 84px);max-height:calc(100dvh - 84px);min-height:0;border:1px solid #d4d2c7;border-radius:16px;box-shadow:0 18px 60px rgba(12,20,13,.32);z-index:60}
+.field-guide{position:fixed;inset:70px 68px 14px auto;width:min(1160px,calc(100vw - 330px));height:calc(100dvh - 84px);max-height:calc(100dvh - 84px);min-height:0;border:1px solid #d4d2c7;border-radius:16px;box-shadow:0 18px 60px rgba(12,20,13,.32);z-index:60}
 .field-guide-header{flex:0 0 auto}
 .field-guide-toolbar{top:0;flex:0 0 auto}
 .field-guide-intro{flex:0 0 auto;padding:16px 18px 12px}
@@ -809,7 +809,11 @@ async function overpassApiSearch(c,radius,id){
     state.detectedLocality=localities[0].name;
     places.forEach(p=>{if(!p.city)p.city=state.detectedLocality;});
    }
-   return dedupeMappedPlaces(places).slice(0,100);
+   const unique=dedupeMappedPlaces(places);
+   const useful=unique.filter(p=>p.category!=='parking').sort((a,b)=>a.distance-b.distance);
+   const parking=unique.filter(p=>p.category==='parking').sort((a,b)=>a.distance-b.distance);
+   // Keep enough real subjects for visible pins, even in towns with many parking nodes.
+   return [...useful.slice(0,100),...parking.slice(0,50)].sort((a,b)=>a.distance-b.distance);
   }catch(error){
    if(id!==state.scanId)throw error;
    lastError=error;
@@ -824,9 +828,11 @@ async function overpassSearch(c,radius,id){
  let rangefindResults=[];
  try{rangefindResults=await rangefindPlacesSearch(c,radius,id);}catch(error){if(id!==state.scanId)throw error;}
  if(id!==state.scanId)throw new Error('stale scan');
- // Rangefind is a useful lightweight first pass, but its public index is
- // currently reporting a failed rebuild. Supplement empty/thin results from live OSM.
- if(rangefindResults.length>=12)return rangefindResults;
+ // Raw count is not enough: a stale/parking-heavy index is not a complete search.
+ // Require actual historic/building/nature features before skipping live OSM.
+ const nonParking=rangefindResults.filter(p=>p.category!=='parking');
+ const kinds=new Set(nonParking.map(p=>p.category));
+ if(nonParking.length>=8&&kinds.size>=2)return rangefindResults;
  try{
   const live=await overpassApiSearch(c,radius,id);
   if(id!==state.scanId)throw new Error('stale scan');
@@ -837,7 +843,7 @@ async function overpassSearch(c,radius,id){
  }
 }
 
-async function scenicSearch(c,radius,id){
+async function scenicSearchIndexed(c,radius,id){
  const engine=await getRangefindEngine();
  const scoutRadius=Math.max(25000,Math.min(30000,radius*2));
  const queries=['viewpoint','lookout','panorama','hill','peak','mountain','ridge','observation tower','belvedere'];
@@ -945,6 +951,35 @@ async function scenicSearch(c,radius,id){
   if(selected.length>=35)break;
  }
  return selected.sort((a,b)=>b.scenicScore-a.scenicScore||a.distance-b.distance);
+}
+async function scenicSearch(c,radius,id){
+ let indexed=[];
+ try{indexed=await scenicSearchIndexed(c,radius,id);}catch(error){if(id!==state.scanId)throw error;}
+ if(id!==state.scanId)throw new Error('stale scan');
+ if(indexed.length>=8)return indexed;
+ try{
+  const scoutRadius=Math.max(25000,Math.min(30000,radius*2));
+  const live=await overpassApiSearch(c,scoutRadius,id);
+  if(id!==state.scanId)throw new Error('stale scan');
+  const converted=live.filter(p=>p.category!=='parking').map(p=>{
+   const tags=p.tags||{};
+   const category=p.category;
+   const kind=category==='history'?'historic subject':category==='architecture'?'architectural subject':'landscape feature';
+   const score=(category==='history'?68:category==='architecture'?56:62)+(tags.wikipedia||tags.wikidata?10:0)+(tags.natural?12:0);
+   return {...p,id:'scenic-osm-'+p.id,category:'photoSpot',scenicKind:kind,scenicScore:score,
+    confidence:category==='history'?'Mapped historic subject':category==='architecture'?'Mapped architecture subject':'Mapped natural feature',
+    why:'Mapped '+kind+' from OpenStreetMap. It is a possible photographic subject, not a verified clear viewpoint. Check visibility, public access and safe positioning.',
+    evidence:['OpenStreetMap feature tags',...(tags.wikipedia||tags.wikidata?['has a linked reference']:[])]};
+  }).sort((a,b)=>(b.scenicScore||0)-(a.scenicScore||0)||(a.distance||0)-(b.distance||0));
+  const combined=[...indexed,...converted],seen=new Set();
+  return combined.filter(p=>{
+   const key=normalizeNameForDedup(p.name)+'|'+Math.round(p.lat*1000)+'|'+Math.round(p.lng*1000);
+   if(seen.has(key))return false;seen.add(key);return true;
+  }).slice(0,35);
+ }catch(error){
+  if(indexed.length)return indexed;
+  throw error;
+ }
 }
 function normalizeNameForDedup(name){
  return String(name||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
@@ -1311,18 +1346,12 @@ function renderMarkers(){
  const history=state.results.filter(r=>r.category==='history').slice(0,22);
  const viewpoints=state.results.filter(r=>r.category==='viewpoint').slice(0,12);
  const architecture=state.results.filter(r=>r.category==='architecture').slice(0,12);
- const protectedPlaces=[...parking,...history,...viewpoints,...architecture];
- // Do not let a scenic suggestion cover a real parking/history pin at the same spot.
- const scenic=state.scenicSpots.slice(0,24).filter(p=>!protectedPlaces.some(q=>haversine({lat:p.lat,lng:p.lng},{lat:q.lat,lng:q.lng})<85));
- // At overview zoom, hide ordinary dots within the tap target of a parking icon.
- // The full history/architecture lists remain available in the sidebar; zooming in
- // brings those map markers back. This prevents building icons intercepting parking taps.
+ const scenic=state.scenicSpots.slice(0,30);
  const parkingScreens=parkingMarkers.map(p=>({item:p,point:map.project([p.lng,p.lat])}));
- const nonParking=[...history,...viewpoints,...architecture,...scenic].filter(item=>{
-  const point=map.project([item.lng,item.lat]);
-  return !parkingScreens.some(p=>Math.hypot(point.x-p.point.x,point.y-p.point.y)<27);
- });
- const visible=[...nonParking,...parkingMarkers];
+ // Never remove a history/building/nature pin just because parking is nearby.
+ // They are offset a few pixels during rendering so they all remain visible/clickable.
+ const visible=[...history,...viewpoints,...architecture,...scenic,...parkingMarkers];
+ const occupiedScreens=parkingScreens.map(p=>p.point);
  const seen=new Set();
  visible.forEach(item=>{
   const cell=Math.round(item.lat*10000)+'|'+Math.round(item.lng*10000);
@@ -1331,6 +1360,19 @@ function renderMarkers(){
   const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas · '+distanceLabel(item.distance):(item.parkingOrigin==='basemap'?'Mapped parking · availability unverified · ':'Scout parking feature · ')+item.name+' · '+distanceLabel(item.distance)):item.name+' · '+distanceLabel(item.distance);
   const el=markerEl(item.category,label);
   if(item.parkingOrigin==='basemap')el.classList.add('basemap-parking');
+  const screenPoint=map.project([item.lng,item.lat]);
+  let offset=[0,0];
+  if(item.category!=='parking'){
+   const overlapsParking=parkingScreens.some(p=>Math.hypot(screenPoint.x-p.point.x,screenPoint.y-p.point.y)<38);
+   const overlapsExisting=occupiedScreens.some(p=>Math.hypot(screenPoint.x-p.x,screenPoint.y-p.y)<28);
+   if(overlapsParking||overlapsExisting){
+    offset=item.category==='history'?[-17,-15]:
+      item.category==='architecture'?[17,-15]:
+      item.category==='viewpoint'?[-17,15]:
+      item.category==='photoSpot'?[17,15]:[0,-20];
+   }
+  }
+  occupiedScreens.push({x:screenPoint.x+offset[0],y:screenPoint.y+offset[1]});
   // Explicit z-order stops nearby building/history dots from intercepting taps on
   // parking destinations when their coordinates are close at neighbourhood zoom.
   el.style.zIndex=item.category==='parking'?'1100':item.category==='history'?'800':item.category==='architecture'?'650':item.category==='viewpoint'?'600':item.category==='photoSpot'?'300':'500';
@@ -1352,7 +1394,7 @@ function renderMarkers(){
   }else{
    el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
   }
-  const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
+  const m=new maplibregl.Marker({element:el,anchor:'center',offset}).setLngLat([item.lng,item.lat]).addTo(map);
   m.__scoutItems=item.clusterMembers||[item];
   if(typeof m.setZIndex==='function')m.setZIndex(item.category==='parking'?5000:item.category==='history'?4500:4000);
   state.markers.push(m);
