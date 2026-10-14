@@ -1516,7 +1516,7 @@ function photoReferenceFitsPlace(photo,card,localityHint){
  // Generic pins need an explicit locality token; locality alone never rescues a
  // file title whose place-specific words point elsewhere.
  if(!genericSubject){
-  if(subjectTokens.length>0&&subjectTokens.every(token=>titleTokens.has(token)))return true;
+  if(subjectTokens.length>0&&subjectTokens.every(token=>titleTokens.has(token))&&isSelectedLocalityTitle)return true;
   if(subjectTokens.length===0&&allSubjectTokensMatch&&isSelectedLocalityTitle)return true;
   return false;
  }
