@@ -484,6 +484,20 @@ body.field-guide-open .map-quick-actions{opacity:.94;pointer-events:auto}
 @media(max-width:680px){.ai-image-generator{padding:9px}.ai-image-result img{max-height:320px}}
 
 
+
+/* When ideas are requested from a map pin, show only that area's visual board. */
+body.field-guide-context-only .field-guide-header,
+body.field-guide-context-only .field-guide-toolbar,
+body.field-guide-context-only .field-guide-intro,
+body.field-guide-context-only .field-guide-status,
+body.field-guide-context-only #fieldGuideGrid,
+body.field-guide-context-only .field-guide-footer{display:none!important}
+body.field-guide-context-only .field-guide{background:transparent;border:0;box-shadow:none;overflow:visible}
+body.field-guide-context-only .field-guide-detail{position:absolute;inset:0;padding:0;background:rgba(23,31,25,.18)}
+body.field-guide-context-only .field-guide-detail-panel{width:100%;height:100%;max-height:100%;border:1px solid #c9c8bb;border-radius:8px;box-shadow:0 12px 48px rgba(15,22,16,.25)}
+body.field-guide-context-only .field-guide-detail-header{padding:15px 19px 12px}
+body.field-guide-context-only .field-guide-detail-body{overflow:auto}
+
 </style>
 </head>
 <body>
@@ -2394,7 +2408,8 @@ let fieldGuidePhotoLoadToken=0;
 let fieldGuideCardLookup={};
 let fieldGuideHasLoaded=false;
 function fieldGuideCardsForView(){
- let cards=FIELD_GUIDE_PLACES.map(x=>({...x,searchText:[x.name,x.locality,x.tag,...x.topics,...x.shotIdeas].join(' ').toLowerCase()}));
+ const selectedOnly=document.body.classList.contains('field-guide-context-only');
+ let cards=selectedOnly?[]:FIELD_GUIDE_PLACES.map(x=>({...x,searchText:[x.name,x.locality,x.tag,...x.topics,...x.shotIdeas].join(' ').toLowerCase()}));
  if(state.selected&&Number.isFinite(Number(state.selected.lat))&&Number.isFinite(Number(state.selected.lng))){
   const item=state.selected;
   const normalized=String(item.name||'').trim().toLowerCase();
@@ -2779,17 +2794,22 @@ function closeFieldGuideDetail(){
  $('fieldGuideDetailBody').innerHTML='';
 }
 function openSelectedFieldGuide(){
+ if(!state.selected||!Number.isFinite(Number(state.selected.lat))||!Number.isFinite(Number(state.selected.lng))){
+  document.body.classList.remove('field-guide-context-only');
+  openFieldGuide();
+  return;
+ }
+ document.body.classList.add('field-guide-context-only');
  $('guideSearch').value='';
  fieldGuideActiveFilter='all';
  $('fieldGuideFilters').querySelectorAll('[data-guide-filter]').forEach(b=>b.classList.toggle('active',b.dataset.guideFilter==='all'));
  openFieldGuide();
- if(state.selected){
-  window.requestAnimationFrame(()=>{
-   const card=fieldGuideCardsForView().find(x=>x.originalItem&&x.originalItem.id===state.selected.id)||fieldGuideCardsForView().find(x=>x.name.toLowerCase()===String(state.selected.name||'').toLowerCase());
-   if(card)openFieldGuideDetail(card.id);
-   else if(state.selected)$('fieldGuideGrid').scrollIntoView({behavior:'smooth',block:'start'});
-  });
- }
+ window.requestAnimationFrame(()=>{
+  const selectedId=state.selected&&state.selected.id;
+  const card=fieldGuideCardsForView().find(x=>x.originalItem&&x.originalItem.id===selectedId);
+  if(card)openFieldGuideDetail(card.id);
+  else setStatus('Select a location first','Click a place or drop a pin on the map, then open Photo ideas.','warn');
+ });
 }
 function openFieldGuide(){
  $('fieldGuidePage').hidden=false;
@@ -2801,6 +2821,7 @@ function openFieldGuide(){
 function closeFieldGuide(){
  if(!$('fieldGuideDetail').hidden)closeFieldGuideDetail();
  $('fieldGuidePage').hidden=true;
+ document.body.classList.remove('field-guide-context-only');
  document.body.classList.remove('field-guide-open');
  window.requestAnimationFrame(()=>{if(map)map.resize();});
 }
@@ -2848,9 +2869,9 @@ $('fieldGuideGrid').addEventListener('click',event=>{
  if(article)openFieldGuideDetail(article.dataset.guideCard);
 });
 
-$('fieldGuideDetailClose').addEventListener('click',closeFieldGuideDetail);
+$('fieldGuideDetailClose').addEventListener('click',()=>{if(document.body.classList.contains('field-guide-context-only'))closeFieldGuide();else closeFieldGuideDetail();});
 $('fieldGuideDetail').addEventListener('click',event=>{
- if(event.target.closest('[data-guide-detail-close]'))closeFieldGuideDetail();
+ if(event.target.closest('[data-guide-detail-close]')){if(document.body.classList.contains('field-guide-context-only'))closeFieldGuide();else closeFieldGuideDetail();}
  const areaOpen=event.target.closest('[data-area-open]');
  if(areaOpen){
   const related=fieldGuideAreaLookup[areaOpen.dataset.areaOpen];
