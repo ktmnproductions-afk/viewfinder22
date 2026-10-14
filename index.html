@@ -61,6 +61,20 @@
 .selected-concept-img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border:1px solid #354a38;border-radius:8px;background:#22392f;margin:7px 0}
 .selected-concept-preview .btn{margin-top:7px}
 
+.ai-image-generator{margin:14px 18px 0;padding:13px;border:1px solid #526641;border-radius:14px;background:linear-gradient(145deg,#202f25,#17231b);box-shadow:0 8px 25px rgba(0,0,0,.12)}
+.ai-generator-copy,.ai-image-disclaimer,.ai-generator-footnote{font-size:10px;line-height:1.55;color:#b5c3b7;margin:8px 0}
+.ai-image-generator label{display:block;font-size:9px;font-weight:800;letter-spacing:.04em;color:#dce8d9;margin:10px 0 5px}
+.ai-image-generator label a{font-size:9px;font-weight:600;color:var(--lime);text-underline-offset:2px}
+.ai-token-input,.ai-style-select{width:100%;min-width:0;min-height:38px;padding:9px 10px;border:1px solid #3d5142;border-radius:9px;background:#101a13;color:#edf2e8;font-size:10px;outline:none}
+.ai-token-input:focus,.ai-style-select:focus{border-color:#a7c65b;box-shadow:0 0 0 3px rgba(217,243,107,.09)}
+.ai-generate-button{width:100%;margin-top:10px;white-space:normal}
+.ai-generate-button:disabled{opacity:.6;cursor:wait}
+.ai-image-status{font-size:10px;line-height:1.5;color:#bdcbbb;margin:9px 0 0}
+.ai-generated-image{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;border:1px solid #40543f;border-radius:10px;margin-top:10px;background:#101a13}
+.ai-generator-footnote{font-size:9px;color:#899b8c;margin-top:10px}
+.ai-generator-footnote a{color:#bacf7a;text-underline-offset:2px}
+
+
 
 
 
@@ -529,7 +543,32 @@ body.field-guide-open .map-quick-actions{opacity:.94;pointer-events:auto}
       <ol class="selected-shot-ideas" id="selectedShotIdeas"><li>Use the foreground to lead towards the subject.</li><li>Balance the main subject with surrounding context.</li><li>Look for a closer texture or detail frame.</li></ol>
       <button class="btn primary" id="selectedOpenFieldGuide" type="button">More ideas & reference photos ↗</button>
     </div>
-    <div class="detail-reference-block"><div class="section-heading"><h3>Visual references for this stop</h3><span class="count" id="detailPhotoCount">—</span></div><div class="detail-photo-grid" id="detailPhotoRefs"><div class="empty">Drop a pin and select a spot to find source-linked image references.</div></div></div>
+<div class="ai-image-generator" id="aiImageGenerator">
+      <div class="section-heading"><h3>Generate a real AI image</h3><span class="count">AI concept</span></div>
+      <p class="ai-generator-copy">Create an original visual reference for this location. This is creative inspiration—not proof of the real view, buildings or geography.</p>
+      <label for="hfInferenceToken">Hugging Face inference token <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer">Get token ↗</a></label>
+      <input id="hfInferenceToken" class="ai-token-input" type="password" autocomplete="off" spellcheck="false" placeholder="Paste an hf_… token for this session">
+      <label for="aiImageStyle">Visual direction</label>
+      <select id="aiImageStyle" class="ai-style-select">
+        <option value="photorealistic editorial photography">Photorealistic editorial photography</option>
+        <option value="cinematic golden-hour landscape photography">Cinematic golden-hour landscape</option>
+        <option value="moody black-and-white documentary photography">Black-and-white documentary</option>
+        <option value="architectural detail study with natural texture">Architectural details and textures</option>
+        <option value="blue-hour long-exposure photography with realistic light trails">Blue-hour / long exposure</option>
+      </select>
+      <button class="btn primary ai-generate-button" id="generateAiImage" type="button">Generate AI concept image</button>
+      <p class="ai-image-status" id="aiImageStatus" role="status" aria-live="polite">Select a spot and enter a token with Hugging Face Inference Providers permission to generate an image.</p>
+      <div id="aiImageOutput" hidden>
+        <img id="aiGeneratedImage" class="ai-generated-image" alt="AI-generated visual inspiration for the selected photography location">
+        <p class="ai-image-disclaimer">AI-generated inspiration only. Confirm the real scene, composition, access and safety from source-linked references before travelling.</p>
+        <div class="detail-actions">
+          <a class="btn primary" id="downloadAiImage" download="photo-scout-ai-concept.png">Save image ↓</a>
+          <button class="btn" id="copyAiPrompt" type="button">Copy prompt</button>
+        </div>
+      </div>
+      <p class="ai-generator-footnote">Uses Hugging Face Inference Providers. Free credits are limited and may change. The token is not stored in localStorage or committed to GitHub; the browser sends it to Hugging Face only when you press Generate. See <a href="https://huggingface.co/docs/inference-providers/pricing" target="_blank" rel="noopener noreferrer">current credit rules ↗</a>.</p>
+    </div>
+        <div class="detail-reference-block"><div class="section-heading"><h3>Visual references for this stop</h3><span class="count" id="detailPhotoCount">—</span></div><div class="detail-photo-grid" id="detailPhotoRefs"><div class="empty">Drop a pin and select a spot to find source-linked image references.</div></div></div>
         <div class="detail-actions"><a class="btn primary" id="driveLink" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Drive to spot ↗</a><button class="btn" id="saveSelected">☆ Save spot</button></div>
     <p class="concept-note detail-guide-note">For shot-specific ideas and visual examples, open the field guide above. Reference photos link back to their original source and licence.</p>
   </section>
@@ -611,8 +650,8 @@ if (!maplibregl || !maplibregl.Map) {
 const map = new maplibregl.Map({
  container:'map',
  style:styleUrls.liberty,
- center:[12,32],
- zoom:2.65,
+ center:[14.4422,45.3271],
+ zoom:7,
  minZoom:2,
  maxZoom:19,
  attributionControl:true,
@@ -624,13 +663,48 @@ const map = new maplibregl.Map({
 state.map = map;
 map.addControl(new maplibregl.NavigationControl({showCompass:true,visualizePitch:true}), 'bottom-right');
 map.addControl(new maplibregl.ScaleControl({maxWidth:120,unit:'metric'}), 'bottom-left');
-map.on('error', function(e){
+let currentStyle='liberty';
+let mapStyleWatchdog=null;
+let styleRequestId=0;
+let styleAttempts=['liberty'];
+const styleFallbackOrder=['liberty','bright','positron','fiord','dark'];
+function armMapStyleWatchdog(requestId){
+ clearTimeout(mapStyleWatchdog);
+ mapStyleWatchdog=window.setTimeout(function(){
+  if(state.styleLoaded||requestId!==styleRequestId)return;
+  const fallback=styleFallbackOrder.find(function(name){return !styleAttempts.includes(name);});
+  if(fallback){
+   styleAttempts.push(fallback);
+   $('appState').textContent='Basemap slow · trying '+fallback;
+   loadMapStyle(fallback,false);
+   return;
+  }
+  mapError('The free vector map styles did not respond. Check the connection, then retry the map.');
+ },12000);
+}
+function loadMapStyle(name,resetAttempts){
+ const chosen=styleUrls[name]?name:'liberty';
+ if(resetAttempts!==false)styleAttempts=[chosen];
+ else if(!styleAttempts.includes(chosen))styleAttempts.push(chosen);
+ currentStyle=chosen;
+ state.styleLoaded=false;
+ state.basemapParking=[];
+ state.parkingFilteredLayers=new Set();
+ styleRequestId++;
+ document.querySelectorAll('[data-style]').forEach(function(button){
+  button.classList.toggle('active',button.dataset.style===currentStyle);
+ });
+ map.setStyle(styleUrls[currentStyle]);
+ armMapStyleWatchdog(styleRequestId);
+}
+map.on('error',function(){
  state.mapErrors++;
- const msg = e && e.error && e.error.message ? e.error.message : '';
- if (/style|403|404|failed to fetch|load/i.test(msg) && !state.styleLoaded) mapError('The vector basemap did not finish loading. Check the connection or retry.');
+ if(!state.styleLoaded)$('appState').textContent='Checking basemap connection…';
 });
-map.on('style.load', function(){
- state.styleLoaded = true;
+map.on('style.load',function(){
+ clearTimeout(mapStyleWatchdog);
+ state.styleLoaded=true;
+ styleAttempts=[currentStyle];
  state.parkingFilteredLayers=new Set();
  suppressBasemapParkingSymbols();
  ensureRadiusLayers();
@@ -638,32 +712,20 @@ map.on('style.load', function(){
  mapOk();
  renderMarkers();
 });
-map.on('sourcedata', function(e){
- if(e && e.sourceId && e.isSourceLoaded && e.sourceDataType === 'content') state.vectorTileSuccesses++;
+map.on('sourcedata',function(e){
+ if(e&&e.sourceId&&e.isSourceLoaded&&e.sourceDataType==='content')state.vectorTileSuccesses++;
 });
-map.on('idle', function(){ refreshBasemapParking(); });
-map.on('moveend', function(){ refreshBasemapParking(); });
-map.on('style.load', function(){
- state.styleLoaded = true;
- suppressBasemapParkingSymbols();
- ensureRadiusLayers();
- updateRadius();
- mapOk();
- renderMarkers();
-});
+map.on('idle',function(){refreshBasemapParking();});
+map.on('moveend',function(){refreshBasemapParking();});
 $('retryMap').addEventListener('click',function(){
- $('mapIssue').classList.remove('show');
- state.styleLoaded=false;
- map.setStyle(styleUrls[currentStyle]);
+ loadMapStyle(currentStyle,true);
 });
-let currentStyle='liberty';
-document.querySelectorAll('[data-style]').forEach(btn=>btn.addEventListener('click',function(){
- currentStyle=this.dataset.style;
- state.basemapParking=[];state.parkingFilteredLayers=new Set();
- document.querySelectorAll('[data-style]').forEach(b=>b.classList.toggle('active',b===this));
- state.styleLoaded=false;
- map.setStyle(styleUrls[currentStyle]);
-}));
+document.querySelectorAll('[data-style]').forEach(function(btn){
+ btn.addEventListener('click',function(){loadMapStyle(this.dataset.style,true);});
+});
+// The initial Liberty style is already requested by the map constructor. If it stalls,
+// try the remaining included styles instead of leaving a blank map forever.
+armMapStyleWatchdog(styleRequestId);
 function ensureRadiusLayers(){
  if(!map.getSource('scout-radius')){
   map.addSource('scout-radius',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
@@ -2585,6 +2647,98 @@ window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('fieldGuid
 renderFieldGuide();
 loadSaved();
 window.addEventListener('resize',()=>{if(map)map.resize();});
+
+let photoScoutInferenceModulePromise=null;
+let photoScoutAiObjectUrl='';
+let photoScoutAiPrompt='';
+function photoScoutBuildImagePrompt(item,visualStyle){
+ const locationName=String(item&&item.name||'selected photography location').slice(0,140);
+ const locality=String(item&&(item.city||item.locality)||state.detectedLocality||'').slice(0,100);
+ const tags=item&&item.tags&&typeof item.tags==='object'?item.tags:{};
+ const tagSummary=Object.keys(tags).slice(0,8).map(function(key){return key+': '+String(tags[key]).slice(0,70);}).join('; ');
+ const ideas=selectedShotIdeasFor(item).slice(0,3).join('; ');
+ const coordinates=item&&Number.isFinite(Number(item.lat))&&Number.isFinite(Number(item.lng))?
+  Number(item.lat).toFixed(5)+', '+Number(item.lng).toFixed(5):'not available';
+ return 'Create one original, high-quality '+visualStyle+' image to inspire a photographer visiting '+locationName+(locality?' near '+locality:'')+'. '+
+  'This is a visual mood/composition reference, NOT a verified reconstruction of the actual place. '+
+  'Mapped place details supplied as weak context only: '+(tagSummary||String(item&&item.summary||'no mapped descriptive tags available'))+'. '+
+  'Approximate coordinates for context only: '+coordinates+'. '+
+  'Camera context: Canon EOS R50 with RF-S 18–150mm lens. '+
+  'Suggested photographic direction: '+ideas+'. '+
+  'Use physically plausible light, natural perspective, careful foreground-to-background composition, believable material texture, and professional art direction. '+
+  'Do not add text, labels, logos, watermarks or fake signage. Do not claim geographic accuracy; if exact scene details are unknown, make an inspired interpretation rather than inventing a specific landmark.';
+}
+function photoScoutAIStatus(message){
+ const node=$('aiImageStatus');
+ if(node)node.textContent=message;
+}
+async function generatePhotoScoutAIImage(){
+ const item=state.selected;
+ const token=String($('hfInferenceToken').value||'').trim();
+ const button=$('generateAiImage');
+ const output=$('aiImageOutput');
+ if(!item){photoScoutAIStatus('Select a mapped place first, then generate its AI concept.');return;}
+ if(!token){photoScoutAIStatus('Paste a Hugging Face token with Inference Providers permission. It will not be saved.');$('hfInferenceToken').focus();return;}
+ button.disabled=true;
+ button.textContent='Generating…';
+ photoScoutAIStatus('Preparing a location-specific prompt and requesting an image. This may take a little while.');
+ photoScoutAiPrompt=photoScoutBuildImagePrompt(item,$('aiImageStyle').value);
+ try{
+  if(!photoScoutInferenceModulePromise){
+   photoScoutInferenceModulePromise=import('https://esm.sh/@huggingface/inference@4').catch(function(error){
+    photoScoutInferenceModulePromise=null;
+    throw error;
+   });
+  }
+  const inferenceModule=await photoScoutInferenceModulePromise;
+  if(!inferenceModule||typeof inferenceModule.InferenceClient!=='function')throw new Error('The Hugging Face inference client did not load.');
+  const client=new inferenceModule.InferenceClient(token);
+  const imageBlob=await client.textToImage({
+   model:'black-forest-labs/FLUX.1-schnell',
+   inputs:photoScoutAiPrompt,
+   parameters:{num_inference_steps:4}
+  });
+  if(!(imageBlob instanceof Blob)||imageBlob.size<1000)throw new Error('The provider did not return a valid image. Check model access and try again.');
+  if(photoScoutAiObjectUrl)URL.revokeObjectURL(photoScoutAiObjectUrl);
+  photoScoutAiObjectUrl=URL.createObjectURL(imageBlob);
+  $('aiGeneratedImage').src=photoScoutAiObjectUrl;
+  $('aiGeneratedImage').alt='AI-generated visual inspiration for '+String(item.name||'the selected location')+'. It is not a verified photograph.';
+  $('downloadAiImage').href=photoScoutAiObjectUrl;
+  const fileSlug=String(item.name||'photo-scout').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,55)||'photo-scout';
+  $('downloadAiImage').download=fileSlug+'-ai-concept.png';
+  output.hidden=false;
+  photoScoutAIStatus('Image generated. Treat it as creative inspiration—not evidence of the real view.');
+ }catch(error){
+  const raw=String(error&&error.message||error||'Unknown error').slice(0,260);
+  let message='Image generation failed: '+raw;
+  if(/401|unauthori[sz]ed|invalid token|invalid credentials/i.test(raw)){
+   message='Hugging Face rejected the token. Check it and make sure it has Inference Providers permission.';
+  }else if(/403|gated|access to the model|accept.*condition|permission/i.test(raw)){
+   message='Access was denied. Confirm your token has Inference Providers permission and accept the model conditions on the FLUX.1-schnell model page if prompted.';
+  }else if(/402|credit|payment|billing|quota/i.test(raw)){
+   message='The provider reports an exhausted credit balance or quota. Check your Hugging Face Inference Providers usage before retrying; this app does not enable paid billing.';
+  }else if(/429|rate.?limit|too many requests/i.test(raw)){
+   message='The image service is rate-limiting requests. Wait a bit and try again.';
+  }else if(/failed to fetch|network|load.*module|fetch.*failed|cors/i.test(raw)){
+   message='Could not reach the image service. Check the connection, then try again. No image was saved.';
+  }
+  photoScoutAIStatus(message);
+ }finally{
+  button.disabled=false;
+  button.textContent='Generate AI concept image';
+ }
+}
+
+$('generateAiImage').addEventListener('click',generatePhotoScoutAIImage);
+$('copyAiPrompt').addEventListener('click',async function(){
+ if(!photoScoutAiPrompt){photoScoutAIStatus('Generate an image first to create its prompt.');return;}
+ try{
+  await navigator.clipboard.writeText(photoScoutAiPrompt);
+  photoScoutAIStatus('The AI image prompt was copied to the clipboard.');
+ }catch(error){
+  photoScoutAIStatus('Clipboard access was blocked by the browser. You can retry on the secure HTTPS site.');
+ }
+});
 })();
 </script>
 </body>
