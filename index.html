@@ -427,6 +427,30 @@ body.field-guide-open .map-quick-actions{opacity:.94;pointer-events:auto}
  .field-guide-area-board-heading>span{display:inline-block;margin-top:7px}
 }
 
+
+.field-guide-detail-body{padding:13px 18px 17px}
+.field-guide-area-board-host{margin-top:0;padding-top:0;border-top:0}
+.field-guide-area-board-heading{margin-bottom:10px}
+.field-guide-area-board-heading h3{font-size:clamp(20px,2vw,28px)}
+.field-guide-area-card{grid-template-columns:minmax(200px,.28fr) minmax(0,.72fr)}
+.field-guide-area-note{padding:10px 12px}
+.field-guide-area-note h3{font-size:clamp(17px,1.7vw,24px)}
+.field-guide-area-photo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.field-guide-area-photo-grid .area-subject-photo:first-child{grid-column:span 2;grid-row:span 2}
+.field-guide-area-photo-grid .area-subject-photo:first-child img{aspect-ratio:4/3}
+.field-guide-area-photo-grid .area-subject-photo:not(:first-child) img{aspect-ratio:4/3}
+@media(max-width:850px){
+ .field-guide-area-card{grid-template-columns:minmax(150px,.36fr) minmax(0,.64fr)}
+ .field-guide-area-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .field-guide-area-photo-grid .area-subject-photo:first-child{grid-column:span 2;grid-row:span 1}
+}
+@media(max-width:620px){
+ .field-guide-detail-body{padding:9px}
+ .field-guide-area-card{grid-template-columns:1fr}
+ .field-guide-area-photo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .field-guide-area-photo-grid .area-subject-photo:first-child{grid-column:span 2;grid-row:span 2}
+}
+
 </style>
 </head>
 <body>
@@ -2344,12 +2368,29 @@ function openFieldGuideDetail(cardId){
 let fieldGuideAreaLookup={};
 function fieldGuideAreaSubjects(card){
  const origin={lat:Number(card.lat),lng:Number(card.lng)};
+ const primaryItem=card.originalItem||card;
+ const primary={
+  ...card,
+  id:card.id,
+  name:card.name||'Selected photo location',
+  locality:card.locality||state.detectedLocality||coordLabel(origin),
+  lat:origin.lat,lng:origin.lng,category:card.category||'photoSpot',
+  tags:card.tags||primaryItem.tags||{},summary:card.summary||primaryItem.summary||'',
+  tag:'SELECTED SPOT',
+  distance:0,
+  originalItem:primaryItem,
+  isPrimary:true,
+  shotIdeas:card.shotIdeas&&card.shotIdeas.length?card.shotIdeas:selectedShotIdeasFor(primaryItem),
+  searchQueries:card.searchQueries||dedupeQueryTerms([card.name+' '+(card.locality||''),card.name,card.locality+' architecture'])
+ };
+ fieldGuideAreaLookup[primary.id]=primary;
+ fieldGuideCardLookup[primary.id]=primary;
  const source=[
   ...state.results.filter(item=>item&&item.category!=='parking'&&['history','architecture','viewpoint','photoSpot'].includes(item.category)),
   ...state.scenicSpots.filter(item=>item&&item.category!=='parking')
  ];
- const seen=new Set();
- return source.map(item=>{
+ const seen=new Set([normalizeNameForDedup(primary.name)+'|'+Math.round(primary.lat*1000)+'|'+Math.round(primary.lng*1000)]);
+ const nearby=source.map(item=>{
   const lat=Number(item.lat),lng=Number(item.lng);
   if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return null;
   const distance=haversine(origin,{lat,lng});
@@ -2360,18 +2401,18 @@ function fieldGuideAreaSubjects(card){
   const key=normalized+'|'+Math.round(lat*1000)+'|'+Math.round(lng*1000);
   if(seen.has(key))return null;
   seen.add(key);
-  if(normalized===normalizeNameForDedup(card.name)&&distance<350)return null;
+  if(normalized===normalizeNameForDedup(primary.name)&&distance<500)return null;
   return {item,lat,lng,distance,name,normalized,key};
- }).filter(Boolean).sort((a,b)=>a.distance-b.distance).slice(0,5).map((record,index)=>{
+ }).filter(Boolean).sort((a,b)=>a.distance-b.distance).slice(0,4).map((record,index)=>{
   const item=record.item;
   const id='nearby-'+record.normalized.replace(/[^a-z0-9]+/g,'-').slice(0,48)+'-'+Math.round(record.lat*10000)+'-'+Math.round(record.lng*10000);
-  const locality=String(item.city||card.locality||state.detectedLocality||'');
+  const locality=String(item.city||primary.locality||state.detectedLocality||'');
   const subject={
    id,name:record.name,locality,lat:record.lat,lng:record.lng,
    category:item.category||'photoSpot',tags:item.tags||{},summary:item.summary||'',
    scenicKind:item.scenicKind||'',why:item.why||'',
    tag:item.category==='history'?'HISTORIC PLACE':item.category==='architecture'?'ARCHITECTURE':item.category==='viewpoint'?'VIEWPOINT / NATURE':'PHOTO SUBJECT',
-   distance:record.distance,originalItem:item,
+   distance:record.distance,originalItem:item,isPrimary:false,
    shotIdeas:selectedShotIdeasFor(item),
    searchQueries:dedupeQueryTerms([record.name+' '+locality,record.name,locality+' '+(item.category==='history'?'historic place':item.category==='architecture'?'architecture':'landscape')])
   };
@@ -2379,6 +2420,7 @@ function fieldGuideAreaSubjects(card){
   fieldGuideCardLookup[id]=subject;
   return subject;
  });
+ return [primary,...nearby];
 }
 function fieldGuideAreaPhotoHTML(subject){
  const photos=fieldGuidePhotoCache[subject.id];
@@ -2398,7 +2440,7 @@ function fieldGuideAreaCardHTML(subject,index){
   '<h3>'+esc(subject.name)+'</h3><div class="field-guide-area-locality">'+esc(locality)+'</div>'+
   '<img class="field-guide-area-sketch" src="'+esc(conceptSketchData(subject,'wide',index+cardSeed(subject.id)))+'" alt="Pencil composition study for '+esc(subject.name)+'">'+
   '<div class="field-guide-area-ideas-title">SHOT IDEAS</div><ul>'+ideas.map(idea=>'<li>'+esc(idea)+'</li>').join('')+'</ul>'+
-  '<div class="field-guide-area-actions"><button type="button" data-area-open="'+esc(subject.id)+'">Open ideas</button><button type="button" data-area-map="'+esc(subject.id)+'">Show on map</button></div></section>'+
+  '<div class="field-guide-area-actions">'+(subject.isPrimary?'':'<button type="button" data-area-open="'+esc(subject.id)+'">Open ideas</button>')+'<button type="button" data-area-map="'+esc(subject.id)+'">Show on map</button></div></section>'+
   '<section class="field-guide-area-visuals"><div class="field-guide-area-visual-heading"><span>PHOTO REFERENCES</span><small>'+esc(subject.locality||'Selected area')+'</small></div>'+
   '<div class="field-guide-area-photo-grid">'+fieldGuideAreaPhotoHTML(subject)+'</div></section></article>';
 }
@@ -2413,7 +2455,10 @@ function renderFieldGuideAreaBoard(card){
   '<div class="field-guide-area-cards">'+subjects.map(fieldGuideAreaCardHTML).join('')+'</div>':
   '<div class="field-guide-area-board-heading"><div><div class="field-guide-detail-kicker">MORE SUBJECTS AROUND THIS PIN</div><h3>Build a photographic story of the area</h3><p>No additional named historic, architectural or scenic features were returned in this scan. The main location study and its reference photos remain above.</p></div></div>';
  bindFieldGuideImageFallbacks(host);
- subjects.forEach(subject=>loadFieldGuideAreaPhotos(card,subject));
+ subjects.forEach(subject=>{
+  if(subject.id===card.id)return;
+  loadFieldGuideAreaPhotos(card,subject);
+ });
 }
 async function loadFieldGuideAreaPhotos(parentCard,subject){
  const id=subject.id;
@@ -2439,46 +2484,15 @@ async function loadFieldGuideAreaPhotos(parentCard,subject){
   renderFieldGuideDetailBody(subject);
  }else if(fieldGuideDetailCardId===parentCard.id&&!$('fieldGuideDetail').hidden){
   renderFieldGuideAreaBoard(parentCard);
-  renderFieldGuideDetailBody(parentCard);
  }
 }
 function renderFieldGuideDetailBody(card){
  const body=$('fieldGuideDetailBody');
  if(!body||!card)return;
- const modes=[
-  {mode:'wide',short:'WIDE LANDSCAPE',lens:'18–24 mm',tip:0},
-  {mode:'context',short:'SUBJECT + CONTEXT',lens:'35–70 mm',tip:1},
-  {mode:'compressed',short:'COMPRESSED LAYERS',lens:'100–150 mm',tip:2}
- ];
- const tips=card.originalItem?selectedShotIdeasFor(card.originalItem):(card.shotIdeas||[]);
- const photos=fieldGuidePhotoCache[card.id];
- let photoHTML='';
- if(!photos||photos.loading){
-  photoHTML='<div class="field-guide-detail-photo-empty"><strong>Finding real photographs for this location…</strong><span>Trying the nearby place name first, then geotagged and regional source images. The composition ideas below are ready now.</span></div>';
- }else if(!photos.length){
-  photoHTML='<div class="field-guide-detail-photo-empty"><strong>No matched archive photographs returned</strong><span>The sketch studies remain usable. Retry the source search when online.</span></div>';
- }else{
-  photoHTML=photos.slice(0,9).map((photo,i)=>'<figure class="guide-detail-photo'+(i===0?' guide-detail-photo-feature':'')+'"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption><span>'+esc(photo.name)+'</span><a href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Source, credits & licence ↗</a></figcaption></figure>').join('');
- }
- const fallbackMosaic=(!photos||photos.loading||!photos.length)?'<div class="field-guide-sketch-mosaic">'+fieldGuideSketchTiles(card,false)+'</div>':'';
- const ideasHTML=modes.map((entry,i)=>{
-  const line=tips[entry.tip]||tips[i]||'Build a clear foreground, subject and background, then try another focal length.';
-  return '<article class="field-guide-shot-card"><img src="'+esc(conceptSketchData(card,entry.mode,card.id.length+i+81))+'" alt="'+esc(entry.short)+' illustrative sketch for '+esc(card.name)+'"><div class="field-guide-shot-card-copy"><div class="field-guide-detail-kicker">'+esc(entry.short)+'</div><strong>'+esc(entry.lens)+'</strong><p>'+esc(line)+'</p></div><button type="button" data-detail-mode="'+entry.mode+'" class="'+(fieldGuideDetailMode===entry.mode?'active':'')+'" aria-label="Preview '+esc(entry.short)+'">View sketch ↗</button></article>';
- }).join('');
- body.innerHTML='<div class="field-guide-contact-sheet">'+
-  '<section class="field-guide-contact-info"><div class="field-guide-detail-kicker">'+esc(card.tag||'PHOTO LOCATION')+' · COMPOSITION STUDY</div>'+
-  '<img class="field-guide-detail-sketch" src="'+esc(conceptSketchData(card,fieldGuideDetailMode,card.id.length+fieldGuideDetailMode.length))+'" alt="Illustrative pencil composition study for '+esc(card.name)+'">'+
-  '<div class="field-guide-detail-modes" role="group" aria-label="Composition style"><button type="button" data-detail-mode="wide" class="'+(fieldGuideDetailMode==='wide'?'active':'')+'">Wide · 18–24 mm</button><button type="button" data-detail-mode="context" class="'+(fieldGuideDetailMode==='context'?'active':'')+'">Context · 35–70 mm</button><button type="button" data-detail-mode="compressed" class="'+(fieldGuideDetailMode==='compressed'?'active':'')+'">Compressed · 100–150 mm</button></div>'+
-  '<p class="field-guide-detail-copy">Pencil studies are illustrative framing ideas, not verified photographs or a guaranteed camera position. Use the real source photographs alongside them to decide what to try on site.</p>'+
-  '<div class="field-guide-detail-kicker">IDEAS FOR YOUR CANON EOS R50</div><ol class="field-guide-detail-tips">'+tips.slice(0,4).map(tip=>'<li>'+esc(tip)+'</li>').join('')+'</ol></section>'+
-  '<section class="field-guide-contact-visuals"><div class="field-guide-visual-heading"><div><div class="field-guide-detail-kicker">LOCATION PHOTO CONTACT SHEET</div><p>Real source-linked images · shown inside Photo Scout</p></div><span class="field-guide-photo-count">'+(photos&&photos.length?photos.length+' references':'Searching')+'</span></div>'+
-  '<div class="field-guide-detail-photos">'+photoHTML+'</div>'+fallbackMosaic+
-  '<p class="field-guide-detail-copy">Use the small source/licence link under a photo for credits. The photo preview itself stays in this app.</p></section></div>'+
-  '<section class="field-guide-shot-strip"><div class="field-guide-shot-strip-heading"><div class="field-guide-detail-kicker">THREE WAYS TO FRAME THIS PLACE</div><p>Choose a composition to update the larger pencil study.</p></div><div class="field-guide-shot-grid">'+ideasHTML+'</div></section>'+
-  '<section class="field-guide-area-board-host" id="fieldGuideAreaBoard"></section>'+
+ body.innerHTML='<section class="field-guide-area-board-host" id="fieldGuideAreaBoard"></section>'+
   '<div class="field-guide-detail-actions"><button class="guide-map-link" type="button" data-guide-modal-map="'+esc(card.id)+'">Find this spot on the map ↗</button></div>';
- bindFieldGuideImageFallbacks(body);
  renderFieldGuideAreaBoard(card);
+ bindFieldGuideImageFallbacks(body);
 }
 function closeFieldGuideDetail(){
  $('fieldGuideDetail').hidden=true;
