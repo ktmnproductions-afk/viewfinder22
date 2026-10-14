@@ -1,4 +1,4 @@
-const CACHE_NAME = "photo-scout-shell-v2";
+const CACHE_NAME = "photo-scout-shell-v3";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./app-icon.svg"];
 
 self.addEventListener("install", event => {
@@ -26,7 +26,9 @@ self.addEventListener("fetch", event => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
+      // Always prefer the newest deployed app shell and skip the browser HTTP cache.
+      // A stale service-worker page previously hid newly added photo-idea controls.
+      fetch(new Request(request, { cache: "no-store" }))
         .then(response => {
           const copy = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put("./index.html", copy));
