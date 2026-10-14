@@ -839,7 +839,46 @@ window.__PHOTO_SCOUT_TEST__ = {
  },
  scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); },
  forceRasterFallback:function(){return switchToRasterFallback('Automated backup-map verification.');},
- retryVectorBasemap:function(){return setVectorBasemap(currentStyle);}
+ retryVectorBasemap:function(){return setVectorBasemap(currentStyle);},
+ // Read-only fixture hooks used by the no-wallet Playwright regression suite.
+ runContextPhotoRegressionFixtures:function(){
+  const previous={
+   results:state.results,scenicSpots:state.scenicSpots,selected:state.selected,center:state.center,
+   detectedLocality:state.detectedLocality,contextOnly:fieldGuideContextOnly,
+   photoCache:fieldGuidePhotoCache,areaLookup:fieldGuideAreaLookup,cardLookup:fieldGuideCardLookup,
+   activeContextClass:document.body.classList.contains('field-guide-context-only')
+  };
+  const center={lat:45.37306,lng:14.34873};
+  const kastavPin={id:'fixture-kastav-pin',name:'Kastav viewpoint',lat:center.lat,lng:center.lng,city:'Kastav',locality:'Kastav, Croatia',category:'viewpoint',tags:{tourism:'viewpoint'},summary:'Test fixture only.'};
+  const inside={id:'fixture-kastav-near',name:'Kastav Old Town',lat:center.lat+0.004,lng:center.lng+0.003,distance:500,city:'Kastav',category:'history',tags:{historic:'yes'},summary:'Test fixture.'};
+  const tooFar={id:'fixture-distant-aquileia',name:'Aquileia Roman Forum',lat:45.7686,lng:13.3689,distance:haversine(center,{lat:45.7686,lng:13.3689}),city:'Aquileia',category:'history',tags:{historic:'archaeological_site'}};
+  const wrongPhoto={name:'Jefferson Memorial at Dusk, Washington DC.jpg',geotagged:false,distance:400,thumb:'https://example.invalid/wrong.jpg'};
+  const correctPhoto={name:'Kastav Old Town panorama.jpg',geotagged:false,distance:400,thumb:'https://example.invalid/right.jpg'};
+  let result;
+  try{
+   state.results=[inside,tooFar];state.scenicSpots=[];state.selected=kastavPin;state.center=center;state.detectedLocality='Kastav';
+   fieldGuideContextOnly=true;document.body.classList.add('field-guide-context-only');
+   const subjects=fieldGuideAreaSubjects({
+    id:'fixture-kastav-pin',name:'Kastav viewpoint',locality:'Kastav, Croatia',lat:center.lat,lng:center.lng,category:'viewpoint',
+    originalItem:kastavPin,tags:kastavPin.tags,shotIdeas:selectedShotIdeasFor(kastavPin)
+   });
+   result={
+    subjectNames:subjects.map(x=>x.name),
+    nearSubjectRetained:subjects.some(x=>x.name==='Kastav Old Town'),
+    distantSubjectRejected:!subjects.some(x=>x.name==='Aquileia Roman Forum'),
+    washingtonPhotoRejected:!photoReferenceFitsPlace(wrongPhoto,{name:'Kastav viewpoint',locality:'Kastav, Croatia',category:'viewpoint'},'Kastav, Croatia'),
+    kastavPhotoAccepted:photoReferenceFitsPlace(correctPhoto,{name:'Kastav viewpoint',locality:'Kastav, Croatia',category:'viewpoint'},'Kastav, Croatia'),
+    shotIdeasPerSubject:subjects.every(x=>Array.isArray(x.shotIdeas)&&x.shotIdeas.length>=3),
+    sketchPerSubject:subjects.every(x=>conceptSketchData(x,'wide',1).startsWith('data:image/svg+xml'))
+   };
+  }finally{
+   state.results=previous.results;state.scenicSpots=previous.scenicSpots;state.selected=previous.selected;state.center=previous.center;
+   state.detectedLocality=previous.detectedLocality;fieldGuideContextOnly=previous.contextOnly;
+   fieldGuidePhotoCache=previous.photoCache;fieldGuideAreaLookup=previous.areaLookup;fieldGuideCardLookup=previous.cardLookup;
+   document.body.classList.toggle('field-guide-context-only',previous.activeContextClass);
+  }
+  return result;
+ }
 };
 const osmRasterStyle = {
  version:8,
@@ -1463,18 +1502,41 @@ function photoTitleScore(title,queries){
  return score;
 }
 function photoReferenceFitsPlace(photo,card,localityHint){
- const titleTokens=new Set(normalizedPhotoTitle(photo&&photo.name).split(/\s+/));
+ const title=normalizedPhotoTitle(photo&&photo.name);
+ if(!title||IMAGE_EVENT_OR_PERSON_RE.test(title))return false;
+ const titleTokens=new Set(title.split(/\s+/));
  const placeTokens=photoPlaceTokens(card&&card.name);
  const localityTokens=photoPlaceTokens(String(localityHint||card&&card.locality||'').split(',').join(' '));
- const placeHit=placeTokens.some(token=>titleTokens.has(token));
- const localityHit=localityTokens.some(token=>titleTokens.has(token));
- // Text- and geotag-sourced references must be consistent with this place.
- // A coordinate alone is not proof: Commons occasionally has incorrect or broad
- // location metadata. Reject files clearly named for another landmark/city.
- if(placeHit||localityHit)return true;
- const titlePlaceTokens=photoPlaceTokens(photo&&photo.name);
+ // Place names are conjunctive: matching a single token (for example "Kastav")
+ // is not enough when a file title explicitly names another landmark or city.
+ const namedPlaceTokens=[...new Set([...placeTokens,...localityTokens])];
+ const meaningfulTitleTokens=photoPlaceTokens(title);
+ const namedHits=meaningfulTitleTokens.filter(token=>namedPlaceTokens.includes(token));
+ const foreignPlaceTokens=photoPlaceTokens(title).filter(token=>
+  !namedPlaceTokens.includes(token)&&token.length>4
+ );
+ const hasStrongPlaceMatch=placeTokens.length
+  ? placeTokens.every(token=>titleTokens.has(token)) ||
+    (placeTokens.length===1&&titleTokens.has(placeTokens[0])&&localityTokens.some(token=>titleTokens.has(token)))
+  : localityTokens.length>0&&localityTokens.every(token=>titleTokens.has(token));
+ if(hasStrongPlaceMatch)return true;
+ // The selected-pin card also carries its locality. Do not accept titles with an
+ // unrelated specific landmark merely because a generic town token overlaps.
+ const genericSubject=/^(viewpoint|lookout|panorama|hill|peak|mountain|ridge|observation tower|belvedere|tower|park|beach|bridge|scenic view|unnamed mapped)/i.test(String(card&&card.name||'').trim());
+ const exactPlaceMatch=placeTokens.length>0&&placeTokens.every(token=>titleTokens.has(token));
+ const onlyLocalityMatch=localityTokens.length>0&&localityTokens.every(token=>titleTokens.has(token));
+ if(onlyLocalityMatch&&!exactPlaceMatch&&!genericSubject){
+  const disjointSpecific=foreignPlaceTokens.filter(token=>token.length>5);
+  if(disjointSpecific.length)return false;
+ }
+ // Geotags can supply scenic references only for the exact selected area, and
+ // never when the title reveals another named place. Treat unknown/foreign title
+ // words conservatively; a nearby coordinate is not proof of local relevance.
  const distance=Number(photo&&photo.distance);
- if(photo&&photo.geotagged&&Number.isFinite(distance)&&distance<=2500&&titlePlaceTokens.length===0&&!IMAGE_EVENT_OR_PERSON_RE.test(String(photo.name||'')))return true;
+ const hasForeignSpecificity=foreignPlaceTokens.length>0&&namedHits.length===0;
+ if(photo&&photo.geotagged&&Number.isFinite(distance)&&distance<=1500&&
+    !hasForeignSpecificity&&!IMAGE_EVENT_OR_PERSON_RE.test(title)&&
+    meaningfulTitleTokens.length===0)return true;
  return false;
 }
 async function commonsSearch(c,radius,id){
@@ -3063,6 +3125,7 @@ function fieldGuideAreaSubjects(card){
  };
  fieldGuideAreaLookup[primary.id]=primary;
  fieldGuideCardLookup[primary.id]=primary;
+ const maxNearbyMeters=5000;
  const source=[
   ...state.results.filter(item=>item&&item.category!=='parking'&&['history','architecture','viewpoint','photoSpot'].includes(item.category)),
   ...state.scenicSpots.filter(item=>item&&item.category!=='parking')
@@ -3072,7 +3135,9 @@ function fieldGuideAreaSubjects(card){
   const lat=Number(item.lat),lng=Number(item.lng);
   if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return null;
   const distance=haversine(origin,{lat,lng});
-  if(distance>30000)return null;
+  // The ideas board is local to the selected spot. Wider scouting candidates stay
+  // on the main map/list and must not masquerade as nearby subjects.
+  if(distance>maxNearbyMeters)return null;
   const name=String(item.name||'').trim();
   if(!name||/^Unnamed mapped/i.test(name)||isCoordinateLabel(name))return null;
   const normalized=normalizeNameForDedup(name);
@@ -3081,10 +3146,11 @@ function fieldGuideAreaSubjects(card){
   seen.add(key);
   if(normalized===normalizeNameForDedup(primary.name)&&distance<500)return null;
   return {item,lat,lng,distance,name,normalized,key};
- }).filter(Boolean).sort((a,b)=>a.distance-b.distance).slice(0,4).map((record,index)=>{
+ }).filter(Boolean).sort((a,b)=>a.distance-b.distance).slice(0,4).map(record=>{
   const item=record.item;
   const id='nearby-'+record.normalized.replace(/[^a-z0-9]+/g,'-').slice(0,48)+'-'+Math.round(record.lat*10000)+'-'+Math.round(record.lng*10000);
-  const locality=String(item.city||primary.locality||state.detectedLocality||'');
+  // Don't stamp the selected town onto subjects from a different feature record.
+  const locality=String(item.city||item.locality||card.locality||state.detectedLocality||'');
   const subject={
    id,name:record.name,locality,lat:record.lat,lng:record.lng,
    category:item.category||'photoSpot',tags:item.tags||{},summary:item.summary||'',
@@ -3092,7 +3158,7 @@ function fieldGuideAreaSubjects(card){
    tag:item.category==='history'?'HISTORIC PLACE':item.category==='architecture'?'ARCHITECTURE':item.category==='viewpoint'?'VIEWPOINT / NATURE':'PHOTO SUBJECT',
    distance:record.distance,originalItem:item,isPrimary:false,
    shotIdeas:selectedShotIdeasFor(item),
-   searchQueries:dedupeQueryTerms([record.name+' '+locality,record.name,locality+' '+(item.category==='history'?'historic place':item.category==='architecture'?'architecture':'landscape')])
+   searchQueries:dedupeQueryTerms([record.name+(locality?' '+locality:''),record.name,locality+(item.category==='history'?' historic place':item.category==='architecture'?' architecture':' landscape')])
   };
   fieldGuideAreaLookup[id]=subject;
   fieldGuideCardLookup[id]=subject;
@@ -3144,35 +3210,41 @@ function renderFieldGuideAreaBoard(card){
 async function loadFieldGuideAreaPhotos(parentCard,subject){
  const id=subject.id;
  if(fieldGuidePhotoCache[id])return;
+ const token=fieldGuidePhotoLoadToken;
+ const contextOnly=fieldGuideContextOnly;
  fieldGuidePhotoCache[id]={loading:true};
  const scanId=state.scanId;
+ const isCurrent=()=>token===fieldGuidePhotoLoadToken&&scanId===state.scanId&&
+  (!$('fieldGuidePage').hidden)&&(!contextOnly||document.body.classList.contains('field-guide-context-only'));
  try{
   let refs=await commonsTextSearch(subject.searchQueries,{lat:subject.lat,lng:subject.lng},scanId);
+  if(!isCurrent())return;
   refs=refs.filter(photo=>photoReferenceFitsPlace(photo,subject,subject.locality));
-  if(scanId!==state.scanId)return;
-  // If the title search is empty, add only nearby scene-titled landscape/architecture
-  // images, never arbitrary upload coordinates or event/person photos.
+  // A small-town search may return only a few files. Never broaden this to
+  // generic country/category queries inside a selected-place board.
   if(refs.length<3){
    try{
-    const radius=Math.min(8000,Math.max(2500,Number(state.radius)||5000));
+    const radius=Math.min(1500,Math.max(500,Number(state.radius)||1000));
     const nearby=await commonsSearch({lat:subject.lat,lng:subject.lng},radius,scanId);
-    if(scanId!==state.scanId)return;
+    if(!isCurrent())return;
     const seen=new Set(refs.map(p=>p.id||p.name));
     nearby.forEach(photo=>{
      if(!photoReferenceFitsPlace(photo,subject,subject.locality))return;
      const key=photo.id||photo.name;
      if(seen.has(key))return;
      seen.add(key);
-     refs.push({...photo,referenceType:'Nearby scenic/architecture reference; geotag does not verify the exact camera position.'});
+     refs.push({...photo,referenceType:'Local geotagged scenic reference; exact camera position is not verified.'});
     });
-   }catch(error){}
+   }catch(error){if(!isCurrent())return;}
   }
+  if(!isCurrent())return;
   refs=refs.filter(photo=>photoReferenceFitsPlace(photo,subject,subject.locality));
   fieldGuidePhotoCache[id]=refs.slice(0,3);
  }catch(error){
-  if(scanId!==state.scanId){delete fieldGuidePhotoCache[id];return;}
+  if(!isCurrent())return;
   fieldGuidePhotoCache[id]=[];
  }
+ if(!isCurrent())return;
  if(!$('fieldGuideDetail').hidden&&fieldGuideDetailCardId===id){
   renderFieldGuideDetailBody(subject);
  }else if(fieldGuideDetailCardId===parentCard.id&&!$('fieldGuideDetail').hidden){
@@ -3223,12 +3295,18 @@ function openFieldGuide(){
  $('fieldGuidePage').hidden=false;
  document.body.classList.add('field-guide-open');
  renderFieldGuide();
- loadFieldGuidePhotos(false);
+ // Contextual ideas use their own card in the detail board; do not run the
+ // catalogue photo queue in the background, where its results can race with the pin.
+ if(!fieldGuideContextOnly)loadFieldGuidePhotos(false);
  window.requestAnimationFrame(()=>{ $('fieldGuidePage').scrollTop=0; if(map)map.resize(); });
 }
 function closeFieldGuide(){
- // Clear contextual mode before dismissing its detail, so the close helpers do
- // not reopen or preserve a hidden default-location catalogue.
+ // Invalidate all outstanding catalogue/area-photo work before hiding the board.
+ // A late response must never repopulate hidden or newly opened location content.
+ fieldGuidePhotoLoadToken++;
+ fieldGuidePhotoCache={};
+ fieldGuideHasLoaded=false;
+ fieldGuideAreaLookup={};
  fieldGuideContextOnly=false;
  if(!$('fieldGuideDetail').hidden){
   $('fieldGuideDetail').hidden=true;
@@ -3242,7 +3320,6 @@ function closeFieldGuide(){
  if(grid){grid.hidden=false;grid.style.removeProperty('display');}
  window.requestAnimationFrame(()=>{if(map)map.resize();});
 }
-
 $('jumpToPhotoIdeas').addEventListener('click',()=>{
  if(!state.selected){setStatus('Drop a pin first','Click anywhere on the map to create your photography stop.','warn');return;}
  $('spotDetail').scrollIntoView({behavior:'smooth',block:'start'});
