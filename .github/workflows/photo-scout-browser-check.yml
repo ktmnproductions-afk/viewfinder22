@@ -245,6 +245,23 @@ jobs:
                 throw new Error('Contextual Photo Ideas regression: ' + JSON.stringify(contextualPhotoFixtures));
               }
               console.log('CONTEXTUAL_PHOTO_IDEAS_REGRESSION ' + JSON.stringify(contextualPhotoFixtures));
+              const dismissal = await page.evaluate(() => {
+                const beforeToken = window.__PHOTO_SCOUT_TEST__.getState().scanCount;
+                document.querySelector('#fieldGuidePage').hidden = false;
+                document.body.classList.add('field-guide-open', 'field-guide-context-only');
+                window.__PHOTO_SCOUT_TEST__.closeContextBoardForRegression();
+                return {
+                  boardHidden: document.querySelector('#fieldGuidePage').hidden,
+                  contextClassRemoved: !document.body.classList.contains('field-guide-context-only'),
+                  boardClassRemoved: !document.body.classList.contains('field-guide-open'),
+                  scanCountUnchanged: window.__PHOTO_SCOUT_TEST__.getState().scanCount === beforeToken
+                };
+              });
+              if (!dismissal.boardHidden || !dismissal.contextClassRemoved || !dismissal.boardClassRemoved || !dismissal.scanCountUnchanged) {
+                throw new Error('Closing contextual ideas must restore the map without re-scanning or stale UI: ' + JSON.stringify(dismissal));
+              }
+              console.log('CONTEXTUAL_PHOTO_IDEAS_DISMISSAL ' + JSON.stringify(dismissal));
+
 
               const markerFixture = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.renderMarkerFixture());
               if (markerFixture.landmark < 1 || markerFixture.architecture < 1 ||
