@@ -82,6 +82,28 @@ jobs:
                 { timeout: 50000 }
               );
 
+              const appInstallDiagnostics = await page.evaluate(async () => {
+                const [manifestResponse, workerResponse] = await Promise.all([
+                  fetch('./manifest.webmanifest'),
+                  fetch('./sw.js')
+                ]);
+                const manifest = manifestResponse.ok ? await manifestResponse.json() : null;
+                return {
+                  manifestStatus: manifestResponse.status,
+                  display: manifest && manifest.display,
+                  startUrl: manifest && manifest.start_url,
+                  workerStatus: workerResponse.status,
+                  installButton: !!document.querySelector('#installAppBtn'),
+                  pinLegend: !!document.querySelector('#mapPinLegend')
+                };
+              });
+              if (appInstallDiagnostics.manifestStatus !== 200 ||
+                  appInstallDiagnostics.display !== 'standalone' ||
+                  appInstallDiagnostics.workerStatus !== 200 ||
+                  !appInstallDiagnostics.installButton || !appInstallDiagnostics.pinLegend) {
+                throw new Error('Photo Scout must ship as an installable standalone app with a visible pin legend: ' + JSON.stringify(appInstallDiagnostics));
+              }
+
               const initial = await page.evaluate(() => ({
                 title: document.title,
                 styleLoaded: window.__PHOTO_SCOUT_TEST__.styleLoaded,
@@ -209,6 +231,13 @@ jobs:
                 throw new Error('Pin action strip or three camera sketches are missing: '+JSON.stringify(quickActions));
               }
 
+              const markerFixture = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.renderMarkerFixture());
+              if (markerFixture.landmark < 1 || markerFixture.architecture < 1 ||
+                  markerFixture.viewpoint < 1 || markerFixture.photoSpot < 1 ||
+                  markerFixture.parking < 1 || markerFixture.svgIcons < 3) {
+                throw new Error('Landmark, architecture, viewpoint, photo-spot and parking pins must all render as distinct icon markers: ' + JSON.stringify(markerFixture));
+              }
+
               // Mock only the image provider response in CI; don't consume generation credits.
               await page.evaluate(() => {
                 window.__photoScoutTestPrompt = '';
@@ -295,6 +324,8 @@ jobs:
                 pinWorkflow: 'passed',
                 pinState,
                 quickActions,
+                appInstallDiagnostics,
+                markerFixture,
                 imageGenerationUI: {...imageGenerationUI,prompt:imageGenerationUI.prompt.slice(0,500)},
                 photoSearchSettled,
                 photoReferenceDiagnostics,
