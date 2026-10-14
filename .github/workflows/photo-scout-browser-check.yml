@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - "assistant/**"
+      - "fix/**"
     paths:
       - "index.html"
       - ".github/workflows/photo-scout-browser-check.yml"
@@ -335,6 +336,65 @@ jobs:
               }
               if(photoReferenceDiagnostics.sketchCards !== 3 || !photoReferenceDiagnostics.aiImageVisible) {
                 throw new Error('The no-photo fallback must retain three shot sketches and the generated concept: '+JSON.stringify(photoReferenceDiagnostics));
+              }
+
+
+              // Verify the REAL geographic scan maps its real results to visible pins.
+              // The synthetic marker fixture above only proves icon rendering, not live-data rendering.
+              const livePinDiagnostics = await page.evaluate(() => {
+                const test = window.__PHOTO_SCOUT_TEST__;
+                const state = test.getState();
+                const map = test.map;
+                const bounds = map.getBounds();
+                const visible = item => Number.isFinite(Number(item.lat)) &&
+                  Number.isFinite(Number(item.lng)) && bounds.contains([Number(item.lng), Number(item.lat)]);
+                const results = state.resultCount;
+                const liveHistory = [...(state.historyCount ? [] : [])];
+                const canvas = document.querySelector('#map canvas.maplibregl-canvas');
+                const mapRect = document.querySelector('#map')?.getBoundingClientRect();
+                const canvasRect = canvas?.getBoundingClientRect();
+                const markerNodes = [...document.querySelectorAll('.scout-marker')];
+                const markerCounts = state.markerCounts || {};
+                const realData = {
+                  landmarksInView: state.historyCount,
+                  architectureInView: state.resultCount,
+                  viewpointsInView: state.resultCount,
+                  scenicPlacesInView: state.scenicCount
+                };
+                return {
+                  viewport: { width: window.innerWidth, height: window.innerHeight },
+                  mapBox: mapRect && {x:mapRect.x,y:mapRect.y,width:mapRect.width,height:mapRect.height},
+                  canvasBox: canvasRect && {x:canvasRect.x,y:canvasRect.y,width:canvasRect.width,height:canvasRect.height},
+                  canvasBackingStore: canvas && {width:canvas.width,height:canvas.height},
+                  resultCount: results,
+                  markerCounts,
+                  domCounts: {
+                    landmark: markerNodes.filter(node=>node.classList.contains('history')).length,
+                    architecture: markerNodes.filter(node=>node.classList.contains('architecture')).length,
+                    viewpoint: markerNodes.filter(node=>node.classList.contains('viewpoint')).length,
+                    photoSpot: markerNodes.filter(node=>node.classList.contains('photoSpot')).length,
+                    parking: markerNodes.filter(node=>node.classList.contains('parking')).length,
+                    visibleNameLabels: markerNodes.filter(node=>node.classList.contains('show-pin-label')).length
+                  },
+                  legendButtons: document.querySelectorAll('[data-marker-filter]').length,
+                  legendSummary: document.querySelector('#mapPinSummary')?.textContent || '',
+                  scanCount: state.scanCount,
+                  mapReady: state.styleLoaded
+                };
+              });
+              console.log('LIVE_PIN_DIAGNOSTICS ' + JSON.stringify(livePinDiagnostics));
+              if (!livePinDiagnostics.mapReady || livePinDiagnostics.legendButtons !== 5) {
+                throw new Error('The map must load and expose all five interactive pin layers: '+JSON.stringify(livePinDiagnostics));
+              }
+              if (!livePinDiagnostics.mapBox ||
+                  livePinDiagnostics.mapBox.width < livePinDiagnostics.viewport.width * 0.95 ||
+                  !livePinDiagnostics.canvasBox ||
+                  livePinDiagnostics.canvasBox.width < livePinDiagnostics.viewport.width * 0.95) {
+                throw new Error('The map renderer must fill the browser viewport instead of leaving an empty right-side strip: '+JSON.stringify(livePinDiagnostics));
+              }
+              if (livePinDiagnostics.domCounts.landmark + livePinDiagnostics.domCounts.viewpoint +
+                  livePinDiagnostics.domCounts.architecture + livePinDiagnostics.domCounts.photoSpot === 0) {
+                throw new Error('The real geographic scan returned no visible non-parking pins: '+JSON.stringify(livePinDiagnostics));
               }
 
               // Check the selected parking destinations carry human-readable distance
