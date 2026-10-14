@@ -3481,12 +3481,25 @@ window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('fieldGuid
 // Progressive Web App install support. Geographic services still need a network connection.
 let photoScoutInstallEvent=null;
 const installAppButton=$('installAppBtn');
+// Keep an explicit app-install entry point visible even in browsers that do not fire
+// beforeinstallprompt (notably desktop Firefox); the click provides the correct path.
+if(installAppButton){
+ const alreadyInstalled=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;
+ installAppButton.hidden=!!alreadyInstalled;
+}
 window.addEventListener('beforeinstallprompt',function(event){
  event.preventDefault();photoScoutInstallEvent=event;
  if(installAppButton)installAppButton.hidden=false;
 });
 if(installAppButton)installAppButton.addEventListener('click',async function(){
- if(!photoScoutInstallEvent){setStatus('Install Photo Scout','Use your browser menu and choose “Install app” or “Add to Home Screen”.','');return;}
+ if(!photoScoutInstallEvent){
+  const desktopFirefox=/Firefox\//.test(navigator.userAgent)&&!/Android/i.test(navigator.userAgent);
+  const message=desktopFirefox
+   ?'Firefox desktop does not offer the standard installable-app prompt. Open this same URL in Chrome or Microsoft Edge, then choose Install app from the browser toolbar/menu.'
+   :'Open your browser menu and choose “Install app” or “Add to Home Screen”.';
+  setStatus('Install Photo Scout',message,'');
+  return;
+ }
  photoScoutInstallEvent.prompt();
  try{const choice=await photoScoutInstallEvent.userChoice;if(choice&&choice.outcome==='accepted')setStatus('Photo Scout installed','Launch it from your desktop or home screen.','');else setStatus('Installation cancelled','You can install Photo Scout later from your browser menu.','');}catch(error){}
  photoScoutInstallEvent=null;installAppButton.hidden=true;
