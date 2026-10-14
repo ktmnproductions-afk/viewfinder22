@@ -1504,7 +1504,7 @@ function photoTitleScore(title,queries){
 function photoReferenceFitsPlace(photo,card,localityHint){
  const title=normalizedPhotoTitle(photo&&photo.name);
  if(!title||IMAGE_EVENT_OR_PERSON_RE.test(title))return false;
- const titleTokens=new Set(title.split(/\\s+/));
+ const titleTokens=new Set(title.split(/\s+/));
  const placeTokens=photoPlaceTokens(card&&card.name);
  const localityTokens=photoPlaceTokens(String(localityHint||card&&card.locality||'').split(',').join(' '));
  // Place names are conjunctive: matching a single token (for example "Kastav")
