@@ -1463,18 +1463,32 @@ function photoTitleScore(title,queries){
  return score;
 }
 function photoReferenceFitsPlace(photo,card,localityHint){
- const titleTokens=new Set(normalizedPhotoTitle(photo&&photo.name).split(/\s+/));
+ const title=normalizedPhotoTitle(photo&&photo.name);
+ if(!title||IMAGE_EVENT_OR_PERSON_RE.test(title))return false;
+ const titleTokens=new Set(title.split(/\\s+/));
  const placeTokens=photoPlaceTokens(card&&card.name);
  const localityTokens=photoPlaceTokens(String(localityHint||card&&card.locality||'').split(',').join(' '));
- const placeHit=placeTokens.some(token=>titleTokens.has(token));
- const localityHit=localityTokens.some(token=>titleTokens.has(token));
- // Text- and geotag-sourced references must be consistent with this place.
- // A coordinate alone is not proof: Commons occasionally has incorrect or broad
- // location metadata. Reject files clearly named for another landmark/city.
- if(placeHit||localityHit)return true;
- const titlePlaceTokens=photoPlaceTokens(photo&&photo.name);
+ // Place names are conjunctive: matching a single token (for example "Kastav")
+ // is not enough when a file title explicitly names another landmark or city.
+ const namedPlaceTokens=[...new Set([...placeTokens,...localityTokens])];
+ const meaningfulTitleTokens=photoPlaceTokens(title);
+ const namedHits=meaningfulTitleTokens.filter(token=>namedPlaceTokens.includes(token));
+ const foreignPlaceTokens=photoPlaceTokens(title).filter(token=>
+  !namedPlaceTokens.includes(token)&&token.length>4
+ );
+ const hasStrongPlaceMatch=placeTokens.length
+  ? placeTokens.every(token=>titleTokens.has(token)) ||
+    (placeTokens.length===1&&titleTokens.has(placeTokens[0])&&localityTokens.some(token=>titleTokens.has(token)))
+  : localityTokens.length>0&&localityTokens.every(token=>titleTokens.has(token));
+ if(hasStrongPlaceMatch)return true;
+ // Geotags can supply scenic references only for the exact selected area, and
+ // never when the title reveals another named place. Treat unknown/foreign title
+ // words conservatively; a nearby coordinate is not proof of local relevance.
  const distance=Number(photo&&photo.distance);
- if(photo&&photo.geotagged&&Number.isFinite(distance)&&distance<=2500&&titlePlaceTokens.length===0&&!IMAGE_EVENT_OR_PERSON_RE.test(String(photo.name||'')))return true;
+ const hasForeignSpecificity=foreignPlaceTokens.length>0&&namedHits.length===0;
+ if(photo&&photo.geotagged&&Number.isFinite(distance)&&distance<=1500&&
+    !hasForeignSpecificity&&!IMAGE_EVENT_OR_PERSON_RE.test(title)&&
+    meaningfulTitleTokens.length===0)return true;
  return false;
 }
 async function commonsSearch(c,radius,id){
