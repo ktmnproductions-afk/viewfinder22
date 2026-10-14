@@ -1900,6 +1900,9 @@ function refreshBasemapParking(){
  const oldSignature=(state.basemapParking||[]).map(p=>p.id+':'+Math.round(p.distance)).sort().join('|');
  if(signature===oldSignature)return;
  state.basemapParking=spots;
+ // While a scan is in flight, cache settled-viewport parking results but do not
+ // redraw pins mid-scan. The complete geographic marker set is rendered together.
+ if(state.scanSourcesPending)return;
  renderResults();
  renderMarkers();
 }
