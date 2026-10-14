@@ -451,6 +451,32 @@ body.field-guide-open .map-quick-actions{opacity:.94;pointer-events:auto}
  .field-guide-area-photo-grid .area-subject-photo:first-child{grid-column:span 2;grid-row:span 2}
 }
 
+/* Actual in-app AI image generation. Keep the provider setup compact and the map primary. */
+.ai-image-generator{margin-top:12px;padding:11px;border:1px solid #465a40;border-radius:12px;background:rgba(11,22,15,.42)}
+.ai-image-note,.ai-image-cost-note{font-size:9px;line-height:1.5;color:#aab9ac;margin:6px 0 9px}
+.ai-image-controls{display:flex;align-items:center;gap:8px;margin:8px 0}
+.ai-image-style-label{font-size:9px;color:#c5d1c4;white-space:nowrap}
+.ai-image-controls select,.ai-image-settings input{min-width:0;width:100%;background:#101b14;color:#edf2e8;border:1px solid #40513f;border-radius:8px;padding:8px 9px;font-size:10px}
+.ai-generate-button{width:100%;min-height:36px}
+.ai-image-status{font-size:10px;line-height:1.5;color:#c7d4c8;margin:8px 0 0;overflow-wrap:anywhere}
+.ai-image-status.error{color:#ffb7a5}
+.ai-image-status.success{color:#d9f36b}
+.ai-image-result{margin:10px 0 0;border:1px solid #3a4b3a;border-radius:10px;overflow:hidden;background:#101a13}
+.ai-image-result[hidden]{display:none}
+.ai-image-result img{display:block;width:100%;max-height:440px;object-fit:contain;background:#0c130e}
+.ai-image-result figcaption{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px;font-size:9px;line-height:1.45;color:#aebdaf}
+.ai-image-result a{color:#d9f36b;white-space:nowrap;text-decoration:underline;text-underline-offset:2px}
+.ai-image-settings{margin-top:10px;border-top:1px solid rgba(237,244,232,.10);padding-top:8px}
+.ai-image-settings>summary{cursor:pointer;font-size:10px;font-weight:750;color:#dce7d8}
+.ai-image-settings p{font-size:9px;line-height:1.5;color:#9eafa0;margin:7px 0}
+.ai-image-settings label{display:block;font-size:9px;color:#c7d3c6;margin:8px 0 5px}
+.ai-image-settings input{display:block}
+.ai-image-settings-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.ai-image-settings-actions .btn{flex:1}
+.ai-image-redirect-note{overflow-wrap:anywhere}
+@media(max-width:680px){.ai-image-generator{padding:9px}.ai-image-result img{max-height:320px}}
+
+
 </style>
 </head>
 <body>
@@ -552,6 +578,38 @@ body.field-guide-open .map-quick-actions{opacity:.94;pointer-events:auto}
       <p class="concept-note" id="selectedLocalSketchCaption">A location-aware composition study. It is an idea for framing, not a verified photograph or exact sightline.</p>
       <ol class="selected-shot-ideas" id="selectedShotIdeas"><li>Use the foreground to lead towards the subject.</li><li>Balance the main subject with surrounding context.</li><li>Look for a closer texture or detail frame.</li></ol>
       <button class="btn primary" id="selectedOpenFieldGuide" type="button">More ideas & reference photos ↗</button>
+      <div class="ai-image-generator" id="aiImageGenerator">
+        <div class="section-heading"><h3>AI image concept</h3><span class="count" id="aiImageConnectionState">Not connected</span></div>
+        <p class="ai-image-note">Generate a new visual for this location and keep it inside Photo Scout. AI images are illustrative concepts, not verified documentary views.</p>
+        <div class="ai-image-controls">
+          <label class="ai-image-style-label" for="aiImageStyle">Visual style</label>
+          <select id="aiImageStyle" aria-label="AI image style">
+            <option value="cinematic">Cinematic travel photograph</option>
+            <option value="editorial">Natural editorial photography</option>
+            <option value="pencil">Detailed graphite composition</option>
+          </select>
+        </div>
+        <button class="btn primary ai-generate-button" id="generateAIConcept" type="button">✦ Generate AI image</button>
+        <p class="ai-image-status" id="aiImageStatus" role="status" aria-live="polite">Connect an image account to generate. The sketch above is free and works without an API.</p>
+        <figure class="ai-image-result" id="aiImageResult" hidden>
+          <img id="aiImageOutput" alt="AI-generated illustrative photography concept for the selected location">
+          <figcaption><span id="aiImageCaption">AI concept image · not a verified view</span><a id="downloadAIImage" href="#" download="photo-scout-concept.png" hidden>Save image ↓</a></figcaption>
+        </figure>
+        <details class="ai-image-settings" id="aiImageSettings">
+          <summary>Connect image generation</summary>
+          <p>Photo Scout uses Pollinations for genuine image generation. Create an App Key first, then connect your account. Your temporary authorization stays in this browser session; no secret key is stored in this public project.</p>
+          <label for="pollinationsAppKey">Pollinations App Key (public client ID)</label>
+          <input id="pollinationsAppKey" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="pk_…" inputmode="text">
+          <div class="ai-image-settings-actions">
+            <button class="btn small" id="savePollinationsAppKey" type="button">Save App Key</button>
+            <button class="btn primary small" id="connectPollinations" type="button">Connect account</button>
+            <button class="btn small" id="disconnectPollinations" type="button" hidden>Disconnect</button>
+          </div>
+          <p class="ai-image-redirect-note" id="pollinationsRedirectNote"></p>
+          <a class="footer-link" href="https://enter.pollinations.ai/keys" target="_blank" rel="noopener noreferrer">Create or manage an App Key ↗</a>
+          <p class="ai-image-cost-note">The authorization request is limited to the Flux image model, a 1-Pollen budget cap and a one-day expiry. Review the provider’s consent screen before approving; actual image generation uses the credits in your connected account.</p>
+        </details>
+      </div>
     </div>
     <div class="detail-reference-block"><div class="section-heading"><h3>Visual references for this stop</h3><span class="count" id="detailPhotoCount">—</span></div><div class="detail-photo-grid" id="detailPhotoRefs"><div class="empty">Drop a pin and select a spot to find source-linked image references.</div></div></div>
         <div class="detail-actions"><a class="btn primary" id="driveLink" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Drive to spot ↗</a><button class="btn" id="saveSelected">☆ Save spot</button></div>
@@ -608,14 +666,33 @@ const styleUrls = {
  dark:'https://tiles.openfreemap.org/styles/dark',
  fiord:'https://tiles.openfreemap.org/styles/fiord'
 };
-const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, detectedLocality:'', results:[], scenicSpots:[], photos:[], basemapParking:[], parkingFilteredLayers:new Set(), spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0};
+const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, detectedLocality:'', results:[], scenicSpots:[], photos:[], basemapParking:[], parkingFilteredLayers:new Set(), spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0, basemapMode:'vector', basemapFallbackTried:false, basemapWatchdog:null, styleFailureTimer:null};
 window.__PHOTO_SCOUT_TEST__ = {
  get map(){ return state.map; },
  get styleLoaded(){ return state.styleLoaded; },
  get vectorTileSuccesses(){ return state.vectorTileSuccesses; },
  get scanCount(){ return state.scanCount; },
- getState(){ return {styleLoaded:state.styleLoaded, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, selectedId:state.selected&&state.selected.id||null, resultCount:state.results.length, parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
- scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); }
+ getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, resultCount:state.results.length, parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
+ scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); },
+ forceRasterFallback:function(){return switchToRasterFallback('Automated backup-map verification.');},
+ retryVectorBasemap:function(){return setVectorBasemap(currentStyle);}
+};
+const osmRasterStyle = {
+ version:8,
+ sources:{
+  'osm-raster':{
+   type:'raster',
+   tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+   tileSize:256,
+   attribution:'© OpenStreetMap contributors'
+  }
+ },
+ layers:[{id:'osm-raster-layer',type:'raster',source:'osm-raster',minzoom:0,maxzoom:19}]
+};
+let currentStyle='liberty';
+const clearMapHealthTimers = () => {
+ if(state.basemapWatchdog){clearTimeout(state.basemapWatchdog);state.basemapWatchdog=null;}
+ if(state.styleFailureTimer){clearTimeout(state.styleFailureTimer);state.styleFailureTimer=null;}
 };
 const mapError = message => {
  $('mapIssue').classList.add('show');
@@ -626,8 +703,59 @@ const mapError = message => {
 };
 const mapOk = () => {
  $('mapIssue').classList.remove('show');
- $('appState').textContent = 'Interactive map ready · click anywhere to scout';
+ $('statusBox').classList.remove('warn');
+ $('appState').textContent = state.basemapMode==='raster'
+  ? 'Backup street map ready · click anywhere to scout'
+  : 'Interactive map ready · click anywhere to scout';
+ if(state.basemapMode==='raster'&&!state.scanCount){
+  $('statusTitle').textContent='Backup street map ready';
+  $('statusMsg').textContent='The primary vector map was unavailable, so a simpler OpenStreetMap layer is active. Search, pins and photography scouting remain available.';
+ }
 };
+function switchToRasterFallback(reason){
+ if(state.basemapMode==='raster'){
+  mapError('The backup street map also failed to load. Check your connection and try the map again.');
+  return;
+ }
+ if(state.basemapFallbackTried)return;
+ state.basemapFallbackTried=true;
+ state.basemapMode='raster';
+ state.styleLoaded=false;
+ state.vectorTileSuccesses=0;
+ state.basemapParking=[];
+ state.parkingFilteredLayers=new Set();
+ clearMapHealthTimers();
+ $('appState').textContent='Switching to backup street map…';
+ if(reason&&!state.scanCount){
+  $('statusTitle').textContent='Trying backup map';
+  $('statusMsg').textContent=reason+' Switching to a simpler street map.';
+ }
+ map.setStyle(osmRasterStyle);
+}
+function scheduleMapFallback(reason,delay){
+ if(state.basemapMode==='raster'||state.basemapFallbackTried)return;
+ if(state.styleFailureTimer)clearTimeout(state.styleFailureTimer);
+ state.styleFailureTimer=setTimeout(()=>{
+  state.styleFailureTimer=null;
+  if(!state.styleLoaded)switchToRasterFallback(reason);
+ },delay||3500);
+}
+function setVectorBasemap(styleKey){
+ const nextKey=styleUrls[styleKey]?styleKey:'liberty';
+ clearMapHealthTimers();
+ currentStyle=nextKey;
+ state.basemapFallbackTried=false;
+ state.basemapMode='vector';
+ state.styleLoaded=false;
+ state.vectorTileSuccesses=0;
+ state.basemapParking=[];
+ state.parkingFilteredLayers=new Set();
+ map.setStyle(styleUrls[currentStyle]);
+ state.styleFailureTimer=setTimeout(()=>{
+  state.styleFailureTimer=null;
+  if(!state.styleLoaded)switchToRasterFallback('The selected vector basemap did not respond.');
+ },12000);
+}
 if (!maplibregl || !maplibregl.Map) {
  mapError('The MapLibre map renderer did not load from its CDN. Check the connection and reload this page.');
  return;
@@ -635,8 +763,8 @@ if (!maplibregl || !maplibregl.Map) {
 const map = new maplibregl.Map({
  container:'map',
  style:styleUrls.liberty,
- center:[12,32],
- zoom:2.65,
+ center:[14.4422,45.3271],
+ zoom:6.25,
  minZoom:2,
  maxZoom:19,
  attributionControl:true,
@@ -651,9 +779,21 @@ map.addControl(new maplibregl.ScaleControl({maxWidth:120,unit:'metric'}), 'botto
 map.on('error', function(e){
  state.mapErrors++;
  const msg = e && e.error && e.error.message ? e.error.message : '';
- if (/style|403|404|failed to fetch|load/i.test(msg) && !state.styleLoaded) mapError('The vector basemap did not finish loading. Check the connection or retry.');
+ const likelyStyleFailure=/style|403|404|failed to fetch|load/i.test(msg);
+ if(state.basemapMode==='raster'){
+  const rasterFailure=e&&e.sourceId==='osm-raster';
+  if(rasterFailure&&!$('mapIssue').classList.contains('show'))mapError('The backup street tiles are not responding. Search and saved stops may still work, but the map needs a working connection.');
+  return;
+ }
+ if(!state.styleLoaded&&likelyStyleFailure){
+  scheduleMapFallback('The vector basemap could not be loaded.',3000);
+ }else if(state.basemapMode==='vector'&&e&&e.sourceId==='openmaptiles'&&state.vectorTileSuccesses===0){
+  scheduleMapFallback('The vector map tiles are not responding.',5000);
+ }
 });
 map.on('style.load', function(){
+ if(state.styleFailureTimer){clearTimeout(state.styleFailureTimer);state.styleFailureTimer=null;}
+ if(state.basemapWatchdog){clearTimeout(state.basemapWatchdog);state.basemapWatchdog=null;}
  state.styleLoaded = true;
  state.parkingFilteredLayers=new Set();
  suppressBasemapParkingSymbols();
@@ -661,33 +801,31 @@ map.on('style.load', function(){
  updateRadius();
  mapOk();
  renderMarkers();
+ if(state.basemapMode==='vector'){
+  state.basemapWatchdog=setTimeout(()=>{
+   state.basemapWatchdog=null;
+   if(state.basemapMode==='vector'&&state.vectorTileSuccesses===0){
+    switchToRasterFallback('The vector map loaded its style but no map tiles arrived.');
+   }
+  },18000);
+ }
 });
 map.on('sourcedata', function(e){
- if(e && e.sourceId && e.isSourceLoaded && e.sourceDataType === 'content') state.vectorTileSuccesses++;
+ if(state.basemapMode==='vector'&&e&&e.sourceId==='openmaptiles'&&e.isSourceLoaded&&e.sourceDataType==='content'){
+  state.vectorTileSuccesses++;
+  if(state.basemapWatchdog){clearTimeout(state.basemapWatchdog);state.basemapWatchdog=null;}
+ }
 });
 map.on('idle', function(){ refreshBasemapParking(); });
 map.on('moveend', function(){ refreshBasemapParking(); });
-map.on('style.load', function(){
- state.styleLoaded = true;
- suppressBasemapParkingSymbols();
- ensureRadiusLayers();
- updateRadius();
- mapOk();
- renderMarkers();
-});
 $('retryMap').addEventListener('click',function(){
- $('mapIssue').classList.remove('show');
- state.styleLoaded=false;
- map.setStyle(styleUrls[currentStyle]);
+ setVectorBasemap(currentStyle);
 });
-let currentStyle='liberty';
 document.querySelectorAll('[data-style]').forEach(btn=>btn.addEventListener('click',function(){
- currentStyle=this.dataset.style;
- state.basemapParking=[];state.parkingFilteredLayers=new Set();
  document.querySelectorAll('[data-style]').forEach(b=>b.classList.toggle('active',b===this));
- state.styleLoaded=false;
- map.setStyle(styleUrls[currentStyle]);
+ setVectorBasemap(this.dataset.style);
 }));
+
 function ensureRadiusLayers(){
  if(!map.getSource('scout-radius')){
   map.addSource('scout-radius',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
@@ -1197,8 +1335,11 @@ function renderResults(){
  $('mapSubtitle').textContent=state.center?coordLabel(state.center)+' · '+(state.radius/1000)+' km local search + wider photo scouting':'Click anywhere on the map to plan a photography stop.';
 }
 function renderPhotos(){
- $('photoCount').textContent=state.photos.length+' matched images';
- $('photoResults').innerHTML=state.photos.length?state.photos.slice(0,3).map(p=>'<article class="photo-card"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original photo and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="photo-caption">'+esc(p.name)+'<div class="photo-license">Title-matched place/subject reference · not a verified camera position</div><div class="photo-license">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Check original file page')+'</div></div></a></article>').join(''):emptyHTML(state.center?'No suitable landmark/topic-matched references returned from the image archive. We will not substitute unrelated event or personal images. The location-specific shot sketches remain available above.':'Drop a pin to look for place- and subject-matched visual references.');
+ const photoCount=$('photoCount');
+ const photoResults=$('photoResults');
+ if(!photoCount||!photoResults)return;
+ photoCount.textContent=state.photos.length+' matched images';
+ photoResults.innerHTML=state.photos.length?state.photos.slice(0,3).map(p=>'<article class="photo-card"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original photo and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="photo-caption">'+esc(p.name)+'<div class="photo-license">Title-matched place/subject reference · not a verified camera position</div><div class="photo-license">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Check original file page')+'</div></div></a></article>').join(''):emptyHTML(state.center?'No suitable landmark/topic-matched references returned from the image archive. We will not substitute unrelated event or personal images. The location-specific shot sketches remain available above.':'Drop a pin to look for place- and subject-matched visual references.');
 }
 function markerEl(category,label){
  const el=document.createElement('button'); el.type='button'; el.className='scout-marker '+category;
@@ -1509,8 +1650,11 @@ async function scanAt(c,opts){
  if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng)||Math.abs(c.lat)>85||Math.abs(c.lng)>180){setStatus('Choose a valid map point','That coordinate cannot be scanned.','warn');return;}
  state.scanId++;const id=state.scanId;state.scanCount++;cancelPreviousRequests();
  state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.results=[];state.scenicSpots=[];state.photos=[];state.basemapParking=[];state.spotParking=[];state.spotParkingTargetId=null;state.spotParkingLoading=false;state.spotParkingRequest++;state.selected=null;
- $('spotDetail').classList.remove('show');
- setActivePin(state.center);updateRadius();
+setActivePin(state.center);updateRadius();
+ const pinUrl='https://www.openstreetmap.org/?mlat='+c.lat.toFixed(6)+'&mlon='+c.lng.toFixed(6)+'#map=16/'+c.lat.toFixed(6)+'/'+c.lng.toFixed(6);
+ const pinItem={id:'user-pin-'+Date.now(),name:'Pinned photography location',lat:c.lat,lng:c.lng,distance:null,category:'photoSpot',isUserPin:true,source:'Your map pin',sourceUrl:pinUrl,summary:'A user-selected coordinate. Nearby landmarks, parking and reference photos are researched separately; this pin alone does not prove a safe or public viewpoint.',why:'This is your chosen scouting coordinate, not a verified landmark or confirmed sightline. Use the generated framing ideas as a starting point, then check local access and the real view.',scenicKind:'location study',tags:{},city:''};
+ selectItem(pinItem,{keepMapView:true});
+
  if(opts&&opts.fly&&map.getZoom()<12){map.stop();map.flyTo({center:[c.lng,c.lat],zoom:Math.max(12.5,map.getZoom()+3),duration:850,essential:true});}
  refreshBasemapParking();
  renderResults();renderPhotos();renderMarkers();
@@ -1539,6 +1683,7 @@ async function scanAt(c,opts){
   if(id!==state.scanId)return;
   mergePlaces();
   renderResults();renderPhotos();renderMarkers();updateRadius();
+  if(state.selected&&state.selected.isUserPin)renderDetailPhotoRefs(state.selected);
   const parts=[];
   if(completed.has('places'))parts.push(osmResults.length+' mapped places · '+parkingCandidates().length+' parking locations on screen/in radius');
   if(completed.has('history'))parts.push(wikiResults.length+' history articles');
@@ -1602,6 +1747,7 @@ async function scanAt(c,opts){
  }
  if(id!==state.scanId)return;
  renderResults();renderPhotos();renderMarkers();updateRadius();
+ if(state.selected&&state.selected.isUserPin)renderDetailPhotoRefs(state.selected);
  const parks=parkingCandidates().length;
  const histories=state.results.filter(r=>r.category==='history').length;
  const imageCount=state.photos.length;
@@ -1828,36 +1974,41 @@ function conceptSketchData(item,mode,variation){
  '</svg>';
  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
+let detailPhotoSearchId=0;
 async function renderDetailPhotoRefs(item){
  const container=$('detailPhotoRefs');
  if(!container)return;
+ const requestId=++detailPhotoSearchId;
  const selectedId=item.id;
  $('detailPhotoCount').textContent='Searching…';
- container.innerHTML=emptyHTML('Searching for images that match this landmark or subject—not simply photos uploaded nearby.');
+ container.innerHTML=emptyHTML('Searching for source-linked photographs that match the place or its named nearby landmarks—not simply random photos uploaded nearby.');
  const locality=String(item.city||state.detectedLocality||'').trim();
  const rawName=String(item.name||'').replace(/^Unnamed mapped\s+/i,'').replace(/\s+near\s+.+$/i,'').trim();
- const queryName=rawName&&!/^your pin$/i.test(rawName)?rawName:'';
+ const queryName=item.isUserPin?'':(rawName&&!/^your pin$/i.test(rawName)?rawName:'');
+ const nearbyNames=item.isUserPin?[...state.results.filter(r=>r.name&&r.category!=='parking'&&!/^Unnamed mapped/i.test(r.name)).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,3).map(r=>r.name),...state.scenicSpots.filter(r=>r.name&&!r.genericFeature).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,2).map(r=>r.name)]:[];
  const terms=[];
  if(queryName)terms.push(queryName);
  if(queryName&&locality)terms.push(queryName+' '+locality);
+ if(item.isUserPin)terms.push(...nearbyNames.slice(0,3));
  if(locality)terms.push(locality);
  else if(state.detectedLocality)terms.push(state.detectedLocality);
- const refs=await commonsTextSearch(terms,{lat:item.lat,lng:item.lng},state.scanId).catch(()=>[]);
- if(!state.selected||state.selected.id!==selectedId)return;
- const fallback=(state.photos||[]).filter(p=>!p.geotagged&&photoTitleIsRelevant(p.name,queryName+' '+locality));
+ const uniqueTerms=[...new Set(terms.map(t=>String(t||'').trim()).filter(Boolean))].slice(0,4);
+ const refs=uniqueTerms.length?await commonsTextSearch(uniqueTerms,{lat:item.lat,lng:item.lng},state.scanId).catch(()=>[]):[];
+ if(requestId!==detailPhotoSearchId||!state.selected||state.selected.id!==selectedId)return;
+ const relevantQuery=(queryName+' '+locality+' '+nearbyNames.join(' ')).trim();
+ const fallback=(state.photos||[]).filter(p=>!p.geotagged&&photoTitleIsRelevant(p.name,relevantQuery));
  const unique=new Map();
- [...refs,...fallback].forEach(p=>{if(!unique.has(p.id))unique.set(p.id,p);});
+ [...refs,...fallback].forEach(p=>{const key=p.id||p.name;if(!unique.has(key))unique.set(key,p);});
  const finalRefs=[...unique.values()].slice(0,3);
- $('detailPhotoCount').textContent=finalRefs.length?(queryName?'Landmark matched · '+finalRefs.length:'Area matched · '+finalRefs.length):'No close matches';
+ $('detailPhotoCount').textContent=finalRefs.length?(queryName?'Landmark matched · '+finalRefs.length:'Area/nearby landmark matched · '+finalRefs.length):'No close matches';
  if(!finalRefs.length){
-  container.innerHTML=emptyHTML('No suitable source-linked image matched this place name. We will not substitute unrelated event uploads. The location-specific composition sketches and AI photo-idea button remain available above.');
+  container.innerHTML=emptyHTML('No suitable source-linked image matched the selected place or nearby named landmarks. We will not substitute unrelated event uploads. The composition sketch and in-app AI image generator remain available above.');
   return;
  }
  container.innerHTML=finalRefs.map(p=>{
   const note='Matched by title/subject. This is a visual reference, not proof of the exact camera position.';
   return '<article class="detail-photo"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(note)+'</div><div class="detail-photo-note">'+esc(p.license||'Licence on source page')+'</div><a class="detail-photo-source" href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Original photo & licence ↗</a></article>';
  }).join('');
-
 }
 function selectedShotIdeasFor(item){
  const name=String(item&&item.name||'this place');
@@ -1925,19 +2076,280 @@ function renderSelectedShotIdeas(item){
   image.src=conceptSketchData(item,'wide',variation);
   image.alt='Illustrative pencil composition for '+String(item.name||'the selected spot')+'. The sketch suggests framing and is not a verified view.';
  }
- if(caption)caption.textContent='A location-aware composition study based on the place name and available map tags. Use it to plan a frame; confirm the real view and safe access on site.';
+ if(caption)caption.textContent=item.isUserPin?'Illustrative framing ideas for this coordinate—not a verified view. Use the nearby map records and source photographs to confirm what is actually visible.':'A location-aware composition study based on the place name and available map tags. Use it to plan a frame; confirm the real view and safe access on site.';
  if(lens)lens.textContent='Canon R50 · 18–150 mm';
  if(list)list.innerHTML=selectedShotIdeasFor(item).map(idea=>'<li>'+esc(idea)+'</li>').join('');
+ syncAIImageUI();
 }
+const POLLINATIONS_CLIENT_STORAGE='photoscout.pollinations.clientId';
+const POLLINATIONS_TOKEN_STORAGE='photoscout.pollinations.sessionToken';
+const POLLINATIONS_EXPIRY_STORAGE='photoscout.pollinations.expiresAt';
+const POLLINATIONS_VERIFIER_STORAGE='photoscout.pollinations.pkceVerifier';
+const POLLINATIONS_STATE_STORAGE='photoscout.pollinations.oauthState';
+let generatedAIObjectUrl='';
+function photoScoutRedirectUri(){return window.location.origin+window.location.pathname;}
+function setAIImageStatus(message,kind){
+ const box=$('aiImageStatus');
+ if(!box)return;
+ box.textContent=message||'';
+ box.classList.toggle('error',kind==='error');
+ box.classList.toggle('success',kind==='success');
+}
+function readPollinationsToken(){
+ const token=sessionStorage.getItem(POLLINATIONS_TOKEN_STORAGE)||'';
+ const expiry=Number(sessionStorage.getItem(POLLINATIONS_EXPIRY_STORAGE)||0);
+ if(!token||!expiry||Date.now()>=expiry-30000){
+  sessionStorage.removeItem(POLLINATIONS_TOKEN_STORAGE);
+  sessionStorage.removeItem(POLLINATIONS_EXPIRY_STORAGE);
+  return '';
+ }
+ return token;
+}
+function syncAIImageUI(){
+ const appKey=localStorage.getItem(POLLINATIONS_CLIENT_STORAGE)||'';
+ const input=$('pollinationsAppKey');
+ if(input&&input.value!==appKey)input.value=appKey;
+ const connected=!!readPollinationsToken();
+ const stateLabel=$('aiImageConnectionState');
+ if(stateLabel)stateLabel.textContent=connected?'Connected':'Not connected';
+ const connectButton=$('connectPollinations');
+ const disconnectButton=$('disconnectPollinations');
+ if(connectButton)connectButton.hidden=connected;
+ if(disconnectButton)disconnectButton.hidden=!connected;
+ const redirectNote=$('pollinationsRedirectNote');
+ if(redirectNote)redirectNote.textContent='Register this exact redirect URI in the App Key settings: '+photoScoutRedirectUri();
+ const generateButton=$('generateAIConcept');
+ if(generateButton)generateButton.textContent=connected?'✦ Generate AI image':'Connect to generate';
+}
+function randomUrlSafe(bytes){
+ const data=new Uint8Array(bytes);
+ crypto.getRandomValues(data);
+ let binary='';
+ data.forEach(byte=>binary+=String.fromCharCode(byte));
+ return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function pkceChallenge(verifier){
+ const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier));
+ let binary='';
+ new Uint8Array(digest).forEach(byte=>binary+=String.fromCharCode(byte));
+ return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function beginPollinationsConnection(){
+ const input=$('pollinationsAppKey');
+ const clientId=String(input&&input.value||localStorage.getItem(POLLINATIONS_CLIENT_STORAGE)||'').trim();
+ if(!/^pk_[A-Za-z0-9_-]+$/.test(clientId)){
+  $('aiImageSettings').open=true;
+  setAIImageStatus('Enter a Pollinations App Key starting with pk_. It is a public OAuth client ID, not your secret API key.','error');
+  if(input)input.focus();
+  return;
+ }
+ if(!window.crypto||!crypto.subtle){
+  setAIImageStatus('Secure browser cryptography is unavailable. Open Photo Scout over HTTPS and retry.','error');
+  return;
+ }
+ localStorage.setItem(POLLINATIONS_CLIENT_STORAGE,clientId);
+ const verifier=randomUrlSafe(48);
+ const oauthState=randomUrlSafe(24);
+ sessionStorage.setItem(POLLINATIONS_VERIFIER_STORAGE,verifier);
+ sessionStorage.setItem(POLLINATIONS_STATE_STORAGE,oauthState);
+ sessionStorage.setItem(POLLINATIONS_CLIENT_STORAGE,clientId);
+ const redirectUri=photoScoutRedirectUri();
+ try{
+  let authorizationEndpoint='https://enter.pollinations.ai/authorize';
+  try{
+   const discovery=await fetch('https://enter.pollinations.ai/.well-known/oauth-authorization-server',{cache:'no-store'});
+   if(discovery.ok){
+    const metadata=await discovery.json();
+    if(metadata.authorization_endpoint)authorizationEndpoint=metadata.authorization_endpoint;
+    if(metadata.token_endpoint)sessionStorage.setItem('photoscout.pollinations.tokenEndpoint',metadata.token_endpoint);
+   }
+  }catch(ignored){}
+  const params=new URLSearchParams({
+   response_type:'code',
+   client_id:clientId,
+   redirect_uri:redirectUri,
+   scope:'usage',
+   state:oauthState,
+   code_challenge:await pkceChallenge(verifier),
+   code_challenge_method:'S256',
+   models:'black-forest-labs/flux.1-schnell',
+   budget:'1',
+   expiry:'1'
+  });
+  setAIImageStatus('Opening Pollinations consent. Review the model, budget cap and expiry before approving.','');
+  window.location.assign(authorizationEndpoint+'?'+params.toString());
+ }catch(error){
+  sessionStorage.removeItem(POLLINATIONS_VERIFIER_STORAGE);
+  sessionStorage.removeItem(POLLINATIONS_STATE_STORAGE);
+  setAIImageStatus('Could not start provider authorization: '+(error&&error.message||'unknown error'),'error');
+ }
+}
+async function handlePollinationsOAuthReturn(){
+ const params=new URLSearchParams(window.location.search);
+ const code=params.get('code');
+ const errorCode=params.get('error');
+ if(!code&&!errorCode)return;
+ const returnedState=params.get('state')||'';
+ const expectedState=sessionStorage.getItem(POLLINATIONS_STATE_STORAGE)||'';
+ const verifier=sessionStorage.getItem(POLLINATIONS_VERIFIER_STORAGE)||'';
+ const clientId=sessionStorage.getItem(POLLINATIONS_CLIENT_STORAGE)||localStorage.getItem(POLLINATIONS_CLIENT_STORAGE)||'';
+ const redirectUri=photoScoutRedirectUri();
+ const cleanUrl=window.location.pathname+(window.location.hash||'');
+ window.history.replaceState({},document.title,cleanUrl);
+ if(errorCode){
+  sessionStorage.removeItem(POLLINATIONS_STATE_STORAGE);
+  sessionStorage.removeItem(POLLINATIONS_VERIFIER_STORAGE);
+  setAIImageStatus('Image account connection was not approved ('+errorCode.replace(/[^a-zA-Z0-9_-]/g,'')+'). You can retry whenever you are ready.','error');
+  return;
+ }
+ if(!code||!expectedState||returnedState!==expectedState||!verifier||!clientId){
+  sessionStorage.removeItem(POLLINATIONS_STATE_STORAGE);
+  sessionStorage.removeItem(POLLINATIONS_VERIFIER_STORAGE);
+  setAIImageStatus('The authorization return could not be verified. Open Connect image generation and try again.','error');
+  return;
+ }
+ sessionStorage.removeItem(POLLINATIONS_STATE_STORAGE);
+ sessionStorage.removeItem(POLLINATIONS_VERIFIER_STORAGE);
+ setAIImageStatus('Finishing secure account connection…','');
+ try{
+  const tokenEndpoint=sessionStorage.getItem('photoscout.pollinations.tokenEndpoint')||'https://enter.pollinations.ai/api/oauth/token';
+  sessionStorage.removeItem('photoscout.pollinations.tokenEndpoint');
+  const body=new URLSearchParams({
+   grant_type:'authorization_code',
+   code,
+   client_id:clientId,
+   redirect_uri:redirectUri,
+   code_verifier:verifier
+  });
+  const response=await fetch(tokenEndpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString(),cache:'no-store'});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.access_token)throw new Error(data.error_description||data.error||('Authorization failed ('+response.status+')'));
+  sessionStorage.setItem(POLLINATIONS_TOKEN_STORAGE,data.access_token);
+  sessionStorage.setItem(POLLINATIONS_EXPIRY_STORAGE,String(Date.now()+(Number(data.expires_in)||86400)*1000));
+  setAIImageStatus('Connected. Generated concepts will appear below this control and use the account you approved.','success');
+ }catch(error){
+  setAIImageStatus('Could not finish account connection: '+(error&&error.message||'unknown error')+'. Check the App Key redirect URI and try again.','error');
+ }
+ syncAIImageUI();
+}
+function buildAIImagePrompt(item){
+ const name=String(item&&item.name||'the selected map pin').slice(0,150);
+ const locality=String(item&&(item.city||item.locality||state.detectedLocality)||'locality not yet identified').slice(0,120);
+ const coordinates=item&&Number.isFinite(item.lat)&&Number.isFinite(item.lng)?item.lat.toFixed(5)+', '+item.lng.toFixed(5):'coordinates not available';
+ const ideas=selectedShotIdeasFor(item).slice(0,3).map(x=>String(x).slice(0,240)).join('; ');
+ const nearby=[...state.results,...state.scenicSpots].filter(p=>p&&p.name&&!p.genericFeature&&Number.isFinite(p.distance)&&p.distance<30000&&!/^Unnamed mapped/i.test(p.name)).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,5).map(p=>p.name+' ('+Math.round(p.distance)+' m from pin)');
+ const nearbyContext=nearby.length?nearby.join('; '):'no named nearby geographic features returned yet';
+ const userStyle=$('aiImageStyle')?$('aiImageStyle').value:'cinematic';
+ const style=userStyle==='pencil'
+  ?'a sophisticated graphite and fine-ink composition illustration on warm archival paper, detailed but clearly an illustrative study'
+  :userStyle==='editorial'
+   ?'natural editorial travel photography, believable available light, restrained colours, documentary composition'
+   :'cinematic travel photography, atmospheric natural light, carefully layered foreground and background, subtle filmic colour grading';
+ const clue=String(item&&(item.summary||item.history||item.why)||'').replace(/\s+/g,' ').slice(0,420);
+ return 'Create one high-quality visual composition concept for a photography field guide. Subject or place name: '+name+'. Pin coordinates: '+coordinates+'. Geographic context: '+locality+'. Nearby mapped feature names (candidates only, not confirmed visible): '+nearbyContext+'. Mapped feature clues (may be incomplete): '+clue+'. Photographer direction: '+ideas+'. Camera guidance: Canon EOS R50 with RF-S 18–150 mm zoom; try a strong foreground, a clearly readable subject and depth between foreground and background. Visual style: '+style+'. This is a creative planning concept inspired by a map location, not a claim to depict the exact real-world camera position. Do not invent readable signs, labels, logos or watermarks. No text, no UI, no collage, one coherent 16:9 image.';
+}
+async function generateAIImageForSelectedSpot(){
+ const item=state.selected;
+ if(!item){
+  setAIImageStatus('Drop a pin or select a mapped place first.','error');
+  return;
+ }
+ const token=readPollinationsToken();
+ if(!token){
+  $('aiImageSettings').open=true;
+  setAIImageStatus('Connect Pollinations first. Create an App Key, then connect the account you want to use for image credits.','error');
+  syncAIImageUI();
+  return;
+ }
+ const button=$('generateAIConcept');
+ const preview=$('aiImageResult');
+ const image=$('aiImageOutput');
+ const download=$('downloadAIImage');
+ if(button){button.disabled=true;button.textContent='Generating…';}
+ if(preview)preview.hidden=true;
+ if(download){download.hidden=true;download.removeAttribute('href');}
+ setAIImageStatus('Generating a location-specific visual. This can take a little while; keep this tab open.','');
+ try{
+  const prompt=buildAIImagePrompt(item);
+  const query=new URLSearchParams({
+   model:'black-forest-labs/flux.1-schnell',
+   width:'1024',
+   height:'576',
+   seed:String(Math.floor(Math.random()*2147483647))
+  });
+  const imageUrl='https://gen.pollinations.ai/image/'+encodeURIComponent(prompt)+'?'+query.toString();
+  const response=await fetch(imageUrl,{headers:{Authorization:'Bearer '+token,Accept:'image/*'},cache:'no-store'});
+  const blob=await response.blob();
+  if(!response.ok){
+   let detail='';
+   try{detail=(await blob.text()).slice(0,300);}catch(ignored){}
+   throw new Error('Image service returned '+response.status+(detail?': '+detail:''));
+  }
+  if(!/^image\//i.test(blob.type||''))throw new Error('The provider response was not an image. Check the connected model and account balance.');
+  if(generatedAIObjectUrl)URL.revokeObjectURL(generatedAIObjectUrl);
+  generatedAIObjectUrl=URL.createObjectURL(blob);
+  image.src=generatedAIObjectUrl;
+  image.alt='AI-generated '+($('aiImageStyle').selectedOptions[0]?.textContent||'')+' concept for '+String(item.name||'the selected location')+'. Illustrative only.';
+  $('aiImageCaption').textContent='AI-generated concept for '+String(item.name||'this location')+' · not a verified view';
+  if(download){
+   download.href=generatedAIObjectUrl;
+   download.download='photo-scout-'+String(item.name||'concept').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48)+'.'+(blob.type.includes('webp')?'webp':blob.type.includes('jpeg')||blob.type.includes('jpg')?'jpg':'png');
+   download.hidden=false;
+  }
+  preview.hidden=false;
+  setAIImageStatus('Image generated successfully. The result is displayed here and can be saved to your device.','success');
+ }catch(error){
+  const message=String(error&&error.message||'Unknown generation error');
+  setAIImageStatus(message+' If this continues, check the Pollinations balance, allowed model and App Key settings.','error');
+ }finally{
+  if(button){button.disabled=false;syncAIImageUI();}
+ }
+}
+function setupImageGeneration(){
+ const input=$('pollinationsAppKey');
+ const save=$('savePollinationsAppKey');
+ const connect=$('connectPollinations');
+ const disconnect=$('disconnectPollinations');
+ const generate=$('generateAIConcept');
+ if(!input||!save||!connect||!disconnect||!generate)return;
+ input.value=localStorage.getItem(POLLINATIONS_CLIENT_STORAGE)||'';
+ input.addEventListener('change',()=>localStorage.setItem(POLLINATIONS_CLIENT_STORAGE,input.value.trim()));
+ save.addEventListener('click',()=>{
+  const key=input.value.trim();
+  if(!/^pk_[A-Za-z0-9_-]+$/.test(key)){
+   setAIImageStatus('Use a Pollinations App Key beginning with pk_. Do not paste an sk_ secret key here.','error');
+   input.focus();
+   return;
+  }
+  localStorage.setItem(POLLINATIONS_CLIENT_STORAGE,key);
+  setAIImageStatus('App Key saved in this browser. Next, connect the account that will authorize image-generation credits.','success');
+  syncAIImageUI();
+ });
+ connect.addEventListener('click',beginPollinationsConnection);
+ disconnect.addEventListener('click',()=>{
+  sessionStorage.removeItem(POLLINATIONS_TOKEN_STORAGE);
+  sessionStorage.removeItem(POLLINATIONS_EXPIRY_STORAGE);
+  setAIImageStatus('Disconnected. Existing generated images stay visible until you leave or reload this page.','');
+  syncAIImageUI();
+ });
+ generate.addEventListener('click',generateAIImageForSelectedSpot);
+ syncAIImageUI();
+ if(readPollinationsToken())setAIImageStatus('Connected. Generated concepts use the credits in the account you approved.','success');
+ handlePollinationsOAuthReturn().then(syncAIImageUI).catch(error=>{
+  setAIImageStatus('Could not initialize image generation: '+(error&&error.message||'unknown error'),'error');
+ });
+}
+
 function selectItem(item,options){
  state.selected=item;
  // Map place selection updates the on-page photography idea and nearby references.
  $('spotDetail').classList.add('show');
- $('detailEyebrow').textContent=item.category==='photo'?'Visual reference · source-linked':item.category==='photoSpot'?'Photo spot candidate · evidence-ranked':item.category==='parking'?'Parking candidate · verify on arrival':item.category==='history'?'History & place · sourced summary':item.category==='viewpoint'?'Mapped viewpoint · verify the view':'Photographic subject · map data';
+ $('detailEyebrow').textContent=item.isUserPin?'Map pin · photography brief':item.category==='photo'?'Visual reference · source-linked':item.category==='photoSpot'?'Photo spot candidate · evidence-ranked':item.category==='parking'?'Parking candidate · verify on arrival':item.category==='history'?'History & place · sourced summary':item.category==='viewpoint'?'Mapped viewpoint · verify the view':'Photographic subject · map data';
  $('detailTitle').textContent=item.name;
  $('detailMeta').textContent=(Number.isFinite(item.distance)?distanceLabel(item.distance)+' from pin · ':'')+item.source+' · '+coordLabel({lat:item.lat,lng:item.lng});
  let history=item.history||item.summary||'No short history summary is available for this place yet. Open the source record to inspect the mapped details.';
- if(item.category==='photoSpot')history='WHY IT IS SUGGESTED: '+(item.why||'The mapped feature may work as a scenic photo subject.')+' This is a data-based scouting candidate, not a guarantee of an unobstructed view. Check the route, public access, terrain, private land and safe stopping before travelling. The point is a mapped feature, not necessarily the exact place where a photographer should stand.';
+ if(item.isUserPin)history='You placed this pin manually. The composition sketch and AI image are creative planning aids, not a verified view of the exact coordinate. Photo spots, historical records, parking and source-linked photographs will be shown only when returned by their geographic sources. Check access and road safety before travelling.';
+ else if(item.category==='photoSpot')history='WHY IT IS SUGGESTED: '+(item.why||'The mapped feature may work as a scenic photo subject.')+' This is a data-based scouting candidate, not a guarantee of an unobstructed view. Check the route, public access, terrain, private land and safe stopping before travelling. The point is a mapped feature, not necessarily the exact place where a photographer should stand.';
  if(item.category==='photo') history='Image reference by '+(item.artist||'an unlisted photographer')+'. Licence: '+(item.license||'see the original file page')+'. '+(item.geotagged?'This image is geotagged near this coordinate; the exact camera position is not independently confirmed.':'This image matches the area/topic but has no verified shooting coordinates.');
  if(item.category==='parking')history='Mapped parking area/point from OpenStreetMap data. The marker may indicate the centre of a mapped lot, not its vehicle entrance. This does not confirm that parking is currently open, free, legal, safe, or available. Check the source geometry, approach road, access signs and restrictions before driving in.';
  const gear='Canon EOS R50 + RF-S 18–150mm: 18–24mm for a wide establishing frame, 35–70mm for city-with-context, 100–150mm to compress distant skyline and mountain layers.';
@@ -2600,6 +3012,7 @@ $('fieldGuideDetail').addEventListener('click',event=>{
 window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('fieldGuideDetail').hidden)closeFieldGuideDetail();else if(event.key==='Escape'&&!$('fieldGuidePage').hidden)closeFieldGuide();});
 renderFieldGuide();
 loadSaved();
+setupImageGeneration();
 window.addEventListener('resize',()=>{if(map)map.resize();});
 })();
 </script>
