@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - "assistant/**"
+      - "fix/**"
     paths:
       - "index.html"
       - ".github/workflows/photo-scout-browser-check.yml"
@@ -105,13 +106,14 @@ jobs:
                   startUrl: manifest && manifest.start_url,
                   workerStatus: workerResponse.status,
                   installButton: !!document.querySelector('#installAppBtn'),
+                  installButtonVisible: !!document.querySelector('#installAppBtn') && !document.querySelector('#installAppBtn').hidden,
                   pinLegend: !!document.querySelector('#mapPinLegend')
                 };
               });
               if (appInstallDiagnostics.manifestStatus !== 200 ||
                   appInstallDiagnostics.display !== 'standalone' ||
                   appInstallDiagnostics.workerStatus !== 200 ||
-                  !appInstallDiagnostics.installButton || !appInstallDiagnostics.pinLegend) {
+                  !appInstallDiagnostics.installButton || !appInstallDiagnostics.installButtonVisible || !appInstallDiagnostics.pinLegend) {
                 throw new Error('Photo Scout must ship as an installable standalone app with a visible pin legend: ' + JSON.stringify(appInstallDiagnostics));
               }
 
@@ -205,11 +207,35 @@ jobs:
               // Use a real map click at the Rijeka-area coordinate, not a mocked event.
               const point = await page.evaluate(() => {
                 const map = window.__PHOTO_SCOUT_TEST__.map;
-                const p = map.project([14.34873, 45.37306]);
-                return { x: p.x, y: p.y, width: map.getContainer().clientWidth, height: map.getContainer().clientHeight };
+                const container = map.getContainer();
+                const box = container.getBoundingClientRect();
+                const canvas = container.querySelector('canvas.maplibregl-canvas');
+                const canvasContainer = container.querySelector('.maplibregl-canvas-container');
+                if (!canvas || !canvasContainer) return {emptyMapPatch:false,reason:'no MapLibre canvas surface'};
+                const canvasBox = canvas.getBoundingClientRect();
+                const base = map.project([14.34873, 45.37306]);
+                const offsets=[];
+                for(let ring=0;ring<8;ring++){
+                  const r=ring*44;
+                  offsets.push([r,0],[-r,0],[0,r],[0,-r],[r,r],[-r,r],[r,-r],[-r,-r]);
+                }
+                const candidates=offsets.map(([dx,dy])=>({x:box.left+base.x+dx,y:box.top+base.y+dy}))
+                  .concat(Array.from({length:72},(_,i)=>({
+                    x:canvasBox.left+50+((i*173)%(Math.max(1,Math.floor(canvasBox.width-100)))),
+                    y:canvasBox.top+50+((i*97)%(Math.max(1,Math.floor(canvasBox.height-100))))
+                  })));
+                for(const p of candidates){
+                  if(p.x<canvasBox.left+12||p.x>canvasBox.right-12||p.y<canvasBox.top+12||p.y>canvasBox.bottom-12)continue;
+                  const hit=document.elementFromPoint(p.x,p.y);
+                  if(hit===canvas||hit===canvasContainer||canvasContainer.contains(hit)){
+                    const ll=map.unproject([p.x-box.left,p.y-box.top]).toArray();
+                    return {x:p.x,y:p.y,width:window.innerWidth,height:window.innerHeight,lngLat:ll,emptyMapPatch:true};
+                  }
+                }
+                return {x:base.x+box.left,y:base.y+box.top,width:window.innerWidth,height:window.innerHeight,emptyMapPatch:false,reason:'no unobstructed point on MapLibre surface'};
               });
-              if (point.x < 340 || point.x > point.width || point.y < 95 || point.y > point.height) {
-                throw new Error('Test coordinate projected outside the clickable visible map: ' + JSON.stringify(point));
+              if (!point.emptyMapPatch) {
+                throw new Error('Could not find an unobstructed point on the live map surface: ' + JSON.stringify(point));
               }
               const scansBeforeClick = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.scanCount);
               await page.mouse.click(point.x, point.y);
@@ -240,6 +266,56 @@ jobs:
                 null,
                 { timeout: 90000 }
               );
+
+              // Validate real returned place records, not only the synthetic marker fixture.
+              const livePinDiagnostics = await page.evaluate(() => {
+                const test=window.__PHOTO_SCOUT_TEST__;
+                const state=test.getState();
+                const container=test.map.getContainer();
+                const mapBox=container.getBoundingClientRect();
+                const canvas=container.querySelector('canvas.maplibregl-canvas');
+                const canvasBox=canvas&&canvas.getBoundingClientRect();
+                const nodes=[...document.querySelectorAll('.scout-marker')];
+                const domCounts={
+                  landmark:nodes.filter(n=>n.classList.contains('history')).length,
+                  architecture:nodes.filter(n=>n.classList.contains('architecture')).length,
+                  viewpoint:nodes.filter(n=>n.classList.contains('viewpoint')).length,
+                  photoSpot:nodes.filter(n=>n.classList.contains('photoSpot')).length,
+                  parking:nodes.filter(n=>n.classList.contains('parking')).length,
+                  visibleNameLabels:nodes.filter(n=>n.classList.contains('show-pin-label')).length
+                };
+                return {
+                  viewport:{width:innerWidth,height:innerHeight},
+                  mapBox:{x:mapBox.x,y:mapBox.y,width:mapBox.width,height:mapBox.height},
+                  canvasBox:canvasBox&&{x:canvasBox.x,y:canvasBox.y,width:canvasBox.width,height:canvasBox.height},
+                  mapReady:state.styleLoaded,scanCount:state.scanCount,scanPending:state.scanPending,
+                  resultCount:state.resultCount,dataInView:state.viewportCategoryCounts||{},
+                  markerCounts:state.markerCounts||{},domCounts,
+                  legendButtons:document.querySelectorAll('[data-marker-filter]').length,
+                  legendSummary:document.querySelector('#mapPinSummary')?.textContent||''
+                };
+              });
+              console.log('LIVE_PIN_DIAGNOSTICS '+JSON.stringify(livePinDiagnostics));
+              if(!livePinDiagnostics.mapReady || livePinDiagnostics.legendButtons!==5) {
+                throw new Error('The map must expose all five interactive pin layers: '+JSON.stringify(livePinDiagnostics));
+              }
+              if(!livePinDiagnostics.mapBox || livePinDiagnostics.mapBox.width<livePinDiagnostics.viewport.width*.95 ||
+                 !livePinDiagnostics.canvasBox || livePinDiagnostics.canvasBox.width<livePinDiagnostics.viewport.width*.95) {
+                throw new Error('The map canvas must use the full viewport width: '+JSON.stringify(livePinDiagnostics));
+              }
+              if(livePinDiagnostics.domCounts.landmark+livePinDiagnostics.domCounts.architecture+
+                 livePinDiagnostics.domCounts.viewpoint+livePinDiagnostics.domCounts.photoSpot===0) {
+                throw new Error('The real scan produced no visible landmark, building, viewpoint or photo-spot pins: '+JSON.stringify(livePinDiagnostics));
+              }
+              const missingPinForRealResult=
+                (livePinDiagnostics.dataInView.history>0&&livePinDiagnostics.domCounts.landmark===0)||
+                (livePinDiagnostics.dataInView.architecture>0&&livePinDiagnostics.domCounts.architecture===0)||
+                (livePinDiagnostics.dataInView.viewpoint>0&&livePinDiagnostics.domCounts.viewpoint===0)||
+                (livePinDiagnostics.dataInView.scenic>0&&livePinDiagnostics.domCounts.photoSpot===0);
+              if(missingPinForRealResult) {
+                throw new Error('Real in-view geographic records are missing matching visible pins: '+JSON.stringify(livePinDiagnostics));
+              }
+
               await page.waitForTimeout(350);
               const cameraAfterScan = await page.evaluate(() => {
                 const test = window.__PHOTO_SCOUT_TEST__;
