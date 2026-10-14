@@ -214,6 +214,8 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
 .guide-card-ideas-title{margin:9px 0 4px;font:9px Inter,system-ui,sans-serif;letter-spacing:.13em;color:#7d8575;text-transform:uppercase}.guide-card-ideas{margin:0;padding:0 0 0 15px;font-size:11px;line-height:1.45;color:#4e554a}.guide-card-ideas li{padding-left:1px;margin:1px 0}
 .guide-card-actions{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:10px}.guide-map-link{border:0;background:#354535;color:#f6f4e9;border-radius:5px;padding:8px 10px;font:600 10px Inter,system-ui,sans-serif;cursor:pointer}.guide-more-link{font:10px Inter,system-ui,sans-serif;color:#727c6c;text-decoration:underline;text-underline-offset:3px}
 .guide-card-visuals{display:flex;flex-direction:column;min-width:0;min-height:0}.guide-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;flex:1;min-height:0;background:#ebe9df}.guide-photo{display:flex;flex-direction:column;min-width:0;min-height:0;background:#eeece2;overflow:hidden;text-decoration:none;color:#555c50}.guide-photo img{display:block;width:100%;height:100%;min-height:190px;flex:1;object-fit:cover;background:#e4e4da;transition:filter .2s}.guide-photo:hover img{filter:brightness(1.06)}.guide-photo figcaption{padding:5px 5px 6px;max-height:35px;overflow:hidden;font:8px/1.25 Inter,system-ui,sans-serif;color:#697165;background:#f2f0e7;overflow-wrap:anywhere}
+.guide-photo figcaption small,.area-subject-photo figcaption small{display:block;margin-top:4px;color:#97aa99;font-size:8px;line-height:1.4}
+
 .guide-photo-placeholder{grid-column:1/-1;display:flex;align-items:center;justify-content:center;min-height:220px;padding:22px;text-align:center;font:11px/1.6 Inter,system-ui,sans-serif;color:#7b8276;background:linear-gradient(135deg,#e4e4da,#f3f1e8)}.guide-photo-placeholder strong{display:block;font-family:Georgia,serif;font-size:17px;font-weight:400;color:#5c6757;margin-bottom:6px}
 .guide-card-photo-caption{display:flex;justify-content:space-between;gap:8px;border-top:1px solid #d9d7cb;padding:7px 9px;font:9px/1.35 Inter,system-ui,sans-serif;color:#858a7e;background:#f7f5ee}.guide-card-photo-caption span:last-child{white-space:nowrap}
 .field-guide-footer{border-top:1px solid #d8d6cc;padding:16px 22px 23px;font:10px/1.6 Inter,system-ui,sans-serif;color:#888d81}
@@ -2567,9 +2569,12 @@ function fieldGuideSketchTiles(card,compact){
 }
 function fieldGuidePhotoMarkup(card){
  const photos=fieldGuidePhotoCache[card.id];
- if(!photos||photos.loading)return '<div class="guide-photo-placeholder"><div><strong>Building your visual contact sheet</strong>Searching the exact place, nearby mapped landmarks and geotagged source photos. You can already open the card for three composition ideas.</div></div>';
+ if(!photos||photos.loading)return '<div class="guide-photo-placeholder"><div><strong>Building your visual contact sheet</strong>Searching the exact place, nearby named landmarks and filtered scenic references. The composition studies are available while images load.</div></div>';
  if(!photos.length)return '<div class="guide-photo-grid fallback-sketch-grid">'+fieldGuideSketchTiles(card,true)+'</div><div class="guide-photo-placeholder guide-photo-placeholder-note"><div><strong>No source photo returned this time</strong>Here are three alternate framing studies rather than an empty box. Try Refresh to search the photo archive again.</div></div>';
- return photos.slice(0,3).map(photo=>'<figure class="guide-photo"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption><span>'+esc(photo.name)+'</span><a class="guide-photo-source" href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Photo source & licence ↗</a></figcaption></figure>').join('');
+ return photos.slice(0,3).map(photo=>{
+  const note=photo.geotagged?'Nearby scenic/architecture reference · '+distanceLabel(photo.distance)+' away; exact camera position is not verified.':(photo.referenceType||'Matched by place/subject title; exact view is not verified.');
+  return '<figure class="guide-photo"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption><span>'+esc(photo.name)+'</span><small>'+esc(note)+'</small><a class="guide-photo-source" href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Photo source & licence ↗</a></figcaption></figure>';
+ }).join('');
 }
 function fieldGuideCardHTML(card,index){
  const seed=index+21;
@@ -2858,10 +2863,13 @@ function fieldGuideAreaSubjects(card){
 function fieldGuideAreaPhotoHTML(subject){
  const photos=fieldGuidePhotoCache[subject.id];
  if(photos&&photos.length&&!photos.loading){
-  return photos.slice(0,3).map(photo=>'<figure class="area-subject-photo"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption><span>'+esc(photo.name)+'</span><a href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Source & licence ↗</a></figcaption></figure>').join('');
+  return photos.slice(0,3).map(photo=>{
+   const note=photo.geotagged?'Nearby scenic/architecture image; not a verified camera position.':(photo.referenceType||'Matched by place/subject title; exact view is not verified.');
+   return '<figure class="area-subject-photo"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption><span>'+esc(photo.name)+'</span><small>'+esc(note)+'</small><a href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Source & licence ↗</a></figcaption></figure>';
+  }).join('');
  }
  if(photos&&photos.loading){
-  return '<div class="area-subject-photo-state"><span class="mini-loader"></span>Finding photos of '+esc(subject.name)+'…</div>';
+  return '<div class="area-subject-photo-state"><span class="mini-loader"></span>Finding place-matched/scenic reference photos for '+esc(subject.name)+'…</div>';
  }
  return '<div class="area-subject-sketch-fallback">'+fieldGuideSketchTiles(subject,true)+'</div>';
 }
