@@ -59,6 +59,13 @@
 .parking-option .btn{flex:0 0 auto;padding:6px 7px;font-size:8px}
 
 .selected-concept-img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border:1px solid #354a38;border-radius:8px;background:#22392f;margin:7px 0}
+.selected-idea-sketches{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:8px 0}
+.selected-idea-sketch{min-width:0;overflow:hidden;border:1px solid #394d3b;border-radius:8px;background:#152219}
+.selected-idea-sketch img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#25382d}
+.selected-idea-sketch strong{display:block;padding:6px 6px 0;font-size:9px;line-height:1.35;color:#edf3e8}
+.selected-idea-sketch small{display:block;padding:3px 6px 7px;font-size:8px;line-height:1.35;color:#a7b7a8}
+@media(max-width:680px){.selected-idea-sketches{gap:4px}.selected-idea-sketch strong{font-size:8px}.selected-idea-sketch small{font-size:7px}}
+
 .selected-concept-preview .btn{margin-top:7px}
 
 
@@ -567,18 +574,7 @@ body.field-guide-open .map-quick-actions{opacity:.94;pointer-events:auto}
   <section class="detail" id="spotDetail">
     <div class="eyebrow" id="detailEyebrow">Selected location</div><h2 id="detailTitle">Your pin</h2><div class="spot-meta" id="detailMeta"></div>
     <div id="detailHistory"></div>
-    <div class="selected-parking-block">
-      <div class="section-heading"><h3>Parking near this spot</h3><span class="count" id="spotParkingCount">—</span></div>
-      <p id="spotParkingHint" class="parking-nearby-note">Choose a photo spot to search for mapped parking near that exact location.</p>
-      <div id="spotParkingResults"><div class="empty">Parking results will appear here after you select a place.</div></div>
-    </div>
-    <div class="selected-concept-preview fieldguide-detail-cta">
-      <div class="section-heading"><h3>Photo idea for this spot</h3><span class="count" id="selectedIdeaLens">Canon R50 · 18–24 mm</span></div>
-      <img id="selectedLocalSketch" class="selected-concept-img" alt="Illustrative pencil composition for the selected map location">
-      <p class="concept-note" id="selectedLocalSketchCaption">A location-aware composition study. It is an idea for framing, not a verified photograph or exact sightline.</p>
-      <ol class="selected-shot-ideas" id="selectedShotIdeas"><li>Use the foreground to lead towards the subject.</li><li>Balance the main subject with surrounding context.</li><li>Look for a closer texture or detail frame.</li></ol>
-      <button class="btn primary" id="selectedOpenFieldGuide" type="button">More ideas & reference photos ↗</button>
-      <div class="ai-image-generator" id="aiImageGenerator">
+<div class="ai-image-generator" id="aiImageGenerator">
         <div class="section-heading"><h3>AI image concept</h3><span class="count" id="aiImageConnectionState">Not connected</span></div>
         <p class="ai-image-note">Generate a new visual for this location and keep it inside Photo Scout. AI images are illustrative concepts, not verified documentary views.</p>
         <div class="ai-image-controls">
@@ -596,20 +592,25 @@ body.field-guide-open .map-quick-actions{opacity:.94;pointer-events:auto}
           <figcaption><span id="aiImageCaption">AI concept image · not a verified view</span><a id="downloadAIImage" href="#" download="photo-scout-concept.png" hidden>Save image ↓</a></figcaption>
         </figure>
         <details class="ai-image-settings" id="aiImageSettings">
-          <summary>Connect image generation</summary>
-          <p>Photo Scout uses Pollinations for genuine image generation. Create an App Key first, then connect your account. Your temporary authorization stays in this browser session; no secret key is stored in this public project.</p>
-          <label for="pollinationsAppKey">Pollinations App Key (public client ID)</label>
-          <input id="pollinationsAppKey" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="pk_…" inputmode="text">
-          <div class="ai-image-settings-actions">
-            <button class="btn small" id="savePollinationsAppKey" type="button">Save App Key</button>
-            <button class="btn primary small" id="connectPollinations" type="button">Connect account</button>
-            <button class="btn small" id="disconnectPollinations" type="button" hidden>Disconnect</button>
-          </div>
-          <p class="ai-image-redirect-note" id="pollinationsRedirectNote"></p>
-          <a class="footer-link" href="https://enter.pollinations.ai/keys" target="_blank" rel="noopener noreferrer">Create or manage an App Key ↗</a>
-          <p class="ai-image-cost-note">The authorization request is limited to the Flux image model, a 1-Pollen budget cap and a one-day expiry. Review the provider’s consent screen before approving; actual image generation uses the credits in your connected account.</p>
+          <summary>How image generation and usage work</summary>
+          <p>Photo Scout uses Puter.js so no developer API key is stored in this public website. The first generation may ask you to sign in to Puter. Each user's image generation is billed against their own allowance; a free allowance may be available, and the provider may ask you to upgrade if it runs out.</p>
+          <p>Use the Generate AI image button above. The image appears here and can be saved. It is an artistic concept—not a verified photo or guarantee of what is visible from the exact map point.</p>
+          <a class="footer-link" href="https://docs.puter.com/user-pays-model/" target="_blank" rel="noopener noreferrer">Read how user-pays works ↗</a>
         </details>
       </div>
+    <div class="selected-parking-block">
+      <div class="section-heading"><h3>Parking near this spot</h3><span class="count" id="spotParkingCount">—</span></div>
+      <p id="spotParkingHint" class="parking-nearby-note">Choose a photo spot to search for mapped parking near that exact location.</p>
+      <div id="spotParkingResults"><div class="empty">Parking results will appear here after you select a place.</div></div>
+    </div>
+    <div class="selected-concept-preview fieldguide-detail-cta">
+      <div class="section-heading"><h3>Photo idea for this spot</h3><span class="count" id="selectedIdeaLens">Canon R50 · 18–24 mm</span></div>
+      <img id="selectedLocalSketch" class="selected-concept-img" alt="Illustrative pencil composition for the selected map location">
+      <div class="selected-idea-sketches" id="selectedIdeaSketches" aria-label="Three Canon R50 framing ideas"></div>
+      <p class="concept-note" id="selectedLocalSketchCaption">A location-aware composition study. It is an idea for framing, not a verified photograph or exact sightline.</p>
+      <ol class="selected-shot-ideas" id="selectedShotIdeas"><li>Use the foreground to lead towards the subject.</li><li>Balance the main subject with surrounding context.</li><li>Look for a closer texture or detail frame.</li></ol>
+      <button class="btn primary" id="selectedOpenFieldGuide" type="button">More ideas & reference photos ↗</button>
+      
     </div>
     <div class="detail-reference-block"><div class="section-heading"><h3>Visual references for this stop</h3><span class="count" id="detailPhotoCount">—</span></div><div class="detail-photo-grid" id="detailPhotoRefs"><div class="empty">Drop a pin and select a spot to find source-linked image references.</div></div></div>
         <div class="detail-actions"><a class="btn primary" id="driveLink" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps">Drive to spot ↗</a><button class="btn" id="saveSelected">☆ Save spot</button></div>
@@ -654,6 +655,7 @@ body.field-guide-open .map-quick-actions{opacity:.94;pointer-events:auto}
 <footer>Map data © <a class="footer-link" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Vector basemap by <a class="footer-link" href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>. History links and photo licences are shown where available. Always verify road access, parking signs and private-property restrictions.</footer>
 </aside>
 <div class="map-credit">Made for curious photographers · Photo Scout</div>
+<script src="https://js.puter.com/v2/"></script>
 <script type="module">
 import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.13.0/dist/maplibre-gl.mjs';
 (function(){
@@ -2087,18 +2089,21 @@ function renderSelectedShotIdeas(item){
   image.src=conceptSketchData(item,'wide',variation);
   image.alt='Illustrative pencil composition for '+String(item.name||'the selected spot')+'. The sketch suggests framing and is not a verified view.';
  }
+ const sketchGrid=$('selectedIdeaSketches');
+ if(sketchGrid){
+  const modes=[
+   {mode:'wide',title:'Wide landscape',lens:'18–24 mm'},
+   {mode:'context',title:'Subject + context',lens:'35–70 mm'},
+   {mode:'compressed',title:'Compressed layers',lens:'100–150 mm'}
+  ];
+  sketchGrid.innerHTML=modes.map((m,i)=>'<article class="selected-idea-sketch"><img loading="lazy" src="'+esc(conceptSketchData(item,m.mode,variation+i+17))+'" alt="'+esc(m.title)+' composition sketch for '+esc(item.name||'this place')+'"><strong>'+esc(m.title)+'</strong><small>Canon R50 · '+esc(m.lens)+'</small></article>').join('');
+ }
  if(caption)caption.textContent=item.isUserPin?'Illustrative framing ideas for this coordinate—not a verified view. Use the nearby map records and source photographs to confirm what is actually visible.':'A location-aware composition study based on the place name and available map tags. Use it to plan a frame; confirm the real view and safe access on site.';
  if(lens)lens.textContent='Canon R50 · 18–150 mm';
  if(list)list.innerHTML=selectedShotIdeasFor(item).map(idea=>'<li>'+esc(idea)+'</li>').join('');
  syncAIImageUI();
 }
-const POLLINATIONS_CLIENT_STORAGE='photoscout.pollinations.clientId';
-const POLLINATIONS_TOKEN_STORAGE='photoscout.pollinations.sessionToken';
-const POLLINATIONS_EXPIRY_STORAGE='photoscout.pollinations.expiresAt';
-const POLLINATIONS_VERIFIER_STORAGE='photoscout.pollinations.pkceVerifier';
-const POLLINATIONS_STATE_STORAGE='photoscout.pollinations.oauthState';
 let generatedAIObjectUrl='';
-function photoScoutRedirectUri(){return window.location.origin+window.location.pathname;}
 function setAIImageStatus(message,kind){
  const box=$('aiImageStatus');
  if(!box)return;
@@ -2106,142 +2111,11 @@ function setAIImageStatus(message,kind){
  box.classList.toggle('error',kind==='error');
  box.classList.toggle('success',kind==='success');
 }
-function readPollinationsToken(){
- const token=sessionStorage.getItem(POLLINATIONS_TOKEN_STORAGE)||'';
- const expiry=Number(sessionStorage.getItem(POLLINATIONS_EXPIRY_STORAGE)||0);
- if(!token||!expiry||Date.now()>=expiry-30000){
-  sessionStorage.removeItem(POLLINATIONS_TOKEN_STORAGE);
-  sessionStorage.removeItem(POLLINATIONS_EXPIRY_STORAGE);
-  return '';
- }
- return token;
-}
 function syncAIImageUI(){
- const appKey=localStorage.getItem(POLLINATIONS_CLIENT_STORAGE)||'';
- const input=$('pollinationsAppKey');
- if(input&&input.value!==appKey)input.value=appKey;
- const connected=!!readPollinationsToken();
- const stateLabel=$('aiImageConnectionState');
- if(stateLabel)stateLabel.textContent=connected?'Connected':'Not connected';
- const connectButton=$('connectPollinations');
- const disconnectButton=$('disconnectPollinations');
- if(connectButton)connectButton.hidden=connected;
- if(disconnectButton)disconnectButton.hidden=!connected;
- const redirectNote=$('pollinationsRedirectNote');
- if(redirectNote)redirectNote.textContent='Register this exact redirect URI in the App Key settings: '+photoScoutRedirectUri();
- const generateButton=$('generateAIConcept');
- if(generateButton)generateButton.textContent=connected?'✦ Generate AI image':'Connect to generate';
-}
-function randomUrlSafe(bytes){
- const data=new Uint8Array(bytes);
- crypto.getRandomValues(data);
- let binary='';
- data.forEach(byte=>binary+=String.fromCharCode(byte));
- return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-async function pkceChallenge(verifier){
- const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier));
- let binary='';
- new Uint8Array(digest).forEach(byte=>binary+=String.fromCharCode(byte));
- return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-async function beginPollinationsConnection(){
- const input=$('pollinationsAppKey');
- const clientId=String(input&&input.value||localStorage.getItem(POLLINATIONS_CLIENT_STORAGE)||'').trim();
- if(!/^pk_[A-Za-z0-9_-]+$/.test(clientId)){
-  $('aiImageSettings').open=true;
-  setAIImageStatus('Enter a Pollinations App Key starting with pk_. It is a public OAuth client ID, not your secret API key.','error');
-  if(input)input.focus();
-  return;
- }
- if(!window.crypto||!crypto.subtle){
-  setAIImageStatus('Secure browser cryptography is unavailable. Open Photo Scout over HTTPS and retry.','error');
-  return;
- }
- localStorage.setItem(POLLINATIONS_CLIENT_STORAGE,clientId);
- const verifier=randomUrlSafe(48);
- const oauthState=randomUrlSafe(24);
- sessionStorage.setItem(POLLINATIONS_VERIFIER_STORAGE,verifier);
- sessionStorage.setItem(POLLINATIONS_STATE_STORAGE,oauthState);
- sessionStorage.setItem(POLLINATIONS_CLIENT_STORAGE,clientId);
- const redirectUri=photoScoutRedirectUri();
- try{
-  let authorizationEndpoint='https://enter.pollinations.ai/authorize';
-  try{
-   const discovery=await fetch('https://enter.pollinations.ai/.well-known/oauth-authorization-server',{cache:'no-store'});
-   if(discovery.ok){
-    const metadata=await discovery.json();
-    if(metadata.authorization_endpoint)authorizationEndpoint=metadata.authorization_endpoint;
-    if(metadata.token_endpoint)sessionStorage.setItem('photoscout.pollinations.tokenEndpoint',metadata.token_endpoint);
-   }
-  }catch(ignored){}
-  const params=new URLSearchParams({
-   response_type:'code',
-   client_id:clientId,
-   redirect_uri:redirectUri,
-   scope:'usage',
-   state:oauthState,
-   code_challenge:await pkceChallenge(verifier),
-   code_challenge_method:'S256',
-   models:'black-forest-labs/flux.1-schnell',
-   budget:'1',
-   expiry:'1'
-  });
-  setAIImageStatus('Opening Pollinations consent. Review the model, budget cap and expiry before approving.','');
-  window.location.assign(authorizationEndpoint+'?'+params.toString());
- }catch(error){
-  sessionStorage.removeItem(POLLINATIONS_VERIFIER_STORAGE);
-  sessionStorage.removeItem(POLLINATIONS_STATE_STORAGE);
-  setAIImageStatus('Could not start provider authorization: '+(error&&error.message||'unknown error'),'error');
- }
-}
-async function handlePollinationsOAuthReturn(){
- const params=new URLSearchParams(window.location.search);
- const code=params.get('code');
- const errorCode=params.get('error');
- if(!code&&!errorCode)return;
- const returnedState=params.get('state')||'';
- const expectedState=sessionStorage.getItem(POLLINATIONS_STATE_STORAGE)||'';
- const verifier=sessionStorage.getItem(POLLINATIONS_VERIFIER_STORAGE)||'';
- const clientId=sessionStorage.getItem(POLLINATIONS_CLIENT_STORAGE)||localStorage.getItem(POLLINATIONS_CLIENT_STORAGE)||'';
- const redirectUri=photoScoutRedirectUri();
- const cleanUrl=window.location.pathname+(window.location.hash||'');
- window.history.replaceState({},document.title,cleanUrl);
- if(errorCode){
-  sessionStorage.removeItem(POLLINATIONS_STATE_STORAGE);
-  sessionStorage.removeItem(POLLINATIONS_VERIFIER_STORAGE);
-  setAIImageStatus('Image account connection was not approved ('+errorCode.replace(/[^a-zA-Z0-9_-]/g,'')+'). You can retry whenever you are ready.','error');
-  return;
- }
- if(!code||!expectedState||returnedState!==expectedState||!verifier||!clientId){
-  sessionStorage.removeItem(POLLINATIONS_STATE_STORAGE);
-  sessionStorage.removeItem(POLLINATIONS_VERIFIER_STORAGE);
-  setAIImageStatus('The authorization return could not be verified. Open Connect image generation and try again.','error');
-  return;
- }
- sessionStorage.removeItem(POLLINATIONS_STATE_STORAGE);
- sessionStorage.removeItem(POLLINATIONS_VERIFIER_STORAGE);
- setAIImageStatus('Finishing secure account connection…','');
- try{
-  const tokenEndpoint=sessionStorage.getItem('photoscout.pollinations.tokenEndpoint')||'https://enter.pollinations.ai/api/oauth/token';
-  sessionStorage.removeItem('photoscout.pollinations.tokenEndpoint');
-  const body=new URLSearchParams({
-   grant_type:'authorization_code',
-   code,
-   client_id:clientId,
-   redirect_uri:redirectUri,
-   code_verifier:verifier
-  });
-  const response=await fetch(tokenEndpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString(),cache:'no-store'});
-  const data=await response.json().catch(()=>({}));
-  if(!response.ok||!data.access_token)throw new Error(data.error_description||data.error||('Authorization failed ('+response.status+')'));
-  sessionStorage.setItem(POLLINATIONS_TOKEN_STORAGE,data.access_token);
-  sessionStorage.setItem(POLLINATIONS_EXPIRY_STORAGE,String(Date.now()+(Number(data.expires_in)||86400)*1000));
-  setAIImageStatus('Connected. Generated concepts will appear below this control and use the account you approved.','success');
- }catch(error){
-  setAIImageStatus('Could not finish account connection: '+(error&&error.message||'unknown error')+'. Check the App Key redirect URI and try again.','error');
- }
- syncAIImageUI();
+ const label=$('aiImageConnectionState');
+ if(label)label.textContent=(window.puter&&window.puter.ai&&typeof window.puter.ai.txt2img==='function')?'Ready':'Loading';
+ const button=$('generateAIConcept');
+ if(button&&!button.disabled)button.textContent='✦ Generate AI image';
 }
 function buildAIImagePrompt(item){
  const name=String(item&&item.name||'the selected map pin').slice(0,150);
@@ -2252,105 +2126,60 @@ function buildAIImagePrompt(item){
  const nearbyContext=nearby.length?nearby.join('; '):'no named nearby geographic features returned yet';
  const userStyle=$('aiImageStyle')?$('aiImageStyle').value:'cinematic';
  const style=userStyle==='pencil'
-  ?'a sophisticated graphite and fine-ink composition illustration on warm archival paper, detailed but clearly an illustrative study'
+  ?'a detailed graphite and fine-ink composition study on warm archival paper, visibly illustrative and not a documentary photograph'
   :userStyle==='editorial'
    ?'natural editorial travel photography, believable available light, restrained colours, documentary composition'
    :'cinematic travel photography, atmospheric natural light, carefully layered foreground and background, subtle filmic colour grading';
  const clue=String(item&&(item.summary||item.history||item.why)||'').replace(/\s+/g,' ').slice(0,420);
- return 'Create one high-quality visual composition concept for a photography field guide. Subject or place name: '+name+'. Pin coordinates: '+coordinates+'. Geographic context: '+locality+'. Nearby mapped feature names (candidates only, not confirmed visible): '+nearbyContext+'. Mapped feature clues (may be incomplete): '+clue+'. Photographer direction: '+ideas+'. Camera guidance: Canon EOS R50 with RF-S 18–150 mm zoom; try a strong foreground, a clearly readable subject and depth between foreground and background. Visual style: '+style+'. This is a creative planning concept inspired by a map location, not a claim to depict the exact real-world camera position. Do not invent readable signs, labels, logos or watermarks. No text, no UI, no collage, one coherent 16:9 image.';
+ const lensPlan='Photographed concept for a Canon EOS R50 with RF-S 18–150 mm zoom. Use 18–24 mm for a wide establishing frame, 35–70 mm for the subject in context, or 100–150 mm to compress skyline and mountain layers.';
+ return 'Create one high-quality 16:9 visual composition concept for a photography field guide. Subject/place name: '+name+'. Map coordinate: '+coordinates+'. Geographic context: '+locality+'. Nearby mapped feature names (candidates, not confirmed visible): '+nearbyContext+'. Mapped clue (may be incomplete): '+clue+'. Photographer direction: '+ideas+'. '+lensPlan+' Visual style: '+style+'. Make the scene visually compelling with a deliberate foreground, clear subject hierarchy, plausible natural light, and layered depth. This is inspiration based on a map location, NOT proof of the exact view. Do not fabricate named architecture, readable signs, logos or watermarks. No text, no UI, no collage: one coherent image.';
 }
 async function generateAIImageForSelectedSpot(){
  const item=state.selected;
- if(!item){
-  setAIImageStatus('Drop a pin or select a mapped place first.','error');
-  return;
- }
- const token=readPollinationsToken();
- if(!token){
-  $('aiImageSettings').open=true;
-  setAIImageStatus('Connect Pollinations first. Create an App Key, then connect the account you want to use for image credits.','error');
-  syncAIImageUI();
-  return;
- }
+ if(!item){setAIImageStatus('Drop a pin on the map first.','error');return;}
  const button=$('generateAIConcept');
  const preview=$('aiImageResult');
  const image=$('aiImageOutput');
  const download=$('downloadAIImage');
+ if(!window.puter||!window.puter.ai||typeof window.puter.ai.txt2img!=='function'){
+  setAIImageStatus('Image service is still loading. Wait a moment and try again.','error');
+  return;
+ }
  if(button){button.disabled=true;button.textContent='Generating…';}
  if(preview)preview.hidden=true;
  if(download){download.hidden=true;download.removeAttribute('href');}
- setAIImageStatus('Generating a location-specific visual. This can take a little while; keep this tab open.','');
+ setAIImageStatus('Generating a visual concept for '+item.name+'. The first request may ask you to sign in to Puter.','');
  try{
-  const prompt=buildAIImagePrompt(item);
-  const query=new URLSearchParams({
-   model:'black-forest-labs/flux.1-schnell',
-   width:'1024',
-   height:'576',
-   seed:String(Math.floor(Math.random()*2147483647))
+  const generated=await window.puter.ai.txt2img(buildAIImagePrompt(item),{
+   provider:'cloudflare',
+   model:'@cf/black-forest-labs/flux-1-schnell',
+   ratio:{w:16,h:9}
   });
-  const imageUrl='https://gen.pollinations.ai/image/'+encodeURIComponent(prompt)+'?'+query.toString();
-  const response=await fetch(imageUrl,{headers:{Authorization:'Bearer '+token,Accept:'image/*'},cache:'no-store'});
-  const blob=await response.blob();
-  if(!response.ok){
-   let detail='';
-   try{detail=(await blob.text()).slice(0,300);}catch(ignored){}
-   throw new Error('Image service returned '+response.status+(detail?': '+detail:''));
-  }
-  if(!/^image\//i.test(blob.type||''))throw new Error('The provider response was not an image. Check the connected model and account balance.');
-  if(generatedAIObjectUrl)URL.revokeObjectURL(generatedAIObjectUrl);
-  generatedAIObjectUrl=URL.createObjectURL(blob);
-  image.src=generatedAIObjectUrl;
-  image.alt='AI-generated '+($('aiImageStyle').selectedOptions[0]?.textContent||'')+' concept for '+String(item.name||'the selected location')+'. Illustrative only.';
+  const src=typeof generated==='string'?generated:(generated&&generated.src?generated.src:'');
+  if(!src)throw new Error('The image service returned no viewable image.');
+  if(generatedAIObjectUrl&&generatedAIObjectUrl.startsWith('blob:'))URL.revokeObjectURL(generatedAIObjectUrl);
+  generatedAIObjectUrl=src;
+  image.src=src;
+  image.alt='AI-generated concept for '+String(item.name||'the selected location')+'. Illustrative only, not a verified view.';
   $('aiImageCaption').textContent='AI-generated concept for '+String(item.name||'this location')+' · not a verified view';
-  if(download){
-   download.href=generatedAIObjectUrl;
-   download.download='photo-scout-'+String(item.name||'concept').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48)+'.'+(blob.type.includes('webp')?'webp':blob.type.includes('jpeg')||blob.type.includes('jpg')?'jpg':'png');
-   download.hidden=false;
-  }
+  if(download){download.href=src;download.download='photo-scout-'+String(item.name||'concept').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48)+'.png';download.hidden=false;}
   preview.hidden=false;
-  setAIImageStatus('Image generated successfully. The result is displayed here and can be saved to your device.','success');
+  setAIImageStatus('Image created and displayed below. It is an illustrative shot idea, not a verified photograph of the location.','success');
  }catch(error){
-  const message=String(error&&error.message||'Unknown generation error');
-  setAIImageStatus(message+' If this continues, check the Pollinations balance, allowed model and App Key settings.','error');
+  const message=String(error&&error.message||'Unknown image-generation error');
+  setAIImageStatus(message+' If prompted, sign in to Puter. Your usage is charged to your Puter account; free allowance and limits depend on that account.','error');
  }finally{
   if(button){button.disabled=false;syncAIImageUI();}
  }
 }
 function setupImageGeneration(){
- const input=$('pollinationsAppKey');
- const save=$('savePollinationsAppKey');
- const connect=$('connectPollinations');
- const disconnect=$('disconnectPollinations');
  const generate=$('generateAIConcept');
- if(!input||!save||!connect||!disconnect||!generate)return;
- input.value=localStorage.getItem(POLLINATIONS_CLIENT_STORAGE)||'';
- input.addEventListener('change',()=>localStorage.setItem(POLLINATIONS_CLIENT_STORAGE,input.value.trim()));
- save.addEventListener('click',()=>{
-  const key=input.value.trim();
-  if(!/^pk_[A-Za-z0-9_-]+$/.test(key)){
-   setAIImageStatus('Use a Pollinations App Key beginning with pk_. Do not paste an sk_ secret key here.','error');
-   input.focus();
-   return;
-  }
-  localStorage.setItem(POLLINATIONS_CLIENT_STORAGE,key);
-  setAIImageStatus('App Key saved in this browser. Next, connect the account that will authorize image-generation credits.','success');
-  syncAIImageUI();
- });
- connect.addEventListener('click',beginPollinationsConnection);
- disconnect.addEventListener('click',()=>{
-  sessionStorage.removeItem(POLLINATIONS_TOKEN_STORAGE);
-  sessionStorage.removeItem(POLLINATIONS_EXPIRY_STORAGE);
-  setAIImageStatus('Disconnected. Existing generated images stay visible until you leave or reload this page.','');
-  syncAIImageUI();
- });
+ if(!generate)return;
  generate.addEventListener('click',generateAIImageForSelectedSpot);
  syncAIImageUI();
- if(readPollinationsToken())setAIImageStatus('Connected. Generated concepts use the credits in the account you approved.','success');
- handlePollinationsOAuthReturn().then(syncAIImageUI).catch(error=>{
-  setAIImageStatus('Could not initialize image generation: '+(error&&error.message||'unknown error'),'error');
- });
+ setAIImageStatus('Ready to generate a location-specific image. On first use, Puter may ask you to sign in; it handles its own account and usage.','');
+ window.setTimeout(syncAIImageUI,1200);
 }
-
 function selectItem(item,options){
  state.selected=item;
  // Map place selection updates the on-page photography idea and nearby references.
@@ -2698,15 +2527,8 @@ async function loadFieldGuidePhotos(force){
     if(token!==fieldGuidePhotoLoadToken||scanId!==state.scanId)return;
     let refs=await commonsTextSearch(context.queries,{lat:card.lat,lng:card.lng},scanId);
     if(token!==fieldGuidePhotoLoadToken||scanId!==state.scanId)return;
-    // A pin may have no exact-titled photo. Fill from real, geotagged Commons photos
-    // close to the coordinate rather than leaving a big empty image panel.
-    if(refs.length<6){
-     try{
-      const geo=await commonsSearch({lat:card.lat,lng:card.lng},10000,scanId);
-      const seen=new Set(refs.map(p=>p.id||p.name));
-      geo.forEach(p=>{const key=p.id||p.name;if(!seen.has(key)){seen.add(key);refs.push(p);}});
-     }catch(error){}
-    }
+    // Do not fill sparse searches with nearby upload coordinates: the image may be
+    // an unrelated person/event. Keep the three composition studies when no match exists.
     // A broad but locality-aware second pass gives small towns and generic map pins
     // a chance to find real architectural or landscape imagery in the public archive.
     if(refs.length<4){
@@ -2891,13 +2713,8 @@ async function loadFieldGuideAreaPhotos(parentCard,subject){
  try{
   let refs=await commonsTextSearch(subject.searchQueries,{lat:subject.lat,lng:subject.lng},scanId);
   if(scanId!==state.scanId)return;
-  if(refs.length<3){
-   try{
-    const nearby=await commonsSearch({lat:subject.lat,lng:subject.lng},Math.min(8000,Math.max(2500,state.radius/2)),scanId);
-    const seen=new Set(refs.map(p=>p.id||p.name));
-    nearby.forEach(photo=>{const key=photo.id||photo.name;if(!seen.has(key)){seen.add(key);refs.push(photo);}});
-   }catch(error){}
-  }
+  // Keep only subject/title-matched photos; a proximity-only geotag is not proof
+  // that a picture depicts this landmark or a useful photographic viewpoint.
   fieldGuidePhotoCache[id]=refs.slice(0,3);
  }catch(error){
   if(scanId!==state.scanId){delete fieldGuidePhotoCache[id];return;}
