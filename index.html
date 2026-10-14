@@ -2087,11 +2087,11 @@ async function renderDetailPhotoRefs(item){
  const requestId=++detailPhotoSearchId;
  const selectedId=item.id;
  $('detailPhotoCount').textContent='Searching…';
- container.innerHTML=emptyHTML('Searching for source-linked photographs that match the place or its named nearby landmarks—not simply random photos uploaded nearby.');
+ container.innerHTML=emptyHTML('Finding landmark-matched photos and clearly labelled scenic references. Event, team and portrait images are filtered out.');
  const locality=String(item.city||state.detectedLocality||'').trim();
  const rawName=String(item.name||'').replace(/^Unnamed mapped\s+/i,'').replace(/\s+near\s+.+$/i,'').trim();
  const queryName=item.isUserPin?'':(rawName&&!/^your pin$/i.test(rawName)?rawName:'');
- const nearbyNames=item.isUserPin?[...state.results.filter(r=>r.name&&r.category!=='parking'&&!/^Unnamed mapped/i.test(r.name)).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,3).map(r=>r.name),...state.scenicSpots.filter(r=>r.name&&!r.genericFeature).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,2).map(r=>r.name)]:[];
+ const nearbyNames=item.isUserPin?[...state.results.filter(r=>r.name&&r.category!=='parking'&&!/^Unnamed mapped/i.test(r.name)).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,3).map(r=>r.name),...state.scenicSpots.filter(r=>r.name&&!r.genericFeature&&!/^Unnamed mapped/i.test(r.name)).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,2).map(r=>r.name)]:[];
  const terms=[];
  if(queryName)terms.push(queryName);
  if(queryName&&locality)terms.push(queryName+' '+locality);
@@ -2099,22 +2099,53 @@ async function renderDetailPhotoRefs(item){
  if(locality)terms.push(locality);
  else if(state.detectedLocality)terms.push(state.detectedLocality);
  const uniqueTerms=[...new Set(terms.map(t=>String(t||'').trim()).filter(Boolean))].slice(0,4);
- const refs=uniqueTerms.length?await commonsTextSearch(uniqueTerms,{lat:item.lat,lng:item.lng},state.scanId).catch(()=>[]):[];
+ let refs=uniqueTerms.length?await commonsTextSearch(uniqueTerms,{lat:item.lat,lng:item.lng},state.scanId).catch(()=>[]):[];
  if(requestId!==detailPhotoSearchId||!state.selected||state.selected.id!==selectedId)return;
- const relevantQuery=(queryName+' '+locality+' '+nearbyNames.join(' ')).trim();
- const fallback=(state.photos||[]).filter(p=>!p.geotagged&&photoTitleIsRelevant(p.name,relevantQuery));
- const unique=new Map();
- [...refs,...fallback].forEach(p=>{const key=p.id||p.name;if(!unique.has(key))unique.set(key,p);});
- const finalRefs=[...unique.values()].slice(0,3);
- $('detailPhotoCount').textContent=finalRefs.length?(queryName?'Landmark matched · '+finalRefs.length:'Area/nearby landmark matched · '+finalRefs.length):'No close matches';
+ // If exact/title-matched images are sparse, use only nearby Commons files whose
+ // titles identify a landscape, view, building or landmark. Never use proximity alone.
+ if(refs.length<3){
+  try{
+   const radius=Math.min(10000,Math.max(3000,Number(state.radius)||5000));
+   const nearby=await commonsSearch({lat:item.lat,lng:item.lng},radius,state.scanId);
+   if(requestId!==detailPhotoSearchId||!state.selected||state.selected.id!==selectedId)return;
+   const seen=new Set(refs.map(p=>p.id||p.name));
+   nearby.forEach(photo=>{
+    const key=photo.id||photo.name;
+    if(seen.has(key))return;
+    seen.add(key);
+    refs.push({...photo,referenceType:'Nearby geotagged scenic/architecture reference; this does not prove the exact camera position.'});
+   });
+  }catch(error){}
+ }
+ if(requestId!==detailPhotoSearchId||!state.selected||state.selected.id!==selectedId)return;
+ const finalRefs=refs.slice(0,3);
+ $('detailPhotoCount').textContent=finalRefs.length?(queryName?'Matched place + scenic references · '+finalRefs.length:'Nearby scenic references · '+finalRefs.length):'No source images found';
  if(!finalRefs.length){
-  container.innerHTML=emptyHTML('No suitable source-linked image matched the selected place or nearby named landmarks. We will not substitute unrelated event uploads. The composition sketch and in-app AI image generator remain available above.');
+  container.innerHTML=emptyHTML('No suitable licensed source photo matched this stop. The three location-aware composition sketches and the Generate AI image button above remain available; we will not substitute unrelated event uploads.');
   return;
  }
  container.innerHTML=finalRefs.map(p=>{
-  const note='Matched by title/subject. This is a visual reference, not proof of the exact camera position.';
-  return '<article class="detail-photo"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(note)+'</div><div class="detail-photo-note">'+esc(p.license||'Licence on source page')+'</div><a class="detail-photo-source" href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Original photo & licence ↗</a></article>';
+  const note=p.geotagged?'Nearby scenic image · '+distanceLabel(p.distance)+' from the pin. The image geotag is approximate evidence, not a verified camera position.':(p.referenceType||'Matched by landmark/topic title; exact camera position is not verified.');
+  return '<article class="detail-photo"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(note)+'</div><div class="detail-photo-note">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Licence on source page')+'</div><a class="detail-photo-source" href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Original photo & licence ↗</a></article>';
  }).join('');
+ container.querySelectorAll('img').forEach((img,index)=>{
+  img.addEventListener('error',()=>{
+   const photo=finalRefs[index];
+   const card=img.closest('.detail-photo');
+   if(!card||card.dataset.imageFallback)return;
+   card.dataset.imageFallback='true';
+   img.remove();
+   const study=document.createElement('img');
+   study.alt='Composition sketch alternative for '+(photo.name||item.name);
+   study.src=conceptSketchData(item,'wide',index+cardSeed(photo.name||item.name));
+   study.className='detail-photo-sketch';
+   card.insertBefore(study,card.firstChild);
+   const note=document.createElement('div');
+   note.className='detail-photo-note';
+   note.textContent='Source thumbnail unavailable. Showing a Photo Scout composition sketch instead.';
+   card.insertBefore(note,card.querySelector('.detail-photo-title'));
+  },{once:true});
+ });
 }
 function selectedShotIdeasFor(item){
  const name=String(item&&item.name||'this place');
