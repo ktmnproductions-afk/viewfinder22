@@ -1515,7 +1515,7 @@ function photoReferenceFitsPlace(photo,card,localityHint){
  // no other distinctive place-name terms. Named place cards require their actual
  // subject name, not a single shared word like "memorial" or "church".
  if(!genericSubject&&titleHasSelectedPlace)return true;
- if(genericSubject&&titleHasLocality&&meaningfulTitleTokens.every(token=>namedPhotoTokenForLocation(token,placeTokens,localityTokens)))return true;
+ if(genericSubject&&titleHasLocality&&titleHasSelectedPlace&&meaningfulTitleTokens.every(token=>namedPhotoTokenForLocation(token,placeTokens,localityTokens)))return true;
  // Geotags are fallback evidence only for untitled scenic files very close to the
  // subject; they cannot make a named photo of another town relevant.
  const distance=Number(photo&&photo.distance);
