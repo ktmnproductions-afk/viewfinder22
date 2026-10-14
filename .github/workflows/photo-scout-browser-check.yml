@@ -106,13 +106,14 @@ jobs:
                   startUrl: manifest && manifest.start_url,
                   workerStatus: workerResponse.status,
                   installButton: !!document.querySelector('#installAppBtn'),
+                  installButtonVisible: !!document.querySelector('#installAppBtn') && !document.querySelector('#installAppBtn').hidden,
                   pinLegend: !!document.querySelector('#mapPinLegend')
                 };
               });
               if (appInstallDiagnostics.manifestStatus !== 200 ||
                   appInstallDiagnostics.display !== 'standalone' ||
                   appInstallDiagnostics.workerStatus !== 200 ||
-                  !appInstallDiagnostics.installButton || !appInstallDiagnostics.pinLegend) {
+                  !appInstallDiagnostics.installButton || !appInstallDiagnostics.installButtonVisible || !appInstallDiagnostics.pinLegend) {
                 throw new Error('Photo Scout must ship as an installable standalone app with a visible pin legend: ' + JSON.stringify(appInstallDiagnostics));
               }
 
