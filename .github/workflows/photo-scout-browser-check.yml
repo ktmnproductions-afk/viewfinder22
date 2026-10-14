@@ -65,6 +65,10 @@ jobs:
             const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1 });
             const pageErrors = [];
             const tileResponses = [];
+            let mainFrameNavigations = 0;
+            page.on('framenavigated', frame => {
+              if (frame === page.mainFrame()) mainFrameNavigations++;
+            });
             page.on('pageerror', error => pageErrors.push(error.message));
             page.on('response', response => {
               const url = response.url();
@@ -81,6 +85,13 @@ jobs:
                 null,
                 { timeout: 50000 }
               );
+
+              // Fresh installation should not trigger a controllerchange reload.
+              // A second top-level navigation here is a first-load app-shell race.
+              await page.waitForTimeout(800);
+              if (mainFrameNavigations > 1) {
+                throw new Error('First service-worker control unexpectedly reloaded the page: ' + mainFrameNavigations + ' top-level navigations');
+              }
 
               const appInstallDiagnostics = await page.evaluate(async () => {
                 const [manifestResponse, workerResponse] = await Promise.all([
