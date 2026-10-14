@@ -2655,8 +2655,23 @@ async function loadFieldGuidePhotos(force){
     let refs=await commonsTextSearch(context.queries,{lat:card.lat,lng:card.lng},scanId);
     refs=refs.filter(photo=>photoReferenceFitsPlace(photo,card,context.locality||card.locality));
     if(token!==fieldGuidePhotoLoadToken||scanId!==state.scanId)return;
-    // Do not fill sparse searches with nearby upload coordinates: the image may be
-    // an unrelated person/event. Keep the three composition studies when no match exists.
+    // Exact title matches are preferred. If there are fewer than three, add only
+    // geotagged Commons images whose titles indicate real landscape/architecture.
+    // commonsSearch rejects event/person titles; upload coordinates never become pins.
+    if(refs.length<3){
+     try{
+      const radius=Math.min(10000,Math.max(2500,Number(state.radius)||5000));
+      const nearby=await commonsSearch({lat:card.lat,lng:card.lng},radius,scanId);
+      if(token!==fieldGuidePhotoLoadToken||scanId!==state.scanId)return;
+      const seen=new Set(refs.map(p=>p.id||p.name));
+      nearby.forEach(photo=>{
+       const key=photo.id||photo.name;
+       if(seen.has(key))return;
+       seen.add(key);
+       refs.push({...photo,referenceType:'Nearby scenic/architecture reference; geotag does not verify the exact camera position.'});
+      });
+     }catch(error){}
+    }
     // A broad but locality-aware second pass gives small towns and generic map pins
     // a chance to find real architectural or landscape imagery in the public archive.
     if(refs.length<4){
@@ -2842,8 +2857,22 @@ async function loadFieldGuideAreaPhotos(parentCard,subject){
   let refs=await commonsTextSearch(subject.searchQueries,{lat:subject.lat,lng:subject.lng},scanId);
   refs=refs.filter(photo=>photoReferenceFitsPlace(photo,subject,subject.locality));
   if(scanId!==state.scanId)return;
-  // Keep only subject/title-matched photos; a proximity-only geotag is not proof
-  // that a picture depicts this landmark or a useful photographic viewpoint.
+  // If the title search is empty, add only nearby scene-titled landscape/architecture
+  // images, never arbitrary upload coordinates or event/person photos.
+  if(refs.length<3){
+   try{
+    const radius=Math.min(8000,Math.max(2500,Number(state.radius)||5000));
+    const nearby=await commonsSearch({lat:subject.lat,lng:subject.lng},radius,scanId);
+    if(scanId!==state.scanId)return;
+    const seen=new Set(refs.map(p=>p.id||p.name));
+    nearby.forEach(photo=>{
+     const key=photo.id||photo.name;
+     if(seen.has(key))return;
+     seen.add(key);
+     refs.push({...photo,referenceType:'Nearby scenic/architecture reference; geotag does not verify the exact camera position.'});
+    });
+   }catch(error){}
+  }
   fieldGuidePhotoCache[id]=refs.slice(0,3);
  }catch(error){
   if(scanId!==state.scanId){delete fieldGuidePhotoCache[id];return;}
