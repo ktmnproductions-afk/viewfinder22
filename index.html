@@ -613,6 +613,46 @@ footer{color:#7c8b7e;border-top-color:#e4eae1}.footer-link{color:#50715b}
  .area-subject-photo:first-child{grid-column:span 2;grid-row:span 1}
 }
 
+
+/* Photo Scout application shell — let MapLibre manage its own canvas backing store. */
+html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
+#map{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;z-index:0;background:#e7ede5}
+#map .maplibregl-canvas{outline:0}
+.map-heading{z-index:7;max-width:min(620px,calc(100vw - 390px));border:1px solid rgba(255,255,255,.76);background:rgba(255,255,250,.94);box-shadow:0 12px 36px rgba(27,45,32,.12);backdrop-filter:blur(16px)}
+.map-heading strong{font-family:Georgia,serif;font-size:clamp(18px,1.6vw,24px);font-weight:500;letter-spacing:-.025em;color:#263b31}
+.map-heading .eyebrow{color:#3f7456}
+.map-styles{z-index:12;gap:3px;padding:6px;border:1px solid rgba(255,255,255,.88);background:rgba(255,255,250,.95);box-shadow:0 8px 28px rgba(27,45,32,.14);backdrop-filter:blur(12px)}
+.map-style{color:#607566;border-radius:8px;font-weight:700;transition:background .15s,color .15s,box-shadow .15s}
+.map-style:hover,.map-style.active{background:#e3eddb;color:#24533c;box-shadow:inset 0 0 0 1px rgba(58,111,77,.15)}
+.map-quick-actions{z-index:12;right:14px;gap:7px}
+.map-quick-action{box-shadow:0 6px 20px rgba(24,45,30,.12);border:1px solid rgba(255,255,255,.84)}
+.map-pin-legend{z-index:12;max-width:min(780px,calc(100vw - 360px));border:1px solid rgba(255,255,255,.9);background:rgba(255,255,250,.96);box-shadow:0 12px 34px rgba(27,45,32,.14);backdrop-filter:blur(14px)}
+.map-legend-item{appearance:none;font:inherit;color:inherit;cursor:pointer;border:1px solid transparent;background:transparent;border-radius:10px;padding:5px 7px;transition:background .14s,border-color .14s,opacity .14s}
+.map-legend-item:hover,.map-legend-item:focus-visible{background:#edf3e8;border-color:#d0ddca;outline:none}
+.map-legend-item[aria-pressed="false"]{opacity:.42;background:transparent}
+.map-legend-item[aria-pressed="false"] b{background:#e8e9e1;color:#8a9288}
+.map-pin-legend-items{gap:4px 7px}
+.map-legend-item span{white-space:nowrap}
+.scout-marker{isolation:isolate;overflow:visible!important}
+.scout-marker .dot-core{display:grid;place-items:center}
+.scout-marker .dot-core svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.scout-marker.history .dot-core{width:30px;height:30px;background:#e76f54;color:#fff9f1;border:2px solid #fff9f1;box-shadow:0 0 0 3px rgba(231,111,84,.2),0 4px 12px rgba(28,42,31,.28)}
+.scout-marker.architecture .dot-core{width:29px;height:29px;background:#3f8d7b;color:#f8fffb;border:2px solid #f4fffa;box-shadow:0 0 0 3px rgba(63,141,123,.18),0 4px 12px rgba(28,42,31,.25)}
+.scout-marker.viewpoint .dot-core{width:31px;height:31px;background:#e8ac3d;color:#392b10;border:2px solid #fff5d2;transform:none;box-shadow:0 0 0 3px rgba(232,172,61,.2),0 4px 12px rgba(28,42,31,.25)}
+.scout-marker.viewpoint .dot-core span{transform:none}
+.scout-marker.photoSpot .dot-core{width:32px;height:32px;background:#347b58;color:#effbf1;border:2px solid #f4fff6;border-radius:50%;transform:none;box-shadow:0 0 0 3px rgba(52,123,88,.18),0 4px 12px rgba(28,42,31,.25)}
+.scout-marker.photoSpot .dot-core span{transform:none}
+.scout-marker.parking .dot-core{width:32px;height:32px;background:#13794f;color:#fff;border:3px solid #f1fff4;box-shadow:0 0 0 3px rgba(19,121,79,.19),0 4px 12px rgba(28,42,31,.26)}
+.scout-marker.parking-cluster .dot-core{width:36px;height:36px;background:#244a37;color:#e8f6c2;border:3px solid #e8f6c2}
+.scout-marker.active-pin .dot-core{width:39px;height:39px;background:#f0f5b7;color:#1f4933;border:3px solid #fff;box-shadow:0 0 0 6px rgba(240,245,183,.35),0 8px 18px rgba(28,42,31,.3)}
+.scout-marker .pin-name-label{z-index:20;max-width:190px;font-size:10px;font-weight:750;line-height:1.25;color:#294433;background:rgba(255,255,250,.98);border:1px solid #d6e2d0;border-radius:8px;padding:5px 7px;box-shadow:0 4px 14px rgba(28,42,31,.16)}
+.scout-marker.with-label.show-pin-label .pin-name-label{opacity:1;visibility:visible}
+.scout-marker.is-selected .dot-core{box-shadow:0 0 0 6px rgba(47,112,77,.25),0 5px 16px rgba(28,42,31,.3);transform:scale(1.08)}
+#sidebarToggle{z-index:25;box-shadow:0 8px 24px rgba(25,43,30,.13)}
+.sidebar{z-index:20;box-shadow:0 18px 52px rgba(28,42,31,.18)}
+@media(max-width:900px){.map-heading{max-width:calc(100vw - 390px)}.map-pin-legend{max-width:calc(100vw - 360px)}}
+@media(max-width:680px){.map-heading{max-width:calc(100vw - 20px)!important}.map-pin-legend{max-width:calc(100vw - 20px)!important}.map-quick-actions{right:10px}.map-legend-item{padding:4px}.map-legend-item span{white-space:normal}}
+
 </style>
 </head>
 <body>
@@ -681,11 +721,11 @@ footer{color:#7c8b7e;border-top-color:#e4eae1}.footer-link{color:#50715b}
 <section class="map-pin-legend" id="mapPinLegend" aria-label="Map pin key">
   <div class="map-pin-legend-heading"><span>MAP KEY</span><span id="mapPinSummary">Preparing nearby places…</span></div>
   <div class="map-pin-legend-items">
-    <span class="map-legend-item"><i class="map-legend-icon legend-landmark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-5h6v5"/></svg></i><span>Landmarks</span><b id="legendLandmarkCount">—</b></span>
-    <span class="map-legend-item"><i class="map-legend-icon legend-architecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V5h14v16M8 8h2m4 0h2M8 12h2m4 0h2M10 21v-4h4v4"/></svg></i><span>Architecture</span><b id="legendArchitectureCount">—</b></span>
-    <span class="map-legend-item"><i class="map-legend-icon legend-viewpoint"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"/><path d="m2 20 7-10 4 5 3-4 6 9H2Z"/></svg></i><span>Viewpoints</span><b id="legendViewpointCount">—</b></span>
-    <span class="map-legend-item"><i class="map-legend-icon legend-photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v12H3Z"/><circle cx="12" cy="14" r="4"/></svg></i><span>Photo spots</span><b id="legendPhotoSpotCount">—</b></span>
-    <span class="map-legend-item"><i class="map-legend-icon legend-parking">P</i><span>Parking</span><b id="legendParkingCount">—</b></span>
+    <button type="button" class="map-legend-item" data-marker-filter="history" aria-pressed="true" title="Show or hide landmark pins"><i class="map-legend-icon legend-landmark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-5h6v5"/></svg></i><span>Landmarks</span><b id="legendLandmarkCount">—</b></button>
+    <button type="button" class="map-legend-item" data-marker-filter="architecture" aria-pressed="true" title="Show or hide architecture pins"><i class="map-legend-icon legend-architecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V5h14v16M8 8h2m4 0h2M8 12h2m4 0h2M10 21v-4h4v4"/></svg></i><span>Architecture</span><b id="legendArchitectureCount">—</b></button>
+    <button type="button" class="map-legend-item" data-marker-filter="viewpoint" aria-pressed="true" title="Show or hide viewpoint pins"><i class="map-legend-icon legend-viewpoint"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"/><path d="m2 20 7-10 4 5 3-4 6 9H2Z"/></svg></i><span>Viewpoints</span><b id="legendViewpointCount">—</b></button>
+    <button type="button" class="map-legend-item" data-marker-filter="photoSpot" aria-pressed="true" title="Show or hide photo-spot pins"><i class="map-legend-icon legend-photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v12H3Z"/><circle cx="12" cy="14" r="4"/></svg></i><span>Photo spots</span><b id="legendPhotoSpotCount">—</b></button>
+    <button type="button" class="map-legend-item" data-marker-filter="parking" aria-pressed="true" title="Show or hide parking pins"><i class="map-legend-icon legend-parking">P</i><span>Parking</span><b id="legendParkingCount">—</b></button>
   </div>
 </section>
 <div id="mapIssue" class="map-issue"><strong>Basemap could not be loaded.</strong><p>The app is not using the blocked OpenStreetMap volunteer tile endpoint. Retry the vector map or check the connection.</p><button id="retryMap">Retry map</button></div>
@@ -819,7 +859,7 @@ window.__PHOTO_SCOUT_TEST__ = {
  get styleLoaded(){ return state.styleLoaded; },
  get vectorTileSuccesses(){ return state.vectorTileSuccesses; },
  get scanCount(){ return state.scanCount; },
- getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, localityCandidates:state.localityCandidates, locationConflictExclusions:state.locationConflictExclusions, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, selectedCoordinate:state.selected&&Number.isFinite(Number(state.selected.lat))&&Number.isFinite(Number(state.selected.lng))?{lat:Number(state.selected.lat),lng:Number(state.selected.lng)}:null, scanPending:state.scanPending, scanSourcesPending:state.scanSourcesPending, resultCount:state.results.length, distanceDiagnostics:[...state.results,...state.scenicSpots].filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&Number.isFinite(p.distance)).slice(0,25).map(p=>({name:p.name,category:p.category,reportedDistance:p.distance,computedDistance:haversine(state.center,{lat:p.lat,lng:p.lng}),delta:Math.abs(p.distance-haversine(state.center,{lat:p.lat,lng:p.lng}))})), parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), parkingLabelLayersFiltered:[...state.parkingFilteredLayers], visibleParkingMarkerClasses:state.markers.filter(m=>m.getElement().classList.contains('parking')).map(m=>({title:m.getElement().title,classes:m.getElement().className,coordinates:m.getLngLat().toArray()})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, markerCounts:{landmark:state.markers.filter(m=>m.getElement().classList.contains('history')).length,architecture:state.markers.filter(m=>m.getElement().classList.contains('architecture')).length,viewpoint:state.markers.filter(m=>m.getElement().classList.contains('viewpoint')).length,photoSpot:state.markers.filter(m=>m.getElement().classList.contains('photoSpot')).length}, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
+ getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, localityCandidates:state.localityCandidates, locationConflictExclusions:state.locationConflictExclusions, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, selectedCoordinate:state.selected&&Number.isFinite(Number(state.selected.lat))&&Number.isFinite(Number(state.selected.lng))?{lat:Number(state.selected.lat),lng:Number(state.selected.lng)}:null, scanPending:state.scanPending, scanSourcesPending:state.scanSourcesPending, resultCount:state.results.length, resultCategoryCounts:{history:state.results.filter(r=>r.category==='history').length,architecture:state.results.filter(r=>r.category==='architecture').length,viewpoint:state.results.filter(r=>r.category==='viewpoint').length,parking:state.results.filter(r=>r.category==='parking').length}, viewportCategoryCounts:(()=>{const b=state.map&&state.map.getBounds();const inView=r=>b&&Number.isFinite(Number(r.lat))&&Number.isFinite(Number(r.lng))&&b.contains([Number(r.lng),Number(r.lat)]);return {history:state.results.filter(r=>r.category==='history'&&inView(r)).length,architecture:state.results.filter(r=>r.category==='architecture'&&inView(r)).length,viewpoint:state.results.filter(r=>r.category==='viewpoint'&&inView(r)).length,scenic:state.scenicSpots.filter(inView).length};})(), distanceDiagnostics:[...state.results,...state.scenicSpots].filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&Number.isFinite(p.distance)).slice(0,25).map(p=>({name:p.name,category:p.category,reportedDistance:p.distance,computedDistance:haversine(state.center,{lat:p.lat,lng:p.lng}),delta:Math.abs(p.distance-haversine(state.center,{lat:p.lat,lng:p.lng}))})), parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), parkingLabelLayersFiltered:[...state.parkingFilteredLayers], visibleParkingMarkerClasses:state.markers.filter(m=>m.getElement().classList.contains('parking')).map(m=>({title:m.getElement().title,classes:m.getElement().className,coordinates:m.getLngLat().toArray()})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, markerCounts:{landmark:state.markers.filter(m=>m.getElement().classList.contains('history')).length,architecture:state.markers.filter(m=>m.getElement().classList.contains('architecture')).length,viewpoint:state.markers.filter(m=>m.getElement().classList.contains('viewpoint')).length,photoSpot:state.markers.filter(m=>m.getElement().classList.contains('photoSpot')).length}, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
  renderMarkerFixture:function(){
   if(!state.map||!state.styleLoaded)throw new Error('Map is not ready');
   const saved={results:state.results,scenicSpots:state.scenicSpots,basemapParking:state.basemapParking,spotParking:state.spotParking,selected:state.selected,spotParkingTargetId:state.spotParkingTargetId,center:state.center,radius:state.radius};
@@ -1042,7 +1082,13 @@ map.on('sourcedata', function(e){
   if(state.basemapWatchdog){clearTimeout(state.basemapWatchdog);state.basemapWatchdog=null;}
  }
 });
-map.on('idle', function(){ refreshBasemapParking(); });
+map.on('idle', function(){
+ refreshBasemapParking();
+ if(!state.scanSourcesPending){renderMarkers();updateMapPinLegend();}
+});
+map.on('zoomend', function(){
+ if(!state.scanSourcesPending){renderMarkers();updateMapPinLegend();}
+});
 // "idle" fires after destination tiles are loaded; moveend alone may expose old
 // viewport features and cause a second, visibly different parking marker set.
 $('retryMap').addEventListener('click',function(){
@@ -1922,13 +1968,35 @@ function refreshBasemapParking(){
  renderMarkers();
 }
 function updateMapPinLegend(){
+ const current=state.markers.flatMap(marker=>marker.__scoutItems||[]);
  const count=function(items,category){return items.filter(item=>item.category===category).length;};
- const history=count(state.results,'history'),architecture=count(state.results,'architecture'),viewpoints=count(state.results,'viewpoint');
- const photoSpots=state.scenicSpots.length,parking=parkingCandidates().length;
+ const history=count(current,'history'),architecture=count(current,'architecture'),viewpoints=count(current,'viewpoint');
+ const photoSpots=count(current,'photoSpot'),parking=count(current,'parking');
  const put=function(id,value){const node=$(id);if(node)node.textContent=String(value);};
  put('legendLandmarkCount',history);put('legendArchitectureCount',architecture);put('legendViewpointCount',viewpoints);
  put('legendPhotoSpotCount',photoSpots);put('legendParkingCount',parking);
- put('mapPinSummary',state.scanCount?(history+architecture+viewpoints+photoSpots)+' mapped places':'Map ready to scout');
+ const total=history+architecture+viewpoints+photoSpots;
+ put('mapPinSummary',state.scanCount?total+' place pins in view':'Map ready to scout');
+}
+
+const markerLayerVisibility={history:true,architecture:true,viewpoint:true,photoSpot:true,parking:true};
+function normalizeMapMarker(item){
+ if(!item||!Number.isFinite(Number(item.lat))||!Number.isFinite(Number(item.lng??item.lon)))return null;
+ const tags=item.tags&&typeof item.tags==='object'?item.tags:{};
+ const raw=String(item.category||'').toLowerCase();
+ const type=String(tags.type||tags.tourism||tags.natural||tags.building||tags.historic||'').toLowerCase();
+ let category=item.category;
+ if(raw==='parking'||tags.amenity==='parking'||tags.amenity==='parking_space')category='parking';
+ else if(['photospot','photo_spot','scenic','landscape'].includes(raw))category='photoSpot';
+ else if(raw==='viewpoint'||tags.tourism==='viewpoint'||tags.viewpoint==='yes'||['peak','hill','ridge','mountain','cliff','waterfall','beach','lookout','belvedere'].includes(type))category='viewpoint';
+ else if(raw==='history'||raw==='historic'||tags.historic||tags.heritage||tags.wikipedia||tags.wikidata||['museum','attraction','monument','memorial','archaeological_site','castle','ruins','church','cathedral','chapel','monastery'].includes(type))category='history';
+ else if(raw==='architecture'||raw==='building'||tags.building||['church','cathedral','castle','fort','bridge','tower','lighthouse','palace'].includes(type))category='architecture';
+ else return null;
+ return {...item,category,lat:Number(item.lat),lng:Number(item.lng??item.lon),tags};
+}
+function inCurrentMapBounds(item,bounds){
+ const lat=Number(item&&item.lat),lng=Number(item&&(item.lng??item.lon));
+ return Number.isFinite(lat)&&Number.isFinite(lng)&&bounds.contains([lng,lat]);
 }
 function renderMarkers(){
  if(!state.map || !state.styleLoaded)return;
@@ -1937,14 +2005,16 @@ function renderMarkers(){
  // after the source batch completes.
  if(state.scanSourcesPending)return;
  clearMarkers();
- const parking=parkingCandidates().slice(0,60);
+ const bounds=map.getBounds();
+ const allResults=state.results.map(normalizeMapMarker).filter(Boolean).filter(item=>item.category!=='parking'&&markerLayerVisibility[item.category]!==false&&inCurrentMapBounds(item,bounds));
+ const history=allResults.filter(r=>r.category==='history');
+ const viewpoints=allResults.filter(r=>r.category==='viewpoint');
+ const architecture=allResults.filter(r=>r.category==='architecture');
+ const scenic=state.scenicSpots.map(item=>normalizeMapMarker({...item,category:'photoSpot'})).filter(Boolean).filter(item=>markerLayerVisibility.photoSpot&&inCurrentMapBounds(item,bounds));
+ const parking=markerLayerVisibility.parking?parkingCandidates().filter(item=>inCurrentMapBounds(item,bounds)).slice(0,100):[];
  const parkingMarkers=map.getZoom()>=14.5?parking:clusterParkingMarkers(parking);
- const history=state.results.filter(r=>r.category==='history').slice(0,22);
- const viewpoints=state.results.filter(r=>r.category==='viewpoint').slice(0,12);
- const architecture=state.results.filter(r=>r.category==='architecture').slice(0,12);
- const scenic=state.scenicSpots.slice(0,30);
- // Keep all pin symbols on their actual mapped coordinates. Coincident features
- // may stack; visually nudging markers away from their coordinates is misleading.
+ // Keep each pin at its real geographic coordinate. Only include candidates
+ // inside the viewport; pan/zoom causes a stable idle pass to fill new locations.
  const visible=[...history,...viewpoints,...architecture,...scenic,...parkingMarkers];
  const seen=new Set();
  visible.forEach(item=>{
@@ -1954,7 +2024,7 @@ function renderMarkers(){
   const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas · '+distanceLabel(item.distance):(item.parkingOrigin==='basemap'?'Mapped parking · availability unverified · ':'Scout parking feature · ')+item.name+' · '+distanceLabel(item.distance)):item.name+' · '+distanceLabel(item.distance);
   const el=markerEl(item.category,label);
   if(['history','architecture','viewpoint','photoSpot'].includes(item.category)&&map.getZoom()>=14.5&&!item.genericFeature&&!/^Unnamed mapped/i.test(String(item.name||''))){
-   const nameTag=document.createElement('span');nameTag.className='pin-name-label';nameTag.textContent=String(item.name||'').slice(0,52);el.appendChild(nameTag);el.classList.add('with-label');
+   const nameTag=document.createElement('span');nameTag.className='pin-name-label';nameTag.textContent=String(item.name||'').slice(0,52);el.appendChild(nameTag);el.classList.add('with-label','show-pin-label');
   }
   if(item.category==='parking'&&!item.clusterMembers&&map.getZoom()>=14.5){
    el.setAttribute('data-distance',distanceLabel(item.distance||0));
@@ -3471,7 +3541,34 @@ if('serviceWorker' in navigator){
 renderFieldGuide();
 loadSaved();
 setupImageGeneration();
-window.addEventListener('resize',()=>{if(map)map.resize();});
+let appMapResizeFrame=0;
+function scheduleAppMapResize(){
+ if(appMapResizeFrame)cancelAnimationFrame(appMapResizeFrame);
+ appMapResizeFrame=requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  appMapResizeFrame=0;
+  if(!map)return;
+  map.resize();
+  if(!state.scanSourcesPending){renderMarkers();updateMapPinLegend();}
+ }));
+}
+window.addEventListener('resize',scheduleAppMapResize);
+window.addEventListener('orientationchange',scheduleAppMapResize);
+if(typeof ResizeObserver==='function'){
+ const appResizeObserver=new ResizeObserver(scheduleAppMapResize);
+ ['mainSidebar','fieldGuidePage','mapQuickActions'].forEach(id=>{
+  const node=document.getElementById(id);if(node)appResizeObserver.observe(node);
+ });
+}
+document.querySelectorAll('[data-marker-filter]').forEach(button=>{
+ button.addEventListener('click',()=>{
+  const category=button.dataset.markerFilter;
+  if(!Object.prototype.hasOwnProperty.call(markerLayerVisibility,category))return;
+  markerLayerVisibility[category]=!markerLayerVisibility[category];
+  button.setAttribute('aria-pressed',String(markerLayerVisibility[category]));
+  if(!state.scanSourcesPending){renderMarkers();updateMapPinLegend();}
+ });
+});
+
 })();
 </script>
 </body>
