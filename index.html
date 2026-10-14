@@ -1504,28 +1504,39 @@ function photoTitleScore(title,queries){
 function photoReferenceFitsPlace(photo,card,localityHint){
  const title=normalizedPhotoTitle(photo&&photo.name);
  if(!title||IMAGE_EVENT_OR_PERSON_RE.test(title))return false;
- const titleTokens=new Set(title.split(/\\s+/));
+ const titleTokens=new Set(title.split(/\s+/));
  const placeTokens=photoPlaceTokens(card&&card.name);
  const localityTokens=photoPlaceTokens(String(localityHint||card&&card.locality||'').split(',').join(' '));
+ // Place names are conjunctive: matching a single token (for example "Kastav")
+ // is not enough when a file title explicitly names another landmark or city.
+ const namedPlaceTokens=[...new Set([...placeTokens,...localityTokens])];
  const meaningfulTitleTokens=photoPlaceTokens(title);
+ const namedHits=meaningfulTitleTokens.filter(token=>namedPlaceTokens.includes(token));
+ const foreignPlaceTokens=photoPlaceTokens(title).filter(token=>
+  !namedPlaceTokens.includes(token)&&token.length>4
+ );
+ const hasStrongPlaceMatch=placeTokens.length
+  ? placeTokens.every(token=>titleTokens.has(token)) ||
+    (placeTokens.length===1&&titleTokens.has(placeTokens[0])&&localityTokens.some(token=>titleTokens.has(token)))
+  : localityTokens.length>0&&localityTokens.every(token=>titleTokens.has(token));
+ if(hasStrongPlaceMatch)return true;
+ // The selected-pin card also carries its locality. Do not accept titles with an
+ // unrelated specific landmark merely because a generic town token overlaps.
  const genericSubject=/^(viewpoint|lookout|panorama|hill|peak|mountain|ridge|observation tower|belvedere|tower|park|beach|bridge|scenic view|unnamed mapped)/i.test(String(card&&card.name||'').trim());
- const isSelectedLocalityTitle=localityTokens.some(token=>titleTokens.has(token));
- const allSubjectTokensMatch=placeTokens.length>0&&placeTokens.every(token=>titleTokens.has(token));
- const subjectTokens=placeTokens.filter(token=>!localityTokens.includes(token));
- // If the card names a real subject, its non-locality tokens must match as well.
- // Generic pins need an explicit locality token; locality alone never rescues a
- // file title whose place-specific words point elsewhere.
- if(!genericSubject){
-  if(subjectTokens.length>0&&subjectTokens.every(token=>titleTokens.has(token))&&isSelectedLocalityTitle)return true;
-  if(subjectTokens.length===0&&allSubjectTokensMatch&&isSelectedLocalityTitle)return true;
-  return false;
+ const exactPlaceMatch=placeTokens.length>0&&placeTokens.every(token=>titleTokens.has(token));
+ const onlyLocalityMatch=localityTokens.length>0&&localityTokens.every(token=>titleTokens.has(token));
+ if(onlyLocalityMatch&&!exactPlaceMatch&&!genericSubject){
+  const disjointSpecific=foreignPlaceTokens.filter(token=>token.length>5);
+  if(disjointSpecific.length)return false;
  }
- if(isSelectedLocalityTitle&&allSubjectTokensMatch&&meaningfulTitleTokens.every(token=>
-  placeTokens.includes(token)||localityTokens.includes(token)||IMAGE_REFERENCE_GENERIC_WORDS.has(token)
- ))return true;
- // Geotags are only a fallback for untitled files within a tight local radius.
+ // Geotags can supply scenic references only for the exact selected area, and
+ // never when the title reveals another named place. Treat unknown/foreign title
+ // words conservatively; a nearby coordinate is not proof of local relevance.
  const distance=Number(photo&&photo.distance);
- if(photo&&photo.geotagged&&Number.isFinite(distance)&&distance<=1500&&meaningfulTitleTokens.length===0)return true;
+ const hasForeignSpecificity=foreignPlaceTokens.length>0&&namedHits.length===0;
+ if(photo&&photo.geotagged&&Number.isFinite(distance)&&distance<=1500&&
+    !hasForeignSpecificity&&!IMAGE_EVENT_OR_PERSON_RE.test(title)&&
+    meaningfulTitleTokens.length===0)return true;
  return false;
 }
 async function commonsSearch(c,radius,id){
