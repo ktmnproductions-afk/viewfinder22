@@ -316,6 +316,12 @@ jobs:
                 throw new Error('Close-zoom parking markers have no distance labels: '+JSON.stringify(parkingDistanceDiagnostics));
               }
 
+              const distanceDiagnostics = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.getState().distanceDiagnostics || []);
+              const inaccurateDistances = distanceDiagnostics.filter(item => item.delta > 2);
+              if (inaccurateDistances.length) {
+                throw new Error('Displayed search distances disagree with the actual coordinates: ' + JSON.stringify(inaccurateDistances.slice(0,5)));
+              }
+
               await page.screenshot({ path: 'artifacts/photo-scout-live-map.png', fullPage: false });
               if (pageErrors.length) throw new Error('Browser runtime exceptions: ' + JSON.stringify(pageErrors));
               console.log('PHOTO_SCOUT_CHECKS ' + JSON.stringify({
@@ -331,6 +337,7 @@ jobs:
                 photoSearchSettled,
                 photoReferenceDiagnostics,
                 parkingDistanceDiagnostics,
+                distanceDiagnostics,
                 parkingDiagnostics,
                 browserExceptions: pageErrors,
                 tileResponsesObserved: tileResponses.length
