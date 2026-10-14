@@ -232,6 +232,20 @@ jobs:
                 throw new Error('Pin action strip or three camera sketches are missing: '+JSON.stringify(quickActions));
               }
 
+              // Regression tests for the previously reported contextual ideas/photo leaks.
+              const contextualPhotoFixtures = await page.evaluate(() =>
+                window.__PHOTO_SCOUT_TEST__.runContextPhotoRegressionFixtures()
+              );
+              if (!contextualPhotoFixtures.nearSubjectRetained ||
+                  !contextualPhotoFixtures.distantSubjectRejected ||
+                  !contextualPhotoFixtures.washingtonPhotoRejected ||
+                  !contextualPhotoFixtures.kastavPhotoAccepted ||
+                  !contextualPhotoFixtures.shotIdeasPerSubject ||
+                  !contextualPhotoFixtures.sketchPerSubject) {
+                throw new Error('Contextual Photo Ideas regression: ' + JSON.stringify(contextualPhotoFixtures));
+              }
+              console.log('CONTEXTUAL_PHOTO_IDEAS_REGRESSION ' + JSON.stringify(contextualPhotoFixtures));
+
               const markerFixture = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.renderMarkerFixture());
               if (markerFixture.landmark < 1 || markerFixture.architecture < 1 ||
                   markerFixture.viewpoint < 1 || markerFixture.photoSpot < 1 ||
