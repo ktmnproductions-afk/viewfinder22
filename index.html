@@ -600,8 +600,10 @@ window.__PHOTO_SCOUT_TEST__ = {
  get styleLoaded(){ return state.styleLoaded; },
  get vectorTileSuccesses(){ return state.vectorTileSuccesses; },
  get scanCount(){ return state.scanCount; },
- getState(){ return {styleLoaded:state.styleLoaded, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, selectedId:state.selected&&state.selected.id||null, resultCount:state.results.length, parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
- scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); }
+ getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, resultCount:state.results.length, parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
+ scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); },
+ forceRasterFallback:function(){return switchToRasterFallback('Automated backup-map verification.');},
+ retryVectorBasemap:function(){return setVectorBasemap(currentStyle);}
 };
 
 const osmRasterStyle = {
@@ -1625,6 +1627,7 @@ async function scanAt(c,opts){
  }
  if(id!==state.scanId)return;
  renderResults();renderPhotos();renderMarkers();updateRadius();
+ if(state.selected&&state.selected.isUserPin)renderDetailPhotoRefs(state.selected);
  const parks=parkingCandidates().length;
  const histories=state.results.filter(r=>r.category==='history').length;
  const imageCount=state.photos.length;
@@ -1851,36 +1854,41 @@ function conceptSketchData(item,mode,variation){
  '</svg>';
  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
+let detailPhotoSearchId=0;
 async function renderDetailPhotoRefs(item){
  const container=$('detailPhotoRefs');
  if(!container)return;
+ const requestId=++detailPhotoSearchId;
  const selectedId=item.id;
  $('detailPhotoCount').textContent='Searching…';
- container.innerHTML=emptyHTML('Searching for images that match this landmark or subject—not simply photos uploaded nearby.');
+ container.innerHTML=emptyHTML('Searching for source-linked photographs that match the place or its named nearby landmarks—not simply random photos uploaded nearby.');
  const locality=String(item.city||state.detectedLocality||'').trim();
  const rawName=String(item.name||'').replace(/^Unnamed mapped\s+/i,'').replace(/\s+near\s+.+$/i,'').trim();
- const queryName=rawName&&!/^your pin$/i.test(rawName)?rawName:'';
+ const queryName=item.isUserPin?'':(rawName&&!/^your pin$/i.test(rawName)?rawName:'');
+ const nearbyNames=item.isUserPin?[...state.results.filter(r=>r.name&&r.category!=='parking'&&!/^Unnamed mapped/i.test(r.name)).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,3).map(r=>r.name),...state.scenicSpots.filter(r=>r.name&&!r.genericFeature).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,2).map(r=>r.name)]:[];
  const terms=[];
  if(queryName)terms.push(queryName);
  if(queryName&&locality)terms.push(queryName+' '+locality);
+ if(item.isUserPin)terms.push(...nearbyNames.slice(0,3));
  if(locality)terms.push(locality);
  else if(state.detectedLocality)terms.push(state.detectedLocality);
- const refs=await commonsTextSearch(terms,{lat:item.lat,lng:item.lng},state.scanId).catch(()=>[]);
- if(!state.selected||state.selected.id!==selectedId)return;
- const fallback=(state.photos||[]).filter(p=>!p.geotagged&&photoTitleIsRelevant(p.name,queryName+' '+locality));
+ const uniqueTerms=[...new Set(terms.map(t=>String(t||'').trim()).filter(Boolean))].slice(0,4);
+ const refs=uniqueTerms.length?await commonsTextSearch(uniqueTerms,{lat:item.lat,lng:item.lng},state.scanId).catch(()=>[]):[];
+ if(requestId!==detailPhotoSearchId||!state.selected||state.selected.id!==selectedId)return;
+ const relevantQuery=(queryName+' '+locality+' '+nearbyNames.join(' ')).trim();
+ const fallback=(state.photos||[]).filter(p=>!p.geotagged&&photoTitleIsRelevant(p.name,relevantQuery));
  const unique=new Map();
- [...refs,...fallback].forEach(p=>{if(!unique.has(p.id))unique.set(p.id,p);});
+ [...refs,...fallback].forEach(p=>{const key=p.id||p.name;if(!unique.has(key))unique.set(key,p);});
  const finalRefs=[...unique.values()].slice(0,3);
- $('detailPhotoCount').textContent=finalRefs.length?(queryName?'Landmark matched · '+finalRefs.length:'Area matched · '+finalRefs.length):'No close matches';
+ $('detailPhotoCount').textContent=finalRefs.length?(queryName?'Landmark matched · '+finalRefs.length:'Area/nearby landmark matched · '+finalRefs.length):'No close matches';
  if(!finalRefs.length){
-  container.innerHTML=emptyHTML('No suitable source-linked image matched this place name. We will not substitute unrelated event uploads. The location-specific composition sketches and AI photo-idea button remain available above.');
+  container.innerHTML=emptyHTML('No suitable source-linked image matched the selected place or nearby named landmarks. We will not substitute unrelated event uploads. The composition sketch and in-app AI image generator remain available above.');
   return;
  }
  container.innerHTML=finalRefs.map(p=>{
   const note='Matched by title/subject. This is a visual reference, not proof of the exact camera position.';
   return '<article class="detail-photo"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(note)+'</div><div class="detail-photo-note">'+esc(p.license||'Licence on source page')+'</div><a class="detail-photo-source" href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Original photo & licence ↗</a></article>';
  }).join('');
-
 }
 function selectedShotIdeasFor(item){
  const name=String(item&&item.name||'this place');
@@ -1948,7 +1956,7 @@ function renderSelectedShotIdeas(item){
   image.src=conceptSketchData(item,'wide',variation);
   image.alt='Illustrative pencil composition for '+String(item.name||'the selected spot')+'. The sketch suggests framing and is not a verified view.';
  }
- if(caption)caption.textContent='A location-aware composition study based on the place name and available map tags. Use it to plan a frame; confirm the real view and safe access on site.';
+ if(caption)caption.textContent=item.isUserPin?'Illustrative framing ideas for this coordinate—not a verified view. Use the nearby map records and source photographs to confirm what is actually visible.':'A location-aware composition study based on the place name and available map tags. Use it to plan a frame; confirm the real view and safe access on site.';
  if(lens)lens.textContent='Canon R50 · 18–150 mm';
  if(list)list.innerHTML=selectedShotIdeasFor(item).map(idea=>'<li>'+esc(idea)+'</li>').join('');
  syncAIImageUI();
@@ -2107,8 +2115,11 @@ async function handlePollinationsOAuthReturn(){
 }
 function buildAIImagePrompt(item){
  const name=String(item&&item.name||'the selected map pin').slice(0,150);
- const locality=String(item&&(item.city||item.locality||state.detectedLocality)||'the northern Adriatic / European field-guide region').slice(0,120);
+ const locality=String(item&&(item.city||item.locality||state.detectedLocality)||'locality not yet identified').slice(0,120);
+ const coordinates=item&&Number.isFinite(item.lat)&&Number.isFinite(item.lng)?item.lat.toFixed(5)+', '+item.lng.toFixed(5):'coordinates not available';
  const ideas=selectedShotIdeasFor(item).slice(0,3).map(x=>String(x).slice(0,240)).join('; ');
+ const nearby=[...state.results,...state.scenicSpots].filter(p=>p&&p.name&&!p.genericFeature&&Number.isFinite(p.distance)&&p.distance<30000&&!/^Unnamed mapped/i.test(p.name)).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,5).map(p=>p.name+' ('+Math.round(p.distance)+' m from pin)');
+ const nearbyContext=nearby.length?nearby.join('; '):'no named nearby geographic features returned yet';
  const userStyle=$('aiImageStyle')?$('aiImageStyle').value:'cinematic';
  const style=userStyle==='pencil'
   ?'a sophisticated graphite and fine-ink composition illustration on warm archival paper, detailed but clearly an illustrative study'
@@ -2116,7 +2127,7 @@ function buildAIImagePrompt(item){
    ?'natural editorial travel photography, believable available light, restrained colours, documentary composition'
    :'cinematic travel photography, atmospheric natural light, carefully layered foreground and background, subtle filmic colour grading';
  const clue=String(item&&(item.summary||item.history||item.why)||'').replace(/\s+/g,' ').slice(0,420);
- return 'Create one high-quality visual composition concept for a photography field guide. Subject or place name: '+name+'. Geographic context: '+locality+'. Mapped feature clues (may be incomplete): '+clue+'. Photographer direction: '+ideas+'. Camera guidance: Canon EOS R50 with RF-S 18–150 mm zoom; try a strong foreground, a clearly readable subject and depth between foreground and background. Visual style: '+style+'. This is a creative planning concept inspired by a map location, not a claim to depict the exact real-world camera position. Do not invent readable signs, labels, logos or watermarks. No text, no UI, no collage, one coherent 16:9 image.';
+ return 'Create one high-quality visual composition concept for a photography field guide. Subject or place name: '+name+'. Pin coordinates: '+coordinates+'. Geographic context: '+locality+'. Nearby mapped feature names (candidates only, not confirmed visible): '+nearbyContext+'. Mapped feature clues (may be incomplete): '+clue+'. Photographer direction: '+ideas+'. Camera guidance: Canon EOS R50 with RF-S 18–150 mm zoom; try a strong foreground, a clearly readable subject and depth between foreground and background. Visual style: '+style+'. This is a creative planning concept inspired by a map location, not a claim to depict the exact real-world camera position. Do not invent readable signs, labels, logos or watermarks. No text, no UI, no collage, one coherent 16:9 image.';
 }
 async function generateAIImageForSelectedSpot(){
  const item=state.selected;
@@ -2204,6 +2215,7 @@ function setupImageGeneration(){
  });
  generate.addEventListener('click',generateAIImageForSelectedSpot);
  syncAIImageUI();
+ if(readPollinationsToken())setAIImageStatus('Connected. Generated concepts use the credits in the account you approved.','success');
  handlePollinationsOAuthReturn().then(syncAIImageUI).catch(error=>{
   setAIImageStatus('Could not initialize image generation: '+(error&&error.message||'unknown error'),'error');
  });
