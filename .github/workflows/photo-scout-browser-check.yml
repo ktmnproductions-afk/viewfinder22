@@ -249,7 +249,7 @@ jobs:
                 const beforeToken = window.__PHOTO_SCOUT_TEST__.getState().scanCount;
                 document.querySelector('#fieldGuidePage').hidden = false;
                 document.body.classList.add('field-guide-open', 'field-guide-context-only');
-                window.__PHOTO_SCOUT_TEST__.closeContextBoardForRegression();
+                document.querySelector('#fieldGuideClose').click();
                 return {
                   boardHidden: document.querySelector('#fieldGuidePage').hidden,
                   contextClassRemoved: !document.body.classList.contains('field-guide-context-only'),
