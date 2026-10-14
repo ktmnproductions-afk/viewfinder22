@@ -1086,9 +1086,7 @@ map.on('idle', function(){
  refreshBasemapParking();
  if(!state.scanSourcesPending){renderMarkers();updateMapPinLegend();}
 });
-map.on('zoomend', function(){
- if(!state.scanSourcesPending){renderMarkers();updateMapPinLegend();}
-});
+// Marker layers are refreshed on idle, after the camera and destination tiles settle.
 // "idle" fires after destination tiles are loaded; moveend alone may expose old
 // viewport features and cause a second, visibly different parking marker set.
 $('retryMap').addEventListener('click',function(){
