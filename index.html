@@ -839,7 +839,43 @@ window.__PHOTO_SCOUT_TEST__ = {
  },
  scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); },
  forceRasterFallback:function(){return switchToRasterFallback('Automated backup-map verification.');},
- retryVectorBasemap:function(){return setVectorBasemap(currentStyle);}
+ retryVectorBasemap:function(){return setVectorBasemap(currentStyle);},
+ // Read-only fixture hooks used by the no-wallet Playwright regression suite.
+ runContextPhotoRegressionFixtures:function(){
+  const previous={
+   results:state.results,scenicSpots:state.scenicSpots,selected:state.selected,center:state.center,
+   detectedLocality:state.detectedLocality,contextOnly:fieldGuideContextOnly,scanId:state.scanId
+  };
+  const center={lat:45.37306,lng:14.34873};
+  const kastavPin={id:'fixture-kastav-pin',name:'Kastav viewpoint',lat:center.lat,lng:center.lng,city:'Kastav',locality:'Kastav, Croatia',category:'viewpoint',tags:{tourism:'viewpoint'},summary:'Test fixture only.'};
+  const inside={id:'fixture-kastav-near',name:'Kastav Old Town',lat:center.lat+0.004,lng:center.lng+0.003,distance:500,city:'Kastav',category:'history',tags:{historic:'yes'},summary:'Test fixture.'};
+  const tooFar={id:'fixture-distant-aquileia',name:'Aquileia Roman Forum',lat:45.7686,lng:13.3689,distance:haversine(center,{lat:45.7686,lng:13.3689}),city:'Aquileia',category:'history',tags:{historic:'archaeological_site'}};
+  const wrongPhoto={name:'Jefferson Memorial at Dusk, Washington DC.jpg',geotagged:false,distance:400,thumb:'https://example.invalid/wrong.jpg'};
+  const correctPhoto={name:'Kastav Old Town panorama.jpg',geotagged:false,distance:400,thumb:'https://example.invalid/right.jpg'};
+  let result;
+  try{
+   state.results=[inside,tooFar];state.scenicSpots=[];state.selected=kastavPin;state.center=center;state.detectedLocality='Kastav';
+   fieldGuideContextOnly=true;document.body.classList.add('field-guide-context-only');
+   const subjects=fieldGuideAreaSubjects({
+    id:'fixture-kastav-pin',name:'Kastav viewpoint',locality:'Kastav, Croatia',lat:center.lat,lng:center.lng,category:'viewpoint',
+    originalItem:kastavPin,tags:kastavPin.tags,shotIdeas:selectedShotIdeasFor(kastavPin)
+   });
+   result={
+    subjectNames:subjects.map(x=>x.name),
+    nearSubjectRetained:subjects.some(x=>x.name==='Kastav Old Town'),
+    distantSubjectRejected:!subjects.some(x=>x.name==='Aquileia Roman Forum'),
+    washingtonPhotoRejected:!photoReferenceFitsPlace(wrongPhoto,{name:'Kastav viewpoint',locality:'Kastav, Croatia',category:'viewpoint'},'Kastav, Croatia'),
+    kastavPhotoAccepted:photoReferenceFitsPlace(correctPhoto,{name:'Kastav viewpoint',locality:'Kastav, Croatia',category:'viewpoint'},'Kastav, Croatia'),
+    shotIdeasPerSubject:subjects.every(x=>Array.isArray(x.shotIdeas)&&x.shotIdeas.length>=3),
+    sketchPerSubject:subjects.every(x=>conceptSketchData(x,'wide',1).startsWith('data:image/svg+xml'))
+   };
+  }finally{
+   state.results=previous.results;state.scenicSpots=previous.scenicSpots;state.selected=previous.selected;state.center=previous.center;
+   state.detectedLocality=previous.detectedLocality;fieldGuideContextOnly=previous.contextOnly;
+   document.body.classList.toggle('field-guide-context-only',previous.contextOnly);
+  }
+  return result;
+ }
 };
 const osmRasterStyle = {
  version:8,
