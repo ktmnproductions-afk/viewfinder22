@@ -2432,14 +2432,15 @@ async function loadFieldGuideAreaPhotos(parentCard,subject){
   }
   fieldGuidePhotoCache[id]=refs.slice(0,3);
  }catch(error){
-  if(scanId!==state.scanId)return;
+  if(scanId!==state.scanId){delete fieldGuidePhotoCache[id];return;}
   fieldGuidePhotoCache[id]=[];
  }
- if(fieldGuideDetailCardId===parentCard.id&&!$('fieldGuideDetail').hidden){
+ if(!$('fieldGuideDetail').hidden&&fieldGuideDetailCardId===id){
+  renderFieldGuideDetailBody(subject);
+ }else if(fieldGuideDetailCardId===parentCard.id&&!$('fieldGuideDetail').hidden){
   renderFieldGuideAreaBoard(parentCard);
   renderFieldGuideDetailBody(parentCard);
  }
-}
 function renderFieldGuideDetailBody(card){
  const body=$('fieldGuideDetailBody');
  if(!body||!card)return;
