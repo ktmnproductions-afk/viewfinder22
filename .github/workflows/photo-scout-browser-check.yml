@@ -207,35 +207,36 @@ jobs:
               // Use a real map click at the Rijeka-area coordinate, not a mocked event.
               const point = await page.evaluate(() => {
                 const map = window.__PHOTO_SCOUT_TEST__.map;
-                const box = map.getContainer().getBoundingClientRect();
+                const container = map.getContainer();
+                const box = container.getBoundingClientRect();
+                const canvas = container.querySelector('canvas.maplibregl-canvas');
+                if (!canvas) return {emptyMapPatch:false,reason:'no MapLibre canvas'};
+                const canvasBox = canvas.getBoundingClientRect();
                 const base = map.project([14.34873, 45.37306]);
-                const markerRects = [...document.querySelectorAll('.scout-marker')].map(el => {
-                  const r = el.getBoundingClientRect();
-                  return {left:r.left-16,right:r.right+16,top:r.top-16,bottom:r.bottom+16};
-                });
-                const overlayRects = [...document.querySelectorAll('.sidebar,.map-heading,.map-styles,.map-quick-actions,.map-pin-legend,#sidebarToggle')]
-                  .filter(el => !el.hidden && getComputedStyle(el).display !== 'none')
-                  .map(el => {
-                    const r = el.getBoundingClientRect();
-                    return {left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4};
-                  });
-                const offsets = [
-                  [0,0],[38,0],[-38,0],[0,38],[0,-38],[52,30],[-52,30],
-                  [52,-30],[-52,-30],[74,0],[-74,0],[0,74],[0,-74],
-                  [84,48],[-84,48],[84,-48],[-84,-48],[110,0],[-110,0]
-                ];
-                for (const [dx,dy] of offsets) {
-                  const x=base.x+dx,y=base.y+dy;
-                  if(x<370||x>box.width-100||y<110||y>box.height-100)continue;
-                  const hit = rect => x>=rect.left&&x<=rect.right&&y>=rect.top&&y<=rect.bottom;
-                  if(markerRects.some(hit)||overlayRects.some(hit))continue;
-                  const ll=map.unproject([x,y]).toArray();
-                  return {x,y,width:box.width,height:box.height,lngLat:ll,emptyMapPatch:true};
+                const offsets = [];
+                for(let ring=0;ring<8;ring++){
+                  const r=ring*44;
+                  offsets.push([r,0],[-r,0],[0,r],[0,-r],[r,r],[-r,r],[r,-r],[-r,-r]);
                 }
-                return {x:base.x,y:base.y,width:box.width,height:box.height,emptyMapPatch:false};
+                const candidates=offsets.map(([dx,dy])=>({x:box.left+base.x+dx,y:box.top+base.y+dy}))
+                  .concat(Array.from({length:48},(_,i)=>({
+                    x:canvasBox.left+80+((i*173)%(Math.max(1,Math.floor(canvasBox.width-160)))),
+                    y:canvasBox.top+90+((i*97)%(Math.max(1,Math.floor(canvasBox.height-180))))
+                  })));
+                for(const p of candidates){
+                  if(p.x<canvasBox.left+20||p.x>canvasBox.right-20||p.y<canvasBox.top+20||p.y>canvasBox.bottom-20)continue;
+                  const hit=document.elementFromPoint(p.x,p.y);
+                  // This guarantees the test click lands on the actual interactive map canvas,
+                  // not a landmark button, its expanded name label, a sidebar or map control.
+                  if(hit===canvas){
+                    const ll=map.unproject([p.x-box.left,p.y-box.top]).toArray();
+                    return {x:p.x,y:p.y,width:window.innerWidth,height:window.innerHeight,lngLat:ll,emptyMapPatch:true,hit:'map-canvas'};
+                  }
+                }
+                return {x:base.x+box.left,y:base.y+box.top,width:window.innerWidth,height:window.innerHeight,emptyMapPatch:false,reason:'no unobstructed canvas coordinate'};
               });
-              if (!point.emptyMapPatch || point.x < 340 || point.x > point.width || point.y < 95 || point.y > point.height) {
-                throw new Error('Could not find an empty clickable map patch near the test location: ' + JSON.stringify(point));
+              if (!point.emptyMapPatch) {
+                throw new Error('Could not find an unobstructed point on the live map canvas: ' + JSON.stringify(point));
               }
               const scansBeforeClick = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.scanCount);
               await page.mouse.click(point.x, point.y);
