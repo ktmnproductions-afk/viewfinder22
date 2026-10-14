@@ -1254,24 +1254,51 @@ const IMAGE_EVENT_OR_PERSON_RE = /\b(event|festival|concert|tournament|champions
 const IMAGE_SCENE_RE = /\b(panorama|skyline|cityscape|landscape|architecture|historic|old town|church|cathedral|castle|cross|monument|coast|coastal|harbou?r|bay|rooftops?|mountains?|valley|viewpoint|lookout|sunset|sunrise|bridge|fort|ruins|street|town|city|village|port|waterfront|cliff|hill|ridge|sea|island|beach|square|chapel|tower|lighthouse|building|aerial|view|scenic|landmark|nature|forest|river|lake|churchyard|wayside)\b/i;
 const IMAGE_QUERY_STOPWORDS=new Set(['photo','photos','picture','pictures','photography','landscape','landscapes','panorama','architecture','historic','historical','old','town','city','cityscape','view','viewpoint','images','image','near','around','the','with','and','for','from']);
 function normalizedPhotoTitle(value){return String(value||'').replace(/^File:/i,'').replace(/\.[a-z0-9]{2,5}$/i,'').replace(/[_-]+/g,' ').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim().toLowerCase();}
+const IMAGE_REFERENCE_GENERIC_WORDS=new Set([
+ ...IMAGE_QUERY_STOPWORDS,
+ 'street','road','square','church','chapel','basilica','cathedral','castle','palace','monument','memorial','bridge','ruins','roman','historic','historical','landmark','museum','building','architecture','viewpoint','landscape','panorama','old','town','city','village','photo','photograph','croatia','slovenia','italy','austria','friuli','istria'
+]);
+function photoPlaceTokens(value){
+ return normalizedPhotoTitle(value).split(/\s+/).filter(t=>t.length>3&&!IMAGE_REFERENCE_GENERIC_WORDS.has(t));
+}
 function photoTitleIsRelevant(title,query){
  const clean=normalizedPhotoTitle(title);
  if(!clean||IMAGE_EVENT_OR_PERSON_RE.test(clean))return false;
  const meaningful=IMAGE_SCENE_RE.test(clean);
+ const titleTokens=clean.split(/\s+/);
  const qTokens=normalizedPhotoTitle(query).split(/\s+/).filter(t=>t.length>3&&!IMAGE_QUERY_STOPWORDS.has(t));
- const queryMatch=qTokens.some(t=>clean.includes(t));
- // For geotag-only scans, require a meaningful scene title. For a text search,
- // require a place/topic token match so unrelated landscapes do not leak in.
- return qTokens.length ? queryMatch : meaningful;
+ // If a search contains a real place name, require a matching place-name token.
+ // Generic words such as "church", "view" or "architecture" alone must not pull
+ // an unrelated memorial or landscape from another country into the contact sheet.
+ const specificTokens=qTokens.filter(t=>!IMAGE_REFERENCE_GENERIC_WORDS.has(t));
+ if(specificTokens.length)return specificTokens.some(t=>titleTokens.includes(t));
+ return qTokens.length?qTokens.some(t=>titleTokens.includes(t))&&meaningful:meaningful;
 }
 function photoTitleScore(title,queries){
  const clean=normalizedPhotoTitle(title);
+ const titleTokens=clean.split(/\s+/);
  const terms=(queries||[]).flatMap(q=>normalizedPhotoTitle(q).split(/\s+/)).filter(t=>t.length>3&&!IMAGE_QUERY_STOPWORDS.has(t));
- const matching=terms.filter(t=>clean.includes(t)).length;
- let score=matching*10;
- if(/\b(panorama|cityscape|landscape|viewpoint|architecture|old town|skyline|landmark|historic|coast|harbou?r|view|monument|cross)\b/i.test(clean))score+=5;
+ const specific=terms.filter(t=>!IMAGE_REFERENCE_GENERIC_WORDS.has(t));
+ const matchingSpecific=specific.filter(t=>titleTokens.includes(t)).length;
+ const matchingGeneric=terms.filter(t=>IMAGE_REFERENCE_GENERIC_WORDS.has(t)&&titleTokens.includes(t)).length;
+ let score=matchingSpecific*20+matchingGeneric;
+ if(/\b(panorama|cityscape|landscape|viewpoint|architecture|old town|skyline|landmark|historic|coast|harbou?r|view|monument|cross)\b/i.test(clean))score+=2;
  if(IMAGE_EVENT_OR_PERSON_RE.test(clean))score-=100;
  return score;
+}
+function photoReferenceFitsPlace(photo,card,localityHint){
+ if(photo&&photo.geotagged){
+  const distance=Number(photo.distance);
+  return Number.isFinite(distance)&&distance<=10000;
+ }
+ const titleTokens=new Set(normalizedPhotoTitle(photo&&photo.name).split(/\s+/));
+ const placeTokens=photoPlaceTokens(card&&card.name);
+ const locality=String(localityHint||card&&card.locality||'').split(',')[0].trim();
+ const localityTokens=photoPlaceTokens(locality);
+ const placeHit=placeTokens.some(token=>titleTokens.has(token));
+ const localityHit=localityTokens.some(token=>titleTokens.has(token));
+ if(placeTokens.length||localityTokens.length)return placeHit||localityHit;
+ return !IMAGE_EVENT_OR_PERSON_RE.test(String(photo&&photo.name||''));
 }
 async function commonsSearch(c,radius,id){
  const url='https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggscoord='+c.lat+'|'+c.lng+'&ggsradius='+Math.min(radius,10000)+'&ggsnamespace=6&ggslimit=25&prop=coordinates%7Cimageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&format=json&origin=*';
@@ -2580,6 +2607,7 @@ async function loadFieldGuidePhotos(force){
     const context=await buildFieldGuidePhotoQueries(card,scanId);
     if(token!==fieldGuidePhotoLoadToken||scanId!==state.scanId)return;
     let refs=await commonsTextSearch(context.queries,{lat:card.lat,lng:card.lng},scanId);
+    refs=refs.filter(photo=>photoReferenceFitsPlace(photo,card,context.locality||card.locality));
     if(token!==fieldGuidePhotoLoadToken||scanId!==state.scanId)return;
     // Do not fill sparse searches with nearby upload coordinates: the image may be
     // an unrelated person/event. Keep the three composition studies when no match exists.
@@ -2595,7 +2623,7 @@ async function loadFieldGuidePhotos(force){
       card.category==='viewpoint'?local+' landscape viewpoint':null
      ]).slice(0,4);
      try{
-      const fallback=await commonsTextSearch(fallbackQueries,{lat:card.lat,lng:card.lng},scanId);
+      const fallback=(await commonsTextSearch(fallbackQueries,{lat:card.lat,lng:card.lng},scanId)).filter(photo=>photoReferenceFitsPlace(photo,card,context.locality||card.locality));
       const seen=new Set(refs.map(p=>p.id||p.name));
       fallback.forEach(p=>{const key=p.id||p.name;if(!seen.has(key)){seen.add(key);refs.push(p);}});
      }catch(error){}
@@ -2766,6 +2794,7 @@ async function loadFieldGuideAreaPhotos(parentCard,subject){
  const scanId=state.scanId;
  try{
   let refs=await commonsTextSearch(subject.searchQueries,{lat:subject.lat,lng:subject.lng},scanId);
+  refs=refs.filter(photo=>photoReferenceFitsPlace(photo,subject,subject.locality));
   if(scanId!==state.scanId)return;
   // Keep only subject/title-matched photos; a proximity-only geotag is not proof
   // that a picture depicts this landmark or a useful photographic viewpoint.
@@ -2849,7 +2878,7 @@ $('fieldGuideClose').addEventListener('click',closeFieldGuide);
 $('guideSearch').addEventListener('input',renderFieldGuide);
 $('guideSort').addEventListener('change',renderFieldGuide);
 $('guideRefresh').addEventListener('click',()=>{
- guidePhotoCache={};
+ fieldGuidePhotoCache={};
  renderFieldGuide();
  loadFieldGuidePhotos(true);
 });
@@ -2897,7 +2926,7 @@ $('fieldGuideDetail').addEventListener('click',event=>{
  if(mapButton)showGuideCardOnMap(fieldGuideCardLookup[mapButton.dataset.guideModalMap]);
 });
 
-window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('fieldGuideDetail').hidden)closeFieldGuideDetail();else if(event.key==='Escape'&&!$('fieldGuidePage').hidden)closeFieldGuide();});
+window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('fieldGuideDetail').hidden){if(document.body.classList.contains('field-guide-context-only'))closeFieldGuide();else closeFieldGuideDetail();}else if(event.key==='Escape'&&!$('fieldGuidePage').hidden)closeFieldGuide();});
 renderFieldGuide();
 loadSaved();
 setupImageGeneration();
