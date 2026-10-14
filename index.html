@@ -1226,8 +1226,13 @@ function renderResults(){
  $('mapSubtitle').textContent=state.center?coordLabel(state.center)+' · '+(state.radius/1000)+' km local search + wider photo scouting':'Click anywhere on the map to plan a photography stop.';
 }
 function renderPhotos(){
- $('photoCount').textContent=state.photos.length+' matched images';
- $('photoResults').innerHTML=state.photos.length?state.photos.slice(0,3).map(p=>'<article class="photo-card"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original photo and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="photo-caption">'+esc(p.name)+'<div class="photo-license">Title-matched place/subject reference · not a verified camera position</div><div class="photo-license">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Check original file page')+'</div></div></a></article>').join(''):emptyHTML(state.center?'No suitable landmark/topic-matched references returned from the image archive. We will not substitute unrelated event or personal images. The location-specific shot sketches remain available above.':'Drop a pin to look for place- and subject-matched visual references.');
+ // The compact current layout puts references inside the selected-place panel;
+ // older standalone photo-list nodes no longer exist. Treat that panel as optional.
+ const photoCount=$('photoCount');
+ const photoResults=$('photoResults');
+ if(!photoCount||!photoResults)return;
+ photoCount.textContent=state.photos.length+' matched images';
+ photoResults.innerHTML=state.photos.length?state.photos.slice(0,3).map(p=>'<article class="photo-card"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original photo and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="photo-caption">'+esc(p.name)+'<div class="photo-license">Title-matched place/subject reference · not a verified camera position</div><div class="photo-license">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Check original file page')+'</div></div></a></article>').join(''):emptyHTML(state.center?'No suitable landmark/topic-matched references returned from the image archive. We will not substitute unrelated event or personal images. The location-specific shot sketches remain available above.':'Drop a pin to look for place- and subject-matched visual references.');
 }
 function markerEl(category,label){
  const el=document.createElement('button'); el.type='button'; el.className='scout-marker '+category;
