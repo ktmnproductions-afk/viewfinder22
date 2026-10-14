@@ -240,6 +240,52 @@ jobs:
                 throw new Error('Image-generation preview was not created for the selected place and camera: '+JSON.stringify(imageGenerationUI));
               }
 
+              // Let the independent source-photo lookup finish; capture the real
+              // gallery result separately from the mocked image-generation result.
+              const photoSearchSettled = await page.waitForFunction(
+                () => {
+                  const count = document.querySelector('#detailPhotoCount')?.textContent || '';
+                  return !!count && !/searching|looking up|finding landmark/i.test(count);
+                },
+                null,
+                { timeout: 25000 }
+              ).then(() => true).catch(() => false);
+              const photoReferenceDiagnostics = await page.evaluate(() => ({
+                status: document.querySelector('#detailPhotoCount')?.textContent || '',
+                titles: [...document.querySelectorAll('#detailPhotoRefs .detail-photo-title')].map(x => x.textContent || ''),
+                sourceCards: document.querySelectorAll('#detailPhotoRefs .detail-photo').length,
+                sketchCards: document.querySelectorAll('#selectedIdeaSketches .selected-idea-sketch').length,
+                aiImageVisible: !document.querySelector('#aiImageResult')?.hidden
+              }));
+              const badPhotoTitle = /(event|festival|concert|tournament|championship|competition|match|team|players?|skatehockey|football|soccer|basketball|volleyball|hockey|marathon|race|wedding|birthday|graduation|crowd|spectators?|audience|selfie|portrait|headshot|family|children|athletes?|school class|group photo|u(?:1[0-9]|2[0-3])\\b|award ceremony|celebration|party|conference|meeting|demonstration|protest)/i;
+              if(photoReferenceDiagnostics.titles.some(title => badPhotoTitle.test(title))) {
+                throw new Error('Unrelated event/person photos appeared in the selected-spot gallery: '+JSON.stringify(photoReferenceDiagnostics));
+              }
+              if(photoReferenceDiagnostics.sketchCards !== 3 || !photoReferenceDiagnostics.aiImageVisible) {
+                throw new Error('The no-photo fallback must retain three shot sketches and the generated concept: '+JSON.stringify(photoReferenceDiagnostics));
+              }
+
+              // Check the selected parking destinations carry human-readable distance
+              // labels at close zoom, so map markers correlate with the parking list.
+              await page.evaluate(() => {
+                const test = window.__PHOTO_SCOUT_TEST__;
+                const map = test.map;
+                const center = test.getState().activeCenter;
+                if(center) map.jumpTo({center:[center.lng,center.lat],zoom:16});
+              });
+              await page.waitForTimeout(600);
+              const parkingDistanceDiagnostics = await page.evaluate(() => {
+                const markers = [...document.querySelectorAll('.scout-marker.parking:not(.parking-cluster)')];
+                return {
+                  count: markers.length,
+                  withDistance: markers.filter(m => !!m.getAttribute('data-distance')).length,
+                  sample: markers.slice(0,8).map(m=>({title:m.title,distance:m.getAttribute('data-distance')}))
+                };
+              });
+              if(parkingDistanceDiagnostics.count > 0 && parkingDistanceDiagnostics.withDistance === 0) {
+                throw new Error('Close-zoom parking markers have no distance labels: '+JSON.stringify(parkingDistanceDiagnostics));
+              }
+
               await page.screenshot({ path: 'artifacts/photo-scout-live-map.png', fullPage: false });
               if (pageErrors.length) throw new Error('Browser runtime exceptions: ' + JSON.stringify(pageErrors));
               console.log('PHOTO_SCOUT_CHECKS ' + JSON.stringify({
@@ -250,6 +296,9 @@ jobs:
                 pinState,
                 quickActions,
                 imageGenerationUI: {...imageGenerationUI,prompt:imageGenerationUI.prompt.slice(0,500)},
+                photoSearchSettled,
+                photoReferenceDiagnostics,
+                parkingDistanceDiagnostics,
                 parkingDiagnostics,
                 browserExceptions: pageErrors,
                 tileResponsesObserved: tileResponses.length
