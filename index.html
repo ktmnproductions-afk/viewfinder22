@@ -3,9 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#17211c">
-<meta name="description" content="Explore real photography locations with in-app pencil composition studies, source-linked visual references and camera-specific shot ideas.">
-<title>Photo Scout — Visual Photography Field Guide</title>
+<meta name="theme-color" content="#f5f7f1">
+<meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
+<title>Photo Scout — Photography Planner</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./app-icon.svg" type="image/svg+xml">
+<meta name="application-name" content="Photo Scout">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Photo Scout">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.13.0/dist/maplibre-gl.css">
 <style>
@@ -509,6 +515,82 @@ body.field-guide-context-only .field-guide-detail-panel{width:100%;height:100%;m
 body.field-guide-context-only .field-guide-detail-header{padding:15px 19px 12px}
 body.field-guide-context-only .field-guide-detail-body{overflow:auto}
 
+
+/* Photo Scout Pro interface refresh: warm, light, map-first and installable. */
+:root{--ink:#233b31;--panel:#fbfcf8;--panel2:#f2f6ef;--panel3:#e9f0e8;--line:#dfe7dd;--text:#263b31;--muted:#6b7c70;--lime:#d5e5a2;--lime2:#b3cb76;--parking:#22835f;--history:#c45a43;--view:#c88a29;--photo:#557cbb;--shadow:0 16px 48px rgba(35,57,43,.14)}
+html,body{background:#edf1e9;color:#263b31}#map{background:#e7ede5}
+.maplibregl-ctrl-group{background:#fff!important;border-color:#dbe4d8!important}.maplibregl-ctrl button{background:#fff!important}
+.sidebar{left:18px;top:18px;bottom:18px;width:358px;max-width:calc(100vw - 36px);background:rgba(252,253,249,.985);color:#263b31;border:1px solid rgba(255,255,255,.94);border-radius:22px;box-shadow:0 22px 64px rgba(36,57,42,.16);backdrop-filter:blur(20px)}
+.brand{padding:20px 21px 16px;border-bottom:1px solid #e3e9df}.brand-symbol{background:#e9f2e8;border:1px solid #d4e3d2;color:#27674f;box-shadow:none}.brand-name{color:#1f392d;letter-spacing:.12em;font-size:14px}.brand-sub{color:#477a5e}.brand p{color:#67796b;font-size:11px}.brand-quick-hint,.online-state{color:#617668}.live-dot{background:#2d906a;box-shadow:0 0 0 4px rgba(45,144,106,.12)}
+.panel-scroll{scrollbar-color:#c9d6c7 transparent}.eyebrow{color:#547a60}.section{padding-left:17px;padding-right:17px}
+.search-box input{background:#fff;color:#243b30;border-color:#d7e1d6;box-shadow:0 1px 2px rgba(30,50,35,.025)}.search-box input::placeholder{color:#89978b}.search-box svg{color:#778a7d}
+.scan-options label{color:#64796a}.scan-options select,.ai-image-controls select,.ai-image-settings input{background:#fff;color:#293e32;border-color:#d6e1d5}
+.btn{background:#fff;color:#334b3a;border-color:#d8e2d6;box-shadow:0 1px 2px rgba(35,55,40,.035)}.btn:hover{background:#f1f6ee;border-color:#bdcfbd}.btn.primary{background:#28694f;color:#fff;border-color:#28694f;box-shadow:0 3px 9px rgba(40,105,79,.15)}.btn.primary:hover{background:#1f583f;border-color:#1f583f}.btn.ghost{background:transparent;color:#355341}
+.status-box{background:#f0f6ee;border-color:#dce8d9;color:#2b4837}.status-title{color:#294735}.status-msg{color:#617767}.status-box .status-icon{color:#397b59}
+.source-key-note,.filter-note,.nav-panel-note{color:#6a7d6e}.nav-panel{background:#f8faf6;border-color:#dfe8dd}.nav-panel>summary{color:#2e4435}.nav-panel>summary::after{color:#507b5c}.nav-panel>summary .nav-subtitle{color:#738477}.nav-panel[open]>summary{background:#eef5eb;border-bottom-color:#dfe8dd}.nav-panel-content{background:#fbfcf9}
+.section-heading h3{color:#405c48}.count{color:#77877a}.empty{background:#fff;border-color:#d6e1d4;color:#77877a}
+.spot-card{background:#fff;border-color:#e1e8df;box-shadow:0 2px 8px rgba(35,57,43,.025)}.spot-card:hover,.spot-card.selected{background:#f4f8f0;border-color:#9fbea0;box-shadow:0 4px 14px rgba(35,57,43,.06)}
+.spot-icon{background:#e8f2e8;border-color:#d4e5d3;color:#2d6a4e}.spot-icon.parking{background:#e5f4e9;border-color:#c7e7d2;color:#1e7952}.spot-icon.history{background:#fff0ea;border-color:#f0d4ca;color:#b64d39}.spot-icon.viewpoint{background:#fff5df;border-color:#edddb9;color:#a97118}.spot-icon.photo{background:#edf2fb;border-color:#d7e0f5;color:#466aa8}
+.spot-title{color:#273d30}.spot-meta{color:#768579}.spot-summary{color:#586c5d}
+.detail{background:rgba(255,255,251,.99);border-color:#dce6d8;color:#293e32;box-shadow:0 8px 26px rgba(30,55,38,.08)}.detail h2{color:#213a2c}.detail p{color:#5b705f}.detail .spot-meta{color:#77867a}
+.selected-concept-preview,.selected-parking-block{background:#f4f7f0;border-color:#dce6d7}.parking-option{background:#fff;border-color:#dce6d8}.parking-option-title{color:#304938}.parking-option-meta{color:#77867b}.parking-option-icon{background:#18764e}.parking-nearby-note,.concept-note{color:#687b6c}
+.detail-photo,.photo-card{border-color:#dce6d8;background:#fff}.photo-caption{color:#304638}.photo-license{color:#7b8b7c}.prompt-box{background:#f7f9f5;border-color:#dce6d8}.prompt-box textarea{color:#334b3a}.prompt-footer{color:#718374}.saved-row{border-color:#dce6d8;color:#334b3a;background:#fff}.saved-row button{color:#2c7653}
+.ai-image-generator{background:#f7f9f4;border-color:#dbe5d8;box-shadow:0 3px 12px rgba(33,57,39,.035)}.ai-image-note,.ai-image-cost-note{color:#697c6b}.ai-image-status{color:#566f5d}.ai-image-status.error{color:#b64935}.ai-image-status.success{color:#28734f}.ai-image-result{background:#fff;border-color:#dbe5d8}.ai-image-settings{border-top-color:#dce6d8}.ai-image-settings>summary{color:#334d3a}.ai-image-settings p{color:#687c6b}.ai-image-settings label{color:#405b47}.ai-image-settings input{background:#fff;color:#2d4434}.ai-image-redirect-note{color:#697b6b}.ai-image-settings-actions .btn{box-shadow:none}
+footer{color:#7c8b7e;border-top-color:#e4eae1}.footer-link{color:#50715b}
+.map-heading{left:394px;top:18px;max-width:calc(100vw - 430px);padding:15px 19px;background:rgba(255,255,251,.96);border:1px solid rgba(255,255,255,.95);border-radius:17px;box-shadow:0 12px 34px rgba(35,55,40,.11);backdrop-filter:blur(18px)}
+.map-heading .eyebrow{color:#56795f}.map-heading strong{color:#253a2c;font-size:21px;letter-spacing:-.02em}.map-heading div:last-child{color:#697b6d}
+.map-styles{right:18px;top:18px;background:rgba(255,255,251,.96);border:1px solid #fff;border-radius:15px;box-shadow:0 12px 34px rgba(35,55,40,.1);padding:5px}.map-style{color:#667668}.map-style:hover,.map-style.active{background:#e7f0e3;color:#27563e}.map-style.active{box-shadow:inset 0 0 0 1px #d0e0c8}.install-app-button{font-weight:800!important;color:#2a6a4e!important;background:#eef6e9!important}
+.map-quick-actions{background:rgba(255,255,251,.97);border-color:#e0e8dd;box-shadow:0 12px 34px rgba(35,55,40,.13)}.map-quick-action{color:#536b59}.map-quick-action svg{stroke:#466b53}.map-quick-action:hover,.map-quick-action.active{background:#eaf2e6;color:#25573d;border-color:#dae6d6}
+#sidebarToggle{background:rgba(255,255,251,.97);border-color:#e0e8dd;color:#324b39;box-shadow:0 8px 26px rgba(35,55,40,.13)}#sidebarToggle .toggle-glyph{color:#2b7050}body.sidebar-collapsed #sidebarToggle{left:18px}
+.map-issue{background:rgba(255,255,251,.98);border-color:#edcabe;color:#423c31}.map-issue p{color:#70675c}.map-issue button{background:#28694f;color:#fff}.map-credit{color:#455d49;background:rgba(255,255,251,.9)}
+.map-pin-legend{position:fixed;z-index:5;left:394px;bottom:23px;display:flex;flex-direction:column;gap:9px;max-width:min(700px,calc(100vw - 430px));padding:11px 14px 12px;background:rgba(255,255,251,.97);border:1px solid rgba(255,255,255,.96);border-radius:16px;box-shadow:0 12px 34px rgba(35,55,40,.12);backdrop-filter:blur(16px);color:#334b39}
+.map-pin-legend-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:9px;letter-spacing:.1em;font-weight:850;color:#5d765f}.map-pin-legend-heading #mapPinSummary{font-size:10px;letter-spacing:0;font-weight:600;color:#7a897c;white-space:nowrap}
+.map-pin-legend-items{display:flex;align-items:center;gap:15px;flex-wrap:wrap}.map-legend-item{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;color:#435b48;font-size:10px;font-weight:650}.map-legend-item b{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;border-radius:6px;background:#f0f4ed;color:#526958;font-size:9px;font-variant-numeric:tabular-nums}
+.map-legend-icon{width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-style:normal;background:#eaf2e8;color:#2b684e}.map-legend-icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.legend-landmark{background:#fff0e9;color:#b8503b}.legend-architecture{background:#e8eff9;color:#386798}.legend-viewpoint{background:#fff3db;color:#a86e16}.legend-photo{background:#e7f3e9;color:#2d7b50}.legend-parking{background:#e3f3e8;color:#1e7952;font-size:13px;font-weight:900}
+.scout-marker{overflow:visible;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:0;padding:0;border:0;background:transparent;box-shadow:none;outline:none;white-space:nowrap;isolation:isolate;cursor:pointer}
+.scout-marker .dot-core{position:relative;z-index:2;display:grid;place-items:center;width:31px;height:31px;flex:0 0 31px;border:2px solid rgba(255,255,255,.98);border-radius:10px;box-shadow:0 3px 12px rgba(30,50,35,.28),0 0 0 3px rgba(255,255,255,.38);background:#e6f0e6;color:#2c6249;font:850 13px/1 ui-sans-serif,system-ui}
+.scout-marker .dot-core svg{display:block;width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.scout-marker.parking .dot-core{width:31px;height:31px;border-radius:10px;background:#21815b;color:#fff;border:2px solid #fff;box-shadow:0 3px 12px rgba(30,50,35,.27),0 0 0 3px rgba(33,129,91,.13)}.scout-marker .parking-glyph{font-size:14px;line-height:1;font-weight:900}
+.scout-marker.history .dot-core{width:33px;height:33px;flex-basis:33px;border-radius:50%;background:#c45a43;color:#fff8f4;box-shadow:0 3px 12px rgba(128,58,39,.28),0 0 0 3px rgba(196,90,67,.16)}.scout-marker.architecture .dot-core{background:#386b9c;color:#fff;border-radius:9px;box-shadow:0 3px 12px rgba(45,86,127,.25),0 0 0 3px rgba(56,107,156,.14)}.scout-marker.viewpoint .dot-core{background:#cf8b25;color:#fffdf6;border-radius:9px;box-shadow:0 3px 12px rgba(150,100,25,.25),0 0 0 3px rgba(207,139,37,.14)}
+.scout-marker.photoSpot .dot-core{width:33px;height:33px;flex-basis:33px;border-radius:50% 50% 50% 10px;transform:none;background:#2e8054;color:#fff;border:2px solid #fff;box-shadow:0 3px 12px rgba(30,90,50,.29),0 0 0 3px rgba(46,128,84,.15)}
+.scout-marker.photo .dot-core{background:#6b72c8;color:#fff}.scout-marker.with-label{min-height:33px;padding:0 10px 0 0;border:1px solid rgba(255,255,255,.95);border-radius:10px;background:rgba(255,255,251,.98);box-shadow:0 4px 14px rgba(35,55,40,.15);gap:7px}.scout-marker.with-label .dot-core{margin-left:-1px;box-shadow:none;border-width:1px;outline:1px solid rgba(255,255,255,.98)}
+.pin-name-label{display:block;max-width:165px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#2c4434;font-size:10px;letter-spacing:0;font-weight:750}.scout-marker.parking.with-label .pin-name-label{color:#25553c}
+.scout-marker.parking-cluster .dot-core{width:35px;height:35px;border-radius:50%;background:#1c6c4d;color:#fff;border:3px solid #fff;font-size:11px;box-shadow:0 0 0 3px rgba(28,108,77,.16),0 5px 14px rgba(30,50,35,.25)}
+.scout-marker.active-pin .dot-core{width:39px;height:39px;flex-basis:39px;border-radius:50% 50% 50% 10px;transform:rotate(-45deg);background:#233f30;color:#fff;border:3px solid #fff;box-shadow:0 0 0 5px rgba(213,229,162,.65),0 7px 18px rgba(30,50,35,.35);font-size:19px}.scout-marker.active-pin .dot-core span{transform:rotate(45deg);font-weight:500}
+.scout-marker:focus-visible{outline:3px solid #2d7752;outline-offset:4px;border-radius:10px}.scout-marker.with-label:focus-visible{outline-offset:3px}
+.sidebar,.map-heading,.map-styles,.map-quick-actions,.map-pin-legend{color-scheme:light}
+@media(min-width:681px){.map-heading{left:394px;max-width:calc(100vw - 430px)}}
+@media(max-width:900px){.sidebar{width:340px}.map-heading{left:366px;max-width:calc(100vw - 388px)}.map-pin-legend{left:366px;max-width:calc(100vw - 388px)}}
+@media(max-width:680px){
+ .sidebar{left:12px;right:auto;top:62px;bottom:12px;width:min(360px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - 74px);border-radius:20px}
+ .brand{padding:16px 16px 12px}.brand p{font-size:11px;margin-top:6px}.section{padding-left:13px;padding-right:13px}
+ .map-heading,.map-pin-legend{left:12px!important;right:12px;max-width:calc(100vw - 24px)!important}.map-heading{top:12px!important;padding:10px 13px}.map-heading strong{font-size:17px}.map-heading div:last-child{display:block;font-size:9px}
+ body:not(.sidebar-collapsed) .map-heading{bottom:auto!important;top:12px!important}.map-styles{top:63px;right:12px;left:12px;max-width:calc(100vw - 24px);overflow-x:auto;justify-content:flex-start}.map-style{flex:0 0 auto;padding:7px 9px;font-size:9px}
+ #sidebarToggle{left:auto;right:12px;top:12px;z-index:24;padding:8px 10px;background:rgba(255,255,251,.98)}body.sidebar-collapsed #sidebarToggle{left:12px;right:auto;top:12px}
+ body.sidebar-collapsed .map-heading{left:12px!important;top:64px!important;max-width:calc(100vw - 24px)!important}
+ .map-pin-legend{bottom:10px!important;padding:9px 11px;gap:7px}.map-pin-legend-items{gap:8px 11px}.map-legend-item{font-size:9px}.map-legend-icon{width:21px;height:21px;border-radius:7px}.map-pin-legend-heading{font-size:8px}.map-pin-legend-heading #mapPinSummary{font-size:9px}
+ .map-credit{bottom:130px}.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-bottom-left{bottom:130px!important}.map-quick-actions{top:auto;bottom:150px;right:12px}.detail{margin-left:13px;margin-right:13px}
+}
+
+
+/* Keep map symbols compact; reveal place names on hover, keyboard focus, or selection. */
+.scout-marker.with-label{
+ position:relative;width:34px;height:34px;min-width:34px;min-height:34px;
+ padding:0;border:0;border-radius:50%;background:transparent;box-shadow:none;gap:0;
+}
+.scout-marker.with-label .dot-core{margin:0;box-shadow:0 3px 12px rgba(30,50,35,.22),0 0 0 2px rgba(255,255,255,.74)}
+.pin-name-label{
+ position:absolute;left:39px;top:50%;transform:translateY(-50%);z-index:5;
+ display:block;width:max-content;max-width:165px;padding:5px 8px;
+ border:1px solid #fff;border-radius:8px;background:rgba(255,255,251,.99);
+ box-shadow:0 4px 14px rgba(35,55,40,.16);opacity:0;visibility:hidden;
+ pointer-events:none;transition:opacity .12s ease,visibility .12s ease;
+}
+.scout-marker.with-label:hover .pin-name-label,
+.scout-marker.with-label:focus-visible .pin-name-label,
+.scout-marker.with-label.is-selected .pin-name-label{opacity:1;visibility:visible}
+
 </style>
 </head>
 <body>
@@ -561,6 +643,7 @@ body.field-guide-context-only .field-guide-detail-body{overflow:auto}
   </div>
 </main>
 <div class="map-styles" role="group" aria-label="Map style">
+  <button id="installAppBtn" class="map-style install-app-button" type="button" hidden>＋ Install app</button>
   <button class="map-style active" data-style="liberty">Atlas</button>
   <button class="map-style" data-style="bright">Bright</button>
   <button class="map-style" data-style="positron">Light</button>
@@ -573,6 +656,16 @@ body.field-guide-context-only .field-guide-detail-body{overflow:auto}
   <button id="quickIdeasBtn" class="map-quick-action" type="button" title="Photo ideas and reference photos" aria-label="Photo ideas and reference photos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.7 6.3L20 10l-6.3 1.7L12 18l-1.7-6.3L4 10l6.3-1.7L12 2Z"></path><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"></path></svg><span>Ideas</span></button>
   <button id="quickSavedBtn" class="map-quick-action" type="button" title="Saved stops" aria-label="Saved stops"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17L12 17l-6 3.5Z"></path></svg><span>Saved</span></button>
 </nav>
+<section class="map-pin-legend" id="mapPinLegend" aria-label="Map pin key">
+  <div class="map-pin-legend-heading"><span>MAP KEY</span><span id="mapPinSummary">Preparing nearby places…</span></div>
+  <div class="map-pin-legend-items">
+    <span class="map-legend-item"><i class="map-legend-icon legend-landmark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-5h6v5"/></svg></i><span>Landmarks</span><b id="legendLandmarkCount">—</b></span>
+    <span class="map-legend-item"><i class="map-legend-icon legend-architecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V5h14v16M8 8h2m4 0h2M8 12h2m4 0h2M10 21v-4h4v4"/></svg></i><span>Architecture</span><b id="legendArchitectureCount">—</b></span>
+    <span class="map-legend-item"><i class="map-legend-icon legend-viewpoint"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"/><path d="m2 20 7-10 4 5 3-4 6 9H2Z"/></svg></i><span>Viewpoints</span><b id="legendViewpointCount">—</b></span>
+    <span class="map-legend-item"><i class="map-legend-icon legend-photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v12H3Z"/><circle cx="12" cy="14" r="4"/></svg></i><span>Photo spots</span><b id="legendPhotoSpotCount">—</b></span>
+    <span class="map-legend-item"><i class="map-legend-icon legend-parking">P</i><span>Parking</span><b id="legendParkingCount">—</b></span>
+  </div>
+</section>
 <div id="mapIssue" class="map-issue"><strong>Basemap could not be loaded.</strong><p>The app is not using the blocked OpenStreetMap volunteer tile endpoint. Retry the vector map or check the connection.</p><button id="retryMap">Retry map</button></div>
 <button id="sidebarToggle" type="button" aria-controls="mainSidebar" aria-expanded="true" aria-label="Hide sidebar"><span class="toggle-glyph">☰</span><span id="sidebarToggleLabel">Hide menu</span></button>
 <aside class="sidebar" id="mainSidebar">
@@ -698,13 +791,30 @@ const styleUrls = {
  dark:'https://tiles.openfreemap.org/styles/dark',
  fiord:'https://tiles.openfreemap.org/styles/fiord'
 };
-const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, detectedLocality:'', results:[], scenicSpots:[], photos:[], basemapParking:[], parkingFilteredLayers:new Set(), spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0, basemapMode:'vector', basemapFallbackTried:false, basemapWatchdog:null, styleFailureTimer:null};
+const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, detectedLocality:'', results:[], scenicSpots:[], photos:[], basemapParking:[], parkingFilteredLayers:new Set(), spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0, basemapMode:'vector', basemapFallbackTried:false, basemapWatchdog:null, styleFailureTimer:null, initialScoutStarted:false};
 window.__PHOTO_SCOUT_TEST__ = {
  get map(){ return state.map; },
  get styleLoaded(){ return state.styleLoaded; },
  get vectorTileSuccesses(){ return state.vectorTileSuccesses; },
  get scanCount(){ return state.scanCount; },
- getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, resultCount:state.results.length, parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), parkingLabelLayersFiltered:[...state.parkingFilteredLayers], visibleParkingMarkerClasses:state.markers.filter(m=>m.getElement().classList.contains('parking')).map(m=>({title:m.getElement().title,classes:m.getElement().className,coordinates:m.getLngLat().toArray()})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
+ getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, resultCount:state.results.length, parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), parkingLabelLayersFiltered:[...state.parkingFilteredLayers], visibleParkingMarkerClasses:state.markers.filter(m=>m.getElement().classList.contains('parking')).map(m=>({title:m.getElement().title,classes:m.getElement().className,coordinates:m.getLngLat().toArray()})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, markerCounts:{landmark:state.markers.filter(m=>m.getElement().classList.contains('history')).length,architecture:state.markers.filter(m=>m.getElement().classList.contains('architecture')).length,viewpoint:state.markers.filter(m=>m.getElement().classList.contains('viewpoint')).length,photoSpot:state.markers.filter(m=>m.getElement().classList.contains('photoSpot')).length}, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
+ renderMarkerFixture:function(){
+  if(!state.map||!state.styleLoaded)throw new Error('Map is not ready');
+  const saved={results:state.results,scenicSpots:state.scenicSpots,basemapParking:state.basemapParking,spotParking:state.spotParking,selected:state.selected,spotParkingTargetId:state.spotParkingTargetId,center:state.center,radius:state.radius};
+  const c=map.getCenter();
+  const make=function(id,name,category,dLat,dLng){return {id,name,category,lat:c.lat+dLat,lng:c.lng+dLng,distance:420,source:'Automated test fixture',sourceUrl:'https://www.openstreetmap.org/',tags:{},city:'Fixture'};};
+  let result;
+  try{
+   state.results=[make('fixture-landmark','Fixture Landmark','history',0.0010,0.0010),make('fixture-building','Fixture Building','architecture',0.0018,0.0018),make('fixture-viewpoint','Fixture Viewpoint','viewpoint',0.0026,0.0026),make('fixture-parking','Fixture Parking','parking',-0.0010,-0.0010)];
+   state.scenicSpots=[make('fixture-photo-spot','Fixture Photo Spot','photoSpot',-0.0020,0.0020)];
+   state.basemapParking=[];state.spotParking=[];state.selected=null;state.spotParkingTargetId=null;state.center={lat:c.lat,lng:c.lng};state.radius=10000;
+   renderMarkers();
+   result={landmark:document.querySelectorAll('.scout-marker.history').length,architecture:document.querySelectorAll('.scout-marker.architecture').length,viewpoint:document.querySelectorAll('.scout-marker.viewpoint').length,photoSpot:document.querySelectorAll('.scout-marker.photoSpot').length,parking:document.querySelectorAll('.scout-marker.parking').length,svgIcons:document.querySelectorAll('.scout-marker .dot-core svg').length};
+  }finally{
+   clearMarkers();state.results=saved.results;state.scenicSpots=saved.scenicSpots;state.basemapParking=saved.basemapParking;state.spotParking=saved.spotParking;state.selected=saved.selected;state.spotParkingTargetId=saved.spotParkingTargetId;state.center=saved.center;state.radius=saved.radius;renderMarkers();
+  }
+  return result;
+ },
  scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); },
  forceRasterFallback:function(){return switchToRasterFallback('Automated backup-map verification.');},
  retryVectorBasemap:function(){return setVectorBasemap(currentStyle);}
@@ -833,6 +943,14 @@ map.on('style.load', function(){
  updateRadius();
  mapOk();
  renderMarkers();
+ if(!state.initialScoutStarted){
+  state.initialScoutStarted=true;
+  window.setTimeout(function(){
+   if(state.scanCount===0&&state.styleLoaded){
+    scanAt({lat:45.3271,lng:14.4422},{fly:true,initial:true});
+   }
+  },500);
+ }
  if(state.basemapMode==='vector'){
   state.basemapWatchdog=setTimeout(()=>{
    state.basemapWatchdog=null;
@@ -1413,13 +1531,18 @@ function renderPhotos(){
  photoResults.innerHTML=state.photos.length?state.photos.slice(0,3).map(p=>'<article class="photo-card"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original photo and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="photo-caption">'+esc(p.name)+'<div class="photo-license">Title-matched place/subject reference · not a verified camera position</div><div class="photo-license">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Check original file page')+'</div></div></a></article>').join(''):emptyHTML(state.center?'No suitable landmark/topic-matched references returned from the image archive. We will not substitute unrelated event or personal images. The location-specific shot sketches remain available above.':'Drop a pin to look for place- and subject-matched visual references.');
 }
 function markerEl(category,label){
- const el=document.createElement('button'); el.type='button'; el.className='scout-marker '+category;
- el.title=label; el.setAttribute('aria-label',label);
+ const el=document.createElement('button');el.type='button';el.className='scout-marker '+category;
+ el.dataset.category=category;el.title=label;el.setAttribute('aria-label',label);
  const core=document.createElement('span');core.className='dot-core';
- if(category==='viewpoint')core.innerHTML='<span>V</span>';
- else if(category==='photoSpot')core.innerHTML='<span>✦</span>';
- else core.textContent=category==='parking'?'P':category==='history'?'H':category==='photo'?'✦':'A';
- el.appendChild(core); return el;
+ const icons={
+  history:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-5h6v5M8 10h1m6 0h1"/></svg>',
+  architecture:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V5h14v16M8 8h2m4 0h2M8 12h2m4 0h2M10 21v-4h4v4"/></svg>',
+  viewpoint:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"/><path d="m2 20 7-10 4 5 3-4 6 9H2Z"/></svg>',
+  photoSpot:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v12H3Z"/><circle cx="12" cy="14" r="4"/></svg>',
+  parking:'<span class="parking-glyph" aria-hidden="true">P</span>',
+  photo:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m4 18 5-5 3 3 3-4 5 6"/></svg>'
+ };
+ core.innerHTML=icons[category]||icons.architecture;el.appendChild(core);return el;
 }
 function clearMarkers(){state.markers.forEach(m=>m.remove());state.markers=[];}
 function normalizeBasemapFilter(filter){
@@ -1673,6 +1796,15 @@ function refreshBasemapParking(){
  renderResults();
  renderMarkers();
 }
+function updateMapPinLegend(){
+ const count=function(items,category){return items.filter(item=>item.category===category).length;};
+ const history=count(state.results,'history'),architecture=count(state.results,'architecture'),viewpoints=count(state.results,'viewpoint');
+ const photoSpots=state.scenicSpots.length,parking=parkingCandidates().length;
+ const put=function(id,value){const node=$(id);if(node)node.textContent=String(value);};
+ put('legendLandmarkCount',history);put('legendArchitectureCount',architecture);put('legendViewpointCount',viewpoints);
+ put('legendPhotoSpotCount',photoSpots);put('legendParkingCount',parking);
+ put('mapPinSummary',state.scanCount?(history+architecture+viewpoints+photoSpots)+' mapped places':'Map ready to scout');
+}
 function renderMarkers(){
  if(!state.map || !state.styleLoaded)return;
  clearMarkers();
@@ -1689,11 +1821,14 @@ function renderMarkers(){
  const occupiedScreens=parkingScreens.map(p=>p.point);
  const seen=new Set();
  visible.forEach(item=>{
-  const cell=Math.round(item.lat*10000)+'|'+Math.round(item.lng*10000);
+  const cell=item.category+'|'+Math.round(item.lat*100000)+'|'+Math.round(item.lng*100000);
   if(seen.has(cell))return;
   seen.add(cell);
   const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas · '+distanceLabel(item.distance):(item.parkingOrigin==='basemap'?'Mapped parking · availability unverified · ':'Scout parking feature · ')+item.name+' · '+distanceLabel(item.distance)):item.name+' · '+distanceLabel(item.distance);
   const el=markerEl(item.category,label);
+  if(['history','architecture','viewpoint','photoSpot'].includes(item.category)&&map.getZoom()>=14.5&&!item.genericFeature&&!/^Unnamed mapped/i.test(String(item.name||''))){
+   const nameTag=document.createElement('span');nameTag.className='pin-name-label';nameTag.textContent=String(item.name||'').slice(0,52);el.appendChild(nameTag);el.classList.add('with-label');
+  }
   if(item.category==='parking'&&!item.clusterMembers&&map.getZoom()>=14.5){
    el.setAttribute('data-distance',distanceLabel(item.distance||0));
   }
@@ -1714,7 +1849,7 @@ function renderMarkers(){
   occupiedScreens.push({x:screenPoint.x+offset[0],y:screenPoint.y+offset[1]});
   // Explicit z-order stops nearby building/history dots from intercepting taps on
   // parking destinations when their coordinates are close at neighbourhood zoom.
-  el.style.zIndex=item.category==='parking'?'1100':item.category==='history'?'800':item.category==='architecture'?'650':item.category==='viewpoint'?'600':item.category==='photoSpot'?'300':'500';
+  el.style.zIndex=item.category==='parking'?'250':item.category==='history'?'900':item.category==='architecture'?'850':item.category==='viewpoint'?'1000':item.category==='photoSpot'?'750':'500';
   if(item.clusterMembers){
    el.classList.add('parking-cluster');
    el.querySelector('.dot-core').textContent='×'+item.clusterSize;
@@ -1735,7 +1870,7 @@ function renderMarkers(){
   }
   const m=new maplibregl.Marker({element:el,anchor:'center',offset}).setLngLat([item.lng,item.lat]).addTo(map);
   m.__scoutItems=item.clusterMembers||[item];
-  if(typeof m.setZIndex==='function')m.setZIndex(item.category==='parking'?5000:item.category==='history'?4500:4000);
+  if(typeof m.setZIndex==='function')m.setZIndex(item.category==='parking'?1500:item.category==='history'?5200:item.category==='architecture'?5000:item.category==='viewpoint'?5400:item.category==='photoSpot'?4700:4000);
   state.markers.push(m);
  });
  // The selected-place parking list is populated independently from the wider search.
@@ -1754,7 +1889,9 @@ function renderMarkers(){
    state.markers.push(marker);
   });
  }
+ updateMapPinLegend();
 }
+
 function setActivePin(c){
  if(state.pinMarker)state.pinMarker.remove();
  const el=markerEl('active-pin','Active photography stop');
@@ -1777,14 +1914,21 @@ async function scanAt(c,opts){
 setActivePin(state.center);updateRadius();
  const pinUrl='https://www.openstreetmap.org/?mlat='+c.lat.toFixed(6)+'&mlon='+c.lng.toFixed(6)+'#map=16/'+c.lat.toFixed(6)+'/'+c.lng.toFixed(6);
  const pinItem={id:'user-pin-'+Date.now(),name:'Pinned photography location',lat:c.lat,lng:c.lng,distance:null,category:'photoSpot',isUserPin:true,source:'Your map pin',sourceUrl:pinUrl,summary:'A user-selected coordinate. Nearby landmarks, parking and reference photos are researched separately; this pin alone does not prove a safe or public viewpoint.',why:'This is your chosen scouting coordinate, not a verified landmark or confirmed sightline. Use the generated framing ideas as a starting point, then check local access and the real view.',scenicKind:'location study',tags:{},city:''};
- selectItem(pinItem,{keepMapView:true});
+ if(opts&&opts.initial){
+  // Auto-scout the home map without opening a placeholder pin detail over the search tools.
+  $('spotDetail').classList.remove('show');
+  const quickStrip=$('pinActionStrip');
+  if(quickStrip)quickStrip.hidden=true;
+ }else{
+  selectItem(pinItem,{keepMapView:true});
+ }
 
  if(opts&&opts.fly&&map.getZoom()<12){map.stop();map.flyTo({center:[c.lng,c.lat],zoom:Math.max(12.5,map.getZoom()+3),duration:850,essential:true});}
  refreshBasemapParking();
  renderResults();renderPhotos();renderMarkers();
  setStatus('Scouting around your pin','Searching mapped parking and history nearby, plus a wider 25–30 km radius for landscape and city-view candidates.','loading');
- $('mapTitle').textContent='Exploring your stop';
- $('mapSubtitle').textContent=coordLabel(c)+' · '+(state.radius/1000)+' km local search + wider photo scouting';
+ $('mapTitle').textContent=opts&&opts.initial?'Scout Rijeka & the Kvarner coast':'Exploring your stop';
+ $('mapSubtitle').textContent=(opts&&opts.initial?'Nearby landmarks, viewpoints and parking are loading · ':'')+coordLabel(c)+' · '+(state.radius/1000)+' km local search + wider photo scouting';
  updateSocialSearch('near '+coordLabel(c));
  const rad=state.radius;
  let osmResults=[];
@@ -2353,6 +2497,11 @@ function setupImageGeneration(){
 }
 function selectItem(item,options){
  state.selected=item;
+ state.markers.forEach(function(marker){
+  const items=marker.__scoutItems||[];
+  const selected=items.some(function(candidate){return candidate&&candidate.id===item.id;});
+  marker.getElement().classList.toggle('is-selected',selected);
+ });
  const quick=$('pinActionStrip');
  if(quick){quick.hidden=false;$('pinActionTitle').textContent='Photo ideas · '+String(item.name||'your pin');}
  // Map place selection updates the on-page photography idea and nearby references.
@@ -3064,6 +3213,23 @@ $('fieldGuideDetail').addEventListener('click',event=>{
 });
 
 window.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('fieldGuideDetail').hidden){if(document.body.classList.contains('field-guide-context-only'))closeFieldGuide();else closeFieldGuideDetail();}else if(event.key==='Escape'&&!$('fieldGuidePage').hidden)closeFieldGuide();});
+
+// Progressive Web App install support. Geographic services still need a network connection.
+let photoScoutInstallEvent=null;
+const installAppButton=$('installAppBtn');
+window.addEventListener('beforeinstallprompt',function(event){
+ event.preventDefault();photoScoutInstallEvent=event;
+ if(installAppButton)installAppButton.hidden=false;
+});
+if(installAppButton)installAppButton.addEventListener('click',async function(){
+ if(!photoScoutInstallEvent){setStatus('Install Photo Scout','Use your browser menu and choose “Install app” or “Add to Home Screen”.','');return;}
+ photoScoutInstallEvent.prompt();
+ try{const choice=await photoScoutInstallEvent.userChoice;if(choice&&choice.outcome==='accepted')setStatus('Photo Scout installed','Launch it from your desktop or home screen.','');else setStatus('Installation cancelled','You can install Photo Scout later from your browser menu.','');}catch(error){}
+ photoScoutInstallEvent=null;installAppButton.hidden=true;
+});
+window.addEventListener('appinstalled',function(){if(installAppButton)installAppButton.hidden=true;setStatus('Photo Scout installed','The app can now launch from your app menu or home screen.','');});
+if('serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(function(error){console.info('Offline app shell was not registered:',error&&error.message||error);});});
+
 renderFieldGuide();
 loadSaved();
 setupImageGeneration();

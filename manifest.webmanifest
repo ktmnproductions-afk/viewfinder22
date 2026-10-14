@@ -1,0 +1,25 @@
+{
+  "name": "Photo Scout — Photography Planner",
+  "short_name": "Photo Scout",
+  "description": "Scout real photography locations, historic landmarks, viewpoints, parking and visual composition ideas.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f7f1",
+  "theme_color": "#f5f7f1",
+  "categories": [
+    "travel",
+    "navigation",
+    "photography"
+  ],
+  "icons": [
+    {
+      "src": "./app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
