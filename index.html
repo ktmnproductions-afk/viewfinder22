@@ -3423,7 +3423,15 @@ if(installAppButton)installAppButton.addEventListener('click',async function(){
 window.addEventListener('appinstalled',function(){if(installAppButton)installAppButton.hidden=true;setStatus('Photo Scout installed','The app can now launch from your app menu or home screen.','');});
 if('serviceWorker' in navigator){
  let refreshedForWorker=false;
+ // A first-time controller change is expected when this page registers its
+ // service worker; it does not require a reload. Reload only when a page that
+ // was already controlled receives a replacement worker.
+ let hadController=!!navigator.serviceWorker.controller;
  navigator.serviceWorker.addEventListener('controllerchange',function(){
+  if(!hadController){
+   hadController=true;
+   return;
+  }
   if(refreshedForWorker)return;
   refreshedForWorker=true;
   window.location.reload();
