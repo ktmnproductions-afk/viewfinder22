@@ -3162,35 +3162,41 @@ function renderFieldGuideAreaBoard(card){
 async function loadFieldGuideAreaPhotos(parentCard,subject){
  const id=subject.id;
  if(fieldGuidePhotoCache[id])return;
+ const token=fieldGuidePhotoLoadToken;
+ const contextOnly=fieldGuideContextOnly;
  fieldGuidePhotoCache[id]={loading:true};
  const scanId=state.scanId;
+ const isCurrent=()=>token===fieldGuidePhotoLoadToken&&scanId===state.scanId&&
+  (!$('fieldGuidePage').hidden)&&(!contextOnly||document.body.classList.contains('field-guide-context-only'));
  try{
   let refs=await commonsTextSearch(subject.searchQueries,{lat:subject.lat,lng:subject.lng},scanId);
+  if(!isCurrent())return;
   refs=refs.filter(photo=>photoReferenceFitsPlace(photo,subject,subject.locality));
-  if(scanId!==state.scanId)return;
-  // If the title search is empty, add only nearby scene-titled landscape/architecture
-  // images, never arbitrary upload coordinates or event/person photos.
+  // A small-town search may return only a few files. Never broaden this to
+  // generic country/category queries inside a selected-place board.
   if(refs.length<3){
    try{
-    const radius=Math.min(8000,Math.max(2500,Number(state.radius)||5000));
+    const radius=Math.min(1500,Math.max(500,Number(state.radius)||1000));
     const nearby=await commonsSearch({lat:subject.lat,lng:subject.lng},radius,scanId);
-    if(scanId!==state.scanId)return;
+    if(!isCurrent())return;
     const seen=new Set(refs.map(p=>p.id||p.name));
     nearby.forEach(photo=>{
      if(!photoReferenceFitsPlace(photo,subject,subject.locality))return;
      const key=photo.id||photo.name;
      if(seen.has(key))return;
      seen.add(key);
-     refs.push({...photo,referenceType:'Nearby scenic/architecture reference; geotag does not verify the exact camera position.'});
+     refs.push({...photo,referenceType:'Local geotagged scenic reference; exact camera position is not verified.'});
     });
-   }catch(error){}
+   }catch(error){if(!isCurrent())return;}
   }
+  if(!isCurrent())return;
   refs=refs.filter(photo=>photoReferenceFitsPlace(photo,subject,subject.locality));
   fieldGuidePhotoCache[id]=refs.slice(0,3);
  }catch(error){
-  if(scanId!==state.scanId){delete fieldGuidePhotoCache[id];return;}
+  if(!isCurrent())return;
   fieldGuidePhotoCache[id]=[];
  }
+ if(!isCurrent())return;
  if(!$('fieldGuideDetail').hidden&&fieldGuideDetailCardId===id){
   renderFieldGuideDetailBody(subject);
  }else if(fieldGuideDetailCardId===parentCard.id&&!$('fieldGuideDetail').hidden){
