@@ -379,18 +379,15 @@ jobs:
                 const canvasRect = canvas?.getBoundingClientRect();
                 const markerNodes = [...document.querySelectorAll('.scout-marker')];
                 const markerCounts = state.markerCounts || {};
-                const realData = {
-                  landmarksInView: state.historyCount,
-                  architectureInView: state.resultCount,
-                  viewpointsInView: state.resultCount,
-                  scenicPlacesInView: state.scenicCount
-                };
+                const dataInView = state.viewportCategoryCounts || {};
+
                 return {
                   viewport: { width: window.innerWidth, height: window.innerHeight },
                   mapBox: mapRect && {x:mapRect.x,y:mapRect.y,width:mapRect.width,height:mapRect.height},
                   canvasBox: canvasRect && {x:canvasRect.x,y:canvasRect.y,width:canvasRect.width,height:canvasRect.height},
                   canvasBackingStore: canvas && {width:canvas.width,height:canvas.height},
                   resultCount: results,
+                  dataInView,
                   markerCounts,
                   domCounts: {
                     landmark: markerNodes.filter(node=>node.classList.contains('history')).length,
@@ -419,6 +416,14 @@ jobs:
               if (livePinDiagnostics.domCounts.landmark + livePinDiagnostics.domCounts.viewpoint +
                   livePinDiagnostics.domCounts.architecture + livePinDiagnostics.domCounts.photoSpot === 0) {
                 throw new Error('The real geographic scan returned no visible non-parking pins: '+JSON.stringify(livePinDiagnostics));
+              }
+              const missingVisibleCategoryPin =
+                (livePinDiagnostics.dataInView.history > 0 && livePinDiagnostics.domCounts.landmark === 0) ||
+                (livePinDiagnostics.dataInView.architecture > 0 && livePinDiagnostics.domCounts.architecture === 0) ||
+                (livePinDiagnostics.dataInView.viewpoint > 0 && livePinDiagnostics.domCounts.viewpoint === 0) ||
+                (livePinDiagnostics.dataInView.scenic > 0 && livePinDiagnostics.domCounts.photoSpot === 0);
+              if (missingVisibleCategoryPin) {
+                throw new Error('Real geographic records in the viewport are missing their corresponding landmark/viewpoint/photo pins: '+JSON.stringify(livePinDiagnostics));
               }
 
               // Check the selected parking destinations carry human-readable distance
