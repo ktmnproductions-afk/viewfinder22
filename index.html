@@ -2001,7 +2001,7 @@ setActivePin(state.center);updateRadius();
   if(id!==state.scanId)return;
   mergePlaces();
   renderResults();renderPhotos();renderMarkers();updateRadius();
-  if(state.selected&&state.selected.isUserPin)renderDetailPhotoRefs(state.selected);
+  if(state.selected&&state.selected.isUserPin){renderSelectedShotIdeas(state.selected);renderDetailPhotoRefs(state.selected);}
   const parts=[];
   if(completed.has('places'))parts.push(osmResults.length+' mapped places · '+parkingCandidates().length+' parking locations on screen/in radius');
   if(completed.has('history'))parts.push(wikiResults.length+' history articles');
@@ -2101,7 +2101,14 @@ function conceptSketchData(item,mode,variation){
  const locality=String(item&&(item.city||item.locality||state.detectedLocality)||'');
  const category=String(item&&item.category||'photoSpot');
  const tags=item&&item.tags||{};
- const facts=[name,locality,tags.natural,tags.tourism,tags.waterway,tags.building,tags.historic,tags.amenity,tags.leisure,item&&item.scenicKind,item&&item.summary,item&&item.history,item&&item.why].filter(Boolean).join(' ').toLowerCase();
+ const nearbyContext=item&&item.isUserPin
+  ?[...state.scenicSpots,...state.results.filter(p=>p.category==='history'||p.category==='architecture'||p.category==='viewpoint')]
+    .filter(p=>p&&p.name&&!/^Unnamed mapped/i.test(p.name))
+    .sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,8)
+    .map(p=>[p.name,p.scenicKind,p.summary,p.why,p.tags&&p.tags.natural,p.tags&&p.tags.historic,p.tags&&p.tags.tourism,p.tags&&p.tags.building].filter(Boolean).join(' '))
+    .join(' ')
+  :'';
+ const facts=[name,locality,tags.natural,tags.tourism,tags.waterway,tags.building,tags.historic,tags.amenity,tags.leisure,item&&item.scenicKind,item&&item.summary,item&&item.history,item&&item.why,nearbyContext].filter(Boolean).join(' ').toLowerCase();
  const modeValue=mode||'wide';
  const lens=modeValue==='compressed'?'100–150 mm':modeValue==='context'?'35–70 mm':'18–24 mm';
  const isBattle=/battle|battlefield|battleground|siege|campaign|historic battlefield|conflict site|military history|war site/.test(facts);
@@ -2380,7 +2387,14 @@ async function renderDetailPhotoRefs(item){
 function selectedShotIdeasFor(item){
  const name=String(item&&item.name||'this place');
  const tags=item&&item.tags||{};
- const facts=[name,tags.natural,tags.waterway,tags.historic,tags.tourism,tags.building,tags.leisure,tags.highway,item&&item.scenicKind,item&&item.summary,item&&item.why].filter(Boolean).join(' ').toLowerCase();
+ const nearbyContext=item&&item.isUserPin
+  ?[...state.scenicSpots,...state.results.filter(p=>p.category==='history'||p.category==='architecture'||p.category==='viewpoint')]
+    .filter(p=>p&&p.name&&!/^Unnamed mapped/i.test(p.name))
+    .sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,8)
+    .map(p=>[p.name,p.scenicKind,p.summary,p.why,p.tags&&p.tags.natural,p.tags&&p.tags.historic,p.tags&&p.tags.tourism,p.tags&&p.tags.building].filter(Boolean).join(' '))
+    .join(' ')
+  :'';
+ const facts=[name,item&&item.city||state.detectedLocality,tags.natural,tags.waterway,tags.historic,tags.tourism,tags.building,tags.leisure,tags.highway,item&&item.scenicKind,item&&item.summary,item&&item.why,nearbyContext].filter(Boolean).join(' ').toLowerCase();
  if(/battle|battlefield|siege|historic field|war site/.test(facts))return [
   'Wide · 18–24 mm: show the open landscape with a path or grass in the foreground.',
   'Context · 35–70 mm: frame real terrain, a river bend or an existing marker.',
