@@ -3247,12 +3247,18 @@ function openFieldGuide(){
  $('fieldGuidePage').hidden=false;
  document.body.classList.add('field-guide-open');
  renderFieldGuide();
- loadFieldGuidePhotos(false);
+ // Contextual ideas use their own card in the detail board; do not run the
+ // catalogue photo queue in the background, where its results can race with the pin.
+ if(!fieldGuideContextOnly)loadFieldGuidePhotos(false);
  window.requestAnimationFrame(()=>{ $('fieldGuidePage').scrollTop=0; if(map)map.resize(); });
 }
 function closeFieldGuide(){
- // Clear contextual mode before dismissing its detail, so the close helpers do
- // not reopen or preserve a hidden default-location catalogue.
+ // Invalidate all outstanding catalogue/area-photo work before hiding the board.
+ // A late response must never repopulate hidden or newly opened location content.
+ fieldGuidePhotoLoadToken++;
+ fieldGuidePhotoCache={};
+ fieldGuideHasLoaded=false;
+ fieldGuideAreaLookup={};
  fieldGuideContextOnly=false;
  if(!$('fieldGuideDetail').hidden){
   $('fieldGuideDetail').hidden=true;
@@ -3266,7 +3272,6 @@ function closeFieldGuide(){
  if(grid){grid.hidden=false;grid.style.removeProperty('display');}
  window.requestAnimationFrame(()=>{if(map)map.resize();});
 }
-
 $('jumpToPhotoIdeas').addEventListener('click',()=>{
  if(!state.selected){setStatus('Drop a pin first','Click anywhere on the map to create your photography stop.','warn');return;}
  $('spotDetail').scrollIntoView({behavior:'smooth',block:'start'});
