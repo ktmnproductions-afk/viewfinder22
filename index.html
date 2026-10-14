@@ -2097,28 +2097,52 @@ function conceptSketchData(item,mode,variation){
  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 let detailPhotoSearchId=0;
+const PHOTO_LOCALITY_CACHE=new Map();
+let lastPhotoLocalityRequestAt=0;
+async function lookupPhotoLocality(lat,lng,scanId){
+ const cacheKey=Number(lat).toFixed(2)+','+Number(lng).toFixed(2);
+ if(PHOTO_LOCALITY_CACHE.has(cacheKey))return PHOTO_LOCALITY_CACHE.get(cacheKey);
+ const wait=Math.max(0,1100-(Date.now()-lastPhotoLocalityRequestAt));
+ if(wait)await new Promise(resolve=>setTimeout(resolve,wait));
+ if(scanId!==state.scanId)return '';
+ lastPhotoLocalityRequestAt=Date.now();
+ const url='https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='+encodeURIComponent(lat)+'&lon='+encodeURIComponent(lng)+'&zoom=12&addressdetails=1';
+ try{
+  const data=await requestJSON(url,scanId,9000);
+  const address=data.address||{};
+  const place=address.city||address.town||address.village||address.municipality||address.hamlet||address.suburb||address.county||address.state_district||'';
+  const country=address.country||'';
+  const locality=[place,country].filter(Boolean).join(', ');
+  PHOTO_LOCALITY_CACHE.set(cacheKey,locality);
+  return locality;
+ }catch(error){return '';}
+}
 async function renderDetailPhotoRefs(item){
  const container=$('detailPhotoRefs');
  if(!container)return;
  const requestId=++detailPhotoSearchId;
  const selectedId=item.id;
  $('detailPhotoCount').textContent='Searching…';
- container.innerHTML=emptyHTML('Finding landmark-matched photos and clearly labelled scenic references. Event, team and portrait images are filtered out.');
- const locality=String(item.city||state.detectedLocality||'').trim();
+ container.innerHTML=emptyHTML('Finding landmark-matched photographs and location-aware scenic references. Event, team and portrait images are filtered out.');
+ let locality=String(item.city||item.locality||state.detectedLocality||'').trim();
  const rawName=String(item.name||'').replace(/^Unnamed mapped\s+/i,'').replace(/\s+near\s+.+$/i,'').trim();
  const queryName=item.isUserPin?'':(rawName&&!/^your pin$/i.test(rawName)?rawName:'');
+ if(!locality){
+  locality=await lookupPhotoLocality(item.lat,item.lng,state.scanId);
+  if(requestId!==detailPhotoSearchId||!state.selected||state.selected.id!==selectedId)return;
+  if(locality&&!state.detectedLocality)state.detectedLocality=locality;
+ }
  const nearbyNames=item.isUserPin?[...state.results.filter(r=>r.name&&r.category!=='parking'&&!/^Unnamed mapped/i.test(r.name)).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,3).map(r=>r.name),...state.scenicSpots.filter(r=>r.name&&!r.genericFeature&&!/^Unnamed mapped/i.test(r.name)).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,2).map(r=>r.name)]:[];
  const terms=[];
  if(queryName)terms.push(queryName);
  if(queryName&&locality)terms.push(queryName+' '+locality);
  if(item.isUserPin)terms.push(...nearbyNames.slice(0,3));
- if(locality)terms.push(locality);
- else if(state.detectedLocality)terms.push(state.detectedLocality);
- const uniqueTerms=[...new Set(terms.map(t=>String(t||'').trim()).filter(Boolean))].slice(0,4);
+ if(locality)terms.push(locality,locality+' landscape',locality+' historic architecture');
+ const uniqueTerms=[...new Set(terms.map(t=>String(t||'').trim()).filter(Boolean))].slice(0,5);
  let refs=uniqueTerms.length?await commonsTextSearch(uniqueTerms,{lat:item.lat,lng:item.lng},state.scanId).catch(()=>[]):[];
  if(requestId!==detailPhotoSearchId||!state.selected||state.selected.id!==selectedId)return;
  // If exact/title-matched images are sparse, use only nearby Commons files whose
- // titles identify a landscape, view, building or landmark. Never use proximity alone.
+ // titles indicate landscape, architecture or a landmark; never use proximity alone.
  if(refs.length<3){
   try{
    const radius=Math.min(10000,Math.max(3000,Number(state.radius)||5000));
@@ -2129,19 +2153,19 @@ async function renderDetailPhotoRefs(item){
     const key=photo.id||photo.name;
     if(seen.has(key))return;
     seen.add(key);
-    refs.push({...photo,referenceType:'Nearby geotagged scenic/architecture reference; this does not prove the exact camera position.'});
+    refs.push({...photo,referenceType:'Nearby geotagged scenic/architecture reference. Useful for light and composition; it does not verify the exact camera position.'});
    });
   }catch(error){}
  }
  if(requestId!==detailPhotoSearchId||!state.selected||state.selected.id!==selectedId)return;
  const finalRefs=refs.slice(0,3);
- $('detailPhotoCount').textContent=finalRefs.length?(queryName?'Matched place + scenic references · '+finalRefs.length:'Nearby scenic references · '+finalRefs.length):'No source images found';
+ $('detailPhotoCount').textContent=finalRefs.length?(queryName?'Place-matched + scenic references · '+finalRefs.length:'Locality/scenic references · '+finalRefs.length):'No source images found';
  if(!finalRefs.length){
-  container.innerHTML=emptyHTML('No suitable licensed source photo matched this stop. The three location-aware composition sketches and the Generate AI image button above remain available; we will not substitute unrelated event uploads.');
+  container.innerHTML=emptyHTML('No suitable licensed source photo was available for this stop. Three location-aware sketch ideas remain above; use Generate AI image for a new visual concept. We will not substitute unrelated event uploads.');
   return;
  }
  container.innerHTML=finalRefs.map(p=>{
-  const note=p.geotagged?'Nearby scenic image · '+distanceLabel(p.distance)+' from the pin. The image geotag is approximate evidence, not a verified camera position.':(p.referenceType||'Matched by landmark/topic title; exact camera position is not verified.');
+  const note=p.geotagged?'Nearby scenic image · '+distanceLabel(p.distance)+' from the pin. The geotag is approximate evidence, not a verified camera position.':(p.referenceType||'Matched by place/subject title; exact view is not verified.');
   return '<article class="detail-photo"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(note)+'</div><div class="detail-photo-note">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Licence on source page')+'</div><a class="detail-photo-source" href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Original photo & licence ↗</a></article>';
  }).join('');
  container.querySelectorAll('img').forEach((img,index)=>{
@@ -2196,6 +2220,11 @@ function selectedShotIdeasFor(item){
   'Wide · 18–24 mm: add a trail, rock or water edge in the foreground for depth.',
   'Context · 35–70 mm: frame a single ridge, waterfall or limestone wall with surroundings.',
   'Detail · 100–150 mm: stack distant ridgelines or isolate repeating textures in rock and forest.'
+ ];
+ if(/wayside cross|roadside cross|crucifix|calvary|wayside shrine|kapelica|sveti križ|sveti kriz|cross/.test(facts))return [
+  'Wide · 18–24 mm: use the cross as a clear foreground subject and let the real path, rooftops or hills create depth behind it. Keep the skyline only if it is actually visible from this point.',
+  'Context · 35–70 mm: include the cross plus its setting—stonework, trees, a lane or surrounding architecture—so the image tells where it belongs.',
+  'Detail · 100–150 mm: isolate the cross silhouette, weathered texture or carved detail against a clean sky or distant hillside. Avoid cropping it into a generic symbol.'
  ];
  if(/necropolis|tomb|grave|burial|cemetery|mausoleum/.test(facts))return [
   'Wide · 18–24 mm: show the tombs in their landscape without crowding the frame.',
