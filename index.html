@@ -1434,36 +1434,45 @@ function normalizeBasemapFilter(filter){
 function suppressBasemapParkingSymbols(){
  if(!map||!state.styleLoaded)return;
  const layers=(map.getStyle()&&map.getStyle().layers)||[];
- const parkingTerms=['parking','parking_space','car_parking','car_park'];
+ const parkingTerms=['parking','parking_space','car_parking','car_park','parking_lot','parking_garage'];
  const parkingFeature=['any',
   ...parkingTerms.flatMap(value=>[
    ['==',['downcase',['to-string',['coalesce',['get','class'],'']]],value],
    ['==',['downcase',['to-string',['coalesce',['get','subclass'],'']]],value],
    ['==',['downcase',['to-string',['coalesce',['get','amenity'],'']]],value],
-   ['==',['downcase',['to-string',['coalesce',['get','type'],'']]],value]
+   ['==',['downcase',['to-string',['coalesce',['get','type'],'']]],value],
+   ['==',['downcase',['to-string',['coalesce',['get','kind'],'']]],value]
   ])
  ];
  state.parkingFilteredLayers=new Set();
+ state.parkingFilterDiagnostics=[];
  layers.forEach(layer=>{
   if(layer.type!=='symbol')return;
   const id=String(layer.id||'').toLowerCase();
   const source=String(layer.source||'').toLowerCase();
   const sourceLayer=String(layer['source-layer']||'').toLowerCase();
-  if(/parking/.test(id)){
-   try{map.setLayoutProperty(layer.id,'visibility','none');state.parkingFilteredLayers.add(layer.id);}catch(error){}
+  const iconImage=JSON.stringify(layer.layout&&layer.layout['icon-image']||'').toLowerCase();
+  const seemsParking=/parking/.test(id)||/parking/.test(iconImage);
+  if(seemsParking){
+   try{
+    map.setLayoutProperty(layer.id,'visibility','none');
+    state.parkingFilteredLayers.add(layer.id);
+    state.parkingFilterDiagnostics.push({id:layer.id,source,sourceLayer,method:'layer hidden'});
+   }catch(error){state.parkingFilterDiagnostics.push({id:layer.id,source,sourceLayer,error:String(error.message||error)});}
    return;
   }
-  const isOpenFreeMapPoi=(sourceLayer==='poi'&&(source==='openmaptiles'||source.includes('openmaptiles')))||
-   (sourceLayer==='poi'&&/poi/.test(id))||
-   (source.includes('openmaptiles')&&/poi/.test(id));
-  if(!isOpenFreeMapPoi)return;
+  // OpenFreeMap style layers can use different source IDs across style variants.
+  // Apply the feature filter to every POI source-layer rather than relying on the
+  // literal source name; otherwise the basemap can retain its own blue parking P.
+  const isPoiLayer=sourceLayer==='poi'||(/poi/.test(id)&&sourceLayer!=='transportation_name');
+  if(!isPoiLayer)return;
   try{
    const existing=layer.filter?normalizeBasemapFilter(layer.filter):['all'];
    map.setFilter(layer.id,['all',existing,['!',parkingFeature]]);
    state.parkingFilteredLayers.add(layer.id);
+   state.parkingFilterDiagnostics.push({id:layer.id,source,sourceLayer,method:'parking features excluded'});
   }catch(error){
-   // If the provider has an unusual legacy filter, leave the map running; the
-   // application still provides its own correctly styled/clickable parking markers.
+   state.parkingFilterDiagnostics.push({id:layer.id,source,sourceLayer,error:String(error.message||error)});
   }
  });
 }
