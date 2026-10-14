@@ -200,11 +200,12 @@ jobs:
               if (point.x < 340 || point.x > point.width || point.y < 95 || point.y > point.height) {
                 throw new Error('Test coordinate projected outside the clickable visible map: ' + JSON.stringify(point));
               }
+              const scansBeforeClick = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.scanCount);
               await page.mouse.click(point.x, point.y);
-              await page.waitForFunction(() =>
-                window.__PHOTO_SCOUT_TEST__?.scanCount >= 1 &&
+              await page.waitForFunction((previousCount) =>
+                window.__PHOTO_SCOUT_TEST__?.scanCount > previousCount &&
                 document.querySelector('#spotDetail')?.classList.contains('show'),
-                null,
+                scansBeforeClick,
                 { timeout: 10000 }
               );
 
