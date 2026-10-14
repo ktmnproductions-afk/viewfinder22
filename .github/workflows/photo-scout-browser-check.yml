@@ -132,11 +132,12 @@ jobs:
               if (point.x < 340 || point.x > point.width || point.y < 95 || point.y > point.height) {
                 throw new Error('Test coordinate projected outside the clickable visible map: ' + JSON.stringify(point));
               }
+              const scanCountBeforeClick = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.scanCount);
               await page.mouse.click(point.x, point.y);
-              await page.waitForFunction(() =>
-                window.__PHOTO_SCOUT_TEST__?.scanCount >= 1 &&
+              await page.waitForFunction((before) =>
+                window.__PHOTO_SCOUT_TEST__?.scanCount > before &&
                 document.querySelector('#spotDetail')?.classList.contains('show'),
-                null,
+                scanCountBeforeClick,
                 { timeout: 10000 }
               );
 
@@ -152,6 +153,50 @@ jobs:
                   !pinState.sketch.startsWith('data:image/svg+xml') ||
                   !pinState.generatorButton || !pinState.generatorPanel || !pinState.settings) {
                 throw new Error('A map click must select a pin and show its location-specific photography workflow: ' + JSON.stringify(pinState));
+              }
+
+              // Test pin rendering with deterministic fixture data on localhost only.
+              // These fixtures are never available on the public GitHub Pages app.
+              const fixtureInstalled = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.renderMarkerFixture?.() === true);
+              if (!fixtureInstalled) throw new Error('Local-only map marker test fixture was not available.');
+              await page.waitForTimeout(1200);
+              const markerCheck = await page.evaluate(() => {
+                const kinds = ['history','architecture','viewpoint','photoSpot','parking'];
+                const mapRect = document.querySelector('#map').getBoundingClientRect();
+                const markers = [...document.querySelectorAll('.scout-marker')].map(el => {
+                  const rect = el.getBoundingClientRect();
+                  return {
+                    classes: el.className,
+                    title: el.title || '',
+                    visibleInMap: rect.width > 0 && rect.height > 0 &&
+                      rect.right > mapRect.left + 340 && rect.left < mapRect.right &&
+                      rect.bottom > mapRect.top + 90 && rect.top < mapRect.bottom - 20
+                  };
+                });
+                const counts = Object.fromEntries(kinds.map(kind => [
+                  kind,
+                  markers.filter(marker => marker.classes.split(/\\s+/).includes(kind)).length
+                ]));
+                const visibleCounts = Object.fromEntries(kinds.map(kind => [
+                  kind,
+                  markers.filter(marker => marker.classes.split(/\\s+/).includes(kind) && marker.visibleInMap).length
+                ]));
+                return {
+                  state: window.__PHOTO_SCOUT_TEST__.getState(),
+                  counts,
+                  visibleCounts,
+                  visibleLongDistanceSpot: markers.some(marker =>
+                    marker.title.includes('Distant viewpoint marker fixture') && marker.visibleInMap),
+                  viewport: {width: mapRect.width, height: mapRect.height}
+                };
+              });
+              for (const kind of ['history','architecture','viewpoint','photoSpot','parking']) {
+                if (!(markerCheck.counts[kind] > 0) || !(markerCheck.visibleCounts[kind] > 0)) {
+                  throw new Error('Expected visible '+kind+' pins; the app must not hide them behind overlapping markers or zoom them off-screen: '+JSON.stringify(markerCheck));
+                }
+              }
+              if (!markerCheck.visibleLongDistanceSpot) {
+                throw new Error('The wider-area viewpoint marker was not visible after fitting the scouting bounds: '+JSON.stringify(markerCheck));
               }
 
               // No credentials in CI: the app must keep the user in-app and ask for authorization, not generate a fake image.
@@ -173,6 +218,7 @@ jobs:
                 backupRasterTilesLoaded: rasterLoaded,
                 pinWorkflow: 'passed',
                 localSketch: pinState.sketch.slice(0, 30),
+                markerRendering: markerCheck,
                 imageGeneratorGate: 'authorization required; no off-site navigation',
                 browserExceptions: pageErrors,
                 tileResponsesObserved: tileResponses.length
