@@ -207,8 +207,8 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
 @media(max-width:420px){.field-guide-wordmark{font-size:14px}.field-guide-deck{max-width:190px}.field-guide-header-actions{gap:3px}.field-guide-map-button{font-size:9px;padding:0 7px}.guide-card{grid-template-columns:minmax(116px,.42fr) minmax(0,.58fr)}.guide-card-info{padding:8px}.guide-card h2{font-size:14px}.guide-card-sketch{height:65px}.guide-card-ideas{font-size:9px}.guide-photo img{min-height:140px}}
 
 
-.field-guide-top-button{position:fixed;z-index:7;top:68px;right:16px;border:1px solid rgba(255,255,255,.22);border-radius:9px;background:rgba(248,247,240,.96);color:#263429;padding:9px 12px;font:650 11px Inter,system-ui,sans-serif;box-shadow:0 5px 18px rgba(17,28,19,.12);cursor:pointer}
-@media(max-width:680px){.field-guide-top-button{top:116px;right:8px;padding:8px 10px;font-size:10px}}
+
+@media(max-width:680px){}
 
 
 .fieldguide-launcher{margin:13px 13px 0;padding:14px;border:1px solid #d9ddce;border-radius:12px;background:linear-gradient(140deg,#f1f2e7,#e6eadc);color:#2e3a30}.fieldguide-launcher-kicker{font:9px Inter,system-ui,sans-serif;letter-spacing:.16em;color:#77816f}.fieldguide-launcher h3{font:20px Georgia,serif;font-weight:400;margin:6px 0}.fieldguide-launcher p{font:11px/1.55 Inter,system-ui,sans-serif;color:#687364;margin:0 0 11px}.fieldguide-launcher .btn{width:100%;white-space:normal}.fieldguide-detail-cta{margin-bottom:12px}.fieldguide-detail-cta p{font:11px/1.5 Inter,system-ui,sans-serif;color:#6f796b;margin:8px 0}
@@ -264,6 +264,62 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
 }
 
 .detail-photo-source{display:inline-block;margin:2px 8px 8px;color:#c4d3bf;font:10px Inter,system-ui,sans-serif;text-decoration:underline;text-underline-offset:3px}.detail-photo>img{cursor:default}
+
+/* Compact map actions and docked in-app photo guide */
+.brand-quick-hint{font:10px/1.45 Inter,system-ui,sans-serif;color:#9eb09f;margin:7px 0 0}
+.map-quick-actions{position:fixed;top:112px;right:14px;z-index:8;display:flex;flex-direction:column;gap:8px}
+.map-quick-action{position:relative;display:grid;place-items:center;width:43px;height:43px;padding:0;border:1px solid rgba(53,69,53,.22);border-radius:13px;background:rgba(249,248,241,.97);color:#354535;box-shadow:0 4px 17px rgba(20,32,22,.17);cursor:pointer;transition:transform .14s,background .14s,border-color .14s}
+.map-quick-action:hover{transform:translateY(-1px);background:#fffef7;border-color:#7d8e78}
+.map-quick-action:focus-visible{outline:3px solid #b8da51;outline-offset:2px}
+.map-quick-action svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.map-quick-action span{position:absolute;right:51px;top:50%;transform:translateY(-50%);padding:6px 8px;background:#233127;color:#f6f5eb;border-radius:6px;font:10px Inter,system-ui,sans-serif;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s}
+.map-quick-action:hover span,.map-quick-action:focus-visible span{opacity:1}
+.scout-marker.active-pin .dot-core{width:34px;height:34px;border-radius:50% 50% 50% 8px;border:3px solid #17251b;background:#d9f36b;color:#17251b;box-shadow:0 0 0 6px rgba(217,243,107,.22),0 4px 14px rgba(0,0,0,.65);animation:active-pin-pulse 1.8s ease-out infinite}
+.scout-marker.active-pin .dot-core span{transform:rotate(45deg);font-size:15px}
+@keyframes active-pin-pulse{0%,100%{box-shadow:0 0 0 5px rgba(217,243,107,.18),0 4px 14px rgba(0,0,0,.65)}50%{box-shadow:0 0 0 10px rgba(217,243,107,.04),0 4px 14px rgba(0,0,0,.65)}}
+.field-guide{position:fixed;inset:70px 68px 14px auto;width:min(880px,calc(100vw - 360px));height:calc(100dvh - 84px);max-height:calc(100dvh - 84px);min-height:0;border:1px solid #d4d2c7;border-radius:16px;box-shadow:0 18px 60px rgba(12,20,13,.32);z-index:60}
+.field-guide-header{flex:0 0 auto}
+.field-guide-toolbar{top:0;flex:0 0 auto}
+.field-guide-intro{flex:0 0 auto;padding:16px 18px 12px}
+.field-guide-intro h1{font-size:clamp(23px,2.4vw,33px)}
+.field-guide-intro p{font-size:11px}
+.field-guide-grid{grid-template-columns:1fr;gap:9px;padding:0 10px 14px}
+.guide-card{min-height:230px;grid-template-columns:minmax(130px,.40fr) minmax(0,.60fr)}
+.guide-photo img{min-height:155px}
+.field-guide-detail{position:absolute;inset:0;padding:9px;align-items:stretch;justify-content:stretch;background:rgba(23,31,25,.38)}
+.field-guide-detail-panel{width:100%;max-height:100%;height:100%;overflow:auto;box-shadow:0 10px 40px rgba(12,20,13,.2)}
+body.field-guide-open .map-quick-actions{opacity:.25;pointer-events:none}
+@media(min-width:1250px){.field-guide-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.guide-card{grid-template-columns:minmax(130px,.42fr) minmax(0,.58fr)}}
+@media(max-width:1000px){.field-guide{right:64px;width:min(760px,calc(100vw - 340px))}.field-guide-grid{grid-template-columns:1fr}}
+@media(max-width:720px){
+ .map-quick-actions{top:108px;right:9px;gap:6px}
+ .map-quick-action{width:39px;height:39px;border-radius:12px}
+ .map-quick-action svg{width:18px;height:18px}
+ .field-guide{left:8px;right:8px;top:auto;bottom:8px;width:auto;height:min(78dvh,760px);max-height:calc(100dvh - 74px);border-radius:15px}
+ .field-guide-header{gap:8px;padding:10px}
+ .field-guide-wordmark{font-size:15px}
+ .field-guide-deck{font-size:9px}
+ .field-guide-header-actions{gap:5px}
+ .field-guide-search{width:32px}
+ .field-guide-map-button{font-size:9px;padding:0 7px}
+ .field-guide-toolbar{top:0;padding:8px;gap:5px}
+ .field-guide-sort{font-size:9px}
+ .field-guide-intro{padding:12px}
+ .field-guide-intro h1{font-size:24px}
+ .field-guide-intro p{font-size:10px}
+ .field-guide-grid{grid-template-columns:1fr;padding:0 7px 10px}
+ .guide-card{min-height:215px;grid-template-columns:minmax(112px,.4fr) minmax(0,.6fr)}
+ .guide-card-info{padding:8px}
+ .guide-card h2{font-size:14px}
+ .guide-card-sketch{height:66px}
+ .guide-card-ideas{font-size:9px}
+ .guide-photo img{min-height:137px}
+ .field-guide-detail{padding:5px}
+ .field-guide-detail-panel{height:100%;max-height:100%}
+ .field-guide-detail-grid{grid-template-columns:1fr}
+ .field-guide-detail-photos{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
 </style>
 </head>
 <body>
@@ -322,7 +378,12 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
   <button class="map-style" data-style="dark">Dark</button>
   <button class="map-style" data-style="fiord">Terrain</button>
 </div>
-<button id="fieldGuideTopButton" class="field-guide-top-button" type="button">Field guide ↗</button>
+<nav id="mapQuickActions" class="map-quick-actions" aria-label="Quick map tools">
+  <button id="quickSearchBtn" class="map-quick-action" type="button" title="Search a place" aria-label="Search a place"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"></circle><path d="m16 16 4.4 4.4"></path></svg><span>Search</span></button>
+  <button id="quickNearbyBtn" class="map-quick-action" type="button" title="Nearby places and pins" aria-label="Nearby places and map pins"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.2 7-12A7 7 0 1 0 5 9c0 5.8 7 12 7 12Z"></path><circle cx="12" cy="9" r="2.3"></circle></svg><span>Nearby</span></button>
+  <button id="quickIdeasBtn" class="map-quick-action" type="button" title="Photo ideas and reference photos" aria-label="Photo ideas and reference photos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.7 6.3L20 10l-6.3 1.7L12 18l-1.7-6.3L4 10l6.3-1.7L12 2Z"></path><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"></path></svg><span>Ideas</span></button>
+  <button id="quickSavedBtn" class="map-quick-action" type="button" title="Saved stops" aria-label="Saved stops"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17L12 17l-6 3.5Z"></path></svg><span>Saved</span></button>
+</nav>
 <div id="mapIssue" class="map-issue"><strong>Basemap could not be loaded.</strong><p>The app is not using the blocked OpenStreetMap volunteer tile endpoint. Retry the vector map or check the connection.</p><button id="retryMap">Retry map</button></div>
 <button id="sidebarToggle" type="button" aria-controls="mainSidebar" aria-expanded="true" aria-label="Hide sidebar"><span class="toggle-glyph">☰</span><span id="sidebarToggleLabel">Hide menu</span></button>
 <aside class="sidebar" id="mainSidebar">
@@ -330,9 +391,7 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
   <div class="brand-line"><div class="brand-symbol">✣</div><div><div class="brand-name">PHOTO SCOUT</div><div class="brand-sub">Visual photography field guide</div></div></div>
   <p>Find places. Plan a frame. Save your stops.</p>
   <div class="online-state"><span class="live-dot"></span><span id="appState">Map loading · global search ready</span></div>
-  <div class="marker-legend" aria-label="Map key"><span><i class="legend-dot mapped"></i> Mapped facts</span><span><i class="legend-dot candidate"></i> Photo candidates</span><span><i class="legend-dot parking"></i> Parking</span><span><i class="legend-dot photo"></i> Photo ideas</span></div>
-  <div class="parking-legend-note">Green P = mapped parking. ×N = several nearby points. Check access and signs on arrival.</div>
-  <button class="btn primary small idea-lab-header-button" id="headerIdeaButton" type="button">✦ Open Field Guide</button>
+<div class="brand-quick-hint">Tap the map to drop a pin, then use the small map icons for Search, Nearby, Ideas or Saved.</div>
 </header>
 <div class="panel-scroll">
   <section class="section search-section" id="searchSection">
@@ -346,13 +405,7 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
   </section>
   <section class="section status-section">
     <div class="status-box" id="statusBox"><div class="status-icon">✣</div><div class="status-copy"><div class="status-title" id="statusTitle">Start with a place</div><div class="status-msg" id="statusMsg">Search for a city or landmark, or click anywhere on the map to explore nearby spots.</div></div></div>
-    <div class="source-key-note">Start here: search or click the map → choose a nearby place → open Photo ideas for a sketch.</div>
-  </section>
-  <section class="fieldguide-launcher">
-    <div class="fieldguide-launcher-kicker">VISUAL FIELD GUIDE</div>
-    <h3>Find a frame worth making.</h3>
-    <p>Browse pencil composition studies, source-linked reference photos, and practical shot ideas for real locations around Friuli and beyond.</p>
-    <button class="btn primary" id="sidebarOpenFieldGuide" type="button">Explore photo locations ↗</button>
+    <div class="source-key-note">Click the map to zoom in and drop a bright pin. Use the small map icons for Search, Nearby, Ideas or Saved.</div>
   </section>
   <section class="detail" id="spotDetail">
     <div class="eyebrow" id="detailEyebrow">Selected location</div><h2 id="detailTitle">Your pin</h2><div class="spot-meta" id="detailMeta"></div>
@@ -1239,6 +1292,7 @@ function renderMarkers(){
    el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectItem(item);});
   }
   const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
+  if(typeof m.setZIndex==='function')m.setZIndex(String(item.category==='parking'?5000:item.category==='history'?4500:4000));
   state.markers.push(m);
  });
 }
@@ -1248,6 +1302,7 @@ function setActivePin(c){
  const core=el.querySelector('.dot-core'); if(core)core.innerHTML='<span>+</span>';
  el.style.zIndex='1200';
  state.pinMarker=new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([c.lng,c.lat]).addTo(map);
+ if(typeof state.pinMarker.setZIndex==='function')state.pinMarker.setZIndex('9999');
 }
 function setStatus(title,msg,kind){
  $('statusTitle').textContent=title;
@@ -1261,7 +1316,7 @@ async function scanAt(c,opts){
  state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.results=[];state.scenicSpots=[];state.photos=[];state.basemapParking=[];state.spotParking=[];state.spotParkingTargetId=null;state.spotParkingLoading=false;state.spotParkingRequest++;state.selected=null;
  $('spotDetail').classList.remove('show');
  setActivePin(state.center);updateRadius();
- if(opts&&opts.fly&&map.getZoom()<8){map.flyTo({center:[c.lng,c.lat],zoom:9.5,duration:700});}
+ if(opts&&opts.fly&&map.getZoom()<12){map.stop();map.flyTo({center:[c.lng,c.lat],zoom:Math.max(12.5,map.getZoom()+3),duration:850,essential:true});}
  refreshBasemapParking();
  renderResults();renderPhotos();renderMarkers();
  setStatus('Scouting around your pin','Searching mapped parking and history nearby, plus a wider 25–30 km radius for landscape and city-view candidates.','loading');
@@ -1784,7 +1839,7 @@ map.on('click',e=>{
   feature=ranked[0]||null;
  }catch(err){}
  const clicked={lat:e.lngLat.lat,lng:e.lngLat.lng};
- scanAt(clicked,{fly:false});
+ scanAt(clicked,{fly:true});
  let item;
  if(feature){
   const p=feature.f.properties||{};
@@ -2054,10 +2109,24 @@ function closeFieldGuide(){
  window.requestAnimationFrame(()=>{if(map)map.resize();});
 }
 
-$('headerIdeaButton').addEventListener('click',openFieldGuide);
-$('fieldGuideTopButton').addEventListener('click',openFieldGuide);
-$('sidebarOpenFieldGuide').addEventListener('click',openFieldGuide);
 $('selectedOpenFieldGuide').addEventListener('click',openSelectedFieldGuide);
+$('quickIdeasBtn').addEventListener('click',openFieldGuide);
+$('quickSearchBtn').addEventListener('click',()=>{
+ if(document.body.classList.contains('sidebar-collapsed'))$('sidebarToggle').click();
+ window.requestAnimationFrame(()=>{$('searchSection').scrollIntoView({behavior:'smooth',block:'start'});$('placeSearch').focus();});
+});
+$('quickNearbyBtn').addEventListener('click',()=>{
+ if(document.body.classList.contains('sidebar-collapsed'))$('sidebarToggle').click();
+ ['parkingPanel','historyPanel','architecturePanel'].forEach(id=>$(id).open=false);
+ $('scenicDetails').open=true;
+ window.requestAnimationFrame(()=>{$('scenicDetails').scrollIntoView({behavior:'smooth',block:'nearest'});});
+ if(!state.center)setStatus('Choose a nearby search area','Click the map first to scan real places and put a visible pin on the map.','loading');
+});
+$('quickSavedBtn').addEventListener('click',()=>{
+ if(document.body.classList.contains('sidebar-collapsed'))$('sidebarToggle').click();
+ $('savedStopsPanel').open=true;
+ window.requestAnimationFrame(()=>{$('savedStopsPanel').scrollIntoView({behavior:'smooth',block:'nearest'});});
+});
 $('fieldGuideMapButton').addEventListener('click',closeFieldGuide);
 $('fieldGuideClose').addEventListener('click',closeFieldGuide);
 $('guideSearch').addEventListener('input',renderFieldGuide);
