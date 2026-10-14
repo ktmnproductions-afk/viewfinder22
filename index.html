@@ -3077,6 +3077,7 @@ function fieldGuideAreaSubjects(card){
  };
  fieldGuideAreaLookup[primary.id]=primary;
  fieldGuideCardLookup[primary.id]=primary;
+ const maxNearbyMeters=5000;
  const source=[
   ...state.results.filter(item=>item&&item.category!=='parking'&&['history','architecture','viewpoint','photoSpot'].includes(item.category)),
   ...state.scenicSpots.filter(item=>item&&item.category!=='parking')
@@ -3086,7 +3087,9 @@ function fieldGuideAreaSubjects(card){
   const lat=Number(item.lat),lng=Number(item.lng);
   if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return null;
   const distance=haversine(origin,{lat,lng});
-  if(distance>30000)return null;
+  // The ideas board is local to the selected spot. Wider scouting candidates stay
+  // on the main map/list and must not masquerade as nearby subjects.
+  if(distance>maxNearbyMeters)return null;
   const name=String(item.name||'').trim();
   if(!name||/^Unnamed mapped/i.test(name)||isCoordinateLabel(name))return null;
   const normalized=normalizeNameForDedup(name);
@@ -3095,10 +3098,11 @@ function fieldGuideAreaSubjects(card){
   seen.add(key);
   if(normalized===normalizeNameForDedup(primary.name)&&distance<500)return null;
   return {item,lat,lng,distance,name,normalized,key};
- }).filter(Boolean).sort((a,b)=>a.distance-b.distance).slice(0,4).map((record,index)=>{
+ }).filter(Boolean).sort((a,b)=>a.distance-b.distance).slice(0,4).map(record=>{
   const item=record.item;
   const id='nearby-'+record.normalized.replace(/[^a-z0-9]+/g,'-').slice(0,48)+'-'+Math.round(record.lat*10000)+'-'+Math.round(record.lng*10000);
-  const locality=String(item.city||primary.locality||state.detectedLocality||'');
+  // Don't stamp the selected town onto subjects from a different feature record.
+  const locality=String(item.city||item.locality||card.locality||state.detectedLocality||'');
   const subject={
    id,name:record.name,locality,lat:record.lat,lng:record.lng,
    category:item.category||'photoSpot',tags:item.tags||{},summary:item.summary||'',
@@ -3106,7 +3110,7 @@ function fieldGuideAreaSubjects(card){
    tag:item.category==='history'?'HISTORIC PLACE':item.category==='architecture'?'ARCHITECTURE':item.category==='viewpoint'?'VIEWPOINT / NATURE':'PHOTO SUBJECT',
    distance:record.distance,originalItem:item,isPrimary:false,
    shotIdeas:selectedShotIdeasFor(item),
-   searchQueries:dedupeQueryTerms([record.name+' '+locality,record.name,locality+' '+(item.category==='history'?'historic place':item.category==='architecture'?'architecture':'landscape')])
+   searchQueries:dedupeQueryTerms([record.name+(locality?' '+locality:''),record.name,locality+(item.category==='history'?' historic place':item.category==='architecture'?' architecture':' landscape')])
   };
   fieldGuideAreaLookup[id]=subject;
   fieldGuideCardLookup[id]=subject;
