@@ -844,7 +844,9 @@ window.__PHOTO_SCOUT_TEST__ = {
  runContextPhotoRegressionFixtures:function(){
   const previous={
    results:state.results,scenicSpots:state.scenicSpots,selected:state.selected,center:state.center,
-   detectedLocality:state.detectedLocality,contextOnly:fieldGuideContextOnly,scanId:state.scanId
+   detectedLocality:state.detectedLocality,contextOnly:fieldGuideContextOnly,
+   photoCache:fieldGuidePhotoCache,areaLookup:fieldGuideAreaLookup,cardLookup:fieldGuideCardLookup,
+   activeContextClass:document.body.classList.contains('field-guide-context-only')
   };
   const center={lat:45.37306,lng:14.34873};
   const kastavPin={id:'fixture-kastav-pin',name:'Kastav viewpoint',lat:center.lat,lng:center.lng,city:'Kastav',locality:'Kastav, Croatia',category:'viewpoint',tags:{tourism:'viewpoint'},summary:'Test fixture only.'};
@@ -872,7 +874,8 @@ window.__PHOTO_SCOUT_TEST__ = {
   }finally{
    state.results=previous.results;state.scenicSpots=previous.scenicSpots;state.selected=previous.selected;state.center=previous.center;
    state.detectedLocality=previous.detectedLocality;fieldGuideContextOnly=previous.contextOnly;
-   document.body.classList.toggle('field-guide-context-only',previous.contextOnly);
+   fieldGuidePhotoCache=previous.photoCache;fieldGuideAreaLookup=previous.areaLookup;fieldGuideCardLookup=previous.cardLookup;
+   document.body.classList.toggle('field-guide-context-only',previous.activeContextClass);
   }
   return result;
  }
