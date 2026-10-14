@@ -1509,12 +1509,18 @@ function photoReferenceFitsPlace(photo,card,localityHint){
  const localityTokens=photoPlaceTokens(String(localityHint||card&&card.locality||'').split(',').join(' '));
  const meaningfulTitleTokens=photoPlaceTokens(title);
  const genericSubject=/^(viewpoint|lookout|panorama|hill|peak|mountain|ridge|observation tower|belvedere|tower|park|beach|bridge|scenic view|unnamed mapped)/i.test(String(card&&card.name||'').trim());
- const titleHasSubject=placeTokens.length>0&&placeTokens.every(token=>titleTokens.has(token));
- const titleHasLocality=localityTokens.length>0&&localityTokens.some(token=>titleTokens.has(token));
- // For a named place, the full subject name must occur. For a generic pin, the
- // photo title must identify the selected locality and not name another place.
- if(!genericSubject&&titleHasSubject)return true;
- if(genericSubject&&titleHasSubject&&titleHasLocality&&meaningfulTitleTokens.every(token=>
+ const isSelectedLocalityTitle=localityTokens.some(token=>titleTokens.has(token));
+ const allSubjectTokensMatch=placeTokens.length>0&&placeTokens.every(token=>titleTokens.has(token));
+ const subjectTokens=placeTokens.filter(token=>!localityTokens.includes(token));
+ // If the card names a real subject, its non-locality tokens must match as well.
+ // Generic pins need an explicit locality token; locality alone never rescues a
+ // file title whose place-specific words point elsewhere.
+ if(!genericSubject){
+  if(subjectTokens.length>0&&subjectTokens.every(token=>titleTokens.has(token)))return true;
+  if(subjectTokens.length===0&&allSubjectTokensMatch&&isSelectedLocalityTitle)return true;
+  return false;
+ }
+ if(isSelectedLocalityTitle&&meaningfulTitleTokens.every(token=>
   placeTokens.includes(token)||localityTokens.includes(token)||IMAGE_REFERENCE_GENERIC_WORDS.has(token)
  ))return true;
  // Geotags are only a fallback for untitled files within a tight local radius.
