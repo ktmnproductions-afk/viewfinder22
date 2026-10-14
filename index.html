@@ -1466,7 +1466,7 @@ function suppressBasemapParkingSymbols(){
   // OpenFreeMap style layers can use different source IDs across style variants.
   // Apply the feature filter to every POI source-layer rather than relying on the
   // literal source name; otherwise the basemap can retain its own blue parking P.
-  const isPoiLayer=sourceLayer==='poi'||(/poi/.test(id)&&sourceLayer!=='transportation_name');
+  const isPoiLayer=sourceLayer==='poi';
   if(!isPoiLayer)return;
   try{
    const existing=layer.filter?normalizeBasemapFilter(layer.filter):['all'];
