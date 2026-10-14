@@ -220,6 +220,56 @@ jobs:
                 { timeout: 10000 }
               );
 
+              // The chosen point should remain selected and the camera should not
+              // jump again when asynchronous nearby-place/photo requests finish.
+              await page.waitForFunction(() => {
+                const test = window.__PHOTO_SCOUT_TEST__;
+                return !!test && !test.map.isMoving() && test.getState().scanPending === true;
+              }, null, { timeout: 15000 });
+              const cameraAtSelectedPin = await page.evaluate(() => {
+                const test = window.__PHOTO_SCOUT_TEST__;
+                return {
+                  center: test.map.getCenter().toArray(),
+                  zoom: test.map.getZoom(),
+                  activeCenter: test.getState().activeCenter,
+                  selectedCoordinate: test.getState().selectedCoordinate
+                };
+              });
+              await page.waitForFunction(
+                () => window.__PHOTO_SCOUT_TEST__?.getState().scanPending === false,
+                null,
+                { timeout: 90000 }
+              );
+              await page.waitForTimeout(350);
+              const cameraAfterScan = await page.evaluate(() => {
+                const test = window.__PHOTO_SCOUT_TEST__;
+                return {
+                  center: test.map.getCenter().toArray(),
+                  zoom: test.map.getZoom(),
+                  activeCenter: test.getState().activeCenter,
+                  selectedCoordinate: test.getState().selectedCoordinate
+                };
+              });
+              const centerDrift = Math.hypot(
+                cameraAtSelectedPin.center[0] - cameraAfterScan.center[0],
+                cameraAtSelectedPin.center[1] - cameraAfterScan.center[1]
+              );
+              const zoomDrift = Math.abs(cameraAtSelectedPin.zoom - cameraAfterScan.zoom);
+              const pinDrift = cameraAfterScan.activeCenter && cameraAfterScan.selectedCoordinate
+                ? Math.hypot(
+                    cameraAfterScan.activeCenter.lng - cameraAfterScan.selectedCoordinate.lng,
+                    cameraAfterScan.activeCenter.lat - cameraAfterScan.selectedCoordinate.lat
+                  )
+                : Infinity;
+              if (centerDrift > 0.00001 || zoomDrift > 0.02 || pinDrift > 0.00001) {
+                throw new Error('Selected map pin/camera changed after scan completion: ' + JSON.stringify({
+                  cameraAtSelectedPin, cameraAfterScan, centerDrift, zoomDrift, pinDrift
+                }));
+              }
+              console.log('PIN_CAMERA_STABILITY ' + JSON.stringify({
+                centerDrift, zoomDrift, pinDrift, cameraAtSelectedPin, cameraAfterScan
+              }));
+
               const pinState = await page.evaluate(() => ({
                 state: window.__PHOTO_SCOUT_TEST__.getState(),
                 sketch: document.querySelector('#selectedLocalSketch')?.getAttribute('src') || '',
@@ -277,8 +327,9 @@ jobs:
               const markerFixture = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.renderMarkerFixture());
               if (markerFixture.landmark < 1 || markerFixture.architecture < 1 ||
                   markerFixture.viewpoint < 1 || markerFixture.photoSpot < 1 ||
-                  markerFixture.parking < 1 || markerFixture.svgIcons < 3) {
-                throw new Error('Landmark, architecture, viewpoint, photo-spot and parking pins must all render as distinct icon markers: ' + JSON.stringify(markerFixture));
+                  markerFixture.parking < 1 || markerFixture.svgIcons < 3 ||
+                  !markerFixture.exactCoordinates || !markerFixture.zeroOffsets) {
+                throw new Error('Map feature markers must remain on their exact geographic coordinates with no visual offsets: ' + JSON.stringify(markerFixture));
               }
 
               // Mock only the image provider response in CI; don't consume generation credits.
