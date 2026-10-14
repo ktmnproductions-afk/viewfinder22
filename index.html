@@ -674,7 +674,7 @@ window.__PHOTO_SCOUT_TEST__ = {
  get styleLoaded(){ return state.styleLoaded; },
  get vectorTileSuccesses(){ return state.vectorTileSuccesses; },
  get scanCount(){ return state.scanCount; },
- getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, resultCount:state.results.length, parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
+ getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, resultCount:state.results.length, parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), parkingLabelLayersFiltered:[...state.parkingFilteredLayers], visibleParkingMarkerClasses:state.markers.filter(m=>m.getElement().classList.contains('parking')).map(m=>({title:m.getElement().title,classes:m.getElement().className,coordinates:m.getLngLat().toArray()})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
  scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); },
  forceRasterFallback:function(){return switchToRasterFallback('Automated backup-map verification.');},
  retryVectorBasemap:function(){return setVectorBasemap(currentStyle);}
@@ -1364,47 +1364,85 @@ function markerEl(category,label){
  el.appendChild(core); return el;
 }
 function clearMarkers(){state.markers.forEach(m=>m.remove());state.markers=[];}
+function normalizeBasemapFilter(filter){
+ if(!Array.isArray(filter)||!filter.length)return filter;
+ const op=filter[0];
+ const comparison=['==','!=','>','>=','<','<='];
+ if(comparison.includes(op)&&typeof filter[1]==='string'){
+  return [op,['get',filter[1]],...filter.slice(2).map(normalizeBasemapFilter)];
+ }
+ if((op==='in'||op==='!in')&&typeof filter[1]==='string'){
+  return [op,['get',filter[1]],['literal',filter.slice(2)]];
+ }
+ if((op==='has'||op==='!has')&&typeof filter[1]==='string')return [op,filter[1]];
+ return [op,...filter.slice(1).map(normalizeBasemapFilter)];
+}
 function suppressBasemapParkingSymbols(){
  if(!map||!state.styleLoaded)return;
  const layers=(map.getStyle()&&map.getStyle().layers)||[];
+ const parkingTerms=['parking','parking_space','car_parking','car_park'];
+ const parkingFeature=['any',
+  ...parkingTerms.flatMap(value=>[
+   ['==',['downcase',['to-string',['coalesce',['get','class'],'']]],value],
+   ['==',['downcase',['to-string',['coalesce',['get','subclass'],'']]],value],
+   ['==',['downcase',['to-string',['coalesce',['get','amenity'],'']]],value],
+   ['==',['downcase',['to-string',['coalesce',['get','type'],'']]],value]
+  ])
+ ];
+ state.parkingFilteredLayers=new Set();
  layers.forEach(layer=>{
-  if(layer.type!=='symbol'||layer['source-layer']!=='poi'||state.parkingFilteredLayers.has(layer.id))return;
-  const existing=layer.filter||['all'];
-  // Replace the basemap's blue parking P icons with the app's larger, clickable
-  // green parking markers so users can tell Scout results apart from map labels.
-  map.setFilter(layer.id,['all',existing,
-   ['!=',['get','class'],'parking'],
-   ['!=',['get','subclass'],'parking'],
-   ['!=',['get','class'],'parking_space'],
-   ['!=',['get','subclass'],'parking_space'],
-   ['!=',['get','class'],'car_parking'],
-   ['!=',['get','subclass'],'car_parking'],
-   ['!=',['get','amenity'],'parking'],
-   ['!=',['get','amenity'],'parking_space']
-  ]);
-  state.parkingFilteredLayers.add(layer.id);
+  if(layer.type!=='symbol')return;
+  const id=String(layer.id||'').toLowerCase();
+  const source=String(layer.source||'').toLowerCase();
+  const sourceLayer=String(layer['source-layer']||'').toLowerCase();
+  if(/parking/.test(id)){
+   try{map.setLayoutProperty(layer.id,'visibility','none');state.parkingFilteredLayers.add(layer.id);}catch(error){}
+   return;
+  }
+  const isOpenFreeMapPoi=(sourceLayer==='poi'&&(source==='openmaptiles'||source.includes('openmaptiles')))||
+   (sourceLayer==='poi'&&/poi/.test(id))||
+   (source.includes('openmaptiles')&&/poi/.test(id));
+  if(!isOpenFreeMapPoi)return;
+  try{
+   const existing=layer.filter?normalizeBasemapFilter(layer.filter):['all'];
+   map.setFilter(layer.id,['all',existing,['!',parkingFeature]]);
+   state.parkingFilteredLayers.add(layer.id);
+  }catch(error){
+   // If the provider has an unusual legacy filter, leave the map running; the
+   // application still provides its own correctly styled/clickable parking markers.
+  }
  });
 }
 function parkingCandidates(){
- const radius=state.radius||10000;
  const center=state.center;
+ // Once a pin/place is selected, show only the parking researched for that exact
+ // selected location. Do not mix it with distant parking from the original scan.
+ if(state.selected&&state.spotParkingTargetId===state.selected.id){
+  const spot={lat:Number(state.selected.lat),lng:Number(state.selected.lng)};
+  const items=[];
+  state.spotParking.forEach(p=>{
+   const lat=Number(p.lat),lng=Number(p.lng);
+   if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
+   const distance=haversine(spot,{lat,lng});
+   if(distance>3500)return;
+   if(items.some(q=>haversine({lat:q.lat,lng:q.lng},{lat,lng})<60))return;
+   const generic=/^(parking|parking area|car park|parking lot|mapped parking area)$/i.test(String(p.name||'').trim());
+   items.push({...p,name:generic?'Mapped parking point':p.name,distance,distanceFromSpot:distance,parkingOrigin:'near-selected',
+    summary:p.summary||'Mapped parking feature near this selected spot. The point may be the centre of a mapped area rather than its entrance. Legal access, availability and restrictions are not verified.'});
+  });
+  return items.sort((a,b)=>a.distance-b.distance);
+ }
+ const radius=state.radius||10000;
  const raw=state.results.filter(r=>r.category==='parking').sort((a,b)=>(a.distance||0)-(b.distance||0));
  let unnamedIndex=0;
  const direct=raw.map(p=>{
   const generic=/^(parking|parking area|car park|parking lot|mapped parking area)$/i.test(String(p.name||'').trim());
   if(generic)unnamedIndex++;
-  return {...p,
-   name:generic?'Mapped parking point '+unnamedIndex:p.name,
-   summary:p.summary||'OpenStreetMap marks this as a parking area/point. The map coordinate can be the centre of a mapped area, not its vehicle entrance. Public access, charges, restrictions and availability are not confirmed; inspect signs before parking.',
-   parkingOrigin:'indexed'
-  };
+  return {...p,name:generic?'Mapped parking point '+unnamedIndex:p.name,
+   summary:p.summary||'OpenStreetMap marks this as a parking area/point. Its coordinate may be the centre of a mapped area, not its vehicle entrance. Access, charges and availability are not confirmed.',
+   parkingOrigin:'indexed'};
  });
- const selectedNearby=state.spotParkingTargetId&&state.selected&&state.selected.id===state.spotParkingTargetId?state.spotParking.map(p=>({...p,distance:center?haversine(center,{lat:p.lat,lng:p.lng}):p.distance,distanceFromSpot:p.distance,parkingOrigin:'near-selected'})):[];
  const seen=[...direct];
- selectedNearby.forEach(p=>{
-  const duplicate=seen.some(q=>haversine({lat:q.lat,lng:q.lng},{lat:p.lat,lng:p.lng})<65);
-  if(!duplicate)seen.push(p);
- });
  (state.basemapParking||[]).forEach(p=>{
   const dist=center?haversine(center,{lat:p.lat,lng:p.lng}):p.distance;
   if(!Number.isFinite(dist)||dist>radius)return;
@@ -1588,7 +1626,8 @@ function renderMarkers(){
   seen.add(cell);
   const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas · '+distanceLabel(item.distance):(item.parkingOrigin==='basemap'?'Mapped parking · availability unverified · ':'Scout parking feature · ')+item.name+' · '+distanceLabel(item.distance)):item.name+' · '+distanceLabel(item.distance);
   const el=markerEl(item.category,label);
-  if(item.parkingOrigin==='basemap')el.classList.add('basemap-parking');
+  // All scout parking destinations use the same green marker. Provider-native blue
+  // parking labels are filtered out of the basemap so users see one consistent layer.
   const screenPoint=map.project([item.lng,item.lat]);
   let offset=[0,0];
   if(item.category!=='parking'){
