@@ -3,9 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#17211c">
-<meta name="description" content="Explore real photography locations with in-app pencil composition studies, source-linked visual references and camera-specific shot ideas.">
-<title>Photo Scout — Visual Photography Field Guide</title>
+<meta name="theme-color" content="#f5f7f1">
+<meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
+<title>Photo Scout — Photography Planner</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./app-icon.svg" type="image/svg+xml">
+<meta name="application-name" content="Photo Scout">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Photo Scout">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.13.0/dist/maplibre-gl.css">
 <style>
@@ -561,6 +567,7 @@ body.field-guide-context-only .field-guide-detail-body{overflow:auto}
   </div>
 </main>
 <div class="map-styles" role="group" aria-label="Map style">
+  <button id="installAppBtn" class="map-style install-app-button" type="button" hidden>＋ Install app</button>
   <button class="map-style active" data-style="liberty">Atlas</button>
   <button class="map-style" data-style="bright">Bright</button>
   <button class="map-style" data-style="positron">Light</button>
@@ -573,6 +580,16 @@ body.field-guide-context-only .field-guide-detail-body{overflow:auto}
   <button id="quickIdeasBtn" class="map-quick-action" type="button" title="Photo ideas and reference photos" aria-label="Photo ideas and reference photos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.7 6.3L20 10l-6.3 1.7L12 18l-1.7-6.3L4 10l6.3-1.7L12 2Z"></path><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"></path></svg><span>Ideas</span></button>
   <button id="quickSavedBtn" class="map-quick-action" type="button" title="Saved stops" aria-label="Saved stops"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17L12 17l-6 3.5Z"></path></svg><span>Saved</span></button>
 </nav>
+<section class="map-pin-legend" id="mapPinLegend" aria-label="Map pin key">
+  <div class="map-pin-legend-heading"><span>MAP KEY</span><span id="mapPinSummary">Preparing nearby places…</span></div>
+  <div class="map-pin-legend-items">
+    <span class="map-legend-item"><i class="map-legend-icon legend-landmark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-5h6v5"/></svg></i><span>Landmarks</span><b id="legendLandmarkCount">—</b></span>
+    <span class="map-legend-item"><i class="map-legend-icon legend-architecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V5h14v16M8 8h2m4 0h2M8 12h2m4 0h2M10 21v-4h4v4"/></svg></i><span>Architecture</span><b id="legendArchitectureCount">—</b></span>
+    <span class="map-legend-item"><i class="map-legend-icon legend-viewpoint"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"/><path d="m2 20 7-10 4 5 3-4 6 9H2Z"/></svg></i><span>Viewpoints</span><b id="legendViewpointCount">—</b></span>
+    <span class="map-legend-item"><i class="map-legend-icon legend-photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v12H3Z"/><circle cx="12" cy="14" r="4"/></svg></i><span>Photo spots</span><b id="legendPhotoSpotCount">—</b></span>
+    <span class="map-legend-item"><i class="map-legend-icon legend-parking">P</i><span>Parking</span><b id="legendParkingCount">—</b></span>
+  </div>
+</section>
 <div id="mapIssue" class="map-issue"><strong>Basemap could not be loaded.</strong><p>The app is not using the blocked OpenStreetMap volunteer tile endpoint. Retry the vector map or check the connection.</p><button id="retryMap">Retry map</button></div>
 <button id="sidebarToggle" type="button" aria-controls="mainSidebar" aria-expanded="true" aria-label="Hide sidebar"><span class="toggle-glyph">☰</span><span id="sidebarToggleLabel">Hide menu</span></button>
 <aside class="sidebar" id="mainSidebar">
@@ -698,13 +715,30 @@ const styleUrls = {
  dark:'https://tiles.openfreemap.org/styles/dark',
  fiord:'https://tiles.openfreemap.org/styles/fiord'
 };
-const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, detectedLocality:'', results:[], scenicSpots:[], photos:[], basemapParking:[], parkingFilteredLayers:new Set(), spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0, basemapMode:'vector', basemapFallbackTried:false, basemapWatchdog:null, styleFailureTimer:null};
+const state = {map:null, styleLoaded:false, scanCount:0, center:null, radius:10000, detectedLocality:'', results:[], scenicSpots:[], photos:[], basemapParking:[], parkingFilteredLayers:new Set(), spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0, basemapMode:'vector', basemapFallbackTried:false, basemapWatchdog:null, styleFailureTimer:null, initialScoutStarted:false};
 window.__PHOTO_SCOUT_TEST__ = {
  get map(){ return state.map; },
  get styleLoaded(){ return state.styleLoaded; },
  get vectorTileSuccesses(){ return state.vectorTileSuccesses; },
  get scanCount(){ return state.scanCount; },
- getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, resultCount:state.results.length, parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), parkingLabelLayersFiltered:[...state.parkingFilteredLayers], visibleParkingMarkerClasses:state.markers.filter(m=>m.getElement().classList.contains('parking')).map(m=>({title:m.getElement().title,classes:m.getElement().className,coordinates:m.getLngLat().toArray()})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
+ getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, resultCount:state.results.length, parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), parkingLabelLayersFiltered:[...state.parkingFilteredLayers], visibleParkingMarkerClasses:state.markers.filter(m=>m.getElement().classList.contains('parking')).map(m=>({title:m.getElement().title,classes:m.getElement().className,coordinates:m.getLngLat().toArray()})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, markerCounts:{landmark:state.markers.filter(m=>m.getElement().classList.contains('history')).length,architecture:state.markers.filter(m=>m.getElement().classList.contains('architecture')).length,viewpoint:state.markers.filter(m=>m.getElement().classList.contains('viewpoint')).length,photoSpot:state.markers.filter(m=>m.getElement().classList.contains('photoSpot')).length}, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
+ renderMarkerFixture:function(){
+  if(!state.map||!state.styleLoaded)throw new Error('Map is not ready');
+  const saved={results:state.results,scenicSpots:state.scenicSpots,basemapParking:state.basemapParking,spotParking:state.spotParking,selected:state.selected,spotParkingTargetId:state.spotParkingTargetId,center:state.center,radius:state.radius};
+  const c=map.getCenter();
+  const make=function(id,name,category,dLat,dLng){return {id,name,category,lat:c.lat+dLat,lng:c.lng+dLng,distance:420,source:'Automated test fixture',sourceUrl:'https://www.openstreetmap.org/',tags:{},city:'Fixture'};};
+  let result;
+  try{
+   state.results=[make('fixture-landmark','Fixture Landmark','history',0.0010,0.0010),make('fixture-building','Fixture Building','architecture',0.0018,0.0018),make('fixture-viewpoint','Fixture Viewpoint','viewpoint',0.0026,0.0026),make('fixture-parking','Fixture Parking','parking',-0.0010,-0.0010)];
+   state.scenicSpots=[make('fixture-photo-spot','Fixture Photo Spot','photoSpot',-0.0020,0.0020)];
+   state.basemapParking=[];state.spotParking=[];state.selected=null;state.spotParkingTargetId=null;state.center={lat:c.lat,lng:c.lng};state.radius=10000;
+   renderMarkers();
+   result={landmark:document.querySelectorAll('.scout-marker.history').length,architecture:document.querySelectorAll('.scout-marker.architecture').length,viewpoint:document.querySelectorAll('.scout-marker.viewpoint').length,photoSpot:document.querySelectorAll('.scout-marker.photoSpot').length,parking:document.querySelectorAll('.scout-marker.parking').length,svgIcons:document.querySelectorAll('.scout-marker .dot-core svg').length};
+  }finally{
+   clearMarkers();state.results=saved.results;state.scenicSpots=saved.scenicSpots;state.basemapParking=saved.basemapParking;state.spotParking=saved.spotParking;state.selected=saved.selected;state.spotParkingTargetId=saved.spotParkingTargetId;state.center=saved.center;state.radius=saved.radius;renderMarkers();
+  }
+  return result;
+ },
  scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); },
  forceRasterFallback:function(){return switchToRasterFallback('Automated backup-map verification.');},
  retryVectorBasemap:function(){return setVectorBasemap(currentStyle);}
@@ -833,6 +867,14 @@ map.on('style.load', function(){
  updateRadius();
  mapOk();
  renderMarkers();
+ if(!state.initialScoutStarted){
+  state.initialScoutStarted=true;
+  window.setTimeout(function(){
+   if(state.scanCount===0&&state.styleLoaded){
+    scanAt({lat:45.3271,lng:14.4422},{fly:true,initial:true});
+   }
+  },500);
+ }
  if(state.basemapMode==='vector'){
   state.basemapWatchdog=setTimeout(()=>{
    state.basemapWatchdog=null;
@@ -1413,13 +1455,18 @@ function renderPhotos(){
  photoResults.innerHTML=state.photos.length?state.photos.slice(0,3).map(p=>'<article class="photo-card"><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer" title="Open original photo and licence"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="photo-caption">'+esc(p.name)+'<div class="photo-license">Title-matched place/subject reference · not a verified camera position</div><div class="photo-license">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Check original file page')+'</div></div></a></article>').join(''):emptyHTML(state.center?'No suitable landmark/topic-matched references returned from the image archive. We will not substitute unrelated event or personal images. The location-specific shot sketches remain available above.':'Drop a pin to look for place- and subject-matched visual references.');
 }
 function markerEl(category,label){
- const el=document.createElement('button'); el.type='button'; el.className='scout-marker '+category;
- el.title=label; el.setAttribute('aria-label',label);
+ const el=document.createElement('button');el.type='button';el.className='scout-marker '+category;
+ el.dataset.category=category;el.title=label;el.setAttribute('aria-label',label);
  const core=document.createElement('span');core.className='dot-core';
- if(category==='viewpoint')core.innerHTML='<span>V</span>';
- else if(category==='photoSpot')core.innerHTML='<span>✦</span>';
- else core.textContent=category==='parking'?'P':category==='history'?'H':category==='photo'?'✦':'A';
- el.appendChild(core); return el;
+ const icons={
+  history:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-5h6v5M8 10h1m6 0h1"/></svg>',
+  architecture:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V5h14v16M8 8h2m4 0h2M8 12h2m4 0h2M10 21v-4h4v4"/></svg>',
+  viewpoint:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"/><path d="m2 20 7-10 4 5 3-4 6 9H2Z"/></svg>',
+  photoSpot:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v12H3Z"/><circle cx="12" cy="14" r="4"/></svg>',
+  parking:'<span class="parking-glyph" aria-hidden="true">P</span>',
+  photo:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m4 18 5-5 3 3 3-4 5 6"/></svg>'
+ };
+ core.innerHTML=icons[category]||icons.architecture;el.appendChild(core);return el;
 }
 function clearMarkers(){state.markers.forEach(m=>m.remove());state.markers=[];}
 function normalizeBasemapFilter(filter){
@@ -1673,6 +1720,15 @@ function refreshBasemapParking(){
  renderResults();
  renderMarkers();
 }
+function updateMapPinLegend(){
+ const count=function(items,category){return items.filter(item=>item.category===category).length;};
+ const history=count(state.results,'history'),architecture=count(state.results,'architecture'),viewpoints=count(state.results,'viewpoint');
+ const photoSpots=state.scenicSpots.length,parking=parkingCandidates().length;
+ const put=function(id,value){const node=$(id);if(node)node.textContent=String(value);};
+ put('legendLandmarkCount',history);put('legendArchitectureCount',architecture);put('legendViewpointCount',viewpoints);
+ put('legendPhotoSpotCount',photoSpots);put('legendParkingCount',parking);
+ put('mapPinSummary',state.scanCount?(history+architecture+viewpoints+photoSpots)+' mapped places':'Map ready to scout');
+}
 function renderMarkers(){
  if(!state.map || !state.styleLoaded)return;
  clearMarkers();
@@ -1689,11 +1745,14 @@ function renderMarkers(){
  const occupiedScreens=parkingScreens.map(p=>p.point);
  const seen=new Set();
  visible.forEach(item=>{
-  const cell=Math.round(item.lat*10000)+'|'+Math.round(item.lng*10000);
+  const cell=item.category+'|'+Math.round(item.lat*100000)+'|'+Math.round(item.lng*100000);
   if(seen.has(cell))return;
   seen.add(cell);
   const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas · '+distanceLabel(item.distance):(item.parkingOrigin==='basemap'?'Mapped parking · availability unverified · ':'Scout parking feature · ')+item.name+' · '+distanceLabel(item.distance)):item.name+' · '+distanceLabel(item.distance);
   const el=markerEl(item.category,label);
+  if(['history','architecture','viewpoint','photoSpot'].includes(item.category)&&map.getZoom()>=14.5&&!item.genericFeature&&!/^Unnamed mapped/i.test(String(item.name||''))){
+   const nameTag=document.createElement('span');nameTag.className='pin-name-label';nameTag.textContent=String(item.name||'').slice(0,52);el.appendChild(nameTag);el.classList.add('with-label');
+  }
   if(item.category==='parking'&&!item.clusterMembers&&map.getZoom()>=14.5){
    el.setAttribute('data-distance',distanceLabel(item.distance||0));
   }
@@ -1714,7 +1773,7 @@ function renderMarkers(){
   occupiedScreens.push({x:screenPoint.x+offset[0],y:screenPoint.y+offset[1]});
   // Explicit z-order stops nearby building/history dots from intercepting taps on
   // parking destinations when their coordinates are close at neighbourhood zoom.
-  el.style.zIndex=item.category==='parking'?'1100':item.category==='history'?'800':item.category==='architecture'?'650':item.category==='viewpoint'?'600':item.category==='photoSpot'?'300':'500';
+  el.style.zIndex=item.category==='parking'?'250':item.category==='history'?'900':item.category==='architecture'?'850':item.category==='viewpoint'?'1000':item.category==='photoSpot'?'750':'500';
   if(item.clusterMembers){
    el.classList.add('parking-cluster');
    el.querySelector('.dot-core').textContent='×'+item.clusterSize;
@@ -1735,7 +1794,7 @@ function renderMarkers(){
   }
   const m=new maplibregl.Marker({element:el,anchor:'center',offset}).setLngLat([item.lng,item.lat]).addTo(map);
   m.__scoutItems=item.clusterMembers||[item];
-  if(typeof m.setZIndex==='function')m.setZIndex(item.category==='parking'?5000:item.category==='history'?4500:4000);
+  if(typeof m.setZIndex==='function')m.setZIndex(item.category==='parking'?1500:item.category==='history'?5200:item.category==='architecture'?5000:item.category==='viewpoint'?5400:item.category==='photoSpot'?4700:4000);
   state.markers.push(m);
  });
  // The selected-place parking list is populated independently from the wider search.
@@ -1754,7 +1813,9 @@ function renderMarkers(){
    state.markers.push(marker);
   });
  }
+ updateMapPinLegend();
 }
+
 function setActivePin(c){
  if(state.pinMarker)state.pinMarker.remove();
  const el=markerEl('active-pin','Active photography stop');
