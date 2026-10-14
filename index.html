@@ -573,6 +573,24 @@ footer{color:#7c8b7e;border-top-color:#e4eae1}.footer-link{color:#50715b}
  .map-credit{bottom:130px}.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-bottom-left{bottom:130px!important}.map-quick-actions{top:auto;bottom:150px;right:12px}.detail{margin-left:13px;margin-right:13px}
 }
 
+
+/* Keep map symbols compact; reveal place names on hover, keyboard focus, or selection. */
+.scout-marker.with-label{
+ position:relative;width:34px;height:34px;min-width:34px;min-height:34px;
+ padding:0;border:0;border-radius:50%;background:transparent;box-shadow:none;gap:0;
+}
+.scout-marker.with-label .dot-core{margin:0;box-shadow:0 3px 12px rgba(30,50,35,.22),0 0 0 2px rgba(255,255,255,.74)}
+.pin-name-label{
+ position:absolute;left:39px;top:50%;transform:translateY(-50%);z-index:5;
+ display:block;width:max-content;max-width:165px;padding:5px 8px;
+ border:1px solid #fff;border-radius:8px;background:rgba(255,255,251,.99);
+ box-shadow:0 4px 14px rgba(35,55,40,.16);opacity:0;visibility:hidden;
+ pointer-events:none;transition:opacity .12s ease,visibility .12s ease;
+}
+.scout-marker.with-label:hover .pin-name-label,
+.scout-marker.with-label:focus-visible .pin-name-label,
+.scout-marker.with-label.is-selected .pin-name-label{opacity:1;visibility:visible}
+
 </style>
 </head>
 <body>
@@ -1896,14 +1914,21 @@ async function scanAt(c,opts){
 setActivePin(state.center);updateRadius();
  const pinUrl='https://www.openstreetmap.org/?mlat='+c.lat.toFixed(6)+'&mlon='+c.lng.toFixed(6)+'#map=16/'+c.lat.toFixed(6)+'/'+c.lng.toFixed(6);
  const pinItem={id:'user-pin-'+Date.now(),name:'Pinned photography location',lat:c.lat,lng:c.lng,distance:null,category:'photoSpot',isUserPin:true,source:'Your map pin',sourceUrl:pinUrl,summary:'A user-selected coordinate. Nearby landmarks, parking and reference photos are researched separately; this pin alone does not prove a safe or public viewpoint.',why:'This is your chosen scouting coordinate, not a verified landmark or confirmed sightline. Use the generated framing ideas as a starting point, then check local access and the real view.',scenicKind:'location study',tags:{},city:''};
- selectItem(pinItem,{keepMapView:true});
+ if(opts&&opts.initial){
+  // Auto-scout the home map without opening a placeholder pin detail over the search tools.
+  $('spotDetail').classList.remove('show');
+  const quickStrip=$('pinActionStrip');
+  if(quickStrip)quickStrip.hidden=true;
+ }else{
+  selectItem(pinItem,{keepMapView:true});
+ }
 
  if(opts&&opts.fly&&map.getZoom()<12){map.stop();map.flyTo({center:[c.lng,c.lat],zoom:Math.max(12.5,map.getZoom()+3),duration:850,essential:true});}
  refreshBasemapParking();
  renderResults();renderPhotos();renderMarkers();
  setStatus('Scouting around your pin','Searching mapped parking and history nearby, plus a wider 25–30 km radius for landscape and city-view candidates.','loading');
- $('mapTitle').textContent='Exploring your stop';
- $('mapSubtitle').textContent=coordLabel(c)+' · '+(state.radius/1000)+' km local search + wider photo scouting';
+ $('mapTitle').textContent=opts&&opts.initial?'Scout Rijeka & the Kvarner coast':'Exploring your stop';
+ $('mapSubtitle').textContent=(opts&&opts.initial?'Nearby landmarks, viewpoints and parking are loading · ':'')+coordLabel(c)+' · '+(state.radius/1000)+' km local search + wider photo scouting';
  updateSocialSearch('near '+coordLabel(c));
  const rad=state.radius;
  let osmResults=[];
@@ -2472,6 +2497,11 @@ function setupImageGeneration(){
 }
 function selectItem(item,options){
  state.selected=item;
+ state.markers.forEach(function(marker){
+  const items=marker.__scoutItems||[];
+  const selected=items.some(function(candidate){return candidate&&candidate.id===item.id;});
+  marker.getElement().classList.toggle('is-selected',selected);
+ });
  const quick=$('pinActionStrip');
  if(quick){quick.hidden=false;$('pinActionTitle').textContent='Photo ideas · '+String(item.name||'your pin');}
  // Map place selection updates the on-page photography idea and nearby references.
