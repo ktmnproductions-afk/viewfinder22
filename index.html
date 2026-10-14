@@ -591,6 +591,28 @@ footer{color:#7c8b7e;border-top-color:#e4eae1}.footer-link{color:#50715b}
 .scout-marker.with-label:focus-visible .pin-name-label,
 .scout-marker.with-label.is-selected .pin-name-label{opacity:1;visibility:visible}
 
+
+/* Stable editorial image tiles: thumbnail files always fill a landscape frame. */
+.field-guide-area-visuals{min-width:0;width:100%;overflow:hidden}
+.field-guide-area-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;align-items:stretch}
+.area-subject-photo{display:flex;flex-direction:column;width:100%;min-width:0;max-width:100%;overflow:hidden;margin:0}
+.area-subject-photo img{display:block;width:100%!important;max-width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;object-position:center;background:#e7e5db}
+.area-subject-photo:first-child{grid-column:span 2;grid-row:span 2}
+.area-subject-photo:first-child img{aspect-ratio:4/3;min-height:0}
+.area-subject-photo figcaption{flex:1;padding:6px 7px;min-width:0;overflow-wrap:anywhere}
+.area-subject-photo figcaption span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.area-subject-photo figcaption a{font-size:8px}
+.area-subject-sketch-fallback .guide-sketch-fallback{min-width:0;width:100%;overflow:hidden}
+.area-subject-sketch-fallback .guide-sketch-fallback img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+@media(max-width:850px){
+ .field-guide-area-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .area-subject-photo:first-child{grid-column:span 2;grid-row:span 1}
+}
+@media(max-width:620px){
+ .field-guide-area-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .area-subject-photo:first-child{grid-column:span 2;grid-row:span 1}
+}
+
 </style>
 </head>
 <body>
@@ -2696,13 +2718,14 @@ let fieldGuidePhotoCache={};
 let fieldGuidePhotoLoadToken=0;
 let fieldGuideCardLookup={};
 let fieldGuideHasLoaded=false;
+let fieldGuideContextOnly=false;
 function fieldGuideCardsForView(){
- const selectedOnly=document.body.classList.contains('field-guide-context-only');
+ const selectedOnly=fieldGuideContextOnly||document.body.classList.contains('field-guide-context-only');
  let cards=selectedOnly?[]:FIELD_GUIDE_PLACES.map(x=>({...x,searchText:[x.name,x.locality,x.tag,...x.topics,...x.shotIdeas].join(' ').toLowerCase()}));
  if(state.selected&&Number.isFinite(Number(state.selected.lat))&&Number.isFinite(Number(state.selected.lng))){
   const item=state.selected;
   const normalized=String(item.name||'').trim().toLowerCase();
-  const existing=cards.find(x=>x.name.trim().toLowerCase()===normalized);
+  const existing=cards.find(x=>x.name.trim().toLowerCase()===normalized&&haversine({lat:Number(item.lat),lng:Number(item.lng)},{lat:Number(x.lat),lng:Number(x.lng)})<=5000);
   const key='selected-'+String(item.id||'map-place').replace(/[^a-zA-Z0-9_-]/g,'-');
   const category=item.category||'photoSpot';
   const topics=existing?existing.topics.slice():['recommended','details'];
@@ -2767,6 +2790,10 @@ function bindFieldGuideImageFallbacks(root){
 function renderFieldGuide(){
  const grid=$('fieldGuideGrid');
  if(!grid)return;
+ const contextual=fieldGuideContextOnly||document.body.classList.contains('field-guide-context-only');
+ grid.hidden=contextual;
+ if(contextual)grid.style.display='none';
+ else{grid.hidden=false;grid.style.removeProperty('display');}
  const cards=fieldGuideCardsForView();
  fieldGuideCardLookup={};
  cards.forEach(card=>fieldGuideCardLookup[card.id]=card);
@@ -2884,6 +2911,7 @@ async function loadFieldGuidePhotos(force){
       if(token!==fieldGuidePhotoLoadToken||scanId!==state.scanId)return;
       const seen=new Set(refs.map(p=>p.id||p.name));
       nearby.forEach(photo=>{
+       if(!photoReferenceFitsPlace(photo,card,context.locality||card.locality))return;
        const key=photo.id||photo.name;
        if(seen.has(key))return;
        seen.add(key);
@@ -2908,6 +2936,9 @@ async function loadFieldGuidePhotos(force){
       fallback.forEach(p=>{const key=p.id||p.name;if(!seen.has(key)){seen.add(key);refs.push(p);}});
      }catch(error){}
     }
+    // Last gate across exact-title, geotagged and fallback sources. A photo with
+    // a different named landmark/city can never leak into this location's sheet.
+    refs=refs.filter(photo=>photoReferenceFitsPlace(photo,card,context.locality||card.locality));
     fieldGuidePhotoCache[card.id]=refs.slice(0,9);
    }catch(error){
     if(token!==fieldGuidePhotoLoadToken)return;
@@ -3088,6 +3119,7 @@ async function loadFieldGuideAreaPhotos(parentCard,subject){
     if(scanId!==state.scanId)return;
     const seen=new Set(refs.map(p=>p.id||p.name));
     nearby.forEach(photo=>{
+     if(!photoReferenceFitsPlace(photo,subject,subject.locality))return;
      const key=photo.id||photo.name;
      if(seen.has(key))return;
      seen.add(key);
@@ -3095,6 +3127,7 @@ async function loadFieldGuideAreaPhotos(parentCard,subject){
     });
    }catch(error){}
   }
+  refs=refs.filter(photo=>photoReferenceFitsPlace(photo,subject,subject.locality));
   fieldGuidePhotoCache[id]=refs.slice(0,3);
  }catch(error){
   if(scanId!==state.scanId){delete fieldGuidePhotoCache[id];return;}
@@ -3118,14 +3151,24 @@ function closeFieldGuideDetail(){
  $('fieldGuideDetail').hidden=true;
  fieldGuideDetailCardId=null;
  $('fieldGuideDetailBody').innerHTML='';
+ if(fieldGuideContextOnly)closeFieldGuide();
 }
 function openSelectedFieldGuide(){
  if(!state.selected||!Number.isFinite(Number(state.selected.lat))||!Number.isFinite(Number(state.selected.lng))){
+  fieldGuideContextOnly=false;
   document.body.classList.remove('field-guide-context-only');
   openFieldGuide();
   return;
  }
+ // This is a new contextual session. Discard any image results or pending cache
+ // from a previously opened catalogue/place so none can appear under this pin.
+ fieldGuideContextOnly=true;
  document.body.classList.add('field-guide-context-only');
+ fieldGuidePhotoLoadToken++;
+ fieldGuidePhotoCache={};
+ fieldGuideHasLoaded=false;
+ fieldGuideAreaLookup={};
+ fieldGuideCardLookup={};
  $('guideSearch').value='';
  fieldGuideActiveFilter='all';
  $('fieldGuideFilters').querySelectorAll('[data-guide-filter]').forEach(b=>b.classList.toggle('active',b.dataset.guideFilter==='all'));
@@ -3135,8 +3178,7 @@ function openSelectedFieldGuide(){
   const card=fieldGuideCardsForView().find(x=>x.originalItem&&x.originalItem.id===selectedId);
   if(card)openFieldGuideDetail(card.id);
   else setStatus('Select a location first','Click a place or drop a pin on the map, then open Photo ideas.','warn');
- });
-}
+ });}
 function openFieldGuide(){
  $('fieldGuidePage').hidden=false;
  document.body.classList.add('field-guide-open');
@@ -3145,10 +3187,19 @@ function openFieldGuide(){
  window.requestAnimationFrame(()=>{ $('fieldGuidePage').scrollTop=0; if(map)map.resize(); });
 }
 function closeFieldGuide(){
- if(!$('fieldGuideDetail').hidden)closeFieldGuideDetail();
+ // Clear contextual mode before dismissing its detail, so the close helpers do
+ // not reopen or preserve a hidden default-location catalogue.
+ fieldGuideContextOnly=false;
+ if(!$('fieldGuideDetail').hidden){
+  $('fieldGuideDetail').hidden=true;
+  fieldGuideDetailCardId=null;
+  $('fieldGuideDetailBody').innerHTML='';
+ }
  $('fieldGuidePage').hidden=true;
  document.body.classList.remove('field-guide-context-only');
  document.body.classList.remove('field-guide-open');
+ const grid=$('fieldGuideGrid');
+ if(grid){grid.hidden=false;grid.style.removeProperty('display');}
  window.requestAnimationFrame(()=>{if(map)map.resize();});
 }
 
