@@ -116,6 +116,7 @@
 @media(max-width:850px){.local-main{grid-template-columns:1fr}.local-chat{border-right:0;border-bottom:1px solid #e9ede8}.local-config{grid-template-columns:1fr 1fr}.local-load{grid-column:1/-1}.local-trust{white-space:normal}.local-head{flex-direction:column}}
 @media(max-width:600px){.local-config{grid-template-columns:1fr}.local-load{grid-column:auto}.local-head{padding:16px}.local-head h2{font-size:20px}.local-config{padding:13px}.local-progress{padding:10px 13px}.local-feed{max-height:400px}.local-composer-bottom{flex-wrap:wrap}.local-composer-bottom select{flex-basis:100%}.study-link-banner{align-items:flex-start;flex-direction:column}}
 
+.free-hosted{border:1px solid #dfe6df;background:#fff;border-radius:20px;overflow:hidden;margin:18px 0 24px;box-shadow:0 7px 25px rgba(22,38,29,.04)}.fh-head{padding:18px 20px;background:linear-gradient(120deg,#eff5ed,#fafbf7);border-bottom:1px solid #e6ece4;display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.fh-head h2{font-size:20px;letter-spacing:-.6px;margin:0 0 5px}.fh-head p{font-size:11px;line-height:1.55;color:#68766b;margin:0;max-width:740px}.fh-pill{border:1px solid #d7e6d7;background:#fff;border-radius:8px;color:#286647;padding:7px 9px;font-size:10px;font-weight:850;white-space:nowrap}.fh-tabs{display:flex;gap:7px;flex-wrap:wrap;padding:12px 14px;background:#fff;border-bottom:1px solid #ebefea}.fh-tab{border:1px solid #e0e7df;background:#fff;border-radius:9px;padding:9px 11px;font-size:11px;color:#617066;font-weight:800}.fh-tab.active{color:#245c3e;border-color:#aac8ae;background:#eaf4eb}.fh-tab small{font-size:9px;color:#929d93;font-weight:650;margin-left:4px}.fh-frame-wrap{background:#eef2ed;padding:12px}.fh-frame{display:block;background:#fff;border:1px solid #dce3db;border-radius:12px;width:100%;height:720px;max-width:100%}.fh-openline{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0;padding:0 14px 13px;background:#eef2ed;color:#788479;font-size:10px}.fh-openline a{font-weight:850;color:#286647;text-decoration:underline;text-underline-offset:3px}.fh-warning{font-size:10px;line-height:1.6;color:#7b694b;background:#fff7e8;border-top:1px solid #f0e4cd;padding:10px 15px}@media(max-width:650px){.fh-head{flex-direction:column;padding:15px}.fh-head h2{font-size:20px}.fh-tabs{padding:9px}.fh-tab{padding:8px}.fh-frame-wrap{padding:6px}.fh-frame{height:650px}.fh-openline{padding:0 10px 10px}}
 </style>
 </head>
 <body>
@@ -162,7 +163,7 @@
       <label class="local-field">Choose a local model
         <select id="local-model">
           <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Light · Llama 3.2 1B · lower hardware needs</option>
-          <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" selected>Balanced · Llama 3.2 3B · recommended start</option>
+          <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" selected>Balanced · Llama 3.2 3B · recommended start</option><option value="Qwen3-1.7B-q4f16_1-MLC">Chinese family · Qwen3 1.7B · compact</option><option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Chinese family · Qwen2.5 Coder 1.5B</option>
           <option value="DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC">Reasoning · DeepSeek R1 distilled Qwen 7B · heavier</option>
           <option value="Phi-4-mini-instruct-q4f16_1-MLC">Compact reasoning · Phi-4 mini · medium hardware</option>
         </select>
@@ -201,7 +202,7 @@
         <div class="local-score"><div><strong>DeepSeek R1 · Qwen 7B</strong><p>Heavier reasoning-oriented model. More demanding download and GPU memory; not a frontier model.</p></div><span class="local-tag">REASONING</span></div>
         <div class="local-score"><div><strong>Phi-4 mini</strong><p>Compact alternative for instruction following and reasoning, subject to browser compatibility.</p></div><span class="local-tag">ALT</span></div>
         <div class="local-caveat"><b>Honest limits:</b> smaller local models are less capable than the biggest hosted models; they can make mistakes. Local research mode cannot verify current facts. Image/video generation needs different, much heavier models and is listed separately in the research report.</div>
-        <div class="local-links"><a href="https://github.com/mlc-ai/web-llm" target="_blank" rel="noopener">Runtime & model support ↗</a><a href="https://huggingface.co/mlc-ai" target="_blank" rel="noopener">Model files ↗</a><a href="https://ktmnproductions-afk.github.io/viewfinder22/ai-workspace/free-ai-study.html" target="_blank" rel="noopener">Full free-AI study ↗</a></div>
+        <div class="local-links"><a href="https://github.com/mlc-ai/web-llm" target="_blank" rel="noopener">Runtime & model support ↗</a><a href="https://huggingface.co/mlc-ai" target="_blank" rel="noopener">Model files ↗</a><a href="https://ktmnproductions-afk.github.io/viewfinder22/ai-workspace/free-ai-study/" target="_blank" rel="noopener">Full free-AI study ↗</a></div>
       </aside>
     </div>
   </section>
@@ -837,7 +838,7 @@ handleOAuthCallback();
   var $=function(id){return document.getElementById(id);};
   var modelInfo={
     'Llama-3.2-1B-Instruct-q4f16_1-MLC':{name:'Llama 3.2 1B',vram:'~0.9 GB VRAM listed by WebLLM',note:'Smallest choice. Lower memory use, lower answer quality and reasoning depth.'},
-    'Llama-3.2-3B-Instruct-q4f16_1-MLC':{name:'Llama 3.2 3B',vram:'~2.3 GB VRAM listed by WebLLM',note:'Good first local model. Download may be around 1–2 GB and take a while on the first run.'},
+    'Llama-3.2-3B-Instruct-q4f16_1-MLC':{name:'Llama 3.2 3B',vram:'~2.3 GB VRAM listed by WebLLM',note:'Good first local model. Download may be around 1–2 GB and take a while on the first run.'},'Qwen3-1.7B-q4f16_1-MLC':{name:'Qwen3 1.7B',vram:'Compact model; check current model metadata',note:'Chinese model family for everyday prompts and brainstorming; smaller than frontier hosted versions.'},'Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC':{name:'Qwen2.5 Coder 1.5B',vram:'Compact model; check current model metadata',note:'Chinese open-weight coding model for smaller snippets and debugging suggestions.'},
     'DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC':{name:'DeepSeek R1 distilled Qwen 7B',vram:'~5.1 GB VRAM listed by WebLLM',note:'Reasoning-focused 7B model. Heavier and slower; requires more GPU memory and a larger download.'},
     'Phi-4-mini-instruct-q4f16_1-MLC':{name:'Phi-4 mini',vram:'Check current WebLLM model card',note:'Compact alternative. Hardware and supported model list may differ by browser/device.'}
   };
@@ -951,5 +952,6 @@ handleOAuthCallback();
 })();
 </script>
 
+<script>(function(){var demos={image:{title:'Qwen Image 2.1',src:'https://qwen-qwen-image-2-1.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen-Image-2.1',note:'Image generation and editing · Hugging Face ZeroGPU.'},video:{title:'Wan 2.2 Fast',src:'https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space/?__theme=light',page:'https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster',note:'Wan 2.2 image-to-video · GPU queue and quota apply.'},voice:{title:'Qwen3 TTS',src:'https://qwen-qwen3-tts-demo.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen3-TTS-Demo',note:'Text-to-speech and voice options.'},code:{title:'Qwen3 Coder WebDev',src:'https://qwen-qwen3-coder-webdev.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen3-Coder-WebDev',note:'Prototype HTML/React from a description.'}};var frame=document.getElementById('fh-frame');if(!frame)return;var status=document.getElementById('fh-status'),link=document.getElementById('fh-external'),loaded='image';document.querySelectorAll('[data-hfdemo]').forEach(function(btn){btn.addEventListener('click',function(){var id=btn.getAttribute('data-hfdemo'),item=demos[id];if(!item)return;loaded=id;document.querySelectorAll('[data-hfdemo]').forEach(function(b){var active=b===btn;b.classList.toggle('active',active);b.setAttribute('aria-selected',active?'true':'false');});frame.title=item.title+' public demo';status.textContent=item.title+' · Loading…';link.href=item.page;link.textContent='Open '+item.title+' ↗';if(frame.src!==item.src)frame.src=item.src;});});frame.addEventListener('load',function(){status.textContent=demos[loaded].note;});})();</script>
 </body>
 </html>
