@@ -139,7 +139,7 @@ jobs:
                   display: manifest && manifest.display,
                   startUrl: manifest && manifest.start_url,
                   workerStatus: workerResponse.status,
-                  workerCacheV11: workerText.includes('"photo-scout-shell-v11"'),
+                  workerCacheV12: workerText.includes('"photo-scout-shell-v12"'),
                   buildVersion: document.querySelector('meta[name="photo-scout-build"]')?.content||'',
                   installButton: !!document.querySelector('#installAppBtn'),
                   installButtonVisible: !!document.querySelector('#installAppBtn') && !document.querySelector('#installAppBtn').hidden,
@@ -150,7 +150,7 @@ jobs:
                   appInstallDiagnostics.display !== 'standalone' ||
                   appInstallDiagnostics.workerStatus !== 200 ||
                   !appInstallDiagnostics.workerCacheV11 ||
-                  appInstallDiagnostics.buildVersion !== '2026-10-15-photo-scout-map-roles-v11' ||
+                  appInstallDiagnostics.buildVersion !== '2026-10-15-photo-scout-local-details-v12' ||
                   !appInstallDiagnostics.installButton || !appInstallDiagnostics.installButtonVisible || !appInstallDiagnostics.pinLegend) {
                 throw new Error('Photo Scout must ship as an installable standalone app with a visible pin legend: ' + JSON.stringify(appInstallDiagnostics));
               }
@@ -436,6 +436,11 @@ jobs:
                 throw new Error('Mapped viewpoints, targeted vantage points and sparse landmark labels regressed: ' + JSON.stringify(mapRoleFixture));
               }
               console.log('MAP_ROLE_AND_LABEL_FIXTURE ' + JSON.stringify(mapRoleFixture));
+              if (!mapRoleFixture.memorialTagsRecognized || !mapRoleFixture.waysideCrossRecognized ||
+                  !mapRoleFixture.plaqueRecognized || !mapRoleFixture.fountainRecognized ||
+                  !mapRoleFixture.distinctNearbyMemorialsKept || !mapRoleFixture.exactSameGenericCoordinateDeduplicated) {
+                throw new Error('Small local-interest subjects must be retained without collapsing distinct nearby memorials: ' + JSON.stringify(mapRoleFixture));
+              }
 
               // Diagnostic only: Openverse is anonymous but rate limited. The app
               // retains Wikimedia Commons and in-app sketches if the service is unavailable.
