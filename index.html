@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
+<meta name="photo-scout-build" content="2026-10-15-openverse-parking-ideas">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -892,6 +893,22 @@ window.__PHOTO_SCOUT_TEST__ = {
    clearMarkers();state.results=saved.results;state.scenicSpots=saved.scenicSpots;state.basemapParking=saved.basemapParking;state.spotParking=saved.spotParking;state.selected=saved.selected;state.spotParkingTargetId=saved.spotParkingTargetId;state.center=saved.center;state.radius=saved.radius;renderMarkers();
   }
   return result;
+ },
+ runParkingEntranceFixture:function(){
+  const entranceCases=[
+   {amenity:'parking_entrance'},
+   {parking:'entrance'},
+   {entrance:'parking'}
+  ];
+  const areaCases=[
+   {amenity:'parking'},
+   {amenity:'parking_space'}
+  ];
+  return {
+   entranceCasesRecognized:entranceCases.every(tags=>isParkingEntrance({tags:tags})),
+   ordinaryLotsNotCalledEntrances:areaCases.every(tags=>!isParkingEntrance({tags:tags})),
+   generatedRouteLabel:entranceCases.every(tags=>isParkingEntrance({tags:tags})?'Route to entrance':'Route to point')
+  };
  },
  scanAt:function(lat,lng){ return scanAt({lat:lat,lng:lng},{fly:true}); },
  forceRasterFallback:function(){return switchToRasterFallback('Automated backup-map verification.');},
