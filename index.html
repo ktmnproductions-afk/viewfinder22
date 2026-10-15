@@ -2847,7 +2847,10 @@ async function renderDetailPhotoRefs(item){
  const nearbyTokens=photoPlaceTokens(nearbyNames.join(' '));
  const ranked=refs.map(photo=>{
   const title=normalizedPhotoTitle(photo.name);
-  const metadata=normalizedPhotoTitle([photo.description,photo.searchText,Array.isArray(photo.tags)?photo.tags.join(' '):photo.tags].filter(Boolean).join(' '));
+  // Use only actual image title, description, and tags here. Some search adapters
+  // append the query string to searchText, which is not image evidence and must not
+  // make an unrelated photograph appear to match a town or landmark.
+  const metadata=normalizedPhotoTitle([photo.description,Array.isArray(photo.tags)?photo.tags.map(t=>typeof t==='string'?t:(t&&t.name)||'').join(' '):photo.tags].filter(Boolean).join(' '));
   const allText=title+' '+metadata;
   if(!title||unwanted.test(allText)||!scene.test(allText))return null;
   const titleTokens=photoPlaceTokens(title);
