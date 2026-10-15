@@ -463,11 +463,8 @@ function refreshModelDetail(){
   $('aw-model-detail').textContent=id==='openrouter/free'?'$0 per token for model inference. It dynamically selects an eligible free model; availability and daily request limits apply.':m?((freePrice(m)?'Free model according to current catalog. ':'Paid model: ')+(m.description||'Price and limits can change; check model details before use.')):'Free model router is available after connecting a key.';
  }else{
   var rate='Pricing varies by model/provider. Review the selected model before generation.';
-  if(m&&m.pricing_skus){try{rate='Listed rates: '+Object.entries(m.pricing_skus).map(function(x){return x[0]+': 
-</html>+x[1];}).join(' · ')+'.';}catch(e){}}
-  else if(m&&m.pricing&&m.pricing.prompt!==undefined){rate='Listed token pricing: input 
-</html>+m.pricing.prompt+' / output 
-</html>+m.pricing.completion+'.';}
+  if(m&&m.pricing_skus){try{rate='Listed rates: '+Object.entries(m.pricing_skus).map(function(x){return x[0]+': '+String.fromCharCode(36)+x[1];}).join(' · ')+'.';}catch(e){}}
+  else if(m&&m.pricing&&m.pricing.prompt!==undefined){rate='Listed token pricing: input '+String.fromCharCode(36)+m.pricing.prompt+' / output '+String.fromCharCode(36)+m.pricing.completion+'.';}
   $('aw-model-detail').textContent=(m&&m.description?m.description+' ':'')+rate;
  }
 }
@@ -544,8 +541,7 @@ async function sendChat(prompt,cat){
   waiting.body.textContent=textContent||'The model returned no text. Try another model or prompt.';
   chatHistory.push({role:'assistant',content:textContent});
   if(Array.isArray(msg.images)){msg.images.forEach(function(im){var src=im.image_url&&im.image_url.url;if(src){var img=document.createElement('img');img.src=src;img.alt='AI generated image';img.className='output-visual';waiting.wrapper.appendChild(img);}});}
-  if(data.usage&&data.usage.cost!==undefined)setStatus('Done · reported API cost: 
-</html>+Number(data.usage.cost).toFixed(5));
+  if(data.usage&&data.usage.cost!==undefined)setStatus('Done · reported API cost: '+String.fromCharCode(36)+Number(data.usage.cost).toFixed(5));
   else setStatus('Response complete · Model: '+(data.model||model));
  }catch(e){waiting.body.textContent='Request failed: '+e.message;waiting.wrapper.classList.add('error');waiting.wrapper.style.color='#a13c30';setStatus('Request failed. Check key, model availability and remaining quota.',true);}
  finally{setBusy(false);$('aw-feed').scrollTop=$('aw-feed').scrollHeight;}
@@ -556,8 +552,7 @@ function addImageResult(item,prompt,data){
   var a=document.createElement('a');a.href=img.src;a.download='ai-workbench-image.'+((item.media_type||'image/png').indexOf('jpeg')>=0?'jpg':'png');a.className='download-link';a.textContent='Download image';card.appendChild(a);
  }else if(item.url){var img2=document.createElement('img');img2.src=item.url;img2.alt=prompt;img2.className='output-visual';card.appendChild(img2);var a2=document.createElement('a');a2.href=item.url;a2.target='_blank';a2.rel='noopener';a2.download='ai-workbench-image';a2.className='download-link';a2.textContent='Open / download image';card.appendChild(a2);}
  else throw new Error('The image API returned no displayable image.');
- if(data.usage&&data.usage.cost!==undefined){var cost=document.createElement('p');cost.textContent='Reported API cost: 
-</html>+Number(data.usage.cost).toFixed(5);cost.style.fontSize='10px';cost.style.color='#818b82';card.appendChild(cost);}
+ if(data.usage&&data.usage.cost!==undefined){var cost=document.createElement('p');cost.textContent='Reported API cost: '+String.fromCharCode(36)+Number(data.usage.cost).toFixed(5);cost.style.fontSize='10px';cost.style.color='#818b82';card.appendChild(cost);}
  $('aw-feed').scrollTop=$('aw-feed').scrollHeight;
 }
 async function generateImage(prompt){
@@ -569,10 +564,9 @@ async function generateImage(prompt){
   var resp=await apiFetch(API+'/images',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:model,prompt:prompt,aspect_ratio:$('aw-aspect').value})});
   var data=await responseJson(resp);var item=data.data&&data.data[0];if(!item)throw new Error('No image returned by the model.');
   addImageResult(item,prompt,data);
-  setStatus('Image generated · Model '+model+(data.usage&&data.usage.cost!==undefined?' · API cost 
-</html>+Number(data.usage.cost).toFixed(5):' · Check provider usage for final cost'));
+  setStatus('Image generated · Model '+model+(data.usage&&data.usage.cost!==undefined?' · API cost '+String.fromCharCode(36)+Number(data.usage.cost).toFixed(5):' · Check provider usage for final cost'));
  }catch(e){appendText('assistant','Image generation failed: '+e.message,'ERROR');setStatus('Image request failed. Check model support, API key and credits.',true);}
- finally{setBusy(false);$('aw-feed').scrollTop=$('aw-feed').scrollHeight;}
+ finally{setBusy(false);$('aw-cost-confirm').checked=false;$('aw-feed').scrollTop=$('aw-feed').scrollHeight;}
 }
 async function generateVideo(prompt){
  if(!requireKey()||!requireMediaApproval())return;
@@ -583,7 +577,7 @@ async function generateVideo(prompt){
   var resp=await apiFetch(API+'/videos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   var job=await responseJson(resp);if(!job.id)throw new Error('The provider did not return a video job ID.');
   statusMsg.body.textContent='Job accepted ('+job.id+'). Checking progress… Image and video providers may take several minutes.';
-  var poll=job.polling_url||('/videos/'+encodeURIComponent(job.id));if(poll.charAt(0)==='/')poll=API+poll;
+  var poll=job.polling_url||('/videos/'+encodeURIComponent(job.id));if(poll.indexOf('https://')!==0&&poll.indexOf('http://')!==0){if(poll.indexOf('/api/v1/')===0)poll='https://openrouter.ai'+poll;else if(poll.charAt(0)==='/')poll=API+poll;else poll=API+'/'+poll;}
   var finalJob=job;
   for(var i=0;i<60;i++){
    await new Promise(function(resolve){setTimeout(resolve,5000);});
@@ -604,12 +598,11 @@ async function generateVideo(prompt){
    var video2=document.createElement('video');video2.controls=true;video2.playsInline=true;video2.className='output-media';video2.src=objectUrl;statusMsg.wrapper.appendChild(video2);
    var link2=document.createElement('a');link2.href=objectUrl;link2.download='ai-workbench-video.mp4';link2.className='download-link';link2.textContent='Download video';statusMsg.wrapper.appendChild(link2);
   }
-  var usage=finalJob.usage&&finalJob.usage.cost!==undefined?' · Reported API cost: 
-</html>+Number(finalJob.usage.cost).toFixed(4):'';
+  var usage=finalJob.usage&&finalJob.usage.cost!==undefined?' · Reported API cost: '+String.fromCharCode(36)+Number(finalJob.usage.cost).toFixed(4):'';
   statusMsg.body.textContent='Video generation complete. Model: '+model+usage+'.';
   setStatus('Video ready'+usage);
  }catch(e){statusMsg.body.textContent='Video generation failed: '+e.message;statusMsg.wrapper.style.color='#a13c30';setStatus('Video job failed or could not finish. Check model pricing/availability.',true);}
- finally{setBusy(false);$('aw-feed').scrollTop=$('aw-feed').scrollHeight;}
+ finally{setBusy(false);$('aw-cost-confirm').checked=false;$('aw-feed').scrollTop=$('aw-feed').scrollHeight;}
 }
 async function generateVoice(prompt){
  if(!requireKey()||!requireMediaApproval())return;
@@ -625,7 +618,7 @@ async function generateVoice(prompt){
   var a=document.createElement('a');a.href=url;a.download='ai-workbench-voice.mp3';a.className='download-link';a.textContent='Download MP3';card.appendChild(a);
   setStatus('Audio generated. Check provider account usage for the final price.');
  }catch(e){card.textContent='Speech generation failed: '+e.message;card.style.color='#a13c30';setStatus('Voice request failed. Check model voice support and credits.',true);}
- finally{setBusy(false);$('aw-feed').scrollTop=$('aw-feed').scrollHeight;}
+ finally{setBusy(false);$('aw-cost-confirm').checked=false;$('aw-feed').scrollTop=$('aw-feed').scrollHeight;}
 }
 async function run(){
  if(busy)return;
