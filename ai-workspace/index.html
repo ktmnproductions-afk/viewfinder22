@@ -54,6 +54,68 @@
 @media(max-width:1000px){.studio-grid{grid-template-columns:minmax(260px,.88fr) minmax(0,1.12fr)}.studio-controls{padding:14px}.output-feed{padding:12px}}
 @media(max-width:720px){.studio{border-radius:16px;margin-top:12px}.studio-head{padding:16px;flex-direction:column}.studio-head h2{font-size:20px}.connect-btn{width:100%}.studio-grid{grid-template-columns:1fr}.studio-controls{border-right:0;border-bottom:1px solid #e8ece7;padding:14px}.output-feed{min-height:280px;max-height:560px}.studio-options{grid-template-columns:1fr 1fr}.mode-chips{grid-template-columns:repeat(4,minmax(0,1fr))}.key-row input{min-width:100%;flex-basis:100%}.studio-actions{position:sticky;bottom:0;background:rgba(255,255,255,.94);padding:6px 0;z-index:2}.chat-message{max-width:100%}}
 
+
+/* Truly-free browser-local inference */
+.local-ai{margin:18px 0 24px;border:1px solid #dbe5dc;border-radius:22px;background:#fff;overflow:hidden;box-shadow:0 9px 30px rgba(22,38,29,.045)}
+.local-head{padding:20px 22px;background:linear-gradient(115deg,#eaf4eb,#f7f8f4);border-bottom:1px solid #e0e9e0;display:flex;gap:14px;justify-content:space-between;align-items:flex-start}
+.local-kicker{display:flex;gap:7px;align-items:center;color:#286447;font-size:10px;font-weight:850;letter-spacing:1.1px;text-transform:uppercase;margin-bottom:7px}
+.local-kicker span{height:6px;width:6px;background:#5a9f72;border-radius:99px}
+.local-head h2{font-size:22px;letter-spacing:-.65px;margin:0 0 6px}
+.local-head p{font-size:12px;color:#657269;max-width:720px;margin:0;line-height:1.55}
+.local-trust{flex:none;border:1px solid #cde0d0;background:#f9fffa;color:#2b6947;border-radius:10px;padding:8px 10px;font-size:10px;font-weight:850}
+.local-config{padding:15px 19px;border-bottom:1px solid #e7ece7;display:grid;grid-template-columns:minmax(200px,1fr) minmax(180px,1fr) auto;gap:10px;align-items:end}
+.local-field{display:flex;flex-direction:column;gap:5px;min-width:0;color:#56635a;font-size:10px;font-weight:800}
+.local-field select{min-width:0;width:100%;background:#fafbf9;border:1px solid #dfe6df;border-radius:9px;padding:10px;color:#314237;font-size:11px;outline:none}
+.local-load{background:#286647;border:1px solid #286647;color:white;border-radius:10px;padding:10px 14px;font-size:11px;font-weight:850;white-space:nowrap}
+.local-load:hover{background:#1d5439}
+.local-load:disabled{opacity:.5;cursor:wait}
+.local-progress{padding:10px 19px 12px;background:#fbfcfa;border-bottom:1px solid #edf0ec;display:none}
+.local-progress.show{display:block}
+.local-progress-label{display:flex;justify-content:space-between;gap:12px;font-size:10px;color:#7a857d;margin-bottom:7px}
+.local-progress-track{height:5px;background:#e8eee8;border-radius:20px;overflow:hidden}
+.local-progress-fill{height:100%;width:0;background:#459663;transition:width .2s}
+.local-model-note{font-size:10px;color:#859087;line-height:1.5;padding:0 19px 12px}
+.local-main{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(280px,.82fr);min-height:330px}
+.local-chat{min-width:0;border-right:1px solid #e9ede8;display:flex;flex-direction:column}
+.local-chat-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 15px;border-bottom:1px solid #edf0ec}
+.local-chat-top strong{font-size:11px}.local-chat-top span{font-size:10px;color:#8a958c}
+.local-feed{min-height:200px;max-height:490px;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:15px;background:#f9fbf8}
+.local-welcome{margin:auto;padding:18px 12px;text-align:center;max-width:390px;color:#718075}
+.local-welcome .mark{width:42px;height:42px;border-radius:14px;background:#e5f0e6;color:#2b6545;display:grid;place-items:center;font-size:22px;margin:0 auto 11px}
+.local-welcome strong{display:block;color:#344a39;font-size:14px;margin-bottom:7px}
+.local-welcome p{font-size:11px;line-height:1.65;margin:0}
+.local-msg{max-width:95%;padding:10px 12px;border:1px solid #e3e9e3;border-radius:12px;background:white;font-size:12px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;color:#344238}
+.local-msg.user{align-self:flex-end;background:#e5f0e6;border-color:#d5e6d7;border-bottom-right-radius:4px}
+.local-msg.assistant{align-self:flex-start;border-bottom-left-radius:4px}
+.local-msg.error{color:#a83d33;border-color:#f0cfc9;background:#fff8f7}
+.local-msg .meta{display:block;color:#96a096;font-size:9px;font-weight:850;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px}
+.local-composer{padding:12px;border-top:1px solid #e7ece7;background:#fff}
+.local-composer textarea{width:100%;min-height:84px;resize:vertical;border:1px solid #dfe6df;background:#fbfcfa;border-radius:10px;padding:11px;font:inherit;font-size:12px;line-height:1.55;outline:none;color:#28392e}
+.local-composer textarea:focus{border-color:#9dbba2;box-shadow:0 0 0 3px #edf4ed}
+.local-composer-bottom{display:flex;align-items:center;gap:8px;margin-top:8px}
+.local-composer-bottom select{border:1px solid #e0e6e0;border-radius:8px;background:#fff;padding:8px;min-width:0;font-size:10px;color:#4b5a4f;flex:1}
+.local-send{background:#286647;color:#fff;border:0;border-radius:9px;padding:9px 13px;font-size:11px;font-weight:850;white-space:nowrap}
+.local-send:disabled{opacity:.5;cursor:wait}
+.local-clear{background:#fff;border:1px solid #e0e6e0;border-radius:9px;padding:8px 10px;font-size:10px;font-weight:750;color:#68766b}
+.local-side{padding:16px;min-width:0}
+.local-side h3{font-size:13px;margin:0 0 9px}
+.local-score{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid #eef1ed;padding:10px 0}
+.local-score:last-of-type{border-bottom:0}
+.local-score strong{display:block;font-size:11px;color:#3c4b40}
+.local-score p{font-size:10px;color:#7a867b;margin:3px 0 0;line-height:1.5}
+.local-tag{font-size:9px;font-weight:850;color:#2c6748;background:#eaf4eb;border-radius:6px;padding:5px 6px;white-space:nowrap}
+.local-caveat{background:#f6f7f2;border:1px solid #ebeee4;border-radius:10px;padding:10px;margin-top:12px;font-size:10px;line-height:1.6;color:#747b6b}
+.local-caveat b{color:#505846}
+.local-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.local-links a{font-size:10px;color:#286647;text-decoration:underline;text-underline-offset:3px;font-weight:800}
+.cloud-studio-label{display:flex;align-items:center;gap:8px;margin:24px 0 4px;color:#78837b;font-size:10px;font-weight:850;letter-spacing:1px;text-transform:uppercase}
+.cloud-studio-label:after{content:"";height:1px;background:#e2e8e1;flex:1}
+.study-link-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;background:#f1f5ef;border:1px solid #e1e9df;border-radius:12px;margin:16px 0}
+.study-link-banner strong{font-size:12px}.study-link-banner p{font-size:10px;color:#778178;margin:3px 0 0}
+.study-link-banner a{font-size:10px;font-weight:850;color:#286647;white-space:nowrap}
+@media(max-width:850px){.local-main{grid-template-columns:1fr}.local-chat{border-right:0;border-bottom:1px solid #e9ede8}.local-config{grid-template-columns:1fr 1fr}.local-load{grid-column:1/-1}.local-trust{white-space:normal}.local-head{flex-direction:column}}
+@media(max-width:600px){.local-config{grid-template-columns:1fr}.local-load{grid-column:auto}.local-head{padding:16px}.local-head h2{font-size:20px}.local-config{padding:13px}.local-progress{padding:10px 13px}.local-feed{max-height:400px}.local-composer-bottom{flex-wrap:wrap}.local-composer-bottom select{flex-basis:100%}.study-link-banner{align-items:flex-start;flex-direction:column}}
+
 </style>
 </head>
 <body>
@@ -83,9 +145,68 @@
     <div class="eyebrow"><span class="eyedot"></span> Integrated AI workspace</div>
     <h1>Your AI studio.<br>Choose a task. Use AI right here.</h1>
     <p>Pick the best available model for the job, from Chinese and international AI families. Chat, research, code, generate images, create videos and make voiceovers inside this workspace.</p>
-    <div class="heroactions"><button class="primary-button" onclick="document.getElementById('ai-studio').scrollIntoView({behavior:'smooth'})">✦ Start using AI here</button><button class="quiet-button" id="jump-china">◈ Explore Chinese AI</button><button class="quiet-button" id="jump-free">Find free models</button></div>
+    <div class="heroactions"><button class="primary-button" onclick="document.getElementById('local-ai').scrollIntoView({behavior:'smooth'})">✦ Start free local AI</button><button class="quiet-button" id="jump-china">◈ Explore Chinese AI</button><button class="quiet-button" id="jump-free">Find free models</button></div>
   </section>
   
+  
+  <section class="local-ai" id="local-ai">
+    <div class="local-head">
+      <div>
+        <div class="local-kicker"><span></span> Actually free · Local inference</div>
+        <h2>Use AI without connecting an account</h2>
+        <p>This mode runs a downloadable language model on your own computer, inside this page. No API key, cloud credits, payment method or model-inference account. Once a model is cached, later sessions can reuse it.</p>
+      </div>
+      <div class="local-trust">$0 API cost · No key</div>
+    </div>
+    <div class="local-config">
+      <label class="local-field">Choose a local model
+        <select id="local-model">
+          <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Light · Llama 3.2 1B · lower hardware needs</option>
+          <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" selected>Balanced · Llama 3.2 3B · recommended start</option>
+          <option value="DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC">Reasoning · DeepSeek R1 distilled Qwen 7B · heavier</option>
+          <option value="Phi-4-mini-instruct-q4f16_1-MLC">Compact reasoning · Phi-4 mini · medium hardware</option>
+        </select>
+      </label>
+      <label class="local-field">Task type
+        <select id="local-task-type">
+          <option value="general">General assistant</option>
+          <option value="coding">Coding / debugging</option>
+          <option value="research">Research planning (no live web)</option>
+          <option value="creative">Creative / photography ideas</option>
+          <option value="writing">Writing and editing</option>
+        </select>
+      </label>
+      <button class="local-load" id="local-load">Load model to this device</button>
+    </div>
+    <div class="local-progress" id="local-progress">
+      <div class="local-progress-label"><span id="local-progress-text">Preparing model…</span><span id="local-progress-percent">0%</span></div>
+      <div class="local-progress-track"><div class="local-progress-fill" id="local-progress-fill"></div></div>
+    </div>
+    <div class="local-model-note" id="local-model-note">Recommended to start: the 3B model. First load downloads model files (typically hundreds of MB to several GB) from public model hosting; exact size varies by model. Browser GPU support and available memory determine whether it runs well.</div>
+    <div class="local-main">
+      <div class="local-chat">
+        <div class="local-chat-top"><strong>Local conversation</strong><span id="local-runtime-status">No model loaded</span></div>
+        <div class="local-feed" id="local-feed" aria-live="polite">
+          <div class="local-welcome"><div class="mark">✳</div><strong>No connection required</strong><p>Select a model and click <b>Load model</b>. After the first download completes, prompts run on your device. This local mode does not browse the internet or call paid APIs.</p></div>
+        </div>
+        <div class="local-composer">
+          <textarea id="local-prompt" placeholder="What do you want the local AI to do? Example: Give me 5 unusual photography ideas for Aquileia…" rows="3"></textarea>
+          <div class="local-composer-bottom"><select id="local-response-size" aria-label="Response length"><option value="512">Short answer</option><option value="1024" selected>Standard answer</option><option value="1800">Detailed answer</option></select><button class="local-clear" id="local-new-chat">New chat</button><button class="local-send" id="local-send" disabled>Run local AI</button></div>
+        </div>
+      </div>
+      <aside class="local-side">
+        <h3>Free model shortlist</h3>
+        <div class="local-score"><div><strong>Llama 3.2 1B</strong><p>Fastest starter and smallest download. Best for simple requests, rewriting and basic tasks.</p></div><span class="local-tag">LIGHT</span></div>
+        <div class="local-score"><div><strong>Llama 3.2 3B</strong><p>Balanced option for writing, brainstorming, simple coding and everyday assistance.</p></div><span class="local-tag">START HERE</span></div>
+        <div class="local-score"><div><strong>DeepSeek R1 · Qwen 7B</strong><p>Heavier reasoning-oriented model. More demanding download and GPU memory; not a frontier model.</p></div><span class="local-tag">REASONING</span></div>
+        <div class="local-score"><div><strong>Phi-4 mini</strong><p>Compact alternative for instruction following and reasoning, subject to browser compatibility.</p></div><span class="local-tag">ALT</span></div>
+        <div class="local-caveat"><b>Honest limits:</b> smaller local models are less capable than the biggest hosted models; they can make mistakes. Local research mode cannot verify current facts. Image/video generation needs different, much heavier models and is listed separately in the research report.</div>
+        <div class="local-links"><a href="https://github.com/mlc-ai/web-llm" target="_blank" rel="noopener">Runtime & model support ↗</a><a href="https://huggingface.co/mlc-ai" target="_blank" rel="noopener">Model files ↗</a><a href="https://ktmnproductions-afk.github.io/viewfinder22/ai-workspace/free-ai-study.html" target="_blank" rel="noopener">Full free-AI study ↗</a></div>
+      </aside>
+    </div>
+  </section>
+
+  <div class="cloud-studio-label">Optional cloud connections · API key or service sign-in required</div>
   <section class="studio" id="ai-studio">
     <div class="studio-head">
       <div>
@@ -705,6 +826,128 @@ showKeyPanel(false);
 updateInterface();
 loadCatalogs();
 handleOAuthCallback();
+})();
+</script>
+
+
+<script type="module">
+(function(){
+  'use strict';
+  var engine=null, webllm=null, loadedId='', busy=false, history=[];
+  var $=function(id){return document.getElementById(id);};
+  var modelInfo={
+    'Llama-3.2-1B-Instruct-q4f16_1-MLC':{name:'Llama 3.2 1B',vram:'~0.9 GB VRAM listed by WebLLM',note:'Smallest choice. Lower memory use, lower answer quality and reasoning depth.'},
+    'Llama-3.2-3B-Instruct-q4f16_1-MLC':{name:'Llama 3.2 3B',vram:'~2.3 GB VRAM listed by WebLLM',note:'Good first local model. Download may be around 1–2 GB and take a while on the first run.'},
+    'DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC':{name:'DeepSeek R1 distilled Qwen 7B',vram:'~5.1 GB VRAM listed by WebLLM',note:'Reasoning-focused 7B model. Heavier and slower; requires more GPU memory and a larger download.'},
+    'Phi-4-mini-instruct-q4f16_1-MLC':{name:'Phi-4 mini',vram:'Check current WebLLM model card',note:'Compact alternative. Hardware and supported model list may differ by browser/device.'}
+  };
+  function status(text,error){$('local-runtime-status').textContent=text;$('local-runtime-status').style.color=error?'#ac4035':'';}
+  function loadProgress(text,pct){
+    $('local-progress').classList.add('show');
+    $('local-progress-text').textContent=text||'Preparing model…';
+    var p=Number(pct);
+    if(!Number.isFinite(p))p=0;
+    p=Math.max(0,Math.min(1,p));
+    $('local-progress-fill').style.width=(p*100)+'%';
+    $('local-progress-percent').textContent=Math.round(p*100)+'%';
+  }
+  function setBusy(val){
+    busy=val;$('local-load').disabled=val;$('local-send').disabled=val||!engine;
+    $('local-load').textContent=val?'Working…':'Load model to this device';
+    $('local-send').textContent=val?'Generating…':'Run local AI';
+  }
+  function addMessage(role,text,model){
+    var feed=$('local-feed');var welcome=feed.querySelector('.local-welcome');if(welcome)welcome.remove();
+    var div=document.createElement('div');div.className='local-msg '+role;
+    if(model){var meta=document.createElement('span');meta.className='meta';meta.textContent=model;div.appendChild(meta);}
+    var body=document.createElement('div');body.textContent=String(text||'');div.appendChild(body);feed.appendChild(div);feed.scrollTop=feed.scrollHeight;
+    return {wrapper:div,body:body};
+  }
+  function currentModel(){return $('local-model').value;}
+  $('local-model').addEventListener('change',function(){
+    var info=modelInfo[currentModel()];
+    $('local-model-note').textContent=(info?info.note+' ':'')+(info?info.vram+'. ':'')+'No API credentials or billing account are used in this local mode.';
+    if(loadedId&&loadedId!==currentModel())status('Different model selected; load it to switch.',false);
+  });
+  async function getWebLLM(){
+    if(webllm)return webllm;
+    status('Loading browser inference engine…',false);
+    webllm=await import('https://esm.run/@mlc-ai/web-llm@0.2.86');
+    return webllm;
+  }
+  async function loadModel(){
+    if(busy)return;
+    if(!('gpu' in navigator)){
+      addMessage('error','This browser does not expose WebGPU. Try current Chrome or Edge on a computer with a compatible GPU. This mode intentionally does not fall back to a paid API.','DEVICE CHECK');
+      status('WebGPU not detected',true);return;
+    }
+    var id=currentModel();
+    if(engine&&loadedId===id){status((modelInfo[id]||{}).name+' is ready',false);return;}
+    setBusy(true);loadProgress('Preparing browser runtime…',0);status('Loading model — first launch downloads files',false);
+    try{
+      var lib=await getWebLLM();
+      var record=lib.prebuiltAppConfig.model_list.find(function(m){return m.model_id===id;});
+      if(!record)throw new Error('This model is not in the runtime’s current prebuilt model list. Choose another model or check the model support page.');
+      if(engine&&engine.unload){try{await engine.unload();}catch(e){}engine=null;loadedId='';}
+      engine=await lib.CreateMLCEngine(id,{initProgressCallback:function(report){
+        var prog=typeof report.progress==='number'?report.progress:0;
+        loadProgress(report.text||'Downloading / compiling model…',prog);
+        status(report.text||'Loading model…',false);
+      }});
+      loadedId=id;history=[];$('local-send').disabled=false;loadProgress('Model is ready in browser cache.',1);
+      status((modelInfo[id]||{name:id}).name+' ready',false);
+      addMessage('assistant','The local model is ready. There is no API connection or per-prompt inference charge. Model quality and speed depend on your hardware.','LOCAL MODEL READY');
+    }catch(e){
+      engine=null;loadedId='';$('local-send').disabled=true;
+      addMessage('error','Could not load this local model: '+(e&&e.message?e.message:String(e))+'\n\nTry the 1B option, use a WebGPU-enabled browser, close other GPU-heavy tabs, or check the runtime/model links. No paid API was called.','LOCAL LOAD ERROR');
+      status('Load failed — check the message',true);
+    }finally{setBusy(false);}
+  }
+  function taskSystem(){
+    var type=$('local-task-type').value;
+    var base='You are a practical assistant running locally inside a browser. Be helpful, accurate, concise by default, and honest about uncertainty. Do not claim to have searched the web or accessed current data.';
+    if(type==='coding')base+=' You are assisting with software engineering. Suggest minimal root-cause fixes, provide complete runnable snippets when practical, and give test steps. Do not claim code has been executed.';
+    if(type==='research')base+=' Help plan research, define evidence standards, compare hypotheses, and identify trustworthy sources to consult. You have no live internet search in this mode; explicitly tell the user when current verification is needed.';
+    if(type==='creative')base+=' Act as an imaginative art director and photographer. Offer concrete compositions, lighting, mood, camera/lens suggestions, and novel visual concepts rather than generic advice.';
+    if(type==='writing')base+=' Help write, rewrite, edit, and structure text in a natural, professional style. Follow the user’s requested tone and language.';
+    return base;
+  }
+  async function runLocal(){
+    if(busy)return;
+    var prompt=$('local-prompt').value.trim();
+    if(!prompt){$('local-prompt').focus();status('Write a prompt first',true);return;}
+    if(!engine){status('Load a local model first. This does not require connecting an API.',true);return;}
+    var type=$('local-task-type').value, selectedModel=currentModel();
+    addMessage('user',prompt,(modelInfo[selectedModel]||{name:selectedModel}).name+' · '+type);
+    $('local-prompt').value='';
+    var out=addMessage('assistant','Generating locally…','LOCAL INFERENCE');
+    var msgs=[{role:'system',content:taskSystem()}].concat(history).concat([{role:'user',content:prompt}]);
+    setBusy(true);status('Generating on this device…',false);
+    try{
+      var stream=await engine.chat.completions.create({messages:msgs,temperature:0.65,max_tokens:Number($('local-response-size').value),stream:true});
+      var answer='';
+      for await(var chunk of stream){
+        var delta=chunk&&chunk.choices&&chunk.choices[0]&&chunk.choices[0].delta&&chunk.choices[0].delta.content;
+        if(typeof delta==='string'){answer+=delta;out.body.textContent=answer;$('local-feed').scrollTop=$('local-feed').scrollHeight;}
+      }
+      if(!answer)answer='The model returned an empty response. Try a different prompt.';
+      out.body.textContent=answer;history.push({role:'user',content:prompt},{role:'assistant',content:answer});
+      status('Finished locally · no API used',false);
+    }catch(e){
+      out.body.textContent='Generation failed: '+(e&&e.message?e.message:String(e));out.wrapper.classList.add('error');status('Local generation failed',true);
+    }finally{setBusy(false);$('local-feed').scrollTop=$('local-feed').scrollHeight;}
+  }
+  $('local-load').addEventListener('click',loadModel);
+  $('local-send').addEventListener('click',runLocal);
+  $('local-prompt').addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();runLocal();}});
+  $('local-new-chat').addEventListener('click',function(){
+    history=[];$('local-feed').innerHTML='<div class="local-welcome"><div class="mark">✳</div><strong>New local conversation</strong><p>Your model is still loaded. Enter a new prompt to begin again.</p></div>';$('local-prompt').value='';status(loadedId?'Local model ready':'No model loaded',false);
+  });
+  if(!('gpu' in navigator)){
+    status('WebGPU not detected in this browser',true);
+    $('local-model-note').textContent='Your browser does not report WebGPU support. Try current Chrome or Edge on a compatible device. The no-key mode does not call a cloud API as a fallback.';
+  }
+  $('local-load').disabled=false;
 })();
 </script>
 
