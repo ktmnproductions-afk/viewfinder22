@@ -35,30 +35,22 @@ jobs:
       - name: Install Playwright
         run: npm install --no-save playwright
 
-      - name: Validate Photo Scout JavaScript syntax
+      - name: Validate Photo Scout JavaScript module syntax
         run: |
           node <<'NODE'
           const fs = require('node:fs');
           const html = fs.readFileSync('index.html', 'utf8');
-          const scripts = html.split('<script type="module">').slice(1).map(block => block.split('</script>')[0]);
-          if (!scripts.length) throw new Error('No Photo Scout module script found');
-          for (let index = 0; index < scripts.length; index++) {
-            let source = scripts[index];
-            if (source.trimStart().startsWith('import ')) {
-              const importStart = source.indexOf('import ');
-              const newline = source.indexOf(String.fromCharCode(10), importStart);
-              source = newline >= 0 ? source.slice(newline + 1) : source;
-            }
-            const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-            try { new AsyncFunction(source); }
-            catch (error) {
-              console.error('Module script syntax error at block '+index+': '+error.stack);
-              throw error;
-            }
-          }
-          console.log('Photo Scout module script syntax OK ('+scripts.length+' module block(s)).');
+          const opening = '<script type="module">';
+          const start = html.indexOf(opening);
+          if (start < 0) throw new Error('No Photo Scout module script found');
+          const bodyStart = html.indexOf('>', start) + 1;
+          const end = html.indexOf('</script>', bodyStart);
+          if (bodyStart <= 0 || end < 0) throw new Error('Photo Scout module script is not closed');
+          const source = html.slice(bodyStart, end);
+          fs.writeFileSync('/tmp/photo-scout-check.mjs', source);
+          console.log('Extracted module source, characters:', source.length);
           NODE
-
+          node --check /tmp/photo-scout-check.mjs
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
