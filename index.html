@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-15-photo-scout-local-details-v12">
+<meta name="photo-scout-build" content="2026-10-15-photo-scout-local-details-v13">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -1413,7 +1413,7 @@ function hasSuspiciousLocalityMismatch(name,featureCity,distance){
 function dedupeMappedPlaces(places){
  const seen=new Set();
  return places.sort((a,b)=>a.distance-b.distance).filter(p=>{
-  const precision=isGenericMapFeatureLabel(p.name,p)?5:4;
+  const precision=p.isSmallInterest?5:4;
   const key=p.category+'|'+normalizeNameForDedup(p.name)+'|'+p.lat.toFixed(precision)+'|'+p.lng.toFixed(precision);
   if(seen.has(key))return false;seen.add(key);return true;
  });
@@ -1429,11 +1429,11 @@ function localInterestLabel(tags){
  const artwork=String(t.artwork_type||'').toLowerCase();
  if(['wayside_cross','wayside_crosses'].includes(historic)||t.cross==='yes'||manMade==='cross')return 'Wayside cross';
  if(['wayside_shrine','wayside_chapel'].includes(historic)||building==='wayside_shrine')return historic==='wayside_chapel'?'Wayside chapel':'Wayside shrine';
- if(historic==='memorial'||/^(war_memorial|memorial|plaque|blue_plaque)$/.test(memorial))return 'Memorial';
- if(historic==='monument'||manMade==='monument')return 'Monument';
  if(historic==='plaque'||manMade==='plaque'||memorial==='plaque'||memorial==='blue_plaque')return 'Commemorative plaque';
  if(historic==='obelisk'||manMade==='obelisk'||memorial==='obelisk')return 'Obelisk';
  if(historic==='statue'||manMade==='statue'||memorial==='statue'||artwork==='statue')return 'Statue';
+ if(historic==='memorial'||/^(war_memorial|memorial)$/.test(memorial))return 'Memorial';
+ if(historic==='monument'||manMade==='monument')return 'Monument';
  if(historic==='milestone'||manMade==='milestone')return 'Historic milestone';
  if(historic==='boundary_stone'||manMade==='boundary_stone')return 'Historic boundary stone';
  if(historic==='archaeological_site')return 'Archaeological site';
@@ -1449,7 +1449,7 @@ function areDuplicateMapMarkers(a,b){
  if(!a||!b||a.category!==b.category)return false;
  const sourceId=item=>{
   const url=String(item.sourceUrl||'');
-  const match=url.match(/openstreetmap\\.org\\/(node|way|relation)\\/(\\d+)/i);
+  const match=url.match(/openstreetmap\.org\/(node|way|relation)\/(\d+)/i);
   return match?match[1].toLowerCase()+'/'+match[2]:'';
  };
  const aSource=sourceId(a),bSource=sourceId(b);
@@ -1458,10 +1458,14 @@ function areDuplicateMapMarkers(a,b){
  if(!Number.isFinite(separation))return false;
  const sameName=normalizeNameForDedup(a.name)===normalizeNameForDedup(b.name);
  const genericA=isGenericMapFeatureLabel(a.name,a),genericB=isGenericMapFeatureLabel(b.name,b);
- // Generic items often really are separate little monuments in a town.
- // Only merge them when they occupy effectively the same map coordinate.
- if(genericA||genericB)return sameName&&separation<2;
- return sameName&&separation<45;
+ if(a.isSmallInterest||b.isSmallInterest){
+  // Small mapped memorials often share the generic type label. Keep distinct
+  // objects unless their coordinates are effectively identical.
+  if(genericA||genericB)return sameName&&separation<2;
+  return sameName&&separation<45;
+ }
+ // Preserve the v11 de-duplication behavior for regular landmarks/viewpoints.
+ return (sameName&&separation<55)||(genericA&&genericB&&separation<100);
 }
 
 async function overpassApiSearch(c,radius,id){
@@ -1472,12 +1476,9 @@ async function overpassApiSearch(c,radius,id){
   'nwr'+around+'["amenity"~"^(parking|parking_space|parking_entrance)$"];'+
   'nwr'+around+'["parking"="entrance"];'+
   'nwr'+around+'["historic"];'+
-  'nwr'+around+'["man_made"~"^(monument|obelisk|plaque|statue|milestone|boundary_stone|cross|water_well)$"];'+
-  'nwr'+around+'["memorial"];'+
-  'nwr'+around+'["amenity"="fountain"];'+
   'nwr'+around+'["tourism"~"^(attraction|museum|viewpoint|artwork|gallery|zoo|theme_park)$"];'+
   'nwr'+around+'["natural"~"^(peak|hill|ridge|cliff|cave|waterfall|beach|spring|wetland|wood)$"];'+
-  'nwr'+around+'["building"~"^(church|cathedral|chapel|castle|fort|monument|tower|historic|ruins|wayside_shrine)$"];'+
+  'nwr'+around+'["building"~"^(church|cathedral|chapel|castle|fort|monument|tower|historic|ruins)$"];'+
   'nwr'+around+'["leisure"~"^(park|nature_reserve|garden)$"];'+
   'nwr'+around+'["highway"~"^(path|footway|track|pedestrian|steps)$"]["name"];'+
   'nwr'+around+'["waterway"~"^(river|canal|riverbank)$"]["name"];'+
@@ -1505,29 +1506,26 @@ async function overpassApiSearch(c,radius,id){
     const d=haversine(c,{lat:plat,lng:plon});
     if(d>r)return;
     const name=String(tags.name||tags['name:en']||tags.ref||'').trim();
-    if(!name && !(tags.amenity==='parking_entrance'||tags.parking==='entrance'||tags.entrance==='parking')&&!smallInterest)return;
+    if(!name && !(tags.amenity==='parking_entrance'||tags.parking==='entrance'||tags.entrance==='parking'))return;
     const placeType=String(tags.place||'').toLowerCase();
     if(['city','town','village','suburb','neighbourhood'].includes(placeType)){
      localities.push({name,distance:d});return;
     }
     const parking=tags.amenity==='parking'||tags.amenity==='parking_space'||tags.amenity==='parking_entrance'||tags.parking==='entrance'||tags.entrance==='parking';
-    const smallInterest=localInterestLabel(tags);
     const scenic=isExplicitViewpoint(tags,String(tags.tourism||tags.natural||''),name);
     const historic=Boolean(tags.historic)||Boolean(tags.heritage)||Boolean(tags.archaeological_site)||['museum','attraction','artwork','gallery','theme_park'].includes(tags.tourism)||['archaeological_site','castle','ruins','monument','memorial','fort','wayside_shrine'].includes(tags.historic);
     const architecture=['church','cathedral','chapel','castle','fort','monument','tower','historic','ruins','house','residential','temple','bridge'].includes(tags.building)||tags.man_made==='tower'||tags.man_made==='bridge';
     const nature=['wetland','wood','heath','scrub','grassland','water'].includes(tags.natural)||['park','nature_reserve','garden'].includes(tags.leisure)||['river','canal','riverbank'].includes(tags.waterway)||['path','footway','track','pedestrian','steps'].includes(tags.highway);
-    const category=parking?'parking':scenic?'viewpoint':(historic||smallInterest)?'history':architecture?'architecture':nature?'photoSpot':null;
+    const category=parking?'parking':scenic?'viewpoint':historic?'history':architecture?'architecture':nature?'photoSpot':null;
     if(!category)return;
     const isEntrance=tags.amenity==='parking_entrance'||tags.parking==='entrance'||tags.entrance==='parking';
-    const displayName=isEntrance?('Parking entrance'+(name?' · '+name:'')):(name||smallInterest||'');
+    const displayName=isEntrance?('Parking entrance'+(name?' · '+name:'')):name;
     const osmType=String(el.type||'node');
     places.push({
      id:'osm-'+osmType+'-'+String(el.id)+'-'+category,
      name:displayName,lat:plat,lng:plon,distance:d,tags,isParkingEntrance:isEntrance,
      city:state.detectedLocality||'',
-     isSmallInterest:!!smallInterest,smallInterestType:smallInterest||'',
-     genericFeature:!!smallInterest&&!name,
-     source:smallInterest?'OpenStreetMap · local-interest detail':'OpenStreetMap · live Overpass query',
+     source:'OpenStreetMap · live Overpass query',
      sourceUrl:'https://www.openstreetmap.org/'+osmType+'/'+el.id,
      category,
      summary:String(tags.description||tags['description:en']||tags['tourism:en']||''),
