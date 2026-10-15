@@ -1,4 +1,4 @@
-const CACHE_NAME = "photo-scout-shell-v5";
+const CACHE_NAME = "photo-scout-shell-v6";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./app-icon.svg"];
 
 self.addEventListener("install", event => {
