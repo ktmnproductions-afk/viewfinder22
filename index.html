@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-15-parking-photo-ideas-v7">
+<meta name="photo-scout-build" content="2026-10-15-photo-scout-fastpins-v8">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -698,6 +698,12 @@ html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
 .pin-idea-board .ai-image-status{font-size:10px}
 .pin-idea-board .ai-image-result img{max-height:320px}
 @media(max-width:680px){.pin-idea-board{margin:10px 12px 0;padding:11px}.pin-idea-sketch-grid,.pin-idea-reference-grid{gap:5px}.pin-idea-sketch strong{font-size:8px}.pin-idea-lens{font-size:7px;padding:6px}}
+/* Photo Scout fast interaction patch: the app remains map-first until the user asks for a scan. */
+.scout-marker.active-pin{pointer-events:auto!important;z-index:2147483000!important;filter:drop-shadow(0 0 7px rgba(217,243,107,.9))}
+.scout-marker.active-pin .dot-core{width:42px!important;height:42px!important;border-radius:50% 50% 50% 8px!important;border:4px solid #fff!important;background:#d9f36b!important;color:#142018!important;box-shadow:0 0 0 7px rgba(217,243,107,.4),0 8px 22px rgba(0,0,0,.65)!important;font-size:20px!important}
+.scout-marker.active-pin .dot-core span{transform:rotate(45deg)!important}
+.scout-marker.pending-pin{animation:scoutPinPulse 1.25s ease-in-out infinite}
+@keyframes scoutPinPulse{0%,100%{filter:drop-shadow(0 0 2px rgba(217,243,107,.55))}50%{filter:drop-shadow(0 0 12px rgba(217,243,107,1))}}
 </style>
 </head>
 <body>
@@ -1170,14 +1176,9 @@ map.on('style.load', function(){
  updateRadius();
  mapOk();
  renderMarkers();
- if(!state.initialScoutStarted){
-  state.initialScoutStarted=true;
-  window.setTimeout(function(){
-   if(state.scanCount===0&&state.styleLoaded){
-    scanAt({lat:45.3271,lng:14.4422},{fly:true,initial:true});
-   }
-  },500);
- }
+ // Deliberately stay idle at launch. A city-wide scan is expensive and should
+ // begin only after the user clicks the map or searches for a destination.
+ state.initialScoutStarted=true;
  if(state.basemapMode==='vector'){
   state.basemapWatchdog=setTimeout(()=>{
    state.basemapWatchdog=null;
@@ -2237,10 +2238,13 @@ function inCurrentMapBounds(item,bounds){
 }
 function renderMarkers(){
  if(!state.map || !state.styleLoaded)return;
- // Do not replace marker nodes while geographic requests are still settling.
- // scanAt clears the previous area once; the next full marker render happens
- // after the source batch completes.
- if(state.scanSourcesPending)return;
+ // Show ready results immediately; the active clicked coordinate is rendered
+ // separately and never depends on this asynchronous result list.
+ if(state.scanSourcesPending && !state.results.length && !state.scenicSpots.length) {
+  updateSelectedParkingLink();
+  updateMapPinLegend();
+  return;
+ }
  clearMarkers();
  const bounds=map.getBounds();
  const allResults=state.results.map(normalizeMapMarker).filter(Boolean).filter(item=>item.category!=='parking'&&markerLayerVisibility[item.category]!==false&&inCurrentMapBounds(item,bounds));
@@ -2348,10 +2352,11 @@ async function scanAt(c,opts){
  if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng)||Math.abs(c.lat)>85||Math.abs(c.lng)>180){setStatus('Choose a valid map point','That coordinate cannot be scanned.','warn');return;}
  state.scanId++;const id=state.scanId;state.scanCount++;state.scanPending=true;state.scanSourcesPending=true;cancelPreviousRequests();
  state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.localityCandidates=[];state.locationConflictExclusions=[];state.results=[];state.scenicSpots=[];state.photos=[];state.basemapParking=[];state.spotParking=[];state.spotParkingTargetId=null;state.spotParkingLoading=false;state.spotParkingRequest++;state.selected=null;
- // Remove the previous area's pins once, then hold the map layer stable until
- // the complete geographic source batch is ready.
+ // Clear stale results, but place the user's selected coordinate immediately.
+ // Keep this high-contrast marker independent of all background source requests.
  clearMarkers();
- setActivePin(state.center);updateRadius();
+ setActivePin(state.center);
+ updateRadius();
  const pinUrl='https://www.openstreetmap.org/?mlat='+c.lat.toFixed(6)+'&mlon='+c.lng.toFixed(6)+'#map=16/'+c.lat.toFixed(6)+'/'+c.lng.toFixed(6);
  const pinItem={id:'user-pin-'+Date.now(),name:'Map pin · '+c.lat.toFixed(5)+', '+c.lng.toFixed(5),lat:c.lat,lng:c.lng,distance:null,category:'photoSpot',isUserPin:true,source:'Your map pin',sourceUrl:pinUrl,summary:'A user-selected coordinate. Nearby landmarks, parking and reference photos are researched separately; this pin alone does not prove a safe or public viewpoint.',why:'This is your chosen scouting coordinate, not a verified landmark or confirmed sightline. Use the generated framing ideas as a starting point, then check local access and the real view.',scenicKind:'location study',tags:{},city:''};
  // Map clicks / field-guide buttons provide the final selected item themselves,
@@ -2416,8 +2421,14 @@ async function scanAt(c,opts){
    failures.add(name);
    completed.add(name);
   }
-  // Keep marker geometry stable while source requests are settling. Render one
-  // complete geographic result set below, rather than replacing all pins per source.
+  // Render each completed source as it returns; a slow API must not hide pins
+  // already available from the other sources or the user's own active pin.
+  if(id===state.scanId){
+   state.scanSourcesPending=false;
+   mergePlaces();
+   renderResults();
+   renderMarkers();
+  }
   if(state.selected&&(state.selected.isUserPin||state.selected.isMapDrop)){
    if(!state.selected.city&&state.detectedLocality)state.selected.city=state.detectedLocality;
    renderSelectedShotIdeas(state.selected);
@@ -2434,46 +2445,39 @@ async function scanAt(c,opts){
  state.scanSourcesPending=false;
  mergePlaces();
  renderResults();renderPhotos();renderMarkers();updateRadius();
- // Photo references are searched by place/subject title, not by distance-only
- // geotags. That prevents event uploads and random nearby portraits from masquerading
- // as useful views of a landmark.
- {
-  const displayCity=state.detectedLocality||osmResults.find(r=>r.city&&String(r.city).trim())?.city||'';
-  const landmarkNames=[
+ // End the critical map scan as soon as geographic results are available.
+ // Image reference searching is optional and must never block pin visibility.
+ const scanPlaceNames = {
+  locality: state.detectedLocality || osmResults.find(r=>r.city&&String(r.city).trim())?.city || '',
+  landmarks: [
    ...wikiResults.slice(0,3).map(r=>r.name),
    ...state.scenicSpots.filter(r=>!r.genericFeature&&!/^Unnamed mapped/i.test(r.name)).slice(0,3).map(r=>r.name),
    ...osmResults.filter(r=>r.category==='history'||r.category==='viewpoint').slice(0,3).map(r=>r.name)
-  ].filter(Boolean);
-  // Wikimedia full-text search treats multiword terms conjunctively. Start
-  // with the place name itself instead of over-constraining it with 3 scene words.
-  let terms=[];
-  if(displayCity){
-   // Never assume a country from the developer's home market.
-   terms=[displayCity,landmarkNames[0]||displayCity+' old town',landmarkNames[1]||landmarkNames[0]||displayCity+' architecture'];
-  }else{
-   // Prefer no match over unrelated imagery when there is no named local subject.
-   terms=landmarkNames.slice(0,3);
-  }
+  ].filter(Boolean)
+ };
+ window.setTimeout(async ()=>{
+  if(id!==state.scanId)return;
+  const displayCity=scanPlaceNames.locality;
+  const landmarkNames=scanPlaceNames.landmarks;
+  let terms=displayCity
+   ?[displayCity,landmarkNames[0]||displayCity+' old town',landmarkNames[1]||landmarkNames[0]||displayCity+' architecture']
+   :landmarkNames.slice(0,3);
   terms=[...new Set(terms.map(t=>String(t||'').trim()).filter(Boolean))].slice(0,3);
+  if(!terms.length)return;
   try{
    const matched=await commonsTextSearch(terms,c,id);
    if(id!==state.scanId)return;
-   // Search services can return files with misleading location metadata or broad
-   // titles. Keep only images whose title matches this locality or one of the
-   // actual nearby landmarks used for this scan.
    const localSubjects=[displayCity,...landmarkNames].filter(Boolean);
-   const placeMatched=matched.filter(photo=>localSubjects.some(name=>
+   state.photos=matched.filter(photo=>localSubjects.some(name=>
     photoReferenceFitsPlace(photo,{name,locality:displayCity,category:'photoSpot'},displayCity)
-   ));
-   state.photos=placeMatched.map(p=>({...p,geotagged:false,referenceType:'Matched by local place/landmark title. Visual inspiration only; not a verified camera position.'}));
-   completed.add('photos');
-   failures.delete('photos');
+   )).map(p=>({...p,geotagged:false,referenceType:'Matched by local place/landmark title. Visual inspiration only; not a verified camera position.'}));
+   renderPhotos();
+   renderDetailPhotoRefs(state.selected);
+   setStatus('Map ready · references updated',state.results.length+' nearby places · '+parkingCandidates().length+' parking features · '+state.scenicSpots.length+' photo-spot candidates · '+state.photos.length+' relevant image references.','');
   }catch(err){
-   if(id!==state.scanId)return;
-   failures.add('photo inspiration');
-   state.photos=[];
+   // The offline sketches remain available when reference image services are slow.
   }
- }
+ },0);
  if(id!==state.scanId)return;
  state.scanPending=false;
  renderResults();renderPhotos();updateRadius();
@@ -3248,11 +3252,10 @@ map.on('click',e=>{
  }catch(err){}
  const clicked={lat:e.lngLat.lat,lng:e.lngLat.lng};
  map.stop();
- map.flyTo({
+ // Jump immediately so the new pin is never left behind during a slow animation.
+ map.jumpTo({
   center:[clicked.lng,clicked.lat],
-  zoom:Math.max(map.getZoom(),12.5),
-  duration:700,
-  essential:true
+  zoom:Math.max(map.getZoom(),12.5)
  });
  scanAt(clicked,{fly:false,skipPinSelection:true});
  let item;
