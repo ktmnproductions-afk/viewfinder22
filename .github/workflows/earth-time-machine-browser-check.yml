@@ -67,7 +67,7 @@ jobs:
             ihdr.writeUInt32BE(1, 0); ihdr.writeUInt32BE(1, 4);
             ihdr[8] = 8; ihdr[9] = 6;
             const scanline = Buffer.from([0, r, g, b, 255]);
-            return Buffer.concat([signature, chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(scanline)), chunk('IEND', Buffer.alloc(0)]);
+            return Buffer.concat([signature, chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(scanline)), chunk('IEND', Buffer.alloc(0))]);
           }
           (async () => {
             const browser = await chromium.launch({
