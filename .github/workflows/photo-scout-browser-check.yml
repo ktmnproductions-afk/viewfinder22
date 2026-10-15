@@ -40,17 +40,29 @@ jobs:
           node <<'NODE'
           const fs = require('node:fs');
           const html = fs.readFileSync('index.html', 'utf8');
-          const scripts = [...html.matchAll(/<script type="module">([\\s\\S]*?)<\\/script>/g)];
-          if (!scripts.length) throw new Error('No Photo Scout module script found');
-          for (let index=0; index<scripts.length; index++) {
-            const source = scripts[index][1].replace(/^\\s*import\\s+\\*\\s+as\\s+maplibregl\\s+from\\s+['"][^'"]+['"];\\s*/, '');
+          const opening = '<script type="module">';
+          let cursor = 0;
+          let count = 0;
+          while (true) {
+            const start = html.indexOf(opening, cursor);
+            if (start < 0) break;
+            const bodyStart = html.indexOf('\\n', start) + 1;
+            const end = html.indexOf('</script>', bodyStart);
+            if (bodyStart <= 0 || end < 0) throw new Error('Unclosed Photo Scout module script');
+            let source = html.slice(bodyStart, end);
+            // The first module line imports MapLibre; remove it so Node can syntax-check
+            // the browser module body with new Function().
+            if (source.startsWith('import ')) source = source.slice(source.indexOf('\\n') + 1);
             try { new Function(source); }
             catch (error) {
-              console.error('Module script syntax error at block '+index+': '+error.message);
+              console.error('Module script syntax error near extracted block '+count+': '+error.stack);
               throw error;
             }
+            count++;
+            cursor = end + '</script>'.length;
           }
-          console.log('Photo Scout module script syntax OK ('+scripts.length+' module block(s)).');
+          if (!count) throw new Error('No Photo Scout module script found');
+          console.log('Photo Scout module script syntax OK ('+count+' module block(s)).');
           NODE
 
       - name: Install Chromium
