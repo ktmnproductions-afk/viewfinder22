@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-15-photo-scout-stable-render-v19">
+<meta name="photo-scout-build" content="2026-10-15-photo-scout-stable-render-v20">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -950,12 +950,15 @@ window.__PHOTO_SCOUT_TEST__ = {
   const signature=lastRenderedMarkerSignature;
   renderMarkers();
   const second=[...document.querySelectorAll('.scout-marker')];
+  const normalPins=second.filter(node=>!node.classList.contains('active-pin'));
+  const activePinInDom=second.some(node=>node.classList.contains('active-pin'));
   return {
    markerCountBefore:first.length,
    markerCountAfter:second.length,
    sameDomNodes:first.length===second.length&&first.every((node,index)=>node===second[index]),
    signatureStable:!!signature&&signature===lastRenderedMarkerSignature,
-   markerCountMatchesState:second.length===state.markers.length
+   markerCountMatchesState:normalPins.length===state.markers.length,
+   activePinRemainsIndependent:activePinInDom===!!state.pinMarker
   };
  },
  renderMarkerFixture:function(){
