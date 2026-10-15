@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-15-photo-scout-fastpins-v8">
+<meta name="photo-scout-build" content="2026-10-15-photo-scout-fastpins-v9">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -2337,10 +2337,10 @@ function setActivePin(c){
  if(state.pinMarker)state.pinMarker.remove();
  const el=markerEl('active-pin','Active photography stop');
  const core=el.querySelector('.dot-core'); if(core)core.innerHTML='<span>+</span>';
- el.style.zIndex='9999';
+ el.style.zIndex='2147483000';
+ el.style.pointerEvents='auto';
  state.pinMarker=new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([c.lng,c.lat]).addTo(map);
- if(typeof state.pinMarker.setZIndex==='function')state.pinMarker.setZIndex(9999);
- if(typeof state.pinMarker.setZIndex==='function')state.pinMarker.setZIndex('9999');
+ if(typeof state.pinMarker.setZIndex==='function')state.pinMarker.setZIndex(2147483000);
 }
 function setStatus(title,msg,kind){
  $('statusTitle').textContent=title;
