@@ -214,6 +214,40 @@ function loadImageTexture(url,timeoutMs=22000){
   image.src=url;
  });
 }
+function createFallbackEarthTexture(){
+ const canvas=document.createElement('canvas');
+ canvas.width=2048;canvas.height=1024;
+ const ctx=canvas.getContext('2d');
+ const ocean=ctx.createLinearGradient(0,0,0,1024);
+ ocean.addColorStop(0,'#0e3440');ocean.addColorStop(.5,'#0b2633');ocean.addColorStop(1,'#061823');
+ ctx.fillStyle=ocean;ctx.fillRect(0,0,canvas.width,canvas.height);
+ const project=(lon,lat)=>[(lon+180)/360*canvas.width,(90-lat)/180*canvas.height];
+ const land=[
+  [[-168,70],[-145,73],[-126,62],[-110,54],[-96,50],[-82,52],[-60,44],[-80,9],[-99,15],[-115,29],[-130,48],[-153,55]],
+  [[-53,12],[-35,5],[-40,-17],[-52,-55],[-68,-34],[-78,-8],[-70,5]],
+  [[-10,36],[3,47],[20,59],[39,67],[65,58],[88,70],[114,62],[143,54],[165,61],[153,42],[127,33],[119,16],[102,6],[82,9],[64,25],[48,37],[31,29],[18,36],[7,37]],
+  [[-17,34],[10,38],[34,29],[50,7],[39,-17],[27,-35],[14,-34],[-1,-19],[-12,4],[-17,19]],
+  [[112,-11],[132,-9],[154,-18],[150,-39],[130,-45],[114,-28]],
+  [[-53,82],[-25,77],[-39,59],[-53,61]],
+  [[46,-13],[51,-16],[49,-25],[44,-22]],
+  [[130,32],[142,45],[146,37],[139,30]],
+  [[-8,58],[-2,59],[0,51],[-6,50]],
+  [[-180,-70],[-120,-66],[-60,-72],[0,-69],[60,-72],[120,-66],[180,-70],[180,-90],[-180,-90]]
+ ];
+ ctx.fillStyle='#31564d';ctx.strokeStyle='#729b7f';ctx.lineWidth=3;
+ for(const polygon of land){
+  ctx.beginPath();
+  polygon.forEach((point,index)=>{
+   const [x,y]=project(point[0],point[1]);
+   if(index===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  });
+  ctx.closePath();ctx.fill();ctx.stroke();
+ }
+ const texture=new THREE.CanvasTexture(canvas);
+ texture.colorSpace=THREE.SRGBColorSpace;
+ texture.needsUpdate=true;
+ return texture;
+}
 function tileDate(index){
  const year=FIRST_YEAR+Math.floor(index/12);
  const month=index%12;
@@ -433,7 +467,7 @@ async function recordSequence(){
  recorder.start(250);
  $('recordBtn').textContent='Stop recording';$('recordBtn').classList.remove('primary');
  autoSpin=true;$('autoSpin').checked=true;
- toggleTimeline();
+ if(!isPlaying)toggleTimeline();
  setStatus('Recording 12-second globe study…','loading');
  recordTimer=setTimeout(()=>stopCapture(),12000);
 }
@@ -465,7 +499,13 @@ async function init(){
  createStarfield();
  earthGroup=new THREE.Group();scene.add(earthGroup);
  try{
-  const earthTex=await loadImageTexture('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
+  let earthTex;
+  try{
+   earthTex=await loadImageTexture('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
+  }catch(textureError){
+   earthTex=createFallbackEarthTexture();
+   setStatus('Using schematic fallback globe · requesting NASA data','loading');
+  }
   let normalTex=null;
   try{normalTex=await loadImageTexture('https://threejs.org/examples/textures/planets/earth_normal_2048.jpg');}catch(e){}
   earthGeometry=new THREE.SphereGeometry(4.7,192,128);
