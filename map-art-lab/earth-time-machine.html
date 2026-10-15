@@ -504,6 +504,7 @@ $('timeSlider').addEventListener('input',()=>{
 $('recordBtn').addEventListener('click',recordSequence);
 $('exportBtn').addEventListener('click',exportScene);
 window.addEventListener('beforeunload',()=>{pauseTimeline();if(recordTimer)clearTimeout(recordTimer);if(renderer)renderer.dispose();});
+window.__EARTH_TIME_MACHINE_TEST__ = () => ({renderCalls:renderer ? renderer.info.render.calls : 0,hasCanvas:!!renderer?.domElement,hasGlobe:!!globeMesh,hasOverlay:!!overlayMesh,monthIndex:currentMonthIndex,layer:$('layer').value,status:$('statusText').textContent});
 init();
 </script>
 </body>
