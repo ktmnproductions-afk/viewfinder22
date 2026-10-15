@@ -1272,13 +1272,15 @@ async function rangefindPlacesSearch(c,radius,id){
   const architecture=['church','cathedral','castle','fort','ruins','monument','lighthouse','tower','bridge','industrial','historic','palace','townhall','city_hall'].includes(type)||(ct==='building'&&Boolean(r.name));
   const category=parking?'parking':history?'history':viewpoint?'viewpoint':architecture?'architecture':null;
   if(!category)return;
-  const name=String(r.name||r.title||'').trim()||(parking?'Parking area':'');
+  const isEntrance=tags.amenity==='parking_entrance'||tags.parking==='entrance'||tags.entrance==='parking';
+  const rawName=String(r.name||r.title||'').trim();
+  const name=rawName||(isEntrance?'Parking entrance':parking?'Parking area':'');
   if(!name)return;
   const distance=haversine(c,{lat,lng}); // Always derive distance from returned coordinates; third-party index distance metadata is not trusted.
   const featureCity=String(r.city||r.town||r.village||r.municipality||r.suburb||'');
   if(hasSuspiciousLocalityMismatch(name,featureCity,distance)){state.locationConflictExclusions.push({name,featureCity,distance,reason:'Title names another indexed locality at a conflicting nearby coordinate'});return;}
   if(distance>radius)return;
-  places.push({id:'rf-'+String(r.id||index)+'-'+category,name,lat,lng,distance,tags,city:String(r.city||r.town||r.village||r.municipality||r.suburb||''),source:'OpenStreetMap via Rangefind',sourceUrl:r.url||(r.id?'https://www.openstreetmap.org/'+String(r.id):'https://www.openstreetmap.org/'),category,summary:String(tags.description||tags['description:en']||r.description||''),history:String(tags.wikipedia||tags['wikipedia:en']||''),wikiUrl:tags.wikipedia?wikiURL(tags.wikipedia):tags['wikipedia:en']?wikiURL(tags['wikipedia:en']):'',license:'© OpenStreetMap contributors'});
+  places.push({id:'rf-'+String(r.id||index)+'-'+category,name,lat,lng,distance,tags,isParkingEntrance:isEntrance,city:String(r.city||r.town||r.village||r.municipality||r.suburb||''),source:'OpenStreetMap via Rangefind',sourceUrl:r.url||(r.id?'https://www.openstreetmap.org/'+String(r.id):'https://www.openstreetmap.org/'),category,summary:isEntrance?'Mapped vehicle entrance. Check whether it serves public parking and verify the approach, signs and restrictions.':String(tags.description||tags['description:en']||r.description||''),history:String(tags.wikipedia||tags['wikipedia:en']||''),wikiUrl:tags.wikipedia?wikiURL(tags.wikipedia):tags['wikipedia:en']?wikiURL(tags['wikipedia:en']):'',license:'© OpenStreetMap contributors'});
  });
  return dedupeMappedPlaces(places).slice(0,100);
 }
@@ -2129,7 +2131,7 @@ function normalizeMapMarker(item){
  const raw=String(item.category||'').toLowerCase();
  const type=String(tags.type||tags.tourism||tags.natural||tags.building||tags.historic||'').toLowerCase();
  let category=item.category;
- if(raw==='parking'||tags.amenity==='parking'||tags.amenity==='parking_space')category='parking';
+ if(raw==='parking'||tags.amenity==='parking'||tags.amenity==='parking_space'||tags.amenity==='parking_entrance'||tags.parking==='entrance'||tags.entrance==='parking')category='parking';
  else if(['photospot','photo_spot','scenic','landscape'].includes(raw))category='photoSpot';
  else if(raw==='viewpoint'||tags.tourism==='viewpoint'||tags.viewpoint==='yes'||['peak','hill','ridge','mountain','cliff','waterfall','beach','lookout','belvedere'].includes(type))category='viewpoint';
  else if(raw==='history'||raw==='historic'||tags.historic||tags.heritage||tags.wikipedia||tags.wikidata||['museum','attraction','monument','memorial','archaeological_site','castle','ruins','church','cathedral','chapel','monastery'].includes(type))category='history';
