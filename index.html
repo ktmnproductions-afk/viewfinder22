@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-15-photo-scout-local-details-v13">
+<meta name="photo-scout-build" content="2026-10-15-photo-scout-local-details-v14">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -971,8 +971,8 @@ window.__PHOTO_SCOUT_TEST__ = {
   return result;
  },
  runMapRoleFixture:function(){
-  const nearbyMemorialA={category:'history',name:'Memorial',lat:45.3271,lng:14.4422,genericFeature:true};
-  const nearbyMemorialB={category:'history',name:'Memorial',lat:45.32735,lng:14.44245,genericFeature:true};
+  const nearbyMemorialA={category:'history',name:'Memorial',lat:45.3271,lng:14.4422,genericFeature:true,isSmallInterest:true};
+  const nearbyMemorialB={category:'history',name:'Memorial',lat:45.32735,lng:14.44245,genericFeature:true,isSmallInterest:true};
   const duplicateMemorial={...nearbyMemorialA};
   return {
    explicitlyMappedViewpointAccepted:isExplicitViewpoint({tourism:'viewpoint'},'viewpoint','Vidikovac'),
