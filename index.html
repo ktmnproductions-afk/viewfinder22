@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-15-photo-scout-map-restore-v16">
+<meta name="photo-scout-build" content="2026-10-15-photo-scout-map-restore-v17">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -933,6 +933,9 @@ const styleUrls = {
  dark:'https://tiles.openfreemap.org/styles/dark',
  fiord:'https://tiles.openfreemap.org/styles/fiord'
 };
+// Automatic recovery intentionally excludes the dark style. "Dark" remains an
+// explicit user choice only; a failed light map must never turn the landing view black.
+const vectorFallbackOrder=['bright','positron','fiord','liberty'];
 const state = {map:null, styleLoaded:false, scanCount:0, scanPending:false, scanSourcesPending:false, center:null, radius:10000, detectedLocality:'', localityCandidates:[], locationConflictExclusions:[], results:[], scenicSpots:[], photos:[], basemapParking:[], parkingFilteredLayers:new Set(), parkingIconLayersSilenced:new Set(), parkingFilterDiagnostics:[], spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0, basemapMode:'vector', basemapFallbackTried:false, basemapWatchdog:null, styleFailureTimer:null, initialScoutStarted:false};
 window.__PHOTO_SCOUT_TEST__ = {
  get map(){ return state.map; },
@@ -996,7 +999,7 @@ window.__PHOTO_SCOUT_TEST__ = {
    legacyGenericMemorialsKept:!areDuplicateMapMarkers(legacyMappedMemorialA,legacyMappedMemorialB),
    mappedGenericRecordsStaySeparate:nearbyMappedDetails.length===2,
    exactSameGenericCoordinateDeduplicated:areDuplicateMapMarkers(nearbyMemorialA,duplicateMemorial),
-   darkStyleExcludedFromFallback:!['bright','positron','fiord','liberty','dark'].includes('dark')
+   darkStyleExcludedFromFallback:!vectorFallbackOrder.includes('dark')
   };
  },
  runParkingEntranceFixture:function(){
@@ -1116,7 +1119,7 @@ function switchToRasterFallback(reason){
 let triedVectorStyles=new Set(['liberty']);
 function switchToBackupVector(reason){
  if(state.basemapMode==='raster')return;
- const order=['bright','positron','fiord','liberty'];
+ const order=vectorFallbackOrder;
  const nextKey=order.find(key=>!triedVectorStyles.has(key));
  if(!nextKey){
   clearMapHealthTimers();
