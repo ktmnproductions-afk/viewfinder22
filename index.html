@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-15-openverse-parking-ideas">
+<meta name="photo-scout-build" content="2026-10-15-pin-ideas-visible-v5">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -2652,7 +2652,6 @@ async function renderPinIdeaBoard(item){
  $('pinIdeaReferenceCount').textContent='Searching for relevant images…';
  $('pinIdeaReferenceGrid').innerHTML=emptyHTML('Searching for photographs that match this place or subject. We will not use an unrelated event upload just because its geotag is nearby.');
  const drive=$('pinIdeaDrive');
- if(drive)drive.onclick=()=>GenUI; // replaced below with a normal map URL handler
  if(drive){
   drive.onclick=()=>window.open('https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(item.lat+','+item.lng)+'&travelmode=driving','_blank','noopener');
  }
