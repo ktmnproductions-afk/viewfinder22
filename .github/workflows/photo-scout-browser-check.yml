@@ -150,7 +150,7 @@ jobs:
                   appInstallDiagnostics.display !== 'standalone' ||
                   appInstallDiagnostics.workerStatus !== 200 ||
                   !appInstallDiagnostics.workerCacheV9 ||
-                  appInstallDiagnostics.buildVersion !== '2026-10-15-photo-scout-fastpins-v8' ||
+                  appInstallDiagnostics.buildVersion !== '2026-10-15-photo-scout-fastpins-v9' ||
                   !appInstallDiagnostics.installButton || !appInstallDiagnostics.installButtonVisible || !appInstallDiagnostics.pinLegend) {
                 throw new Error('Photo Scout must ship as an installable standalone app with a visible pin legend: ' + JSON.stringify(appInstallDiagnostics));
               }
