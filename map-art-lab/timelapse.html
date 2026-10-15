@@ -181,10 +181,15 @@ let demStats = {loaded:0,failed:0};
 let tileCoordinates = {x:0,y:0};
 let busy = false;
 let timelineTimer = null;
+let timelineToken = 0;
 let cameraPlayback = null;
 let recorder = null;
 let recordStopTimer = null;
 let recordFrameTimer = null;
+let recordSequenceToken = 0;
+let imageryRequestToken = 0;
+let regionRefreshToken = 0;
+let refreshQueued = false;
 let keyframes = [];
 let initialCamera = null;
 let savedMaterial = null;
@@ -384,25 +389,31 @@ function textureFromImage(image){
   return texture;
 }
 async function loadHistoricalFrame(year,quiet=false){
-  const coords = tileCoordinates;
+  const requestToken = ++imageryRequestToken;
+  const regionToken = regionRefreshToken;
+  const coords = {...tileCoordinates};
   $('yearOutput').textContent = String(year);
   $('timelineYear').textContent = String(year);
   $('yearSlider').value = String(year);
   $('timelineSlider').value = String(year);
   $('yearNote').innerHTML = 'MODIS Terra<br>True Color · '+year;
   if(!quiet) setStatus('Loading '+year+' imagery tile…','loading');
+  const isStale = () => requestToken !== imageryRequestToken || regionToken !== regionRefreshToken;
   let frame;
   try{
     frame = await getHistoricalImage(year,coords.x,coords.y);
   }catch(error){
+    if(isStale()) return false;
     try{
       frame = await getFallbackImage(coords.x,coords.y);
     }catch(fallbackError){
-      if(!quiet) setStatus('Imagery unavailable; terrain remains active','error');
+      if(isStale()) return false;
       $('frameState').textContent = 'NO IMAGE';
+      if(!quiet) setStatus('Imagery unavailable; terrain remains active','error');
       return false;
     }
   }
+  if(isStale()) return false;
   const texture = textureFromImage(frame.image);
   const previous = baseTexture;
   baseTexture = texture;
@@ -422,19 +433,34 @@ async function loadHistoricalFrame(year,quiet=false){
   return true;
 }
 async function refreshRegion(){
-  if(busy) return;
+  if(busy){
+    refreshQueued=true;
+    regionRefreshToken++;
+    imageryRequestToken++;
+    return;
+  }
   busy=true;
+  const runToken=++regionRefreshToken;
   stopTimeLapse();
   cameraPlayback=null;
   selectedRegion=REGIONS[$('location').value] || REGIONS.rijeka;
   setRegionUI(selectedRegion);
   const coords=tileFor(selectedRegion.lon,selectedRegion.lat,MAP_ZOOM);
   tileCoordinates=coords;
+  const oldTexture=baseTexture;
+  baseTexture=null;
+  if(oldTexture) oldTexture.dispose();
+  if(terrainMaterial){
+    terrainMaterial.map=null;
+    terrainMaterial.needsUpdate=true;
+  }
   setStatus('Loading regional elevation mosaic…','loading');
   $('demState').textContent='Loading DEM…';
   try{
-    await loadHistoricalFrame(currentYear,true);
     const canvas=await buildDEMCanvas(coords.x,coords.y);
+    if(runToken!==regionRefreshToken) return;
+    const imageryReady=await loadHistoricalFrame(currentYear,true);
+    if(runToken!==regionRefreshToken) return;
     const stats=createTerrain(canvas,Number($('exaggeration').value));
     const span=Math.max(0,stats.max-stats.min);
     $('scaleNote').textContent='REGIONAL TILE · ZOOM 9 · RELIEF '+Math.round(span)+' M';
@@ -444,16 +470,24 @@ async function refreshRegion(){
     controls.update();
     keyframes=[];
     updateKeyCount();
-    if(demStats.failed){
+    if(!imageryReady){
+      setStatus('Terrain loaded · imagery unavailable','error');
+    }else if(demStats.failed){
       setStatus('Terrain ready with '+demStats.failed+' missing DEM tiles','error');
     }else{
       setStatus('Real elevation mesh ready · '+demStats.loaded+' DEM tiles','ready');
     }
   }catch(error){
-    useFallbackTerrain();
-    setStatus('Live DEM unavailable · using illustrative relief preview','error');
+    if(runToken===regionRefreshToken){
+      useFallbackTerrain();
+      setStatus('Live DEM unavailable · using illustrative relief preview','error');
+    }
   }finally{
     busy=false;
+    if(refreshQueued){
+      refreshQueued=false;
+      refreshRegion();
+    }
   }
 }
 function useFallbackTerrain(){
@@ -517,22 +551,21 @@ function easeInOut(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
 function startCameraPlayback(duration=9000){
   const points=pointsForPlayback();
   controls.enabled=false;
-  cameraPlayback={start:performance.now(),duration,points};
-  setStatus(keyframes.length>=2?'Playing saved camera path':'Playing default cinematic flyover','ready');
+  cameraPlayback={
+    start:performance.now(),
+    duration,
+    positionCurve:new THREE.CatmullRomCurve3(points.map(p=>p.position),false,'centripetal',0.5),
+    targetCurve:new THREE.CatmullRomCurve3(points.map(p=>p.target),false,'centripetal',0.5)
+  };
+  setStatus(keyframes.length>=2?'Playing saved cinematic camera path':'Playing smooth cinematic flyover','ready');
 }
 function updateCameraPlayback(now){
   if(!cameraPlayback)return;
   const elapsed=now-cameraPlayback.start;
   const t=Math.min(1,elapsed/cameraPlayback.duration);
   const eased=easeInOut(t);
-  const points=cameraPlayback.points;
-  const scaled=eased*(points.length-1);
-  const section=Math.min(points.length-2,Math.floor(scaled));
-  const local=scaled-section;
-  const p0=points[section].position,p1=points[section+1].position;
-  const t0=points[section].target,t1=points[section+1].target;
-  camera.position.lerpVectors(p0,p1,local);
-  controls.target.lerpVectors(t0,t1,local);
+  camera.position.copy(cameraPlayback.positionCurve.getPoint(eased));
+  controls.target.copy(cameraPlayback.targetCurve.getPoint(eased));
   camera.lookAt(controls.target);
   if(t>=1){
     cameraPlayback=null;
@@ -542,23 +575,31 @@ function updateCameraPlayback(now){
   }
 }
 function stopTimeLapse(){
-  if(timelineTimer){clearInterval(timelineTimer);timelineTimer=null;}
+  timelineToken++;
+  if(timelineTimer){clearTimeout(timelineTimer);timelineTimer=null;}
   $('timelinePlay').classList.remove('active');
   $('timelinePlay').textContent='Play timeline';
 }
 function playTimeLapse(){
-  if(timelineTimer){stopTimeLapse();return;}
+  if(timelineTimer!==null){stopTimeLapse();return;}
   $('timelinePlay').classList.add('active');
   $('timelinePlay').textContent='Pause timeline';
   const frames=YEAR_STEPS;
   let index=frames.indexOf(currentYear);
-  if(index<0) index=frames.findIndex(y=>y>currentYear)-1;
-  if(index<0) index=0;
-  timelineTimer=window.setInterval(()=>{
+  if(index<0){
+    const next=frames.findIndex(y=>y>currentYear);
+    index=next<0?frames.length-1:next-1;
+  }
+  const token=++timelineToken;
+  const tick=async()=>{
+    if(token!==timelineToken || timelineTimer===null) return;
     index=(index+1)%frames.length;
     currentYear=frames[index];
-    loadHistoricalFrame(currentYear,true);
-  },1900);
+    const loaded=await loadHistoricalFrame(currentYear,true);
+    if(token!==timelineToken || timelineTimer===null) return;
+    timelineTimer=window.setTimeout(tick,loaded?1650:850);
+  };
+  timelineTimer=window.setTimeout(tick,100);
   setStatus('Playing '+frames.length+' dated imagery frames','ready');
 }
 function downloadBlob(blob,filename){
@@ -574,8 +615,9 @@ function chooseRecorderType(){
   return types.find(type=>MediaRecorder.isTypeSupported(type)) || '';
 }
 function stopCapture(){
+  recordSequenceToken++;
   if(recordStopTimer){clearTimeout(recordStopTimer);recordStopTimer=null;}
-  if(recordFrameTimer){clearInterval(recordFrameTimer);recordFrameTimer=null;}
+  if(recordFrameTimer){clearTimeout(recordFrameTimer);recordFrameTimer=null;}
   if(recorder && recorder.state!=='inactive') recorder.stop();
 }
 async function recordSequence(){
@@ -607,11 +649,16 @@ async function recordSequence(){
   startCameraPlayback(12000);
   let frameIndex=YEAR_STEPS.indexOf(currentYear);
   if(frameIndex<0)frameIndex=0;
-  recordFrameTimer=window.setInterval(()=>{
+  const sequenceToken=++recordSequenceToken;
+  const advanceFrame=async()=>{
+    if(sequenceToken!==recordSequenceToken || !recorder || recorder.state==='inactive') return;
     frameIndex=(frameIndex+1)%YEAR_STEPS.length;
     currentYear=YEAR_STEPS[frameIndex];
-    loadHistoricalFrame(currentYear,true);
-  },1500);
+    await loadHistoricalFrame(currentYear,true);
+    if(sequenceToken!==recordSequenceToken || !recorder || recorder.state==='inactive') return;
+    recordFrameTimer=window.setTimeout(advanceFrame,1500);
+  };
+  recordFrameTimer=window.setTimeout(advanceFrame,1500);
   setStatus('Recording 12-second camera + time pass…','loading');
   recordStopTimer=window.setTimeout(()=>stopCapture(),12000);
 }
@@ -646,11 +693,13 @@ $('dockBtn').addEventListener('click',()=>{
 $('closeDock').addEventListener('click',()=>{$('dock').classList.add('closed');$('dockBtn').classList.remove('active');$('dockBtn').setAttribute('aria-expanded','false');});
 $('location').addEventListener('change',()=>{const region=REGIONS[$('location').value];if(region){selectedRegion=region;refreshRegion();}});
 $('yearSlider').addEventListener('input',()=>{
+  stopTimeLapse();
   currentYear=Number($('yearSlider').value);
   $('yearOutput').textContent=String(currentYear);$('timelineYear').textContent=String(currentYear);$('timelineSlider').value=String(currentYear);
 });
 $('yearSlider').addEventListener('change',()=>{stopTimeLapse();loadHistoricalFrame(currentYear);});
 $('timelineSlider').addEventListener('input',()=>{
+  stopTimeLapse();
   currentYear=Number($('timelineSlider').value);
   $('yearOutput').textContent=String(currentYear);$('timelineYear').textContent=String(currentYear);$('yearSlider').value=String(currentYear);
 });
