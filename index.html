@@ -654,6 +654,36 @@ html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
 @media(max-width:900px){.map-heading{max-width:calc(100vw - 390px)}.map-pin-legend{max-width:calc(100vw - 360px)}}
 @media(max-width:680px){.map-heading{max-width:calc(100vw - 20px)!important}.map-pin-legend{max-width:calc(100vw - 20px)!important}.map-quick-actions{right:10px}.map-legend-item{padding:4px}.map-legend-item span{white-space:normal}}
 
+
+/* Pin-first photo ideas: visible immediately after a map click. */
+.pin-idea-board{margin:12px 17px 0;padding:14px;border:1px solid #d4e2d2;border-radius:15px;background:linear-gradient(155deg,#fbfdf8,#f0f6ed);box-shadow:0 5px 18px rgba(34,58,39,.06)}
+.pin-idea-board[hidden]{display:none}
+.pin-idea-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.pin-idea-head h2{margin:2px 0 5px;font:500 21px/1.13 Georgia,serif;color:#244333}
+.pin-idea-head p{margin:0;color:#687c6c;font-size:10px;line-height:1.5}
+.pin-idea-lens{flex:0 0 auto;border:1px solid #d4e1cb;border-radius:9px;background:#e8f1df;color:#336249;font-weight:850;font-size:8px;line-height:1.45;letter-spacing:.06em;padding:7px 8px;text-align:center}
+.pin-idea-sketch-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.pin-idea-sketch{overflow:hidden;border:1px solid #d8e3d4;border-radius:10px;background:#fff;min-width:0}
+.pin-idea-sketch img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#e8eee2}
+.pin-idea-sketch strong{display:block;padding:7px 7px 0;font-size:9px;line-height:1.3;color:#2d4938}
+.pin-idea-sketch small{display:block;padding:4px 7px 8px;font-size:8px;color:#69806c}
+.pin-idea-shots{margin-top:10px;display:grid;gap:6px}
+.pin-idea-shot{font-size:10px;line-height:1.45;color:#435f4a;padding:8px 9px;background:rgba(225,237,219,.65);border-left:3px solid #5c8964;border-radius:0 7px 7px 0}
+.pin-idea-caveat{margin:9px 0 0;font-size:9px;line-height:1.45;color:#718272}
+.pin-idea-references{margin-top:13px;padding-top:11px;border-top:1px solid #dce6d9}
+.pin-idea-reference-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.pin-idea-ref{min-width:0;overflow:hidden;border:1px solid #d8e3d4;border-radius:10px;background:#fff}
+.pin-idea-ref img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#e9eee5}
+.pin-idea-ref-title{padding:6px 7px 0;font-size:9px;line-height:1.35;color:#344d3a;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pin-idea-ref-note{padding:4px 7px 7px;font-size:8px;line-height:1.4;color:#788878}
+.pin-idea-ref a{display:block;padding:0 7px 8px;font-size:8px;color:#346c4b;text-decoration:underline;text-underline-offset:2px}
+.pin-idea-actions{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.pin-idea-actions .btn{flex:1}
+.pin-idea-board .ai-image-generator{margin-top:13px;background:#fff;border-color:#d5e2d2}
+.pin-idea-board .ai-image-note{font-size:10px}
+.pin-idea-board .ai-image-status{font-size:10px}
+.pin-idea-board .ai-image-result img{max-height:320px}
+@media(max-width:680px){.pin-idea-board{margin:10px 12px 0;padding:11px}.pin-idea-sketch-grid,.pin-idea-reference-grid{gap:5px}.pin-idea-sketch strong{font-size:8px}.pin-idea-lens{font-size:7px;padding:6px}}
 </style>
 </head>
 <body>
@@ -751,16 +781,25 @@ html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
   <section class="section status-section">
     <div class="status-box" id="statusBox"><div class="status-icon">✣</div><div class="status-copy"><div class="status-title" id="statusTitle">Start with a place</div><div class="status-msg" id="statusMsg">Search for a city or landmark, or click anywhere on the map to explore nearby spots.</div></div></div>
     <div class="source-key-note">Click the map to zoom in and drop a bright pin. Use the small map icons for Search, Nearby, Ideas or Saved.</div>
-    <div class="pin-action-strip" id="pinActionStrip" hidden>
-      <div class="pin-action-copy"><strong id="pinActionTitle">Photo ideas for your pin</strong><span>Three Canon R50 framing sketches, nearby parking and an AI image concept.</span></div>
+    <div class="pin-action-strip" id="pinActionStrip">
+      <div class="pin-action-copy"><strong id="pinActionTitle">Start with a photo pin</strong><span>Click the map. Get three framing sketches, matched references and an AI image concept for your Canon R50.</span></div>
       <button class="btn small" id="jumpToPhotoIdeas" type="button">View ideas ↓</button>
       <button class="btn primary small" id="quickGenerateAI" type="button">✦ Generate image</button>
     </div>
   </section>
-  <section class="detail" id="spotDetail">
-    <div class="eyebrow" id="detailEyebrow">Selected location</div><h2 id="detailTitle">Your pin</h2><div class="spot-meta" id="detailMeta"></div>
-    <div id="detailHistory"></div>
-<div class="ai-image-generator" id="aiImageGenerator">
+  <section class="pin-idea-board" id="pinIdeaBoard" hidden aria-live="polite">
+    <div class="pin-idea-head">
+      <div><div class="eyebrow">LOCATION-AWARE FIELD NOTE</div><h2 id="pinIdeaTitle">Photo ideas for this pin</h2><p id="pinIdeaSubtitle">Three possible compositions using the Canon R50 and 18–150 mm lens.</p></div>
+      <span class="pin-idea-lens">CANON R50<br>18–150 mm</span>
+    </div>
+    <div class="pin-idea-sketch-grid" id="pinIdeaSketchGrid"></div>
+    <div class="pin-idea-shots" id="pinIdeaShots"></div>
+    <p class="pin-idea-caveat" id="pinIdeaCaveat">Sketches are composition suggestions, not photos of the actual view. Check sightlines and legal access on site.</p>
+    <div class="pin-idea-references">
+      <div class="section-heading"><h3>Actual reference photographs</h3><span class="count" id="pinIdeaReferenceCount">Searching when a pin is selected</span></div>
+      <div class="pin-idea-reference-grid" id="pinIdeaReferenceGrid"><div class="empty">Click a map point to find photos matched to the place or subject. Unrelated event and portrait photos are excluded.</div></div>
+    </div>
+    <div class="ai-image-generator" id="aiImageGenerator">
         <div class="section-heading"><h3>AI image concept</h3><span class="count" id="aiImageConnectionState">Not connected</span></div>
         <p class="ai-image-note">Generate a new visual for this location and keep it inside Photo Scout. AI images are illustrative concepts, not verified documentary views.</p>
         <div class="ai-image-controls">
@@ -784,6 +823,14 @@ html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
           <a class="footer-link" href="https://docs.puter.com/user-pays-model/" target="_blank" rel="noopener noreferrer">Read how user-pays works ↗</a>
         </details>
       </div>
+    <div class="pin-idea-actions">
+      <button class="btn" id="pinIdeaOpenGuide" type="button">More ideas & reference photos ↗</button>
+      <button class="btn" id="pinIdeaDrive" type="button">Route to this pin ↗</button>
+    </div>
+  </section>
+  <section class="detail" id="spotDetail">
+    <div class="eyebrow" id="detailEyebrow">Selected location</div><h2 id="detailTitle">Your pin</h2><div class="spot-meta" id="detailMeta"></div>
+    <div id="detailHistory"></div>
     <div class="selected-parking-block">
       <div class="section-heading"><h3>Parking near this spot</h3><span class="count" id="spotParkingCount">—</span></div>
       <p id="spotParkingHint" class="parking-nearby-note">Choose a photo spot to search for mapped parking near that exact location.</p>
@@ -1833,18 +1880,20 @@ function suppressBasemapParkingSymbols(){
    }catch(error){state.parkingFilterDiagnostics.push({id,source,sourceLayer,error:String(error.message||error)});}
    return;
   }
-  const isPoiLayer=sourceLayer==='poi';
+  const isPoiLayer=/(^|[_-])pois?([_-]|$)/.test(sourceLayer)||/(^|[_-])pois?([_-]|$)/.test(id);
   if(!isPoiLayer)return;
-  // Keep the basemap's written place labels but remove its generic blue POI icons.
-  // Photo Scout owns the high-contrast parking pins and scenic/landmark markers;
-  // the default blue P is not a chosen/verified parking destination.
+  // Suppress basemap POI artwork (not just parking) while keeping text labels.
+  // Native blue P icons look like destinations even when our own search did not
+  // return that parking point. Photo Scout's green markers are the authoritative pins.
   if(Object.prototype.hasOwnProperty.call(layout,'icon-image')){
    try{
-    map.setLayoutProperty(layer.id,'icon-image',null);
+    map.setPaintProperty(layer.id,'icon-opacity',0);
+    map.setPaintProperty(layer.id,'icon-halo-opacity',0);
     state.parkingIconLayersSilenced.add(layer.id);
-    state.parkingFilterDiagnostics.push({id,source,sourceLayer,method:'basemap POI icon removed; text labels preserved'});
+    state.parkingFilterDiagnostics.push({id,source,sourceLayer,method:'basemap POI icons hidden by opacity; text labels preserved'});
    }catch(error){
-    state.parkingFilterDiagnostics.push({id,source,sourceLayer,error:'icon-image: '+String(error.message||error)});
+    try{map.setLayoutProperty(layer.id,'icon-image',null);state.parkingIconLayersSilenced.add(layer.id);}
+    catch(secondError){state.parkingFilterDiagnostics.push({id,source,sourceLayer,error:'icon suppression: '+String(secondError.message||secondError)});}
    }
   }
   try{
