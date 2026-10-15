@@ -1,0 +1,144 @@
+name: Earth Time Machine browser smoke test
+
+on:
+  pull_request:
+    paths:
+      - "map-art-lab/earth-time-machine.html"
+      - "map-art-lab/index.html"
+      - ".github/workflows/earth-time-machine-browser-check.yml"
+  push:
+    branches: [main]
+    paths:
+      - "map-art-lab/earth-time-machine.html"
+      - "map-art-lab/index.html"
+      - ".github/workflows/earth-time-machine-browser-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Playwright
+        run: npm install --no-save playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Serve static site
+        run: |
+          nohup python3 -m http.server 8000 --bind 127.0.0.1 > /tmp/earth-time-machine-http.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl --silent --fail http://127.0.0.1:8000/map-art-lab/earth-time-machine.html > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/earth-time-machine-http.log
+          exit 1
+      - name: Verify Three.js globe, timeline and controls
+        run: |
+          mkdir -p artifacts
+          node <<'NODE'
+          const { chromium } = require('playwright');
+          const zlib = require('zlib');
+          function crc32(buffer) {
+            let c = 0xffffffff;
+            for (const byte of buffer) {
+              c ^= byte;
+              for (let k = 0; k < 8; k++) c = (c >>> 1) ^ ((c & 1) ? 0xedb88320 : 0);
+            }
+            return (c ^ 0xffffffff) >>> 0;
+          }
+          function chunk(name, data) {
+            const type = Buffer.from(name);
+            const len = Buffer.alloc(4); len.writeUInt32BE(data.length);
+            const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(Buffer.concat([type, data])));
+            return Buffer.concat([len, type, data, crc]);
+          }
+          function png(r, g, b) {
+            const signature = Buffer.from([137,80,78,71,13,10,26,10]);
+            const ihdr = Buffer.alloc(13);
+            ihdr.writeUInt32BE(1, 0); ihdr.writeUInt32BE(1, 4);
+            ihdr[8] = 8; ihdr[9] = 6;
+            const scanline = Buffer.from([0, r, g, b, 255]);
+            return Buffer.concat([signature, chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(scanline)), chunk('IEND', Buffer.alloc(0)]);
+          }
+          (async () => {
+            const browser = await chromium.launch({
+              headless: true,
+              args: ['--enable-webgl', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+            });
+            const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+            const errors = [];
+            page.on('pageerror', e => errors.push(e.message));
+            const tilePng = png(130, 80, 30);
+            const imageResponse = route => route.fulfill({
+              status: 200,
+              contentType: 'image/png',
+              headers: { 'Access-Control-Allow-Origin': '*' },
+              body: tilePng
+            });
+            await page.route('https://threejs.org/examples/textures/planets/**', imageResponse);
+            await page.route('https://gibs.earthdata.nasa.gov/**', imageResponse);
+            await page.goto('http://127.0.0.1:8000/map-art-lab/earth-time-machine.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.waitForFunction(() => typeof window.__EARTH_TIME_MACHINE_TEST__ === 'function', null, { timeout: 30000 });
+            await page.waitForFunction(() => {
+              const s = window.__EARTH_TIME_MACHINE_TEST__();
+              return s.renderCalls > 0 && s.hasCanvas && s.hasGlobe && s.hasOverlay;
+            }, null, { timeout: 60000 });
+            const initial = await page.evaluate(() => window.__EARTH_TIME_MACHINE_TEST__());
+            await page.screenshot({ path: 'artifacts/earth-time-machine.png' });
+            if (!initial.hasCanvas || !initial.hasGlobe || !initial.hasOverlay || initial.renderCalls < 1) {
+              throw new Error('Globe scene did not render: ' + JSON.stringify(initial));
+            }
+
+            await page.locator('#region').selectOption('aquileia');
+            await page.locator('#flyBtn').click();
+            if (!(await page.locator('#heroCoords').textContent()).includes('45.77° N')) {
+              throw new Error('Fly-to control did not focus the selected coordinates.');
+            }
+
+            const targetIndex = (2017 - 1980) * 12 + 3;
+            await page.locator('#timeSlider').evaluate((el, value) => {
+              el.value = String(value);
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+            }, targetIndex);
+            await page.waitForFunction(value => window.__EARTH_TIME_MACHINE_TEST__().monthIndex === value, targetIndex, { timeout: 5000 });
+            await page.waitForFunction(() => document.querySelector('#statusText').textContent.includes('Loaded APR 2017'), null, { timeout: 10000 });
+            if ((await page.locator('#dateLabel').textContent()) !== 'APR 2017') throw new Error('Monthly timeline label did not update.');
+
+            const beforePlay = await page.evaluate(() => window.__EARTH_TIME_MACHINE_TEST__().monthIndex);
+            await page.locator('#playBtn').click();
+            await page.waitForFunction(before => window.__EARTH_TIME_MACHINE_TEST__().monthIndex !== before, beforePlay, { timeout: 5000 });
+            await page.locator('#stopBtn').click();
+
+            await page.locator('#panelBtn').click();
+            if (!(await page.locator('#panel').evaluate(el => el.classList.contains('closed')))) {
+              throw new Error('Globe control panel did not close.');
+            }
+            if (errors.length) throw new Error('Browser runtime errors: ' + errors.join(' | '));
+            console.log(JSON.stringify({
+              scene: 'Three.js globe rendered',
+              initialDataLayer: initial.hasOverlay ? 'loaded (test image intercepted)' : 'missing',
+              flyTo: 'passed',
+              monthScrubbing: 'passed',
+              timelinePlayback: 'passed',
+              panelToggle: 'passed',
+              pageErrors: errors.length
+            }, null, 2));
+            await browser.close();
+          })().catch(e => { console.error(e); process.exit(1); });
+          NODE
+      - name: Save browser screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: earth-time-machine-smoke-test
+          path: artifacts/*.png
+          if-no-files-found: ignore
