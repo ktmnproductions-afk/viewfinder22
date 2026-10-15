@@ -1932,7 +1932,7 @@ function parkingCandidates(){
    items.push({...p,name:generic?'Mapped parking point':p.name,distance,distanceFromSpot:distance,parkingOrigin:'near-selected',
     summary:p.summary||'Mapped parking feature near this selected spot. The point may be the centre of a mapped area rather than its entrance. Legal access, availability and restrictions are not verified.'});
   });
-  return items.sort((a,b)=>(isParkingEntrance(a)?0:1)-(isParkingEntrance(b)?0:1)||a.distance-b.distance);
+  return items.sort((a,b)=>a.distance-b.distance|| (isParkingEntrance(a)?0:1)-(isParkingEntrance(b)?0:1));
  }
  const radius=state.radius||10000;
  const raw=state.results.filter(r=>r.category==='parking').sort((a,b)=>(a.distance||0)-(b.distance||0));
@@ -1951,12 +1951,12 @@ function parkingCandidates(){
   if(seen.some(q=>haversine({lat:q.lat,lng:q.lng},{lat:p.lat,lng:p.lng})<65))return;
   seen.push({...p,distance:dist,parkingOrigin:'basemap'});
  });
- return seen.sort((a,b)=>(isParkingEntrance(a)?0:1)-(isParkingEntrance(b)?0:1)||(a.distance||0)-(b.distance||0));
+ return seen.sort((a,b)=>(a.distance||0)-(b.distance||0)||(isParkingEntrance(a)?0:1)-(isParkingEntrance(b)?0:1));
 }
 function renderSpotParking(item){
  const count=$('spotParkingCount'),hint=$('spotParkingHint'),container=$('spotParkingResults');
  if(!count||!hint||!container)return;
- const items=(state.spotParkingTargetId===item.id?state.spotParking:[]).slice().sort((a,b)=>(isParkingEntrance(a)?0:1)-(isParkingEntrance(b)?0:1)||a.distance-b.distance);
+ const items=(state.spotParkingTargetId===item.id?state.spotParking:[]).slice().sort((a,b)=>a.distance-b.distance||(isParkingEntrance(a)?0:1)-(isParkingEntrance(b)?0:1));
  count.textContent=state.spotParkingLoading?(items.length?items.length+' found · checking more':'Searching…'):items.length+' found';
  if(state.spotParkingLoading)hint.textContent=items.length?'Showing nearby mapped options while checking the map index for more parking close to this spot.':'Searching within 3.5 km of this selected place—not just around your original pin.';
  else hint.textContent='Distances are from '+item.name+'. These are mapped parking features, not live availability; check legal access, signs, charges and opening on arrival.';
@@ -2034,7 +2034,7 @@ async function loadParkingNearSelected(item){
     summary:isEntrance?'Mapped vehicle entrance near '+item.name+'. Verify signs, restrictions and whether this entrance serves public parking.':'Mapped parking feature near '+item.name+'. Public access, legal parking, charges, opening and availability are not confirmed.'
    });
   });
-  state.spotParking=pool.sort((a,b)=>(isParkingEntrance(a)?0:1)-(isParkingEntrance(b)?0:1)||a.distance-b.distance).slice(0,12);
+  state.spotParking=pool.sort((a,b)=>a.distance-b.distance||(isParkingEntrance(a)?0:1)-(isParkingEntrance(b)?0:1)).slice(0,12);
   state.spotParkingLoading=false;
   renderSpotParking(item);
   renderResults();
@@ -2161,7 +2161,7 @@ function renderMarkers(){
   .sort((a,b)=>{
    const aEntrance=isParkingEntrance(a)?0:1;
    const bEntrance=isParkingEntrance(b)?0:1;
-   return aEntrance-bEntrance || (a.distance||Infinity)-(b.distance||Infinity);
+   return (a.distance||Infinity)-(b.distance||Infinity) || aEntrance-bEntrance;
   }).slice(0,3):[];
  const parkingMarkers=map.getZoom()>=14.5?parking:clusterParkingMarkers(parking);
  // Keep each pin at its real geographic coordinate. Only include candidates
@@ -3182,7 +3182,7 @@ function fieldGuidePhotoMarkup(card){
  if(!photos.length)return '<div class="guide-photo-grid fallback-sketch-grid">'+fieldGuideSketchTiles(card,true)+'</div><div class="guide-photo-placeholder guide-photo-placeholder-note"><div><strong>No source photo returned this time</strong>Here are three alternate framing studies rather than an empty box. Try Refresh to search the photo archive again.</div></div>';
  return photos.slice(0,3).map(photo=>{
   const note=photo.geotagged?'Nearby scenic/architecture reference · '+distanceLabel(photo.distance)+' away; exact camera position is not verified.':(photo.referenceType||'Matched by place/subject title; exact view is not verified.');
-  return '<figure class="guide-photo"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption><span>'+esc(photo.name)+'</span><small>'+esc(note)+'</small><a class="guide-photo-source" href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Photo source & licence ↗</a></figcaption></figure>';
+  return '<figure class="guide-photo"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption><span>'+esc(photo.name)+'</span><small>'+esc(photo.source||photo.provider||'Openly licensed reference')+' · '+esc(photo.artist||'Creator not listed')+'</small><small>'+esc(photo.license||'Check licence on source page')+' · '+esc(note)+'</small><a class="guide-photo-source" href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Open original & licence ↗</a></figcaption></figure>';
  }).join('');
 }
 function fieldGuideCardHTML(card,index){
@@ -3486,7 +3486,7 @@ function fieldGuideAreaPhotoHTML(subject){
  if(photos&&photos.length&&!photos.loading){
   return photos.slice(0,3).map(photo=>{
    const note=photo.geotagged?'Nearby scenic/architecture image; not a verified camera position.':(photo.referenceType||'Matched by place/subject title; exact view is not verified.');
-   return '<figure class="area-subject-photo"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption><span>'+esc(photo.name)+'</span><small>'+esc(note)+'</small><a href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Source & licence ↗</a></figcaption></figure>';
+   return '<figure class="area-subject-photo"><img loading="lazy" src="'+esc(safeLink(photo.thumb))+'" alt="'+esc(photo.name)+'"><figcaption><span>'+esc(photo.name)+'</span><small>'+esc(photo.source||photo.provider||'Openly licensed reference')+' · '+esc(photo.artist||'Creator not listed')+'</small><small>'+esc(photo.license||'Check licence on source page')+' · '+esc(note)+'</small><a href="'+esc(safeLink(photo.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Open original & licence ↗</a></figcaption></figure>';
   }).join('');
  }
  if(photos&&photos.loading){
