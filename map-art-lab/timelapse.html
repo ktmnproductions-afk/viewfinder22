@@ -358,7 +358,7 @@ function createTerrain(canvas,exaggeration){
   terrainMesh = new THREE.Mesh(geometry,terrainMaterial);
   terrainMesh.position.y = 0;
   scene.add(terrainMesh);
-  $('demState').textContent = failed ? (loadedLabel(demStats.loaded) + ' / '+demStats.failed+' missing') : '64 tiles · real DEM';
+  $('demState').textContent = demStats.failed ? (loadedLabel(demStats.loaded) + ' / '+demStats.failed+' missing') : '64 tiles · real DEM';
   return {min:low,max:high,mean:valid ? sum/valid : 0};
 }
 function loadedLabel(n){return n+' loaded';}
