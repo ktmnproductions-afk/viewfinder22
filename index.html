@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-15-photo-scout-map-roles-v10">
+<meta name="photo-scout-build" content="2026-10-15-photo-scout-map-roles-v11">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -2388,7 +2388,7 @@ function renderMarkers(){
   const label=item.isTargetVantage
    ?'Potential view toward '+item.viewTargetName+' · '+item.viewBearingLabel+' · '+distanceLabel(item.distance)+' straight-line. Line of sight not verified.'
    :item.category==='photoSpot'?'Photo subject · '+item.name+' · '+distanceLabel(item.distance)
-   :item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas · '+distanceLabel(item.distance):((item.isRecommendedParking?'Closest mapped parking · ':isParkingEntrance(item)?'Mapped parking entrance · ':'Mapped parking area/point · ')+item.name+' · '+distanceLabel(item.distance))
+   :item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas · '+distanceLabel(item.distance):((item.isRecommendedParking?'Closest mapped parking · ':isParkingEntrance(item)?'Mapped parking entrance · ':'Mapped parking area/point · ')+item.name+' · '+distanceLabel(item.distance)))
    :item.name+' · '+distanceLabel(item.distance);
   const el=markerEl(item.category,label);
   if(item.isTargetVantage){
