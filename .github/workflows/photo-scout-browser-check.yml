@@ -40,49 +40,26 @@ jobs:
           node <<'NODE'
           const fs = require('node:fs');
           const html = fs.readFileSync('index.html', 'utf8');
-          const opening = '<script type="module">';
-          let cursor = 0;
-          let count = 0;
-          while (true) {
-            const start = html.indexOf(opening, cursor);
-            if (start < 0) break;
-            const bodyStart = start + opening.length;
-            const end = html.indexOf('</script>', bodyStart);
-            if (end < 0) throw new Error('Unclosed Photo Scout module script');
-            let source = html.slice(bodyStart, end).trimStart();
-            if (source.startsWith('import ')) {
-              const lineEnd = source.indexOf(String.fromCharCode(10));
-              if (lineEnd < 0) throw new Error('Could not isolate the MapLibre import line');
-              source = source.slice(lineEnd + 1);
+          const scripts = html.split('<script type="module">').slice(1).map(block => block.split('</script>')[0]);
+          if (!scripts.length) throw new Error('No Photo Scout module script found');
+          for (let index = 0; index < scripts.length; index++) {
+            let source = scripts[index];
+            if (source.trimStart().startsWith('import ')) {
+              const newline = source.indexOf(String.fromCharCode(10));
+              source = newline >= 0 ? source.slice(newline + 1) : source;
             }
             try { new Function(source); }
             catch (error) {
-              console.error('Module script syntax error near extracted block '+count+': '+error.stack);
+              console.error('Module script syntax error at block '+index+': '+error.stack);
               throw error;
             }
-            count++;
-            cursor = end + '</script>'.length;
           }
-          if (!count) throw new Error('No Photo Scout module script found');
-          console.log('Photo Scout module script syntax OK ('+count+' module block(s)).');
+          console.log('Photo Scout module script syntax OK ('+scripts.length+' module block(s)).');
           NODE
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Validate Photo Scout browser module syntax
-        run: |
-          python3 - <<'PY'
-          import re
-          from pathlib import Path
-          html = Path("index.html").read_text(encoding="utf-8")
-          scripts = re.findall(r'<script\\s+type="module">([\\s\\S]*?)</script>', html, re.I)
-          if not scripts:
-              raise SystemExit("No inline module script found in index.html")
-          Path("/tmp/photo-scout-check.mjs").write_text(scripts[-1], encoding="utf-8")
-          print("Extracted inline module, characters:", len(scripts[-1]))
-          PY
-          node --check /tmp/photo-scout-check.mjs
       - name: Serve the site
         run: |
           nohup python3 -m http.server 8000 --bind 127.0.0.1 > /tmp/photoscout-http.log 2>&1 &
