@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08131b">
+<title>Map Art Lab — 3D Time-Lapse Studio</title>
+<link rel="preconnect" href="https://gibs.earthdata.nasa.gov">
+<link rel="preconnect" href="https://s3.amazonaws.com">
+<link rel="preconnect" href="https://tiles.maps.eox.at">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07121a;--panel:#0a1720eF;--line:#d9eddf24;--ink:#eff2e9;--muted:#94a99f;--mint:#9ed6c2;--gold:#d4b17b;--red:#e49b83}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:"DM Sans",sans-serif}
+button,select,input{font:inherit}
+button{cursor:pointer}
+#stage{position:absolute;inset:0;background:radial-gradient(ellipse at 55% 48%,#142d36 0%,#08151d 48%,#050b11 100%)}
+#stage canvas{display:block;width:100%;height:100%;outline:0}
+.vignette{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#061017a6 0%,transparent 24%,transparent 64%,#061017b8 100%);z-index:2}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:2;opacity:.04;mix-blend-mode:soft-light;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
+header{position:absolute;z-index:10;left:17px;right:17px;top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;pointer-events:none}
+header>*{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:10px;background:#08141de8;border:1px solid var(--line);padding:9px 12px;backdrop-filter:blur(16px);border-radius:4px;text-decoration:none;color:inherit}
+.brandmark{width:28px;height:28px;border:1px solid #bdd9cd;border-radius:50%;display:grid;place-items:center;font-family:"Playfair Display",serif;font-size:19px;color:#c7e3d6}
+.brand strong{display:block;font-size:9px;letter-spacing:.19em}
+.brand small{display:block;margin-top:3px;color:var(--muted);font-size:8px;letter-spacing:.12em;text-transform:uppercase}
+.header-actions{display:flex;gap:7px;align-items:center}
+.btn{border:1px solid #d9eddf30;background:#08141de8;color:#e5eee7;padding:9px 11px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:3px;backdrop-filter:blur(15px);transition:background .15s,border-color .15s}
+.btn:hover,.btn.active{background:#d9e8dd;color:#0a1a1a;border-color:#d9e8dd}
+.btn.primary{background:#c1e0d2;color:#0a1a1a;border-color:#c1e0d2}
+.btn.primary:hover{background:#f0f1e7}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.dock{position:absolute;z-index:8;left:17px;top:70px;bottom:154px;width:270px;max-height:calc(100dvh - 235px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:4px;backdrop-filter:blur(18px);box-shadow:0 20px 70px #0004;padding:13px;scrollbar-width:thin;scrollbar-color:#344b51 transparent;transition:transform .2s,opacity .2s}
+.dock.closed{transform:translateX(calc(-100% - 25px));opacity:0;pointer-events:none}
+.dockhead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:11px}
+.eyebrow{color:var(--mint);font-size:8px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.dockhead .close{border:1px solid var(--line);background:#101f26;color:var(--ink);height:25px;width:25px;border-radius:3px;font-size:17px;line-height:1}
+h1{font:500 29px/.98 "Playfair Display",Georgia,serif;letter-spacing:-.04em;margin:8px 0 8px}
+.lede{font-size:10px;line-height:1.5;color:#a9bbb2;margin:0}
+.section{border-top:1px solid var(--line);padding-top:11px;margin-top:12px}
+.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.sectionhead strong{font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:#b9d0c5}
+.sectionhead span{font:10px "DM Mono",monospace;color:var(--mint)}
+.fieldlabel{display:block;color:#8fa79b;font-size:8px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px}
+select{appearance:none;width:100%;border:1px solid #d9eddf2c;border-radius:3px;background:#07151d;color:#e5ece5;padding:9px 28px 9px 9px;font-size:10px;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='m1 1 4 4 4-4' fill='none' stroke='%239ed6c2' stroke-width='1.2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+select:focus,input:focus{border-color:#9ed6c2}
+.range{width:100%;accent-color:var(--mint);cursor:ew-resize;margin:6px 0}
+.yearline{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.yearlarge{font:500 31px/.95 "DM Mono",monospace;color:#edf3e9;letter-spacing:-.08em}
+.yearnote{font-size:8px;color:var(--muted);text-align:right;max-width:120px;line-height:1.3}
+.ticks{display:flex;justify-content:space-between;color:#6f8b83;font:7px "DM Mono",monospace}
+.rowbuttons{display:flex;gap:6px;margin-top:9px}
+.rowbuttons .btn{flex:1;padding:9px 7px}
+.smallnote{font-size:8px;color:#799087;line-height:1.5;margin:8px 0 0}
+.inline{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:9px;color:#bac8c0;padding:5px 0}
+.inline output{font:10px "DM Mono",monospace;color:var(--mint)}
+input[type=range]{accent-color:var(--mint)}
+.status{display:flex;align-items:center;gap:7px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:8px;line-height:1.4;color:#9cb9ad;letter-spacing:.08em;text-transform:uppercase}
+.led{width:6px;height:6px;border-radius:100%;flex:0 0 auto;background:#b3c2bb;box-shadow:0 0 8px #b3c2bb66}
+.status[data-state=ready] .led{background:#7fdbb7;box-shadow:0 0 9px #7fdbb7aa}
+.status[data-state=loading] .led{background:#d4b17b;box-shadow:0 0 9px #d4b17baa}
+.status[data-state=error] .led{background:#e49b83;box-shadow:0 0 9px #e49b83aa}
+.hud{position:absolute;z-index:5;right:25px;top:91px;text-align:right;pointer-events:none;text-shadow:0 3px 24px #000a;max-width:43vw}
+.hud .eyebrow{font-size:8px;letter-spacing:.2em}
+.hud h2{font:500 clamp(39px,5vw,68px)/.9 "Playfair Display",Georgia,serif;letter-spacing:-.05em;margin:10px 0 9px}
+.hud p{color:#b2c9bd;font-size:8px;letter-spacing:.14em;text-transform:uppercase;margin:0}
+.hudmeta{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:12px;color:#829b91;font:8px "DM Mono",monospace}
+.hudmeta .dot{width:3px;height:3px;border-radius:50%;background:var(--gold)}
+.scale-note{position:absolute;z-index:5;right:17px;bottom:163px;text-align:right;color:#9cb5a9;font:8px "DM Mono",monospace;text-shadow:0 1px 8px #000}
+.timeline{position:absolute;z-index:9;left:17px;right:17px;bottom:14px;background:#08141de8;border:1px solid var(--line);border-radius:4px;padding:12px 14px 11px;backdrop-filter:blur(18px);box-shadow:0 18px 65px #0005}
+.timeline-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.timeline-title{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:#a8c6b7;font-weight:700}
+.timeline-title b{color:#e9f0e8;font-weight:500}
+.timeline-actions{display:flex;gap:6px;align-items:center}
+.timeline-actions .btn{padding:8px 10px;font-size:8px}
+.timeline .range{margin:9px 0 5px}
+.timeline-scale{display:flex;justify-content:space-between;color:#718b81;font:8px "DM Mono",monospace}
+.credit{position:absolute;z-index:4;left:17px;bottom:143px;color:#779089;font-size:7px;letter-spacing:.02em;max-width:min(480px,60vw);text-shadow:0 1px 5px #000}
+.coord{position:absolute;z-index:5;left:50%;top:80px;transform:translateX(-50%);padding:6px 9px;background:#08141dab;border:1px solid #d9eddf1a;border-radius:3px;color:#8da99d;font:8px "DM Mono",monospace;pointer-events:none;white-space:nowrap}
+.hidden{display:none!important}
+@media(max-width:760px){header{left:9px;right:9px;top:9px}.brand{padding:7px}.brand small{display:none}.brandmark{width:25px;height:25px}.header-actions{gap:4px}.header-actions .btn{padding:8px 8px;font-size:8px}.header-actions #jsonBtn{display:none}.dock{left:9px;top:60px;width:min(282px,calc(100vw - 18px));bottom:142px;max-height:calc(100dvh - 205px);padding:11px}.hud{top:76px;right:12px;max-width:45vw}.hud h2{font-size:38px}.hud p{font-size:7px}.hudmeta{gap:6px;font-size:7px}.scale-note{bottom:142px;right:10px}.timeline{left:9px;right:9px;bottom:8px;padding:10px}.timeline-actions .btn{padding:8px 7px;font-size:7px}.timeline-title{font-size:7px}.credit{display:none}.coord{top:auto;bottom:143px;left:10px;transform:none}}
+@media(max-width:430px){.header-actions #backBtn{display:none}.hud{display:none}.timeline-top{align-items:flex-start;flex-direction:column}.timeline-actions{width:100%}.timeline-actions .btn{flex:1}.timeline{padding:9px}.dock{bottom:145px;max-height:calc(100dvh - 204px)}.scale-note{display:none}}
+</style>
+</head>
+<body>
+<div id="stage"></div><div class="vignette"></div><div class="grain"></div>
+<header>
+ <a class="brand" href="./index.html" aria-label="Back to Map Art Lab"><span class="brandmark">M</span><span><strong>MAP ART LAB</strong><small>Three.js · 3D time-lapse studio</small></span></a>
+ <div class="header-actions">
+  <button class="btn active" id="dockBtn" aria-expanded="true">Studio controls</button>
+  <button class="btn" id="playCameraBtn">Play camera</button>
+  <button class="btn primary" id="recordBtn">Record 12s</button>
+  <a class="btn" id="backBtn" href="./index.html" style="text-decoration:none">Map Art Lab ↗</a>
+  <button class="btn" id="jsonBtn">Export scene</button>
+ </div>
+</header>
+<aside class="dock" id="dock">
+ <div class="dockhead"><div><div class="eyebrow">Scene / 01</div><div style="font:500 19px 'Playfair Display',serif;margin-top:3px">Terrain & time</div></div><button class="close" id="closeDock" aria-label="Close controls">×</button></div>
+ <div class="eyebrow">A real place. Different moments.</div>
+ <h1>Time, drawn<br>into terrain.</h1>
+ <p class="lede">A Three.js terrain mesh, date-aware satellite imagery and a camera path built for short cinematic sequences.</p>
+ <div class="section">
+  <div class="sectionhead"><strong>01 / Region</strong><span>XYZ + DEM</span></div>
+  <label class="fieldlabel" for="location">Choose a starting area</label>
+  <select id="location">
+   <option value="rijeka" selected>Rijeka & Kvarner · Croatia</option>
+   <option value="kastav">Kastav & Učka · Croatia</option>
+   <option value="aquileia">Aquileia & Grado · Italy</option>
+   <option value="trieste">Trieste & Karst · Italy / Slovenia</option>
+   <option value="venice">Venice Lagoon · Italy</option>
+   <option value="dolomites">Dolomites · Italy</option>
+  </select>
+  <div class="smallnote">The terrain tile is a regional window, not a street-level mesh. Use the camera controls to orbit, tilt and frame the relief.</div>
+ </div>
+ <div class="section">
+  <div class="sectionhead"><strong>02 / Historical image</strong><span id="frameState">NASA GIBS</span></div>
+  <div class="yearline"><output class="yearlarge" id="yearOutput">2020</output><span class="yearnote" id="yearNote">MODIS Terra<br>True Color · daily</span></div>
+  <input class="range" id="yearSlider" type="range" min="2002" max="2025" step="1" value="2020" aria-label="Historical image year">
+  <div class="ticks"><span>2002</span><span>2008</span><span>2014</span><span>2020</span><span>2025</span></div>
+  <div class="rowbuttons"><button class="btn" id="prevBtn">← Earlier</button><button class="btn" id="nextBtn">Later →</button></div>
+  <p class="smallnote">Built-in timeline uses NASA MODIS true-colour scenes. It is best for regional land-cover change; it does not promise high-resolution building imagery for every date.</p>
+ </div>
+ <div class="section">
+  <div class="sectionhead"><strong>03 / Relief</strong><span id="demState">Terrarium DEM</span></div>
+  <label class="inline" for="exaggeration"><span>Vertical exaggeration</span><output id="exagOutput">2.5×</output></label>
+  <input class="range" id="exaggeration" type="range" min="0.5" max="5" value="2.5" step="0.1" aria-label="Vertical exaggeration">
+  <label class="inline" for="wire"><span>Terrain wireframe</span><input id="wire" type="checkbox" style="accent-color:var(--mint)"></label>
+ </div>
+ <div class="section">
+  <div class="sectionhead"><strong>04 / Camera path</strong><span id="keyCount">0 points</span></div>
+  <div class="rowbuttons"><button class="btn" id="addPointBtn">Add waypoint +</button><button class="btn" id="clearPointsBtn">Clear</button></div>
+  <p class="smallnote">Orbit the scene with your mouse, frame a shot, then add a waypoint. Two or more waypoints define the recorded camera path; without them, a default flyover is used.</p>
+ </div>
+ <div class="status" id="status" data-state="loading"><span class="led"></span><span id="statusText">Preparing 3D scene…</span></div>
+</aside>
+<div class="coord" id="coord">45.3271° N · 14.4422° E</div>
+<div class="hud"><div class="eyebrow" id="hudEyebrow">Regional time study / Adriatic</div><h2 id="hudTitle">The coast<br>remembers.</h2><p id="hudSubtitle">Kvarner Bay · terrain through time</p><div class="hudmeta"><span id="hudCoords">45.33° N / 14.44° E</span><span class="dot"></span><span>DEM + DATED RASTER</span></div></div>
+<div class="scale-note" id="scaleNote">REGIONAL TILE · ZOOM 9</div>
+<div class="credit">Elevation: AWS Terrain Tiles (Terrarium). Time-aware imagery: NASA GIBS / MODIS Terra Corrected Reflectance. Reference fallback: EOX Sentinel-2 cloudless 2020. Terrain and imagery may be constrained by upstream service availability.</div>
+<div class="timeline">
+ <div class="timeline-top"><div class="timeline-title">Time-lapse sequence <b>— <span id="timelineYear">2020</span></b></div>
+  <div class="timeline-actions"><button class="btn" id="timelinePlay">Play timeline</button><button class="btn" id="stopBtn">Stop</button><button class="btn" id="resetBtn">Reset view</button></div>
+ </div>
+ <input class="range" id="timelineSlider" type="range" min="2002" max="2025" step="1" value="2020" aria-label="Scrub through historical imagery">
+ <div class="timeline-scale"><span>2002</span><span>LANDSCAPE CHANGE</span><span>2025</span></div>
+</div>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.180.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.180.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const $ = (id) => document.getElementById(id);
+const REGIONS = {
+  rijeka:{name:'Rijeka & Kvarner',lat:45.3271,lon:14.4422,subtitle:'Kvarner Bay · terrain through time'},
+  kastav:{name:'Kastav & Učka',lat:45.3754,lon:14.3482,subtitle:'The high coast · ridge to sea'},
+  aquileia:{name:'Aquileia & Grado',lat:45.7685,lon:13.3684,subtitle:'Roman plain · lagoon edge'},
+  trieste:{name:'Trieste & Karst',lat:45.6495,lon:13.7768,subtitle:'Karst plateau · Adriatic light'},
+  venice:{name:'Venice Lagoon',lat:45.4408,lon:12.3155,subtitle:'Lagoon channels · changing shorelines'},
+  dolomites:{name:'Dolomites',lat:46.4102,lon:11.8440,subtitle:'Alpine relief · carved by ice'}
+};
+const MAP_ZOOM = 9;
+const DEM_ZOOM = 12;
+const DEM_SCALE_FACTOR = Math.pow(2, DEM_ZOOM - MAP_ZOOM);
+const TILE_UNITS = 12;
+const SEGMENTS = 256;
+const YEAR_STEPS = [2002,2005,2008,2011,2014,2017,2020,2023,2025];
+const YEAR_DAY = '-08-15';
+let selectedRegion = REGIONS.rijeka;
+let currentYear = 2020;
+let terrainMesh = null;
+let terrainMaterial = null;
+let terrainGeometry = null;
+let demCanvas = null;
+let baseTexture = null;
+let fallbackTexture = null;
+let demStats = {loaded:0,failed:0};
+let tileCoordinates = {x:0,y:0};
+let busy = false;
+let timelineTimer = null;
+let cameraPlayback = null;
+let recorder = null;
+let recordStopTimer = null;
+let recordFrameTimer = null;
+let keyframes = [];
+let initialCamera = null;
+let savedMaterial = null;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#08151d');
+scene.fog = new THREE.FogExp2('#08151d', 0.018);
+const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 120);
+camera.position.set(7.2, 5.8, 8.7);
+const renderer = new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance',preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1,1.7));
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.08;
+$('stage').appendChild(renderer.domElement);
+const controls = new OrbitControls(camera,renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.065;
+controls.minDistance = 3.2;
+controls.maxDistance = 24;
+controls.maxPolarAngle = Math.PI * 0.485;
+controls.target.set(0,0.55,0);
+controls.update();
+
+scene.add(new THREE.HemisphereLight(0xb9d8e1,0x14232a,2.0));
+const keyLight = new THREE.DirectionalLight(0xffe5c2,3.1);
+keyLight.position.set(-4,9,5);
+scene.add(keyLight);
+const rimLight = new THREE.DirectionalLight(0x5ab2c5,1.25);
+rimLight.position.set(5,4,-8);
+scene.add(rimLight);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(18,18),new THREE.MeshStandardMaterial({color:'#0b2028',roughness:1,metalness:0}));
+floor.rotation.x = -Math.PI/2;
+floor.position.y = -0.22;
+scene.add(floor);
+const ringMaterial = new THREE.MeshBasicMaterial({color:'#8fcbb7',transparent:true,opacity:0.42,side:THREE.DoubleSide});
+const ring = new THREE.Mesh(new THREE.RingGeometry(0.16,0.175,72),ringMaterial);
+ring.rotation.x = -Math.PI/2;
+ring.position.set(0,-0.17,0);
+scene.add(ring);
+const ring2 = new THREE.Mesh(new THREE.RingGeometry(0.28,0.29,72),new THREE.MeshBasicMaterial({color:'#d0ac72',transparent:true,opacity:0.22,side:THREE.DoubleSide}));
+ring2.rotation.x = -Math.PI/2;
+ring2.position.set(0,-0.165,0);
+scene.add(ring2);
+
+function setStatus(message,state='loading'){
+  $('status').dataset.state = state;
+  $('statusText').textContent = message;
+}
+function tileFor(lon,lat,z){
+  const n = Math.pow(2,z);
+  const latRad = lat * Math.PI / 180;
+  return {
+    x:Math.max(0,Math.min(n-1,Math.floor((lon+180)/360*n))),
+    y:Math.max(0,Math.min(n-1,Math.floor((1-Math.asinh(Math.tan(latRad))/Math.PI)/2*n)))
+  };
+}
+function shortCoords(lat,lon){
+  return Math.abs(lat).toFixed(2)+'° '+(lat>=0?'N':'S')+' / '+Math.abs(lon).toFixed(2)+'° '+(lon>=0?'E':'W');
+}
+function setRegionUI(region){
+  $('hudTitle').innerHTML = region.name === 'Rijeka & Kvarner' ? 'The coast<br>remembers.' : region.name.split(' & ').join('<br>& ');
+  $('hudSubtitle').textContent = region.subtitle;
+  $('hudCoords').textContent = shortCoords(region.lat,region.lon);
+  $('coord').textContent = Math.abs(region.lat).toFixed(4)+'° '+(region.lat>=0?'N':'S')+' · '+Math.abs(region.lon).toFixed(4)+'° '+(region.lon>=0?'E':'W');
+}
+function loadImage(url,timeoutMs=18000){
+  return new Promise((resolve,reject)=>{
+    const image = new Image();
+    let ended = false;
+    const timer = window.setTimeout(()=>{if(!ended){ended=true;image.src='';reject(new Error('Tile request timed out'));}},timeoutMs);
+    image.crossOrigin = 'anonymous';
+    image.onload = ()=>{if(ended)return;ended=true;clearTimeout(timer);resolve(image);};
+    image.onerror = ()=>{if(ended)return;ended=true;clearTimeout(timer);reject(new Error('Tile source unavailable'));};
+    image.src = url;
+  });
+}
+async function mapConcurrent(items,concurrency,work){
+  let index = 0;
+  const workers = Array.from({length:Math.min(concurrency,items.length)},async()=>{
+    while(index<items.length){
+      const item = items[index++];
+      await work(item);
+    }
+  });
+  await Promise.all(workers);
+}
+function demTileUrl(z,x,y){
+  return 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/'+z+'/'+x+'/'+y+'.png';
+}
+async function buildDEMCanvas(parentX,parentY){
+  const mosaicSize = 256 * DEM_SCALE_FACTOR;
+  const canvas = document.createElement('canvas');
+  canvas.width = mosaicSize;
+  canvas.height = mosaicSize;
+  const ctx = canvas.getContext('2d',{willReadFrequently:true});
+  ctx.fillStyle = 'rgb(128,0,0)';
+  ctx.fillRect(0,0,mosaicSize,mosaicSize);
+  const jobs = [];
+  for(let ty=0;ty<DEM_SCALE_FACTOR;ty++){
+    for(let tx=0;tx<DEM_SCALE_FACTOR;tx++){
+      jobs.push({x:parentX*DEM_SCALE_FACTOR+tx,y:parentY*DEM_SCALE_FACTOR+ty,dx:tx*256,dy:ty*256});
+    }
+  }
+  let loaded = 0;
+  let failed = 0;
+  await mapConcurrent(jobs,16,async(job)=>{
+    try{
+      const image = await loadImage(demTileUrl(DEM_ZOOM,job.x,job.y),16000);
+      ctx.drawImage(image,job.dx,job.dy,256,256);
+      loaded++;
+    }catch(error){
+      failed++;
+    }
+    $('demState').textContent = loaded+'/'+jobs.length+' tiles';
+  });
+  demStats = {loaded,failed};
+  if(loaded===0) throw new Error('Elevation tiles could not be loaded');
+  demCanvas = canvas;
+  return canvas;
+}
+function elevationFromPixel(data,idx){
+  return (data[idx]*256 + data[idx+1] + data[idx+2]/256)-32768;
+}
+function createTerrain(canvas,exaggeration){
+  const ctx = canvas.getContext('2d',{willReadFrequently:true});
+  const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+  const rgba = imageData.data;
+  const width = SEGMENTS+1;
+  const positions = new Float32Array(width*width*3);
+  const uvs = new Float32Array(width*width*2);
+  let low = Infinity, high = -Infinity, sum = 0, valid = 0;
+  for(let row=0;row<width;row++){
+    const v = row/SEGMENTS;
+    const py = Math.min(canvas.height-1,Math.round(v*(canvas.height-1)));
+    for(let col=0;col<width;col++){
+      const u = col/SEGMENTS;
+      const px = Math.min(canvas.width-1,Math.round(u*(canvas.width-1)));
+      const pxIndex = (py*canvas.width+px)*4;
+      const elevation = elevationFromPixel(rgba,pxIndex);
+      const y = Math.max(-0.10,elevation*0.00022*exaggeration);
+      const index = row*width+col;
+      positions[index*3] = (u-0.5)*TILE_UNITS;
+      positions[index*3+1] = y;
+      positions[index*3+2] = (0.5-v)*TILE_UNITS;
+      uvs[index*2] = u;
+      uvs[index*2+1] = 1-v;
+      if(Number.isFinite(elevation) && rgba[pxIndex+3]>0){low=Math.min(low,elevation);high=Math.max(high,elevation);sum+=elevation;valid++;}
+    }
+  }
+  const indices = [];
+  for(let row=0;row<SEGMENTS;row++){
+    for(let col=0;col<SEGMENTS;col++){
+      const a=row*width+col,b=a+1,c=a+width,d=c+1;
+      indices.push(a,b,c,b,d,c);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));
+  geometry.setAttribute('uv',new THREE.BufferAttribute(uvs,2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  if(terrainGeometry) terrainGeometry.dispose();
+  terrainGeometry=geometry;
+  if(terrainMesh){
+    scene.remove(terrainMesh);
+    terrainMesh.material.dispose();
+  }
+  terrainMaterial = new THREE.MeshStandardMaterial({color:'#ffffff',map:baseTexture || null,roughness:0.93,metalness:0.0,wireframe:$('wire').checked,side:THREE.DoubleSide});
+  terrainMesh = new THREE.Mesh(geometry,terrainMaterial);
+  terrainMesh.position.y = 0;
+  scene.add(terrainMesh);
+  $('demState').textContent = demStats.failed ? (loadedLabel(demStats.loaded) + ' / '+demStats.failed+' missing') : '64 tiles · real DEM';
+  return {min:low,max:high,mean:valid ? sum/valid : 0};
+}
+function loadedLabel(n){return n+' loaded';}
+async function getHistoricalImage(year,x,y){
+  const date = String(year)+'-08-15';
+  const url = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/'+date+'/GoogleMapsCompatible_Level9/'+MAP_ZOOM+'/'+y+'/'+x+'.jpg';
+  const image = await loadImage(url);
+  return {image,date,source:'NASA MODIS Terra',fallback:false};
+}
+async function getFallbackImage(x,y){
+  const url = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/'+MAP_ZOOM+'/'+x+'/'+y+'.jpg';
+  const image = await loadImage(url);
+  return {image,date:'2020 mosaic',source:'EOX Sentinel-2 cloudless 2020',fallback:true};
+}
+function textureFromImage(image){
+  const texture = new THREE.Texture(image);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  texture.needsUpdate = true;
+  return texture;
+}
+async function loadHistoricalFrame(year,quiet=false){
+  const coords = tileCoordinates;
+  $('yearOutput').textContent = String(year);
+  $('timelineYear').textContent = String(year);
+  $('yearSlider').value = String(year);
+  $('timelineSlider').value = String(year);
+  $('yearNote').innerHTML = 'MODIS Terra<br>True Color · '+year;
+  if(!quiet) setStatus('Loading '+year+' imagery tile…','loading');
+  let frame;
+  try{
+    frame = await getHistoricalImage(year,coords.x,coords.y);
+  }catch(error){
+    try{
+      frame = await getFallbackImage(coords.x,coords.y);
+    }catch(fallbackError){
+      if(!quiet) setStatus('Imagery unavailable; terrain remains active','error');
+      $('frameState').textContent = 'NO IMAGE';
+      return false;
+    }
+  }
+  const texture = textureFromImage(frame.image);
+  const previous = baseTexture;
+  baseTexture = texture;
+  if(terrainMaterial){
+    terrainMaterial.map = texture;
+    terrainMaterial.needsUpdate = true;
+  }
+  if(previous && previous!==texture) previous.dispose();
+  if(frame.fallback){
+    $('frameState').textContent = '2020 FALLBACK';
+    $('yearNote').innerHTML = 'EOX Sentinel-2<br>cloudless 2020';
+    if(!quiet) setStatus('Historical tile unavailable · using fixed 2020 reference','error');
+  }else{
+    $('frameState').textContent = 'NASA GIBS';
+    if(!quiet) setStatus('Loaded '+year+' imagery · '+demStats.loaded+'/64 elevation tiles',demStats.failed ? 'loading' : 'ready');
+  }
+  return true;
+}
+async function refreshRegion(){
+  if(busy) return;
+  busy=true;
+  stopTimeLapse();
+  cameraPlayback=null;
+  selectedRegion=REGIONS[$('location').value] || REGIONS.rijeka;
+  setRegionUI(selectedRegion);
+  const coords=tileFor(selectedRegion.lon,selectedRegion.lat,MAP_ZOOM);
+  tileCoordinates=coords;
+  setStatus('Loading regional elevation mosaic…','loading');
+  $('demState').textContent='Loading DEM…';
+  try{
+    await loadHistoricalFrame(currentYear,true);
+    const canvas=await buildDEMCanvas(coords.x,coords.y);
+    const stats=createTerrain(canvas,Number($('exaggeration').value));
+    const span=Math.max(0,stats.max-stats.min);
+    $('scaleNote').textContent='REGIONAL TILE · ZOOM 9 · RELIEF '+Math.round(span)+' M';
+    camera.position.set(7.2,5.8,8.7);
+    controls.target.set(0,0.5,0);
+    controls.enabled=true;
+    controls.update();
+    keyframes=[];
+    updateKeyCount();
+    if(demStats.failed){
+      setStatus('Terrain ready with '+demStats.failed+' missing DEM tiles','error');
+    }else{
+      setStatus('Real elevation mesh ready · '+demStats.loaded+' DEM tiles','ready');
+    }
+  }catch(error){
+    useFallbackTerrain();
+    setStatus('Live DEM unavailable · using illustrative relief preview','error');
+  }finally{
+    busy=false;
+  }
+}
+function useFallbackTerrain(){
+  const count=SEGMENTS+1;
+  const positions=new Float32Array(count*count*3),uvs=new Float32Array(count*count*2),indices=[];
+  for(let row=0;row<count;row++){
+    const v=row/SEGMENTS;
+    for(let col=0;col<count;col++){
+      const u=col/SEGMENTS;
+      const dx=u-.5,dz=v-.5;
+      const broad=Math.sin((u*2.7+0.14)*Math.PI)*Math.cos((v*2.2+0.18)*Math.PI);
+      const ridges=Math.sin((u*8.0+v*3.2)*Math.PI)*0.14;
+      const y=(broad*0.28+ridges)*Number($('exaggeration').value);
+      const i=row*count+col;
+      positions[i*3]=(u-.5)*TILE_UNITS;positions[i*3+1]=y;positions[i*3+2]=(.5-v)*TILE_UNITS;
+      uvs[i*2]=u;uvs[i*2+1]=1-v;
+    }
+  }
+  for(let row=0;row<SEGMENTS;row++)for(let col=0;col<SEGMENTS;col++){const a=row*count+col,b=a+1,c=a+count,d=c+1;indices.push(a,b,c,b,d,c);}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));geo.setAttribute('uv',new THREE.BufferAttribute(uvs,2));geo.setIndex(indices);geo.computeVertexNormals();
+  if(terrainMesh){scene.remove(terrainMesh);terrainMesh.geometry.dispose();terrainMesh.material.dispose();}
+  terrainGeometry=geo;
+  const mat=new THREE.MeshStandardMaterial({color:'#24434a',map:baseTexture,roughness:1,wireframe:$('wire').checked,side:THREE.DoubleSide});
+  terrainMaterial=mat;terrainMesh=new THREE.Mesh(geo,mat);scene.add(terrainMesh);
+  $('demState').textContent='Illustrative fallback';
+  $('scaleNote').textContent='ILLUSTRATIVE RELIEF · LIVE DEM UNAVAILABLE';
+}
+function updateKeyCount(){
+  $('keyCount').textContent=keyframes.length+' point'+(keyframes.length===1?'':'s');
+}
+function addWaypoint(){
+  controls.update();
+  keyframes.push({position:camera.position.toArray(),target:controls.target.toArray()});
+  updateKeyCount();
+  setStatus('Camera waypoint '+keyframes.length+' saved in this session','ready');
+}
+function clearWaypoints(){keyframes=[];updateKeyCount();setStatus('Camera path cleared','ready');}
+function defaultCameraPath(){
+  const start=camera.position.clone();
+  const radius=Math.sqrt(start.x*start.x+start.z*start.z);
+  const a0=Math.atan2(start.z,start.x);
+  const points=[];
+  const heights=[Math.max(4.5,start.y),4.7,3.3,6.4];
+  const radii=[Math.max(7.5,radius),7.9,5.8,8.8];
+  for(let i=0;i<4;i++){
+    const a=a0+i*(Math.PI*0.68);
+    points.push({
+      position:new THREE.Vector3(Math.cos(a)*radii[i],heights[i],Math.sin(a)*radii[i]),
+      target:new THREE.Vector3(0,0.42,0)
+    });
+  }
+  return points;
+}
+function pointsForPlayback(){
+  if(keyframes.length>=2){
+    return keyframes.map(k=>({position:new THREE.Vector3().fromArray(k.position),target:new THREE.Vector3().fromArray(k.target)}));
+  }
+  return defaultCameraPath();
+}
+function easeInOut(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+function startCameraPlayback(duration=9000){
+  const points=pointsForPlayback();
+  controls.enabled=false;
+  cameraPlayback={start:performance.now(),duration,points};
+  setStatus(keyframes.length>=2?'Playing saved camera path':'Playing default cinematic flyover','ready');
+}
+function updateCameraPlayback(now){
+  if(!cameraPlayback)return;
+  const elapsed=now-cameraPlayback.start;
+  const t=Math.min(1,elapsed/cameraPlayback.duration);
+  const eased=easeInOut(t);
+  const points=cameraPlayback.points;
+  const scaled=eased*(points.length-1);
+  const section=Math.min(points.length-2,Math.floor(scaled));
+  const local=scaled-section;
+  const p0=points[section].position,p1=points[section+1].position;
+  const t0=points[section].target,t1=points[section+1].target;
+  camera.position.lerpVectors(p0,p1,local);
+  controls.target.lerpVectors(t0,t1,local);
+  camera.lookAt(controls.target);
+  if(t>=1){
+    cameraPlayback=null;
+    controls.enabled=true;
+    controls.update();
+    setStatus('Camera move complete','ready');
+  }
+}
+function stopTimeLapse(){
+  if(timelineTimer){clearInterval(timelineTimer);timelineTimer=null;}
+  $('timelinePlay').classList.remove('active');
+  $('timelinePlay').textContent='Play timeline';
+}
+function playTimeLapse(){
+  if(timelineTimer){stopTimeLapse();return;}
+  $('timelinePlay').classList.add('active');
+  $('timelinePlay').textContent='Pause timeline';
+  const frames=YEAR_STEPS;
+  let index=frames.indexOf(currentYear);
+  if(index<0) index=frames.findIndex(y=>y>currentYear)-1;
+  if(index<0) index=0;
+  timelineTimer=window.setInterval(()=>{
+    index=(index+1)%frames.length;
+    currentYear=frames[index];
+    loadHistoricalFrame(currentYear,true);
+  },1900);
+  setStatus('Playing '+frames.length+' dated imagery frames','ready');
+}
+function downloadBlob(blob,filename){
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();
+  window.setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+function safeName(value){return value.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+function chooseRecorderType(){
+  const types=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+  if(!window.MediaRecorder)return '';
+  return types.find(type=>MediaRecorder.isTypeSupported(type)) || '';
+}
+function stopCapture(){
+  if(recordStopTimer){clearTimeout(recordStopTimer);recordStopTimer=null;}
+  if(recordFrameTimer){clearInterval(recordFrameTimer);recordFrameTimer=null;}
+  if(recorder && recorder.state!=='inactive') recorder.stop();
+}
+async function recordSequence(){
+  if(!renderer.domElement.captureStream || !window.MediaRecorder){
+    setStatus('Video recording unsupported in this browser','error');
+    return;
+  }
+  if(recorder && recorder.state!=='inactive'){stopCapture();return;}
+  const type=chooseRecorderType();
+  let stream;
+  try{stream=renderer.domElement.captureStream(30);}catch(error){setStatus('Could not capture the WebGL canvas','error');return;}
+  const chunks=[];
+  try{recorder=new MediaRecorder(stream,type?{mimeType:type,videoBitsPerSecond:12000000}:undefined);}
+  catch(error){stream.getTracks().forEach(track=>track.stop());setStatus('WebM recording is not available','error');return;}
+  recorder.ondataavailable=(event)=>{if(event.data&&event.data.size)chunks.push(event.data);};
+  recorder.onerror=()=>{stream.getTracks().forEach(track=>track.stop());setStatus('Video recorder stopped with an error','error');};
+  recorder.onstop=()=>{
+    stream.getTracks().forEach(track=>track.stop());
+    const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});
+    if(blob.size)downloadBlob(blob,'map-art-timelapse-'+safeName(selectedRegion.name)+'-'+currentYear+'.webm');
+    $('recordBtn').textContent='Record 12s';
+    $('recordBtn').classList.add('primary');
+    controls.enabled=true;cameraPlayback=null;
+    if(blob.size)setStatus('Rendered video downloaded · '+Math.round(blob.size/1024/1024*10)/10+' MB','ready');
+  };
+  recorder.start(250);
+  $('recordBtn').textContent='Stop recording';
+  $('recordBtn').classList.remove('primary');
+  startCameraPlayback(12000);
+  let frameIndex=YEAR_STEPS.indexOf(currentYear);
+  if(frameIndex<0)frameIndex=0;
+  recordFrameTimer=window.setInterval(()=>{
+    frameIndex=(frameIndex+1)%YEAR_STEPS.length;
+    currentYear=YEAR_STEPS[frameIndex];
+    loadHistoricalFrame(currentYear,true);
+  },1500);
+  setStatus('Recording 12-second camera + time pass…','loading');
+  recordStopTimer=window.setTimeout(()=>stopCapture(),12000);
+}
+function exportScene(){
+  const data={
+    project:'Map Art Lab · Three.js Time-Lapse Studio',
+    generatedAt:new Date().toISOString(),
+    region:{name:selectedRegion.name,latitude:selectedRegion.lat,longitude:selectedRegion.lon},
+    time:{year:currentYear,imagery:'NASA GIBS MODIS Terra Corrected Reflectance True Color',dayOfYear:'August 15'},
+    terrain:{source:'AWS Terrain Tiles / Terrarium DEM',zoom:DEM_ZOOM,regionalTileZoom:MAP_ZOOM,verticalExaggeration:Number($('exaggeration').value),wireframe:$('wire').checked},
+    camera:{position:camera.position.toArray(),target:controls.target.toArray(),waypoints:keyframes},
+    notes:['Imagery availability depends on NASA GIBS date coverage.','The built-in MODIS layer is regional-resolution imagery, not building-scale historical imagery.','Elevation mosaic and source requests may be limited by upstream service availability.'],
+    attribution:['NASA GIBS / MODIS Terra Corrected Reflectance','AWS Terrain Tiles (Terrarium)','EOX Sentinel-2 cloudless 2020 fallback']
+  };
+  downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'map-art-scene-'+safeName(selectedRegion.name)+'.json');
+}
+function resetView(){
+  cameraPlayback=null;controls.enabled=true;camera.position.set(7.2,5.8,8.7);controls.target.set(0,0.5,0);controls.update();setStatus('Camera reset to establishing view','ready');
+}
+function onResize(){
+  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth,window.innerHeight);
+}
+window.addEventListener('resize',onResize);
+
+$('dockBtn').addEventListener('click',()=>{
+  const closed=$('dock').classList.toggle('closed');
+  $('dockBtn').classList.toggle('active',!closed);
+  $('dockBtn').setAttribute('aria-expanded',String(!closed));
+});
+$('closeDock').addEventListener('click',()=>{$('dock').classList.add('closed');$('dockBtn').classList.remove('active');$('dockBtn').setAttribute('aria-expanded','false');});
+$('location').addEventListener('change',()=>{const region=REGIONS[$('location').value];if(region){selectedRegion=region;refreshRegion();}});
+$('yearSlider').addEventListener('input',()=>{
+  currentYear=Number($('yearSlider').value);
+  $('yearOutput').textContent=String(currentYear);$('timelineYear').textContent=String(currentYear);$('timelineSlider').value=String(currentYear);
+});
+$('yearSlider').addEventListener('change',()=>{stopTimeLapse();loadHistoricalFrame(currentYear);});
+$('timelineSlider').addEventListener('input',()=>{
+  currentYear=Number($('timelineSlider').value);
+  $('yearOutput').textContent=String(currentYear);$('timelineYear').textContent=String(currentYear);$('yearSlider').value=String(currentYear);
+});
+$('timelineSlider').addEventListener('change',()=>{stopTimeLapse();loadHistoricalFrame(currentYear);});
+$('prevBtn').addEventListener('click',()=>{currentYear=Math.max(2002,currentYear-1);$('yearSlider').value=String(currentYear);$('timelineSlider').value=String(currentYear);loadHistoricalFrame(currentYear);});
+$('nextBtn').addEventListener('click',()=>{currentYear=Math.min(2025,currentYear+1);$('yearSlider').value=String(currentYear);$('timelineSlider').value=String(currentYear);loadHistoricalFrame(currentYear);});
+$('timelinePlay').addEventListener('click',playTimeLapse);
+$('stopBtn').addEventListener('click',()=>{stopTimeLapse();cameraPlayback=null;controls.enabled=true;stopCapture();setStatus('Playback stopped','ready');});
+$('playCameraBtn').addEventListener('click',()=>startCameraPlayback(9000));
+$('recordBtn').addEventListener('click',recordSequence);
+$('resetBtn').addEventListener('click',resetView);
+$('addPointBtn').addEventListener('click',addWaypoint);
+$('clearPointsBtn').addEventListener('click',clearWaypoints);
+$('jsonBtn').addEventListener('click',exportScene);
+$('exaggeration').addEventListener('input',()=>{
+  $('exagOutput').textContent=Number($('exaggeration').value).toFixed(1)+'×';
+  if(demCanvas){const texture=baseTexture;createTerrain(demCanvas,Number($('exaggeration').value));if(texture && terrainMaterial)terrainMaterial.map=texture;}
+});
+$('wire').addEventListener('change',()=>{if(terrainMaterial)terrainMaterial.wireframe=$('wire').checked;});
+window.addEventListener('beforeunload',()=>{stopTimeLapse();stopCapture();renderer.dispose();});
+
+function animate(now){
+  controls.update();
+  updateCameraPlayback(now || performance.now());
+  const phase=(now||performance.now())*0.001;
+  ring.scale.setScalar(1+Math.sin(phase*1.1)*0.04);
+  ring.material.opacity=0.25+Math.sin(phase*1.1)*0.08;
+  ring2.scale.setScalar(1+Math.sin(phase*0.7+1)*0.03);
+  renderer.render(scene,camera);
+}
+window.__MAP_ART_TIMELAPSE_TEST__ = () => ({drawCalls:renderer.info.render.calls,hasCanvas:!!renderer.domElement,year:Number($('yearSlider').value),hasTerrain:!!terrainMesh,status:$('statusText').textContent});
+refreshRegion();
+renderer.setAnimationLoop(animate);
+</script>
+</body>
+</html>
