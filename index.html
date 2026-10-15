@@ -239,7 +239,7 @@ body.sidebar-collapsed .map-heading{left:76px;max-width:calc(100vw - 160px)}
 
 .guide-photo-failed{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:140px;padding:8px;text-align:center;background:#e7e6dc;color:#72796d;font:10px/1.4 Inter,system-ui,sans-serif}.guide-photo-failed small{font-size:9px}
 
-.selected-shot-ideas{margin:8px 0 12px;padding-left:20px;color:#cbd4c8;font:11px/1.55 Inter,system-ui,sans-serif}
+.selected-generate-ai{display:block;width:100%;margin:10px 0 7px;min-height:42px;font-weight:850}.selected-concept-preview #selectedOpenFieldGuide{display:block;width:100%}.selected-shot-ideas{margin:8px 0 12px;padding-left:20px;color:#cbd4c8;font:11px/1.55 Inter,system-ui,sans-serif}
 .selected-shot-ideas li{padding-left:2px;margin:3px 0}
 .fieldguide-detail-cta .selected-concept-img{display:block;width:100%;height:auto;max-height:205px;object-fit:cover;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:#f5f2e8}
 .fieldguide-detail-cta .btn{width:100%}
@@ -794,7 +794,8 @@ html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
       <div class="selected-idea-sketches" id="selectedIdeaSketches" aria-label="Three Canon R50 framing ideas"></div>
       <p class="concept-note" id="selectedLocalSketchCaption">A location-aware composition study. It is an idea for framing, not a verified photograph or exact sightline.</p>
       <ol class="selected-shot-ideas" id="selectedShotIdeas"><li>Use the foreground to lead towards the subject.</li><li>Balance the main subject with surrounding context.</li><li>Look for a closer texture or detail frame.</li></ol>
-      <button class="btn primary" id="selectedOpenFieldGuide" type="button">More ideas & reference photos ↗</button>
+      <button class="btn primary selected-generate-ai" id="selectedGenerateAI" type="button">✦ Generate an AI visual for this spot</button>
+      <button class="btn" id="selectedOpenFieldGuide" type="button">More ideas & reference photos ↗</button>
       
     </div>
     <div class="detail-reference-block"><div class="section-heading"><h3>Visual references for this stop</h3><span class="count" id="detailPhotoCount">—</span></div><div class="detail-photo-grid" id="detailPhotoRefs"><div class="empty">Drop a pin and select a spot to find source-linked image references.</div></div></div>
@@ -1201,7 +1202,7 @@ async function rangefindPlacesSearch(c,radius,id){
   const tags=normalizeTags(r);
   const type=String(r.type||'').toLowerCase();
   const ct=String(r.category||'').toLowerCase();
-  const parking=tags.amenity==='parking'||tags.amenity==='parking_space';
+  const parking=tags.amenity==='parking'||tags.amenity==='parking_space'||tags.amenity==='parking_entrance'||tags.parking==='entrance'||tags.entrance==='parking';
   const history=ct==='historic'||Boolean(tags.historic)||Boolean(tags.heritage)||['museum','attraction','tourist_attraction','memorial','monument','archaeological_site','castle','ruins','fort','church','cathedral','place_of_worship','monastery','chapel'].includes(type);
   const viewpoint=type==='viewpoint'||['peak','hill','ridge','mountain','cliff','cave','waterfall','beach','spring','lookout'].includes(type)||tags.tourism==='viewpoint'||tags.natural==='peak'||tags.natural==='hill'||tags.natural==='ridge';
   const architecture=['church','cathedral','castle','fort','ruins','monument','lighthouse','tower','bridge','industrial','historic','palace','townhall','city_hall'].includes(type)||(ct==='building'&&Boolean(r.name));
@@ -1245,7 +1246,8 @@ async function overpassApiSearch(c,radius,id){
  const lat=Number(c.lat).toFixed(6),lon=Number(c.lng).toFixed(6);
  const around='(around:'+r+','+lat+','+lon+')';
  const query='[out:json][timeout:12];('+
-  'nwr'+around+'["amenity"~"^(parking|parking_space)$"];'+
+  'nwr'+around+'["amenity"~"^(parking|parking_space|parking_entrance)$"];'+
+  'nwr'+around+'["parking"="entrance"];'+
   'nwr'+around+'["historic"];'+
   'nwr'+around+'["tourism"~"^(attraction|museum|viewpoint|artwork|gallery|zoo|theme_park)$"];'+
   'nwr'+around+'["natural"~"^(peak|hill|ridge|cliff|cave|waterfall|beach|spring|wetland|wood)$"];'+
@@ -1277,22 +1279,24 @@ async function overpassApiSearch(c,radius,id){
     const d=haversine(c,{lat:plat,lng:plon});
     if(d>r)return;
     const name=String(tags.name||tags['name:en']||tags.ref||'').trim();
-    if(!name)return;
+    if(!name && !(tags.amenity==='parking_entrance'||tags.parking==='entrance'||tags.entrance==='parking'))return;
     const placeType=String(tags.place||'').toLowerCase();
     if(['city','town','village','suburb','neighbourhood'].includes(placeType)){
      localities.push({name,distance:d});return;
     }
-    const parking=tags.amenity==='parking'||tags.amenity==='parking_space';
+    const parking=tags.amenity==='parking'||tags.amenity==='parking_space'||tags.amenity==='parking_entrance'||tags.parking==='entrance'||tags.entrance==='parking';
     const scenic=tags.tourism==='viewpoint'||['peak','hill','ridge','cliff','cave','waterfall','beach','spring'].includes(tags.natural);
     const historic=Boolean(tags.historic)||Boolean(tags.heritage)||Boolean(tags.archaeological_site)||['museum','attraction','artwork','gallery','theme_park'].includes(tags.tourism)||['archaeological_site','castle','ruins','monument','memorial','fort','wayside_shrine'].includes(tags.historic);
     const architecture=['church','cathedral','chapel','castle','fort','monument','tower','historic','ruins','house','residential','temple','bridge'].includes(tags.building)||tags.man_made==='tower'||tags.man_made==='bridge';
     const nature=['wetland','wood','heath','scrub','grassland','water'].includes(tags.natural)||['park','nature_reserve','garden'].includes(tags.leisure)||['river','canal','riverbank'].includes(tags.waterway)||['path','footway','track','pedestrian','steps'].includes(tags.highway);
     const category=parking?'parking':scenic?'viewpoint':historic?'history':architecture?'architecture':nature?'viewpoint':null;
     if(!category)return;
+    const isEntrance=tags.amenity==='parking_entrance'||tags.parking==='entrance'||tags.entrance==='parking';
+    const displayName=isEntrance?('Parking entrance'+(name?' · '+name:'')):name;
     const osmType=String(el.type||'node');
     places.push({
      id:'osm-'+osmType+'-'+String(el.id)+'-'+category,
-     name,lat:plat,lng:plon,distance:d,tags,
+     name:displayName,lat:plat,lng:plon,distance:d,tags,isParkingEntrance:isEntrance,
      city:state.detectedLocality||'',
      source:'OpenStreetMap · live Overpass query',
      sourceUrl:'https://www.openstreetmap.org/'+osmType+'/'+el.id,
@@ -1491,7 +1495,7 @@ function normalizeNameForDedup(name){
  return String(name||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
 }
 function classify(t){
- if(t.amenity==='parking'||t.amenity==='parking_space'||t.parking) return 'parking';
+ if(t.amenity==='parking'||t.amenity==='parking_space'||t.amenity==='parking_entrance'||t.parking==='entrance'||t.entrance==='parking'||t.parking) return 'parking';
  if(t.tourism==='viewpoint'||t.natural==='peak'||t.natural==='cliff'||t.natural==='waterfall'||t.natural==='beach'||t.natural==='cave') return 'viewpoint';
  if(t.historic||t.heritage||t.tourism==='museum'||t.tourism==='attraction'||t.building==='castle'||t.building==='church'||t.building==='cathedral'||t.building==='ruins') return 'history';
  return 'architecture';
@@ -1716,7 +1720,7 @@ function normalizeBasemapFilter(filter){
 function suppressBasemapParkingSymbols(){
  if(!map||!state.styleLoaded)return;
  const layers=(map.getStyle()&&map.getStyle().layers)||[];
- const parkingTerms=['parking','parking_space','car_parking','car_park','parking_lot','parking_garage'];
+ const parkingTerms=['parking','parking_space','parking_entrance','car_parking','car_park','parking_lot','parking_garage'];
  const parkingFeature=['any',
   ...parkingTerms.flatMap(value=>[
    ['==',['downcase',['to-string',['coalesce',['get','class'],'']]],value],
@@ -1769,6 +1773,13 @@ function suppressBasemapParkingSymbols(){
   }
  });
 }
+function isParkingEntrance(item){
+ const tags=item&&item.tags||{};
+ return !!(item&&item.isParkingEntrance)||
+  tags.amenity==='parking_entrance'||
+  tags.parking==='entrance'||
+  tags.entrance==='parking';
+}
 function parkingCandidates(){
  const center=state.center;
  // Once a pin/place is selected, show only the parking researched for that exact
@@ -1786,7 +1797,7 @@ function parkingCandidates(){
    items.push({...p,name:generic?'Mapped parking point':p.name,distance,distanceFromSpot:distance,parkingOrigin:'near-selected',
     summary:p.summary||'Mapped parking feature near this selected spot. The point may be the centre of a mapped area rather than its entrance. Legal access, availability and restrictions are not verified.'});
   });
-  return items.sort((a,b)=>a.distance-b.distance);
+  return items.sort((a,b)=>(isParkingEntrance(a)?0:1)-(isParkingEntrance(b)?0:1)||a.distance-b.distance);
  }
  const radius=state.radius||10000;
  const raw=state.results.filter(r=>r.category==='parking').sort((a,b)=>(a.distance||0)-(b.distance||0));
@@ -1805,12 +1816,12 @@ function parkingCandidates(){
   if(seen.some(q=>haversine({lat:q.lat,lng:q.lng},{lat:p.lat,lng:p.lng})<65))return;
   seen.push({...p,distance:dist,parkingOrigin:'basemap'});
  });
- return seen.sort((a,b)=>(a.distance||0)-(b.distance||0));
+ return seen.sort((a,b)=>(isParkingEntrance(a)?0:1)-(isParkingEntrance(b)?0:1)||(a.distance||0)-(b.distance||0));
 }
 function renderSpotParking(item){
  const count=$('spotParkingCount'),hint=$('spotParkingHint'),container=$('spotParkingResults');
  if(!count||!hint||!container)return;
- const items=(state.spotParkingTargetId===item.id?state.spotParking:[]).slice().sort((a,b)=>a.distance-b.distance);
+ const items=(state.spotParkingTargetId===item.id?state.spotParking:[]).slice().sort((a,b)=>(isParkingEntrance(a)?0:1)-(isParkingEntrance(b)?0:1)||a.distance-b.distance);
  count.textContent=state.spotParkingLoading?(items.length?items.length+' found · checking more':'Searching…'):items.length+' found';
  if(state.spotParkingLoading)hint.textContent=items.length?'Showing nearby mapped options while checking the map index for more parking close to this spot.':'Searching within 3.5 km of this selected place—not just around your original pin.';
  else hint.textContent='Distances are from '+item.name+'. These are mapped parking features, not live availability; check legal access, signs, charges and opening on arrival.';
@@ -1826,8 +1837,8 @@ function renderSpotParking(item){
   const nav='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.lat+','+p.lng)+'&travelmode=driving';
   const source=p.sourceUrl||('https://www.openstreetmap.org/?mlat='+p.lat+'&mlon='+p.lng+'#map=18/'+p.lat+'/'+p.lng);
   const generic=/^unnamed mapped parking/i.test(p.name||'')||/^mapped parking point/i.test(p.name||'')||/^parking$/i.test(p.name||'');
-  const label=generic?'Parking option '+(index+1):p.name;
-  return '<article class="parking-option"><div class="parking-option-icon">P</div><div class="parking-option-main"><div class="parking-option-title">'+esc(label)+'</div><div class="parking-option-meta">'+esc(distanceLabel(p.distance)+' from this spot · '+(p.source||'OpenStreetMap'))+'</div><div class="parking-option-meta">Mapped point only; verify public access and parking rules.</div><div class="parking-option-meta"><a class="footer-link" href="'+esc(safeLink(source))+'" target="_blank" rel="noopener noreferrer">Map data ↗</a></div></div><a class="btn small primary" href="'+esc(nav)+'" target="_blank" rel="noopener noreferrer">Drive ↗</a></article>';
+  const label=isParkingEntrance(p)?(generic?'Parking entrance '+(index+1):p.name):generic?'Parking area '+(index+1):p.name;
+  return '<article class="parking-option"><div class="parking-option-icon">P</div><div class="parking-option-main"><div class="parking-option-title">'+esc(label)+'</div><div class="parking-option-meta">'+esc(distanceLabel(p.distance)+' from this spot · '+(p.source||'OpenStreetMap'))+'</div><div class="parking-option-meta">'+esc(isParkingEntrance(p)?'Mapped entrance point; still verify restrictions.':'Mapped lot/point; this may be its centre, not the vehicle entrance.')+'</div><div class="parking-option-meta"><a class="footer-link" href="'+esc(safeLink(source))+'" target="_blank" rel="noopener noreferrer">Map data ↗</a></div></div><a class="btn small primary" href="'+esc(nav)+'" target="_blank" rel="noopener noreferrer">'+(isParkingEntrance(p)?'Route to entrance ↗':'Route to point ↗')+'</a></article>';
  }).join('');
 }
 async function loadParkingNearSelected(item){
@@ -1936,7 +1947,7 @@ function refreshBasemapParking(){
   const p=feature.properties||{};
   const cls=String(p.class||'').toLowerCase();
   const sub=String(p.subclass||'').toLowerCase();
-  if(!['parking','parking_space'].includes(cls)&&!['parking','parking_space'].includes(sub)&&String(p.amenity||'').toLowerCase()!=='parking')return;
+  if(!['parking','parking_space','parking_entrance'].includes(cls)&&!['parking','parking_space','parking_entrance'].includes(sub)&&!['parking','parking_entrance'].includes(String(p.amenity||'').toLowerCase())&&String(p.parking||'').toLowerCase()!=='entrance')return;
   if(!feature.geometry||feature.geometry.type!=='Point'||!Array.isArray(feature.geometry.coordinates))return;
   const lng=Number(feature.geometry.coordinates[0]),lat=Number(feature.geometry.coordinates[1]);
   if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return;
@@ -2009,7 +2020,13 @@ function renderMarkers(){
  const viewpoints=allResults.filter(r=>r.category==='viewpoint');
  const architecture=allResults.filter(r=>r.category==='architecture');
  const scenic=state.scenicSpots.map(item=>normalizeMapMarker({...item,category:'photoSpot'})).filter(Boolean).filter(item=>markerLayerVisibility.photoSpot&&inCurrentMapBounds(item,bounds));
- const parking=markerLayerVisibility.parking?parkingCandidates().filter(item=>inCurrentMapBounds(item,bounds)).slice(0,100):[];
+ const parking=markerLayerVisibility.parking?parkingCandidates()
+  .filter(item=>inCurrentMapBounds(item,bounds))
+  .sort((a,b)=>{
+   const aEntrance=isParkingEntrance(a)?0:1;
+   const bEntrance=isParkingEntrance(b)?0:1;
+   return aEntrance-bEntrance || (a.distance||Infinity)-(b.distance||Infinity);
+  }).slice(0,3):[];
  const parkingMarkers=map.getZoom()>=14.5?parking:clusterParkingMarkers(parking);
  // Keep each pin at its real geographic coordinate. Only include candidates
  // inside the viewport; pan/zoom causes a stable idle pass to fill new locations.
@@ -2019,7 +2036,7 @@ function renderMarkers(){
   const cell=item.category+'|'+Math.round(item.lat*100000)+'|'+Math.round(item.lng*100000);
   if(seen.has(cell))return;
   seen.add(cell);
-  const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas · '+distanceLabel(item.distance):(item.parkingOrigin==='basemap'?'Mapped parking · availability unverified · ':'Scout parking feature · ')+item.name+' · '+distanceLabel(item.distance)):item.name+' · '+distanceLabel(item.distance);
+  const label=item.category==='photoSpot'?'Photo spot candidate · '+item.name+' · '+distanceLabel(item.distance):item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas · '+distanceLabel(item.distance):(isParkingEntrance(item)?'Mapped parking entrance · ':'Mapped parking area/point · ')+item.name+' · '+distanceLabel(item.distance)):item.name+' · '+distanceLabel(item.distance);
   const el=markerEl(item.category,label);
   if(['history','architecture','viewpoint','photoSpot'].includes(item.category)&&map.getZoom()>=14.5&&!item.genericFeature&&!/^Unnamed mapped/i.test(String(item.name||''))){
    const nameTag=document.createElement('span');nameTag.className='pin-name-label';nameTag.textContent=String(item.name||'').slice(0,52);el.appendChild(nameTag);el.classList.add('with-label','show-pin-label');
@@ -2667,11 +2684,13 @@ async function generateAIImageForSelectedSpot(){
  if(!item){setAIImageStatus('Click the map to create a photography pin first.','error');return;}
  const button=$('generateAIConcept');
  const quickButton=$('quickGenerateAI');
+ const selectedButton=$('selectedGenerateAI');
  const preview=$('aiImageResult');
  const image=$('aiImageOutput');
  const download=$('downloadAIImage');
  if(button){button.disabled=true;button.textContent='Preparing image…';}
  if(quickButton){quickButton.disabled=true;quickButton.textContent='Preparing…';}
+ if(selectedButton){selectedButton.disabled=true;selectedButton.textContent='Preparing AI visual…';}
  if(preview)preview.hidden=true;
  if(download){download.hidden=true;download.removeAttribute('href');}
  setAIImageStatus('Connecting to the image service, then creating a visual for '+item.name+'. On first use, Puter may ask you to sign in.','');
@@ -2703,6 +2722,7 @@ async function generateAIImageForSelectedSpot(){
  }finally{
   if(button){button.disabled=false;syncAIImageUI();}
   if(quickButton){quickButton.disabled=false;quickButton.textContent='✦ Generate image';}
+  if(selectedButton){selectedButton.disabled=false;selectedButton.textContent='✦ Generate an AI visual for this spot';}
  }
 }
 function setupImageGeneration(){
@@ -3427,6 +3447,7 @@ $('quickGenerateAI').addEventListener('click',()=>{
  $('spotDetail').scrollIntoView({behavior:'smooth',block:'start'});
  generateAIImageForSelectedSpot();
 });
+$('selectedGenerateAI').addEventListener('click',()=>{generateAIImageForSelectedSpot();$('aiImageGenerator').scrollIntoView({behavior:'smooth',block:'start'});});
 $('selectedOpenFieldGuide').addEventListener('click',openSelectedFieldGuide);
 $('quickIdeasBtn').addEventListener('click',openSelectedFieldGuide);
 $('quickSearchBtn').addEventListener('click',()=>{
