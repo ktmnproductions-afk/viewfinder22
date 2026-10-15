@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-15-pin-ideas-visible-v6">
+<meta name="photo-scout-build" content="2026-10-15-parking-photo-ideas-v7">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -2806,54 +2806,103 @@ async function renderDetailPhotoRefs(item){
  const requestId=++detailPhotoSearchId;
  const selectedId=item.id;
  $('detailPhotoCount').textContent='Searching…';
- container.innerHTML=emptyHTML('Finding landmark-matched photographs and location-aware scenic references. Event, team and portrait images are filtered out.');
+ container.innerHTML=emptyHTML('Searching for matching landmarks and actual scenic photographs. We reject obvious event, team, and portrait images rather than using any nearby geotag.');
  let locality=String(item.city||item.locality||state.detectedLocality||'').trim();
- const rawName=String(item.name||'').replace(/^Unnamed mapped\s+/i,'').replace(/\s+near\s+.+$/i,'').trim();
- const queryName=item.isUserPin?'':(rawName&&!/^your pin$/i.test(rawName)?rawName:'');
  if(!locality){
-  locality=await lookupPhotoLocality(item.lat,item.lng,state.scanId);
+  try{locality=await lookupPhotoLocality(item.lat,item.lng,state.scanId)||'';}catch(error){}
   if(requestId!==detailPhotoSearchId||!state.selected||state.selected.id!==selectedId)return;
   if(locality&&!state.detectedLocality)state.detectedLocality=locality;
  }
- const nearbyNames=item.isUserPin?[...state.results.filter(r=>r.name&&r.category!=='parking'&&!/^Unnamed mapped/i.test(r.name)).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,3).map(r=>r.name),...state.scenicSpots.filter(r=>r.name&&!r.genericFeature&&!/^Unnamed mapped/i.test(r.name)).sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,2).map(r=>r.name)]:[];
+ const localName=locality.split(',')[0].trim();
+ const rawName=String(item.name||'').replace(/^Unnamed mapped\s+/i,'').replace(/\s+near\s+.+$/i,'').trim();
+ const genericName=item.isUserPin||/^map pin\b/i.test(rawName)||/^your pin\b/i.test(rawName)||/^unnamed mapped/i.test(rawName);
+ const queryName=genericName?'':rawName;
+ const nearbyNames=item.isUserPin
+  ?[...state.results.filter(r=>r.name&&r.category!=='parking'&&!/^Unnamed mapped/i.test(r.name)),
+    ...state.scenicSpots.filter(r=>r.name&&!r.genericFeature&&!/^Unnamed mapped/i.test(r.name))]
+    .sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,5).map(r=>r.name)
+  :[];
+ // Search the selected landmark first; for a plain map pin search its locality and
+ // nearby named places. The images shown below are inspiration, not coordinates to drive to.
  const terms=[];
  if(queryName)terms.push(queryName);
- if(queryName&&locality)terms.push(queryName+' '+locality);
- if(item.isUserPin)terms.push(...nearbyNames.slice(0,3));
- if(locality)terms.push(locality,locality+' landscape',locality+' historic architecture');
+ if(queryName&&localName)terms.push(queryName+' '+localName);
+ if(locality){
+  terms.push(locality);
+  terms.push(localName+' landscape');
+  terms.push(localName+' panorama');
+  terms.push(localName+' architecture');
+ }
+ if(genericName)terms.push(...nearbyNames.slice(0,4));
  const uniqueTerms=[...new Set(terms.map(t=>String(t||'').trim()).filter(Boolean))].slice(0,5);
- let refs=uniqueTerms.length?await commonsTextSearch(uniqueTerms,{lat:item.lat,lng:item.lng},state.scanId).catch(()=>[]):[];
+ let refs=[];
+ if(uniqueTerms.length){
+  try{refs=await commonsTextSearch(uniqueTerms,{lat:item.lat,lng:item.lng},state.scanId);}catch(error){refs=[];}
+ }
  if(requestId!==detailPhotoSearchId||!state.selected||state.selected.id!==selectedId)return;
- // Do not fill the gallery with photographs found only by proximity. The API may
- // return event attendees, sport teams or unrelated portraits carrying nearby geotags.
- // If the title search has no match, the composition sketches and AI concept remain.
- if(requestId!==detailPhotoSearchId||!state.selected||state.selected.id!==selectedId)return;
- const finalRefs=refs.slice(0,3);
+ const unwanted=IMAGE_EVENT_OR_PERSON_RE;
+ const scene=IMAGE_SCENE_RE;
+ const localityTokens=photoPlaceTokens(localName||locality);
+ const spotTokens=photoPlaceTokens(queryName);
+ const nearbyTokens=photoPlaceTokens(nearbyNames.join(' '));
+ const ranked=refs.map(photo=>{
+  const title=normalizedPhotoTitle(photo.name);
+  const metadata=normalizedPhotoTitle([photo.description,photo.searchText,Array.isArray(photo.tags)?photo.tags.join(' '):photo.tags].filter(Boolean).join(' '));
+  const allText=title+' '+metadata;
+  if(!title||unwanted.test(allText)||!scene.test(allText))return null;
+  const titleTokens=photoPlaceTokens(title);
+  const metaTokens=photoPlaceTokens(metadata);
+  const matchCount=(tokens)=>tokens.filter(token=>titleTokens.includes(token)).length;
+  const metaCount=(tokens)=>tokens.filter(token=>metaTokens.includes(token)).length;
+  const exact=matchCount(spotTokens);
+  const near=matchCount(nearbyTokens);
+  const regional=matchCount(localityTokens);
+  const metaMatch=metaCount([...spotTokens,...nearbyTokens,...localityTokens]);
+  // Keep direct landmark matches first. A regional image is still useful as a
+  // mood/composition reference but is explicitly labelled as such.
+  const score=exact*15+near*7+regional*4+metaMatch*2+(photo.provider==='Openverse'?1:0);
+  if(!genericName&&spotTokens.length&&exact===0&&near===0&&regional===0&&metaMatch===0)return null;
+  if(genericName&&localityTokens.length&&regional===0&&near===0&&metaMatch===0)return null;
+  const isExact=!genericName&&exact>0;
+  const isNearby=near>0;
+  return {...photo,referenceScore:score,geotagged:false,referenceType:isExact
+   ?'Landmark title match. Reference image only; it does not prove the exact camera position.'
+   :isNearby
+    ?'Nearby named-subject reference. Use it to inspire composition, then check the real view.'
+    :'Regional landscape/architecture inspiration matched to '+(locality||'the searched area')+'. Not proof this image shows the exact spot.'};
+ }).filter(Boolean).sort((a,b)=>b.referenceScore-a.referenceScore);
+ const seen=new Set();
+ const finalRefs=ranked.filter(p=>{
+  const key=String(p.sourceUrl||p.id||p.name).toLowerCase();
+  if(seen.has(key))return false;
+  seen.add(key);return true;
+ }).slice(0,3);
  renderPinIdeaReferences(item,finalRefs);
- $('detailPhotoCount').textContent=finalRefs.length?(queryName?'Place-matched + scenic references · '+finalRefs.length:'Locality/scenic references · '+finalRefs.length):'No source images found';
+ $('detailPhotoCount').textContent=finalRefs.length
+  ?(queryName?'Landmark-matched references · '+finalRefs.length:'Local scene inspiration · '+finalRefs.length)
+  :'No suitable image matches';
  if(!finalRefs.length){
-  container.innerHTML=emptyHTML('No suitable licensed source photo was available for this stop. Three location-aware sketch ideas remain above; use Generate AI image for a new visual concept. We will not substitute unrelated event uploads.');
+  container.innerHTML=emptyHTML('No suitable scene image matched this location this time. The three location-aware sketches and shot list above are still available; retry the reference search or generate an AI visual. We will not show an unrelated event upload as if it depicts this spot.');
   return;
  }
  container.innerHTML=finalRefs.map(p=>{
-  const note=p.geotagged?'Nearby scenic image · '+distanceLabel(p.distance)+' from the pin. The geotag is approximate evidence, not a verified camera position.':(p.referenceType||'Matched by place/subject title; exact view is not verified.');
-  return '<article class="detail-photo"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(p.source||p.provider||'Openly licensed reference')+'</div><div class="detail-photo-note">'+esc(p.artist||'Creator not listed')+' · '+esc(p.license||'Licence on source page')+'</div><div class="detail-photo-note">'+esc(note)+'</div><a class="detail-photo-source" href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Open original ↗</a></article>';
+  const note=p.referenceType||'Visual inspiration; exact shooting position not verified.';
+  return '<article class="detail-photo"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(p.source||p.provider||'Openly licensed reference')+' · '+esc(p.artist||'Creator not listed')+'</div><div class="detail-photo-note">'+esc(p.license||'Licence on source page')+' · '+esc(note)+'</div><a class="detail-photo-source" href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Open original & licence ↗</a></article>';
  }).join('');
  container.querySelectorAll('img').forEach((img,index)=>{
   img.addEventListener('error',()=>{
    const photo=finalRefs[index];
    const card=img.closest('.detail-photo');
    if(!card||card.dataset.imageFallback)return;
-   card.dataset.imageFallback='true';
-   img.remove();
+   card.dataset.imageFallback='true';img.remove();
    const study=document.createElement('img');
-   study.alt='Composition sketch alternative for '+(photo.name||item.name);
+   study.alt='Photo Scout composition sketch for '+(photo.name||item.name);
    study.src=conceptSketchData(item,'wide',index+cardSeed(photo.name||item.name));
    study.className='detail-photo-sketch';
    card.insertBefore(study,card.firstChild);
    const note=document.createElement('div');
    note.className='detail-photo-note';
-   note.textContent='Source thumbnail unavailable. Showing a Photo Scout composition sketch instead.';
+   note.textContent='Source thumbnail unavailable; showing an illustrative composition study instead.';
    card.insertBefore(note,card.querySelector('.detail-photo-title'));
   },{once:true});
  });
