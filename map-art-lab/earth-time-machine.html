@@ -94,7 +94,7 @@ a.textlink:hover{color:#fff}
   <button class="btn active" id="panelBtn" aria-expanded="true">Globe controls</button>
   <button class="btn" id="orbitBtn">Orbit view</button>
   <button class="btn primary" id="recordBtn">Record 12s</button>
-  <a class="btn" id="regionBtn" href="./timelapse.html" style="text-decoration:none">Regional relief ↗</a>
+  <a class="btn" id="regionBtn" href="./timelapse.html?v=20261015-cinematic1" style="text-decoration:none">Regional relief ↗</a>
   <button class="btn" id="exportBtn">Export scene</button>
  </div>
 </header>
@@ -126,6 +126,8 @@ a.textlink:hover{color:#fff}
   <select id="layer">
    <option value="MERRA2_Surface_Skin_Temperature_Monthly">Surface skin temperature · MERRA-2</option>
    <option value="MERRA2_2m_Air_Temperature_Monthly">2 m air temperature · MERRA-2</option>
+   <option value="MERRA2_Precipitation_Bias_Corrected_Monthly">Monthly precipitation · MERRA-2</option>
+   <option value="MERRA2_Total_Precipitable_Water_Vapor_Monthly">Atmospheric water vapor · MERRA-2</option>
   </select>
   <label class="inline" for="opacity"><span>Field opacity</span><output id="opacityOut">82%</output></label>
   <input class="range" id="opacity" type="range" min="20" max="100" value="82" step="1" aria-label="Data layer opacity">
@@ -141,7 +143,7 @@ a.textlink:hover{color:#fff}
  <p class="smallnote">Data: <a class="textlink" href="https://gibs.earthdata.nasa.gov/" target="_blank" rel="noreferrer">NASA GIBS</a> · MERRA-2 monthly fields. Globe surface texture from the Three.js planet texture set. Availability depends on the upstream imagery service.</p>
 </aside>
 <div class="hero"><div class="eyebrow" id="heroEyebrow">Earth system / monthly archive</div><h2 id="heroTitle">The world<br>in motion.</h2><p id="heroSubtitle">Global surface temperature · reanalysis</p><div class="hero-meta"><span id="heroCoords">45.33° N / 14.44° E</span><span class="dot"></span><span>1980 — 2025</span></div></div>
-<div class="legend"><div class="legend-title" id="legendTitle">MERRA-2 · monthly temperature</div><div class="legend-bar"></div><div class="legend-labels"><span>COOLER PATTERN</span><span>WARMER PATTERN</span></div></div>
+<div class="legend"><div class="legend-title" id="legendTitle">MERRA-2 · monthly temperature</div><div class="legend-bar" id="legendBar"></div><div class="legend-labels"><span id="legendMin">COOLER PATTERN</span><span id="legendMax">WARMER PATTERN</span></div></div>
 <div class="attribution">Monthly field: NASA GES DISC MERRA-2 via NASA GIBS. Color ramp is the visualization service's default rendering, not a calibrated thermometer scale. Texture and field availability vary by upstream service.</div>
 <div class="timeline">
  <div class="timeline-top"><div class="timeline-title">Temporal sequence <b>— <span id="dateLabel">AUG 2020</span></b></div>
@@ -173,8 +175,10 @@ const REGIONS = {
  tokyo:{name:'Tokyo',lat:35.6762,lon:139.6503,distance:8.5}
 };
 const LAYERS = {
- MERRA2_Surface_Skin_Temperature_Monthly:{title:'Surface skin temperature',short:'SURFACE TEMPERATURE',caption:'MERRA-2 · monthly temperature'},
- MERRA2_2m_Air_Temperature_Monthly:{title:'2 m air temperature',short:'2 M AIR TEMPERATURE',caption:'MERRA-2 · near-surface air temperature'}
+ MERRA2_Surface_Skin_Temperature_Monthly:{title:'Surface skin temperature',short:'SURFACE TEMPERATURE',caption:'MERRA-2 · monthly temperature',min:'COOLER PATTERN',max:'WARMER PATTERN',hero:'The world<br>in motion.',ramp:'temperature'},
+ MERRA2_2m_Air_Temperature_Monthly:{title:'2 m air temperature',short:'2 M AIR TEMPERATURE',caption:'MERRA-2 · near-surface air temperature',min:'COOLER AIR',max:'WARMER AIR',hero:'The air<br>has a memory.',ramp:'temperature'},
+ MERRA2_Precipitation_Bias_Corrected_Monthly:{title:'Total precipitation',short:'PRECIPITATION',caption:'MERRA-2 · bias-corrected monthly precipitation',min:'LOWER PRECIPITATION',max:'HIGHER PRECIPITATION',hero:'Water in<br>motion.',ramp:'water'},
+ MERRA2_Total_Precipitable_Water_Vapor_Monthly:{title:'Precipitable water vapor',short:'ATMOSPHERIC MOISTURE',caption:'MERRA-2 · total precipitable water vapor',min:'LESS WATER VAPOR',max:'MORE WATER VAPOR',hero:'The invisible<br>ocean.',ramp:'water'}
 };
 let selectedRegion = REGIONS.rijeka;
 let currentMonthIndex = (2020-FIRST_YEAR)*12+7;
@@ -217,10 +221,17 @@ function tileDate(index){
 }
 function updateDateUI(){
  const date=tileDate(currentMonthIndex);
+ const meta=LAYERS[$('layer').value];
  $('dateLabel').textContent=date.label;
  $('timeSlider').value=String(currentMonthIndex);
- $('heroSubtitle').textContent=LAYERS[$('layer').value].title+' · '+date.label;
- $('legendTitle').textContent=LAYERS[$('layer').value].caption;
+ $('heroTitle').innerHTML=meta.hero;
+ $('heroSubtitle').textContent=meta.title+' · '+date.label;
+ $('legendTitle').textContent=meta.caption;
+ $('legendMin').textContent=meta.min;
+ $('legendMax').textContent=meta.max;
+ $('legendBar').style.background=meta.ramp==='water'
+  ? 'linear-gradient(90deg,#243d87,#269fc0,#6bd0bf,#d7dfb2,#f0b36c,#d65e4b)'
+  : 'linear-gradient(90deg,#253e9e,#2b9ac5,#78c9a4,#e2d779,#ed8a4b,#c74646)';
  $('heroCoords').textContent=Math.abs(selectedRegion.lat).toFixed(2)+'° '+(selectedRegion.lat>=0?'N':'S')+' / '+Math.abs(selectedRegion.lon).toFixed(2)+'° '+(selectedRegion.lon>=0?'E':'W');
 }
 function wmsUrl(layer,date){
@@ -231,6 +242,17 @@ function wmsUrl(layer,date){
  });
  return 'https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?'+params.toString();
 }
+function finishPendingFrame(){
+ if(!pendingFrame)return;
+ const {next,previous}=pendingFrame;
+ if(next && next.material)next.material.opacity=Number($('opacity').value)/100;
+ if(previous){
+  earthGroup.remove(previous);
+  previous.material.map?.dispose();
+  previous.material.dispose();
+ }
+ pendingFrame=null;
+}
 function loadFrame(){
  const token=++frameRequest;
  const date=tileDate(currentMonthIndex);
@@ -240,6 +262,7 @@ function loadFrame(){
  const url=wmsUrl(layer,date.iso);
  return loadImageTexture(url).then(texture=>{
   if(token!==frameRequest){texture.dispose();return false;}
+  if(pendingFrame)finishPendingFrame();
   const material=new THREE.MeshBasicMaterial({map:texture,transparent:true,opacity:0,depthWrite:false,side:THREE.FrontSide,toneMapped:false});
   const next=new THREE.Mesh(dataGeometry,material);
   next.renderOrder=2;
