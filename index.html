@@ -34,7 +34,7 @@
 .detail-photo a{display:block;text-decoration:none}
 .detail-photo img{display:block;width:100%;height:74px;object-fit:cover;background:#2a392e}
 .detail-photo-title{padding:6px 7px 0;font-size:9px;line-height:1.35;color:#e6ede2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.detail-photo-note{padding:4px 7px 7px;font-size:8px;line-height:1.35;color:#9eafa0}
+.detail-photo-note{padding:4px 7px 7px;font-size:8px;line-height:1.35;color:#9eafa0}.detail-photo-source{display:block;padding:0 7px 8px;font-size:8px;color:var(--lime);text-decoration:underline;text-underline-offset:2px}
 
 
 
@@ -1558,40 +1558,39 @@ function photoTitleScore(title,queries){
 }
 function photoReferenceFitsPlace(photo,card,localityHint){
  const title=normalizedPhotoTitle(photo&&photo.name);
- if(!title||IMAGE_EVENT_OR_PERSON_RE.test(title))return false;
- const titleTokens=new Set(title.split(/\s+/));
+ if(!title)return false;
+ const metadataText=[
+  photo&&photo.description,
+  photo&&photo.searchText,
+  photo&&photo.tags,
+  photo&&photo.imageTags
+ ].flatMap(value=>Array.isArray(value)?value.map(v=>typeof v==='string'?v:(v&&v.name)||''):[value||''])
+  .filter(Boolean).join(' ');
+ const combined=normalizedPhotoTitle(title+' '+metadataText);
+ // Suppress event/team/portrait media using both the title and indexed metadata.
+ if(IMAGE_EVENT_OR_PERSON_RE.test(title)||IMAGE_EVENT_OR_PERSON_RE.test(combined))return false;
+ const searchableTokens=new Set(combined.split(/\s+/));
  const placeTokens=photoPlaceTokens(card&&card.name);
  const localityTokens=photoPlaceTokens(String(localityHint||card&&card.locality||'').split(',').join(' '));
- // Place names are conjunctive: matching a single token (for example "Kastav")
- // is not enough when a file title explicitly names another landmark or city.
- const namedPlaceTokens=[...new Set([...placeTokens,...localityTokens])];
- const meaningfulTitleTokens=photoPlaceTokens(title);
- const namedHits=meaningfulTitleTokens.filter(token=>namedPlaceTokens.includes(token));
- const foreignPlaceTokens=photoPlaceTokens(title).filter(token=>
-  !namedPlaceTokens.includes(token)&&token.length>4
- );
- const hasStrongPlaceMatch=placeTokens.length
-  ? placeTokens.every(token=>titleTokens.has(token)) ||
-    (placeTokens.length===1&&titleTokens.has(placeTokens[0])&&localityTokens.some(token=>titleTokens.has(token)))
-  : localityTokens.length>0&&localityTokens.every(token=>titleTokens.has(token));
- if(hasStrongPlaceMatch)return true;
- // The selected-pin card also carries its locality. Do not accept titles with an
- // unrelated specific landmark merely because a generic town token overlaps.
+ const wanted=[...new Set([...placeTokens,...localityTokens])];
+ const metadataTokens=photoPlaceTokens(combined);
+ const matched=metadataTokens.filter(token=>wanted.includes(token));
+ // A title naming a different landmark is strong negative evidence. Do not reject
+ // an image merely because its description mentions another place in a comparison.
+ const titleTokens=photoPlaceTokens(title);
+ const foreignTitleTokens=titleTokens.filter(token=>!wanted.includes(token)&&token.length>5);
  const genericSubject=/^(viewpoint|lookout|panorama|hill|peak|mountain|ridge|observation tower|belvedere|tower|park|beach|bridge|scenic view|unnamed mapped)/i.test(String(card&&card.name||'').trim());
- const exactPlaceMatch=placeTokens.length>0&&placeTokens.every(token=>titleTokens.has(token));
- const onlyLocalityMatch=localityTokens.length>0&&localityTokens.every(token=>titleTokens.has(token));
- if(onlyLocalityMatch&&!exactPlaceMatch&&!genericSubject){
-  const disjointSpecific=foreignPlaceTokens.filter(token=>token.length>5);
-  if(disjointSpecific.length)return false;
- }
- // Geotags can supply scenic references only for the exact selected area, and
- // never when the title reveals another named place. Treat unknown/foreign title
- // words conservatively; a nearby coordinate is not proof of local relevance.
+ const placeMatch=placeTokens.length>0&&placeTokens.every(token=>searchableTokens.has(token));
+ const localityMatch=localityTokens.length>0&&localityTokens.every(token=>searchableTokens.has(token));
+ if(placeMatch&&!foreignTitleTokens.length)return true;
+ if(localityMatch&&(!foreignTitleTokens.length||genericSubject))return true;
+ // Metadata can support a match to the selected place; title alone is not the
+ // only searchable signal in Openverse's licensed media index.
+ if(matched.length>0&&!foreignTitleTokens.some(token=>token.length>5))return true;
+ // Geotags are only a last resort for a scenic image very close to the pin.
  const distance=Number(photo&&photo.distance);
- const hasForeignSpecificity=foreignPlaceTokens.length>0&&namedHits.length===0;
- if(photo&&photo.geotagged&&Number.isFinite(distance)&&distance<=1500&&
-    !hasForeignSpecificity&&!IMAGE_EVENT_OR_PERSON_RE.test(title)&&
-    meaningfulTitleTokens.length===0)return true;
+ if(photo&&photo.geotagged&&Number.isFinite(distance)&&distance<=1200&&
+    !foreignTitleTokens.some(token=>token.length>5)&&IMAGE_SCENE_RE.test(combined))return true;
  return false;
 }
 async function commonsSearch(c,radius,id){
@@ -1609,25 +1608,93 @@ async function commonsSearch(c,radius,id){
   return {id:'commons-'+p.pageid,name,lat:point.lat,lng:point.lon,distance:d,thumb:info.thumburl,sourceUrl:info.descriptionurl||info.url,source:'Wikimedia Commons',artist:plain(meta.Artist)||'Photographer not listed',license:plain(meta.LicenseShortName)||'Check original file page',category:'photo',geotagged:true,referenceType:'Relevant scene title and geotag; exact camera position still unverified'};
  }).filter(Boolean).sort((a,b)=>a.distance-b.distance);
 }
-async function commonsTextSearch(queries,c,id){
- const clean=[...new Set((queries||[]).map(q=>String(q||'').trim()).filter(Boolean))].slice(0,5);
- const results=await Promise.allSettled(clean.map(async q=>{
-  const url='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+encodeURIComponent(q)+'&gsrnamespace=6&gsrlimit=12&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&format=json&origin=*';
-  const data=await requestJSON(url,id,15000);
-  return Object.values(data.query&&data.query.pages||{}).map(p=>{
-   const info=p.imageinfo&&p.imageinfo[0];if(!info||!info.thumburl)return null;
-   const name=(p.title||'').replace(/^File:/,'');
-   if(!photoTitleIsRelevant(name,q))return null;
-   const meta=info.extmetadata||{};
-   const plain=v=>String(v&&v.value||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
-   return {id:'commons-search-'+p.pageid,name,thumb:info.thumburl,sourceUrl:info.descriptionurl||info.url,source:'Wikimedia Commons · '+q,artist:plain(meta.Artist)||'Photographer not listed',license:plain(meta.LicenseShortName)||'Check original file page',category:'photo',geotagged:false,referenceType:'Landmark/topic-matched image; not verified as the exact camera position',relevance:photoTitleScore(name,clean)};
+const openverseImageQueryCache=new Map();
+async function openverseTextSearch(queries,id){
+ const clean=[...new Set((queries||[]).map(q=>String(q||'').trim()).filter(Boolean))].slice(0,3);
+ const batches=await Promise.allSettled(clean.map(async q=>{
+  const key=q.toLowerCase();
+  const cached=openverseImageQueryCache.get(key);
+  if(cached&&Date.now()-cached.at<15*60*1000)return cached.items;
+  const params=new URLSearchParams({
+   q:q.slice(0,180),
+   page_size:'16',
+   license_type:'commercial',
+   filter_dead:'true',
+   mature:'false'
+  });
+  const data=await requestJSON('https://api.openverse.org/v1/images/?'+params.toString(),id,14000);
+  const mapped=(data.results||[]).map(r=>{
+   const title=String(r.title||'').trim();
+   const tags=Array.isArray(r.tags)?r.tags.map(t=>typeof t==='string'?t:(t&&t.name)||'').filter(Boolean):[];
+   const description=String(r.description||'');
+   const searchText=[title,description,tags.join(' ')].filter(Boolean).join(' ');
+   if(!title||!r.thumbnail||!r.foreign_landing_url||!photoTitleIsRelevant(searchText,q))return null;
+   const license=String(r.license||'').toUpperCase();
+   return {
+    id:'openverse-'+String(r.id||title),
+    name:title,
+    thumb:r.thumbnail,
+    sourceUrl:r.foreign_landing_url,
+    source:'Openverse · '+String(r.source||r.provider||'openly licensed archive'),
+    artist:String(r.creator||'Creator not listed'),
+    creatorUrl:r.creator_url||'',
+    license:(license?'CC '+license:'Open licence')+(r.license_version?' '+r.license_version:''),
+    licenseUrl:r.license_url||'',
+    category:'photo',
+    geotagged:false,
+    description,
+    searchText,
+    tags,
+    referenceType:'Openverse openly licensed image matched by title/metadata; exact camera position not verified',
+    relevance:photoTitleScore(searchText,clean),
+    provider:'Openverse'
+   };
   }).filter(Boolean);
+  openverseImageQueryCache.set(key,{at:Date.now(),items:mapped});
+  return mapped;
  }));
  if(id!==state.scanId)throw new Error('stale scan');
+ return batches.filter(r=>r.status==='fulfilled').flatMap(r=>r.value);
+}
+async function commonsTextSearch(queries,c,id){
+ const clean=[...new Set((queries||[]).map(q=>String(q||'').trim()).filter(Boolean))].slice(0,5);
+ const [commonsResponse,openverseResponse]=await Promise.allSettled([
+  Promise.allSettled(clean.map(async q=>{
+   const url='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+encodeURIComponent(q)+'&gsrnamespace=6&gsrlimit=12&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&format=json&origin=*';
+   const data=await requestJSON(url,id,15000);
+   return Object.values(data.query&&data.query.pages||{}).map(p=>{
+    const info=p.imageinfo&&p.imageinfo[0];if(!info||!info.thumburl)return null;
+    const name=(p.title||'').replace(/^File:/,'');
+    if(!photoTitleIsRelevant(name,q))return null;
+    const meta=info.extmetadata||{};
+    const plain=v=>String(v&&v.value||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+    const description=plain(meta.ImageDescription)||'';
+    return {
+     id:'commons-search-'+p.pageid,name,thumb:info.thumburl,
+     sourceUrl:info.descriptionurl||info.url,source:'Wikimedia Commons',
+     artist:plain(meta.Artist)||'Photographer not listed',
+     license:plain(meta.LicenseShortName)||'Check original file page',
+     licenseUrl:meta.LicenseUrl?plain(meta.LicenseUrl):'',
+     category:'photo',geotagged:false,description,
+     searchText:name+' '+description+' '+q,
+     referenceType:'Landmark/topic-matched image; not verified as the exact camera position',
+     relevance:photoTitleScore(name+' '+description,clean),provider:'Wikimedia Commons'
+    };
+   }).filter(Boolean);
+  })),
+  openverseTextSearch(clean.slice(0,3),id)
+ ]);
+ if(id!==state.scanId)throw new Error('stale scan');
+ const commons=commonsResponse.status==='fulfilled'
+  ?commonsResponse.value.filter(r=>r.status==='fulfilled').flatMap(r=>r.value):[];
+ const openverse=openverseResponse.status==='fulfilled'?openverseResponse.value:[];
  const seen=new Set();
- return results.filter(r=>r.status==='fulfilled').flatMap(r=>r.value).filter(p=>{
-  const key=p.id||p.name;if(seen.has(key))return false;seen.add(key);return true;
- }).sort((a,b)=>(b.relevance||0)-(a.relevance||0)).slice(0,12);
+ return [...openverse,...commons].filter(p=>{
+  const key=String(p.sourceUrl||p.id||p.name).toLowerCase();
+  if(seen.has(key))return false;
+  seen.add(key);
+  return true;
+ }).sort((a,b)=>(b.relevance||0)-(a.relevance||0)).slice(0,18);
 }
 function cardHTML(item){
  const icon=item.category==='parking'?'P':item.category==='history'?'H':item.category==='viewpoint'?'↗':item.category==='photoSpot'?'✦':item.category==='photo'?'✦':'A';
@@ -1879,7 +1946,8 @@ async function loadParkingNearSelected(item){
    if(r.category&&r.type)tags[r.category]=r.type;
    if(r.type&&!tags.type)tags.type=r.type;
    const type=String(r.type||'').toLowerCase();
-   const parking=tags.amenity==='parking'||tags.amenity==='parking_space';
+   const isEntrance=tags.amenity==='parking_entrance'||tags.parking==='entrance'||tags.entrance==='parking';
+   const parking=tags.amenity==='parking'||tags.amenity==='parking_space'||isEntrance;
    if(!parking)return;
    const lat=Number(r.lat),lng=Number(r.lon??r.lng);
    if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
@@ -1888,17 +1956,17 @@ async function loadParkingNearSelected(item){
    if(seen.some(p=>haversine(p,{lat,lng})<60))return;
    seen.push({lat,lng});
    const rawName=String(r.name||r.title||tags.name||tags['name:en']||'').trim();
-   const name=!rawName||/^parking(?: area)?$/i.test(rawName)?'Mapped parking point':rawName;
+   const name=isEntrance?'Parking entrance'+(rawName?' · '+rawName:''):!rawName||/^parking(?: area)?$/i.test(rawName)?'Mapped parking point':rawName;
    const url=r.url||(r.id?'https://www.openstreetmap.org/'+String(r.id):'https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lng+'#map=18/'+lat+'/'+lng);
    pool.push({
     id:'spot-parking-'+String(r.id||index)+'-'+Math.round(lat*100000)+'-'+Math.round(lng*100000),
     name,lat,lng,distance,distanceFromSpot:distance,tags,
     source:'OpenStreetMap via Rangefind',sourceUrl:url,
-    category:'parking',parkingOrigin:'near-selected',
-    summary:'Mapped parking feature near '+item.name+'. Public access, legal parking, charges, opening and availability are not confirmed.'
+    category:'parking',isParkingEntrance:isEntrance,parkingOrigin:'near-selected',
+    summary:isEntrance?'Mapped vehicle entrance near '+item.name+'. Verify signs, restrictions and whether this entrance serves public parking.':'Mapped parking feature near '+item.name+'. Public access, legal parking, charges, opening and availability are not confirmed.'
    });
   });
-  state.spotParking=pool.sort((a,b)=>a.distance-b.distance).slice(0,12);
+  state.spotParking=pool.sort((a,b)=>(isParkingEntrance(a)?0:1)-(isParkingEntrance(b)?0:1)||a.distance-b.distance).slice(0,12);
   state.spotParkingLoading=false;
   renderSpotParking(item);
   renderResults();
@@ -2527,7 +2595,7 @@ async function renderDetailPhotoRefs(item){
  }
  container.innerHTML=finalRefs.map(p=>{
   const note=p.geotagged?'Nearby scenic image · '+distanceLabel(p.distance)+' from the pin. The geotag is approximate evidence, not a verified camera position.':(p.referenceType||'Matched by place/subject title; exact view is not verified.');
-  return '<article class="detail-photo"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(note)+'</div><div class="detail-photo-note">'+esc(p.artist||'Photographer not listed')+' · '+esc(p.license||'Licence on source page')+'</div><a class="detail-photo-source" href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Original photo & licence ↗</a></article>';
+  return '<article class="detail-photo"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="detail-photo-title">'+esc(p.name)+'</div><div class="detail-photo-note">'+esc(p.source||p.provider||'Openly licensed reference')+'</div><div class="detail-photo-note">'+esc(p.artist||'Creator not listed')+' · '+esc(p.license||'Licence on source page')+'</div><div class="detail-photo-note">'+esc(note)+'</div><a class="detail-photo-source" href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Open original ↗</a></article>';
  }).join('');
  container.querySelectorAll('img').forEach((img,index)=>{
   img.addEventListener('error',()=>{
