@@ -150,7 +150,7 @@ jobs:
                   appInstallDiagnostics.display !== 'standalone' ||
                   appInstallDiagnostics.workerStatus !== 200 ||
                   !appInstallDiagnostics.workerCacheV6 ||
-                  appInstallDiagnostics.buildVersion !== '2026-10-15-pin-ideas-visible-v5' ||
+                  appInstallDiagnostics.buildVersion !== '2026-10-15-pin-ideas-visible-v6' ||
                   !appInstallDiagnostics.installButton || !appInstallDiagnostics.installButtonVisible || !appInstallDiagnostics.pinLegend) {
                 throw new Error('Photo Scout must ship as an installable standalone app with a visible pin legend: ' + JSON.stringify(appInstallDiagnostics));
               }
@@ -404,6 +404,7 @@ jobs:
               const quickActions = await page.evaluate(() => ({
                 visible: document.querySelector('#pinActionStrip') && !document.querySelector('#pinActionStrip').hidden,
                 ideas: document.querySelectorAll('#selectedIdeaSketches .selected-idea-sketch').length,
+                quickSketches: document.querySelectorAll('#pinActionSketches .pin-action-sketch').length,
                 pinBoardVisible: !!document.querySelector('#pinIdeaBoard') && !document.querySelector('#pinIdeaBoard').hidden,
                 pinBoardSketches: document.querySelectorAll('#pinIdeaSketchGrid .pin-idea-sketch').length,
                 pinBoardHasGenerator: !!document.querySelector('#pinIdeaBoard #aiImageGenerator'),
@@ -411,7 +412,7 @@ jobs:
                 aiButton: !!document.querySelector('#quickGenerateAI'),
                 label: document.querySelector('#pinActionTitle')?.textContent
               }));
-              if (!quickActions.visible || quickActions.ideas !== 3 || !quickActions.aiButton ||
+              if (!quickActions.visible || quickActions.ideas !== 3 || quickActions.quickSketches !== 3 || !quickActions.aiButton ||
                   !quickActions.pinBoardVisible || quickActions.pinBoardSketches !== 3 ||
                   !quickActions.pinBoardHasGenerator || !quickActions.pinBoardHasReferences) {
                 throw new Error('Pin-first board must expose three camera sketches, reference photos and AI generation directly after a map click: '+JSON.stringify(quickActions));
