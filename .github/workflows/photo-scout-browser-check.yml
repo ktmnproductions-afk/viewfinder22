@@ -46,13 +46,15 @@ jobs:
           while (true) {
             const start = html.indexOf(opening, cursor);
             if (start < 0) break;
-            const bodyStart = html.indexOf('\\n', start) + 1;
+            const bodyStart = start + opening.length;
             const end = html.indexOf('</script>', bodyStart);
-            if (bodyStart <= 0 || end < 0) throw new Error('Unclosed Photo Scout module script');
-            let source = html.slice(bodyStart, end);
-            // The first module line imports MapLibre; remove it so Node can syntax-check
-            // the browser module body with new Function().
-            if (source.startsWith('import ')) source = source.slice(source.indexOf('\\n') + 1);
+            if (end < 0) throw new Error('Unclosed Photo Scout module script');
+            let source = html.slice(bodyStart, end).trimStart();
+            if (source.startsWith('import ')) {
+              const lineEnd = source.indexOf(String.fromCharCode(10));
+              if (lineEnd < 0) throw new Error('Could not isolate the MapLibre import line');
+              source = source.slice(lineEnd + 1);
+            }
             try { new Function(source); }
             catch (error) {
               console.error('Module script syntax error near extracted block '+count+': '+error.stack);
