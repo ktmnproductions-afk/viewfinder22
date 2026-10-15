@@ -2749,7 +2749,7 @@ function renderPinIdeaReferences(item,refs){
   card.insertBefore(note,card.querySelector('.pin-idea-ref-title'));
  },{once:true}));
 }
-async async function renderDetailPhotoRefs(item){
+async function renderDetailPhotoRefs(item){
  const container=$('detailPhotoRefs');
  if(!container)return;
  const requestId=++detailPhotoSearchId;
