@@ -97,14 +97,17 @@ jobs:
               const appInstallDiagnostics = await page.evaluate(async () => {
                 const [manifestResponse, workerResponse] = await Promise.all([
                   fetch('./manifest.webmanifest'),
-                  fetch('./sw.js')
+                  fetch('./sw.js', {cache:'no-store'})
                 ]);
                 const manifest = manifestResponse.ok ? await manifestResponse.json() : null;
+                const workerText = workerResponse.ok ? await workerResponse.text() : '';
                 return {
                   manifestStatus: manifestResponse.status,
                   display: manifest && manifest.display,
                   startUrl: manifest && manifest.start_url,
                   workerStatus: workerResponse.status,
+                  workerCacheName: (workerText.match(/CACHE_NAME\\s*=\\s*["']([^"']+)/)||[])[1]||'',
+                  buildVersion: document.querySelector('meta[name="photo-scout-build"]')?.content||'',
                   installButton: !!document.querySelector('#installAppBtn'),
                   installButtonVisible: !!document.querySelector('#installAppBtn') && !document.querySelector('#installAppBtn').hidden,
                   pinLegend: !!document.querySelector('#mapPinLegend')
@@ -113,6 +116,8 @@ jobs:
               if (appInstallDiagnostics.manifestStatus !== 200 ||
                   appInstallDiagnostics.display !== 'standalone' ||
                   appInstallDiagnostics.workerStatus !== 200 ||
+                  appInstallDiagnostics.workerCacheName !== 'photo-scout-shell-v4' ||
+                  appInstallDiagnostics.buildVersion !== '2026-10-15-openverse-parking-ideas' ||
                   !appInstallDiagnostics.installButton || !appInstallDiagnostics.installButtonVisible || !appInstallDiagnostics.pinLegend) {
                 throw new Error('Photo Scout must ship as an installable standalone app with a visible pin legend: ' + JSON.stringify(appInstallDiagnostics));
               }
@@ -350,13 +355,17 @@ jobs:
                 state: window.__PHOTO_SCOUT_TEST__.getState(),
                 sketch: document.querySelector('#selectedLocalSketch')?.getAttribute('src') || '',
                 generatorButton: !!document.querySelector('#generateAIConcept'),
+                selectedGeneratorButton: !!document.querySelector('#selectedGenerateAI'),
+                selectedGeneratorVisible: !!document.querySelector('#selectedGenerateAI') &&
+                  document.querySelector('#selectedGenerateAI').getBoundingClientRect().height > 0,
                 generatorPanel: !!document.querySelector('#aiImageGenerator'),
                 settings: !!document.querySelector('#aiImageSettings'),
                 mapIssueVisible: document.querySelector('#mapIssue')?.classList.contains('show')
               }));
               if (!pinState.state.activeCenter || !pinState.state.selectedId ||
                   !pinState.sketch.startsWith('data:image/svg+xml') ||
-                  !pinState.generatorButton || !pinState.generatorPanel || !pinState.settings) {
+                  !pinState.generatorButton || !pinState.selectedGeneratorButton ||
+                  !pinState.selectedGeneratorVisible || !pinState.generatorPanel || !pinState.settings) {
                 throw new Error('A map click must select a pin and show its location-specific photography workflow: ' + JSON.stringify(pinState));
               }
               const quickActions = await page.evaluate(() => ({
@@ -369,7 +378,25 @@ jobs:
                 throw new Error('Pin action strip or three camera sketches are missing: '+JSON.stringify(quickActions));
               }
 
-              // Regression tests for the previously reported contextual ideas/photo leaks.
+              const parkingEntranceFixture = await page.evaluate(() =>
+                window.__PHOTO_SCOUT_TEST__.runParkingEntranceFixture()
+              );
+              if (!parkingEntranceFixture.entranceCasesRecognized ||
+                  !parkingEntranceFixture.ordinaryLotsNotCalledEntrances) {
+                throw new Error('Parking entrances must be distinguished from lot-centre points: ' + JSON.stringify(parkingEntranceFixture));
+              }
+              // Diagnostic only: Openverse is anonymous but rate limited. The app
+              // retains Wikimedia Commons and in-app sketches if the service is unavailable.
+              const openverseProbe = await page.evaluate(async () => {
+                try {
+                  const response = await fetch('https://api.openverse.org/v1/images/?q=Kastav%20Croatia&page_size=3&license_type=commercial&filter_dead=true&mature=false');
+                  const data = response.ok ? await response.json() : null;
+                  return {status:response.status, resultCount:data?.results?.length ?? null,
+                    shapeOK:!!data && Array.isArray(data.results) &&
+                      (!data.results.length || !!(data.results[0].thumbnail && data.results[0].foreign_landing_url && data.results[0].license))};
+                } catch(error) { return {status:0,error:String(error&&error.message||error)}; }
+              });
+              console.log('OPENVERSE_REFERENCE_PROBE '+JSON.stringify(openverseProbe));
               const contextualPhotoFixtures = await page.evaluate(() =>
                 window.__PHOTO_SCOUT_TEST__.runContextPhotoRegressionFixtures()
               );
