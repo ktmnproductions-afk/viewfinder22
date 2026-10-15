@@ -56,6 +56,19 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
+      - name: Validate Photo Scout browser module syntax
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r'<script\\s+type="module">([\\s\\S]*?)</script>', html, re.I)
+          if not scripts:
+              raise SystemExit("No inline module script found in index.html")
+          Path("/tmp/photo-scout-check.mjs").write_text(scripts[-1], encoding="utf-8")
+          print("Extracted inline module, characters:", len(scripts[-1]))
+          PY
+          node --check /tmp/photo-scout-check.mjs
       - name: Serve the site
         run: |
           nohup python3 -m http.server 8000 --bind 127.0.0.1 > /tmp/photoscout-http.log 2>&1 &
@@ -83,12 +96,16 @@ jobs:
             });
             const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1 });
             const pageErrors = [];
+            const consoleErrors = [];
             const tileResponses = [];
             let mainFrameNavigations = 0;
             page.on('framenavigated', frame => {
               if (frame === page.mainFrame()) mainFrameNavigations++;
             });
             page.on('pageerror', error => pageErrors.push(error.message));
+            page.on('console', message => {
+              if(message.type()==='error') consoleErrors.push(message.text());
+            });
             page.on('response', response => {
               const url = response.url();
               if (url.includes('openfreemap') || url.includes('openstreetmap.org')) {
@@ -98,7 +115,20 @@ jobs:
 
             try {
               await page.goto('http://127.0.0.1:8000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
-              await page.waitForFunction(() => !!window.__PHOTO_SCOUT_TEST__?.map, null, { timeout: 15000 });
+              try {
+                await page.waitForFunction(() => !!window.__PHOTO_SCOUT_TEST__?.map, null, { timeout: 15000 });
+              } catch (startupError) {
+                const startup = await page.evaluate(() => ({
+                  title:document.title,
+                  readyState:document.readyState,
+                  scripts:[...document.scripts].map(s=>({src:s.src,type:s.type,ready:!s.src||s.readyState||'loaded'})),
+                  maplibreGlobal:!!window.maplibregl,
+                  mapTestHook:!!window.__PHOTO_SCOUT_TEST__,
+                  bodyText:(document.body.innerText||'').slice(0,700)
+                })).catch(e=>({evaluateError:String(e)}));
+                console.log('PHOTO_SCOUT_STARTUP_DIAGNOSTICS '+JSON.stringify({startup,pageErrors,consoleErrors}));
+                throw startupError;
+              }
               await page.waitForFunction(
                 () => window.__PHOTO_SCOUT_TEST__?.styleLoaded === true,
                 null,
