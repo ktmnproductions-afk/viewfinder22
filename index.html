@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-15-photo-scout-local-details-v15">
+<meta name="photo-scout-build" content="2026-10-15-photo-scout-map-restore-v16">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -975,7 +975,13 @@ window.__PHOTO_SCOUT_TEST__ = {
  runMapRoleFixture:function(){
   const nearbyMemorialA={category:'history',name:'Memorial',lat:45.3271,lng:14.4422,genericFeature:true,isSmallInterest:true};
   const nearbyMemorialB={category:'history',name:'Memorial',lat:45.32735,lng:14.44245,genericFeature:true,isSmallInterest:true};
+  const legacyMappedMemorialA={category:'history',name:'Memorial',lat:45.3271,lng:14.4422,genericFeature:true};
+  const legacyMappedMemorialB={category:'history',name:'Memorial',lat:45.32735,lng:14.44245,genericFeature:true};
   const duplicateMemorial={...nearbyMemorialA};
+  const nearbyMappedDetails=dedupeMappedPlaces([
+   {...legacyMappedMemorialA,distance:10},
+   {...legacyMappedMemorialB,distance:20}
+  ]);
   return {
    explicitlyMappedViewpointAccepted:isExplicitViewpoint({tourism:'viewpoint'},'viewpoint','Vidikovac'),
    namedLookoutAccepted:isExplicitViewpoint({},'hill','Belvedere Trsat'),
@@ -987,7 +993,10 @@ window.__PHOTO_SCOUT_TEST__ = {
    plaqueRecognized:localInterestLabel({man_made:'plaque'})==='Commemorative plaque',
    fountainRecognized:localInterestLabel({amenity:'fountain'})==='Fountain',
    distinctNearbyMemorialsKept:!areDuplicateMapMarkers(nearbyMemorialA,nearbyMemorialB),
-   exactSameGenericCoordinateDeduplicated:areDuplicateMapMarkers(nearbyMemorialA,duplicateMemorial)
+   legacyGenericMemorialsKept:!areDuplicateMapMarkers(legacyMappedMemorialA,legacyMappedMemorialB),
+   mappedGenericRecordsStaySeparate:nearbyMappedDetails.length===2,
+   exactSameGenericCoordinateDeduplicated:areDuplicateMapMarkers(nearbyMemorialA,duplicateMemorial),
+   darkStyleExcludedFromFallback:!['bright','positron','fiord','liberty','dark'].includes('dark')
   };
  },
  runParkingEntranceFixture:function(){
@@ -1107,11 +1116,16 @@ function switchToRasterFallback(reason){
 let triedVectorStyles=new Set(['liberty']);
 function switchToBackupVector(reason){
  if(state.basemapMode==='raster')return;
- const order=['bright','positron','fiord','dark','liberty'];
+ const order=['bright','positron','fiord','liberty'];
  const nextKey=order.find(key=>!triedVectorStyles.has(key));
  if(!nextKey){
   clearMapHealthTimers();
-  mapError('All available vector map styles failed to load. The app is keeping its custom map markers instead of switching to tiles with built-in blue parking icons. Press Retry map to try again.');
+  // Never leave the page on a dark style after a failed basemap sequence.
+  // Keep the last non-dark style and show the connection warning over it.
+  document.querySelectorAll('[data-style]').forEach(button=>
+   button.classList.toggle('active',button.dataset.style===currentStyle)
+  );
+  mapError('The light basemap styles did not respond. The map has stayed on a light style rather than switching to a black map. Press Retry map or check your connection.');
   return;
  }
  triedVectorStyles.add(nextKey);
@@ -1128,6 +1142,9 @@ function switchToBackupVector(reason){
   $('statusMsg').textContent=reason+' Trying another vector style so Photo Scout can keep its own parking pins.';
  }
  currentStyle=nextKey;
+ document.querySelectorAll('[data-style]').forEach(button=>
+  button.classList.toggle('active',button.dataset.style===currentStyle)
+ );
  map.setStyle(styleUrls[nextKey]);
  state.styleFailureTimer=setTimeout(()=>{
   state.styleFailureTimer=null;
@@ -1415,7 +1432,7 @@ function hasSuspiciousLocalityMismatch(name,featureCity,distance){
 function dedupeMappedPlaces(places){
  const seen=new Set();
  return places.sort((a,b)=>a.distance-b.distance).filter(p=>{
-  const precision=p.isSmallInterest?5:4;
+  const precision=(p.isSmallInterest||isGenericMapFeatureLabel(p.name,p))?5:4;
   const key=p.category+'|'+normalizeNameForDedup(p.name)+'|'+p.lat.toFixed(precision)+'|'+p.lng.toFixed(precision);
   if(seen.has(key))return false;seen.add(key);return true;
  });
@@ -1460,14 +1477,14 @@ function areDuplicateMapMarkers(a,b){
  if(!Number.isFinite(separation))return false;
  const sameName=normalizeNameForDedup(a.name)===normalizeNameForDedup(b.name);
  const genericA=isGenericMapFeatureLabel(a.name,a),genericB=isGenericMapFeatureLabel(b.name,b);
- if(a.isSmallInterest||b.isSmallInterest){
-  // Small mapped memorials often share the generic type label. Keep distinct
-  // objects unless their coordinates are effectively identical.
-  if(genericA||genericB)return sameName&&separation<2;
-  return sameName&&separation<45;
- }
- // Preserve the v11 de-duplication behavior for regular landmarks/viewpoints.
- return (sameName&&separation<55)||(genericA&&genericB&&separation<100);
+ // Generic features such as "Memorial", "Wayside cross" or "Monument"
+ // often describe different objects in the same neighbourhood. Only collapse
+ // those when they are effectively at the same coordinate; never merge them
+ // merely because they are within walking distance.
+ if(genericA||genericB)return sameName&&separation<2;
+ // Multiple sources can describe the same properly named landmark from slightly
+ // different coordinates, so keep a modest radius only for non-generic names.
+ return sameName&&separation<45;
 }
 
 async function overpassApiSearch(c,radius,id){
