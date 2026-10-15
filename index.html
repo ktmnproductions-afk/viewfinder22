@@ -2627,7 +2627,69 @@ async function lookupPhotoLocality(lat,lng,scanId){
   return locality;
  }catch(error){return '';}
 }
-async function renderDetailPhotoRefs(item){
+async function renderPinIdeaBoard(item){
+ const board=$('pinIdeaBoard');
+ if(!board||!item)return;
+ board.hidden=false;
+ $('pinIdeaTitle').textContent='Photo ideas · '+String(item.name||'your map pin');
+ const locality=String(item.city||item.locality||state.detectedLocality||'').trim();
+ $('pinIdeaSubtitle').textContent=(locality?locality+' · ':'')+'Three framing ideas for the Canon EOS R50 with the 18–150 mm lens.';
+ $('pinIdeaCaveat').textContent=item.isUserPin
+  ?'These are illustrative composition studies, not a verified view from this coordinate. Nearby map records help ground ideas; confirm the actual sightline and safe public access.'
+  :'These sketches are location-aware creative studies based on the selected place and map tags. They are not photographs of the exact view; confirm the real sightline and safe public access.';
+ const modes=[
+  {mode:'wide',title:'Wide landscape',lens:'18–24 mm'},
+  {mode:'context',title:'Subject + context',lens:'35–70 mm'},
+  {mode:'compressed',title:'Compressed layers',lens:'100–150 mm'}
+ ];
+ const seed=cardSeed(item.id||item.name||coordLabel(item));
+ $('pinIdeaSketchGrid').innerHTML=modes.map((m,i)=>
+  '<article class="pin-idea-sketch"><img loading="lazy" src="'+esc(conceptSketchData(item,m.mode,seed+i+31))+'" alt="'+esc(m.title)+' composition study for '+esc(item.name||'this location')+'"><strong>'+esc(m.title)+'</strong><small>Canon R50 · '+esc(m.lens)+'</small></article>'
+ ).join('');
+ $('pinIdeaShots').innerHTML=selectedShotIdeasFor(item).map((idea,index)=>
+  '<div class="pin-idea-shot"><strong>'+(index===0?'01 · WIDE':index===1?'02 · CONTEXT':'03 · DETAIL')+'</strong><br>'+esc(idea)+'</div>'
+ ).join('');
+ $('pinIdeaReferenceCount').textContent='Searching for relevant images…';
+ $('pinIdeaReferenceGrid').innerHTML=emptyHTML('Searching for photographs that match this place or subject. We will not use an unrelated event upload just because its geotag is nearby.');
+ const drive=$('pinIdeaDrive');
+ if(drive)drive.onclick=()=>GenUI; // replaced below with a normal map URL handler
+ if(drive){
+  drive.onclick=()=>window.open('https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(item.lat+','+item.lng)+'&travelmode=driving','_blank','noopener');
+ }
+}
+function renderPinIdeaReferences(item,refs){
+ const board=$('pinIdeaBoard');
+ const host=$('pinIdeaReferenceGrid');
+ const count=$('pinIdeaReferenceCount');
+ if(!board||board.hidden||!host)return;
+ if(!state.selected||state.selected.id!==item.id)return;
+ const finalRefs=(refs||[]).filter(p=>p&&p.thumb&&p.sourceUrl).slice(0,3);
+ count.textContent=finalRefs.length?finalRefs.length+' matched image'+(finalRefs.length===1?'':'s'):'No reliable matches';
+ if(!finalRefs.length){
+  host.innerHTML=emptyHTML('No suitable landmark-matched photograph was found for this stop. The three sketches above still give you concrete wide, contextual and telephoto shot ideas. Generate an AI image below for a new visual interpretation.');
+  return;
+ }
+ host.innerHTML=finalRefs.map(p=>{
+  const note=p.referenceType||'Matched by place/subject title; exact camera position is not verified.';
+  return '<article class="pin-idea-ref"><img loading="lazy" src="'+esc(safeLink(p.thumb))+'" alt="'+esc(p.name)+'"><div class="pin-idea-ref-title">'+esc(p.name)+'</div><div class="pin-idea-ref-note">'+esc(p.source||'Openly licensed visual reference')+'</div><div class="pin-idea-ref-note">'+esc(note)+'</div><a href="'+esc(safeLink(p.sourceUrl))+'" target="_blank" rel="noopener noreferrer">Open original & licence ↗</a></article>';
+ }).join('');
+ host.querySelectorAll('img').forEach((img,index)=>img.addEventListener('error',()=>{
+  const ref=finalRefs[index];
+  const card=img.closest('.pin-idea-ref');
+  if(!card||card.dataset.failedImage)return;
+  card.dataset.failedImage='true';
+  img.remove();
+  const fallback=document.createElement('img');
+  fallback.src=conceptSketchData(item,'wide',cardSeed(ref.name||item.name)+index);
+  fallback.alt='Photo Scout composition sketch fallback for '+item.name;
+  card.insertBefore(fallback,card.firstChild);
+  const note=document.createElement('div');
+  note.className='pin-idea-ref-note';
+  note.textContent='Source thumbnail unavailable; showing an illustrative composition study instead.';
+  card.insertBefore(note,card.querySelector('.pin-idea-ref-title'));
+ },{once:true}));
+}
+function renderDetailPhotoRefs(item){
  const container=$('detailPhotoRefs');
  if(!container)return;
  const requestId=++detailPhotoSearchId;
@@ -2656,6 +2718,7 @@ async function renderDetailPhotoRefs(item){
  // If the title search has no match, the composition sketches and AI concept remain.
  if(requestId!==detailPhotoSearchId||!state.selected||state.selected.id!==selectedId)return;
  const finalRefs=refs.slice(0,3);
+ renderPinIdeaReferences(item,finalRefs);
  $('detailPhotoCount').textContent=finalRefs.length?(queryName?'Place-matched + scenic references · '+finalRefs.length:'Locality/scenic references · '+finalRefs.length):'No source images found';
  if(!finalRefs.length){
   container.innerHTML=emptyHTML('No suitable licensed source photo was available for this stop. Three location-aware sketch ideas remain above; use Generate AI image for a new visual concept. We will not substitute unrelated event uploads.');
@@ -2901,6 +2964,7 @@ function selectItem(item,options){
  if(item.category==='parking')history='Mapped parking area/point from OpenStreetMap data. The marker may indicate the centre of a mapped lot, not its vehicle entrance. This does not confirm that parking is currently open, free, legal, safe, or available. Check the source geometry, approach road, access signs and restrictions before driving in.';
  const gear='Canon EOS R50 + RF-S 18–150mm: 18–24mm for a wide establishing frame, 35–70mm for city-with-context, 100–150mm to compress distant skyline and mountain layers.';
  renderSelectedShotIdeas(item);
+ renderPinIdeaBoard(item);
  $('detailHistory').innerHTML='<p>'+esc(history)+'</p>'+(item.category==='photoSpot'?'<p>'+esc(gear)+'</p>':'')+'<p><a class="footer-link" href="'+esc(safeLink(item.wikiUrl||item.sourceUrl||'#'))+'" target="_blank" rel="noopener">Open source / more history ↗</a></p>';
  renderSpotParking(item);
  loadParkingNearSelected(item);
@@ -2934,7 +2998,9 @@ function selectItem(item,options){
  }
  renderResults();
  renderMarkers();
- $('spotDetail').scrollIntoView({behavior:'smooth',block:'start'});
+ const ideaBoard=$('pinIdeaBoard');
+ if(ideaBoard&&!ideaBoard.hidden)ideaBoard.scrollIntoView({behavior:'smooth',block:'start'});
+ else $('spotDetail').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function parseCoords(text){
  const m=text.trim().match(/^(-?\d{1,2}(?:\.\d+)?)\s*[,; ]\s*(-?\d{1,3}(?:\.\d+)?)$/);
@@ -3570,8 +3636,14 @@ function closeFieldGuide(){
  window.requestAnimationFrame(()=>{if(map)map.resize();});
 }
 $('jumpToPhotoIdeas').addEventListener('click',()=>{
- if(!state.selected){setStatus('Drop a pin first','Click anywhere on the map to create your photography stop.','warn');return;}
- $('spotDetail').scrollIntoView({behavior:'smooth',block:'start'});
+ if(!state.selected){
+  if(state.center){
+   const c=state.center;
+   selectItem({id:'user-pin-'+Date.now(),name:'Map pin · '+coordLabel(c),lat:c.lat,lng:c.lng,distance:null,category:'photoSpot',isUserPin:true,source:'Your map pin',sourceUrl:'https://www.openstreetmap.org/?mlat='+c.lat+'&mlon='+c.lng,summary:'A user-selected coordinate.',why:'A starting point for creative framing ideas; the exact view and access are not verified.',tags:{},city:''},{keepMapView:true});
+  }else{setStatus('Drop a pin first','Click anywhere on the map to create your photography stop.','warn');return;}
+ }
+ const board=$('pinIdeaBoard');
+ if(board&&!board.hidden)board.scrollIntoView({behavior:'smooth',block:'start'});
 });
 $('quickGenerateAI').addEventListener('click',()=>{
  if(!state.selected){
@@ -3580,11 +3652,16 @@ $('quickGenerateAI').addEventListener('click',()=>{
    selectItem({id:'user-pin-'+Date.now(),name:'Map pin · '+coordLabel(c),lat:c.lat,lng:c.lng,distance:null,category:'photoSpot',isUserPin:true,source:'Your map pin',sourceUrl:'https://www.openstreetmap.org/?mlat='+c.lat+'&mlon='+c.lng,summary:'Your selected scouting centre.',why:'A creative scouting idea based on this coordinate; the actual view and public access are not verified.',tags:{},city:''},{keepMapView:true});
   }else{setStatus('Drop a pin first','Click anywhere on the map to create your photography stop.','warn');return;}
  }
- $('spotDetail').scrollIntoView({behavior:'smooth',block:'start'});
+ const generator=$('aiImageGenerator');
+ if(generator)generator.scrollIntoView({behavior:'smooth',block:'start'});
  generateAIImageForSelectedSpot();
 });
 $('selectedGenerateAI').addEventListener('click',()=>{generateAIImageForSelectedSpot();$('aiImageGenerator').scrollIntoView({behavior:'smooth',block:'start'});});
 $('selectedOpenFieldGuide').addEventListener('click',openSelectedFieldGuide);
+$('pinIdeaOpenGuide').addEventListener('click',()=>{
+ if(!state.selected){setStatus('Drop a pin first','Click the map, then open ideas and references.','warn');return;}
+ openSelectedFieldGuide();
+});
 $('quickIdeasBtn').addEventListener('click',openSelectedFieldGuide);
 $('quickSearchBtn').addEventListener('click',()=>{
  if(document.body.classList.contains('sidebar-collapsed'))$('sidebarToggle').click();
