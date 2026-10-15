@@ -117,8 +117,8 @@ input[type=range]{accent-color:var(--mint)}
  <div class="section">
   <div class="sectionhead"><strong>02 / Historical image</strong><span id="frameState">NASA GIBS</span></div>
   <div class="yearline"><output class="yearlarge" id="yearOutput">2020</output><span class="yearnote" id="yearNote">MODIS Terra<br>True Color · daily</span></div>
-  <input class="range" id="yearSlider" type="range" min="2002" max="2025" step="1" value="2020" aria-label="Historical image year">
-  <div class="ticks"><span>2002</span><span>2008</span><span>2014</span><span>2020</span><span>2025</span></div>
+  <input class="range" id="yearSlider" type="range" min="2002" max="2026" step="1" value="2020" aria-label="Historical image year">
+  <div class="ticks"><span>2002</span><span>2008</span><span>2014</span><span>2020</span><span>2026</span></div>
   <div class="rowbuttons"><button class="btn" id="prevBtn">← Earlier</button><button class="btn" id="nextBtn">Later →</button></div>
   <p class="smallnote">Built-in timeline uses NASA MODIS true-colour scenes. It is best for regional land-cover change; it does not promise high-resolution building imagery for every date.</p>
  </div>
@@ -143,8 +143,8 @@ input[type=range]{accent-color:var(--mint)}
  <div class="timeline-top"><div class="timeline-title">Time-lapse sequence <b>— <span id="timelineYear">2020</span></b></div>
   <div class="timeline-actions"><button class="btn" id="timelinePlay">Play timeline</button><button class="btn" id="stopBtn">Stop</button><button class="btn" id="resetBtn">Reset view</button></div>
  </div>
- <input class="range" id="timelineSlider" type="range" min="2002" max="2025" step="1" value="2020" aria-label="Scrub through historical imagery">
- <div class="timeline-scale"><span>2002</span><span>LANDSCAPE CHANGE</span><span>2025</span></div>
+ <input class="range" id="timelineSlider" type="range" min="2002" max="2026" step="1" value="2020" aria-label="Scrub through historical imagery">
+ <div class="timeline-scale"><span>2002</span><span>LANDSCAPE CHANGE</span><span>2026</span></div>
 </div>
 <script type="importmap">
 {"imports":{"three":"https://unpkg.com/three@0.180.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.180.0/examples/jsm/"}}
@@ -167,7 +167,7 @@ const DEM_ZOOM = 12;
 const DEM_SCALE_FACTOR = Math.pow(2, DEM_ZOOM - MAP_ZOOM);
 const TILE_UNITS = 12;
 const SEGMENTS = 256;
-const YEAR_STEPS = [2002,2005,2008,2011,2014,2017,2020,2023,2025];
+const YEAR_STEPS = [2002,2005,2008,2011,2014,2017,2020,2023,2025,2026];
 const YEAR_DAY = '-08-15';
 let selectedRegion = REGIONS.rijeka;
 let currentYear = 2020;
@@ -359,7 +359,7 @@ function createTerrain(canvas,exaggeration){
     scene.remove(terrainMesh);
     terrainMesh.material.dispose();
   }
-  terrainMaterial = new THREE.MeshStandardMaterial({color:'#ffffff',map:baseTexture || null,roughness:0.93,metalness:0.0,wireframe:$('wire').checked,side:THREE.DoubleSide});
+  terrainMaterial = new THREE.MeshStandardMaterial({color:baseTexture?'#ffffff':'#24434a',map:baseTexture || null,roughness:0.93,metalness:0.0,wireframe:$('wire').checked,side:THREE.DoubleSide});
   terrainMesh = new THREE.Mesh(geometry,terrainMaterial);
   terrainMesh.position.y = 0;
   scene.add(terrainMesh);
@@ -368,7 +368,7 @@ function createTerrain(canvas,exaggeration){
 }
 function loadedLabel(n){return n+' loaded';}
 async function getHistoricalImage(year,x,y){
-  const date = String(year)+'-08-15';
+  const date = String(year)+YEAR_DAY;
   const url = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/'+date+'/GoogleMapsCompatible_Level9/'+MAP_ZOOM+'/'+y+'/'+x+'.jpg';
   const image = await loadImage(url);
   return {image,date,source:'NASA MODIS Terra',fallback:false};
@@ -705,7 +705,7 @@ $('timelineSlider').addEventListener('input',()=>{
 });
 $('timelineSlider').addEventListener('change',()=>{stopTimeLapse();loadHistoricalFrame(currentYear);});
 $('prevBtn').addEventListener('click',()=>{currentYear=Math.max(2002,currentYear-1);$('yearSlider').value=String(currentYear);$('timelineSlider').value=String(currentYear);loadHistoricalFrame(currentYear);});
-$('nextBtn').addEventListener('click',()=>{currentYear=Math.min(2025,currentYear+1);$('yearSlider').value=String(currentYear);$('timelineSlider').value=String(currentYear);loadHistoricalFrame(currentYear);});
+$('nextBtn').addEventListener('click',()=>{currentYear=Math.min(2026,currentYear+1);$('yearSlider').value=String(currentYear);$('timelineSlider').value=String(currentYear);loadHistoricalFrame(currentYear);});
 $('timelinePlay').addEventListener('click',playTimeLapse);
 $('stopBtn').addEventListener('click',()=>{stopTimeLapse();cameraPlayback=null;controls.enabled=true;stopCapture();setStatus('Playback stopped','ready');});
 $('playCameraBtn').addEventListener('click',()=>startCameraPlayback(9000));
