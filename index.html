@@ -121,12 +121,20 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
 .legend-dot.mapped{background:#76b7a4}.legend-dot.candidate{background:var(--lime)}
 .panel-scroll{padding-bottom:22px}.section{padding:12px 16px 0}.search-section{padding-top:14px}.status-section{padding-top:11px}
 .source-key-note{font-size:9px;line-height:1.45;color:#91a296;margin:8px 1px 0}
-.pin-action-strip{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:9px 0 0;padding:10px;border:1px solid rgba(217,243,107,.30);border-radius:11px;background:linear-gradient(120deg,rgba(217,243,107,.11),rgba(217,243,107,.025))}
+.pin-action-strip{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:9px 0 0;padding:10px;border:1px solid rgba(217,243,107,.36);border-radius:12px;background:linear-gradient(120deg,rgba(217,243,107,.13),rgba(217,243,107,.035));box-shadow:0 6px 20px rgba(0,0,0,.10)}
 .pin-action-strip[hidden]{display:none}
 .pin-action-copy{min-width:0;flex:1 1 100%;display:flex;flex-direction:column;gap:3px}
-.pin-action-copy strong{font-size:10px;color:#eff7d5}
+.pin-action-copy strong{font-size:11px;color:#eff7d5}
 .pin-action-copy span{font-size:9px;line-height:1.4;color:#b4c4b3}
-.pin-action-strip .btn{flex:1}
+.pin-action-sketches{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;flex:1 1 100%;min-width:0}
+.pin-action-sketch{min-width:0;overflow:hidden;border:1px solid rgba(230,243,219,.18);border-radius:8px;background:#152019}
+.pin-action-sketch img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#dce5d4}
+.pin-action-sketch strong{display:block;padding:5px 5px 0;font-size:8px;line-height:1.25;color:#e8f2e5}
+.pin-action-sketch small{display:block;padding:3px 5px 6px;font-size:8px;color:#b7c8b6}
+.pin-action-empty{grid-column:1/-1;font-size:9px;color:#aebfae;line-height:1.4;padding:6px 0}
+.pin-action-quick-idea{flex:1 1 100%;font-size:9px;line-height:1.45;color:#c9d9c7}
+.pin-action-buttons{display:flex;gap:6px;flex:1 1 100%}
+.pin-action-buttons .btn{flex:1}
 
 .nav-panel{margin:12px 16px 0;border:1px solid rgba(237,244,232,.12);border-radius:13px;background:rgba(31,45,36,.52);overflow:hidden}
 .nav-panel>summary{list-style:none;display:grid;grid-template-columns:minmax(0,1fr) auto 12px;align-items:center;column-gap:7px;padding:12px;cursor:pointer;user-select:none;color:#eaf1e5;font-size:12px;font-weight:760}
@@ -782,9 +790,10 @@ html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
     <div class="status-box" id="statusBox"><div class="status-icon">✣</div><div class="status-copy"><div class="status-title" id="statusTitle">Start with a place</div><div class="status-msg" id="statusMsg">Search for a city or landmark, or click anywhere on the map to explore nearby spots.</div></div></div>
     <div class="source-key-note">Click the map to zoom in and drop a bright pin. Use the small map icons for Search, Nearby, Ideas or Saved.</div>
     <div class="pin-action-strip" id="pinActionStrip">
-      <div class="pin-action-copy"><strong id="pinActionTitle">Start with a photo pin</strong><span>Click the map. Get three framing sketches, matched references and an AI image concept for your Canon R50.</span></div>
-      <button class="btn small" id="jumpToPhotoIdeas" type="button">View ideas ↓</button>
-      <button class="btn primary small" id="quickGenerateAI" type="button">✦ Generate image</button>
+      <div class="pin-action-copy"><strong id="pinActionTitle">Start with a photo pin</strong><span>Three composition sketches and an AI-image action appear as soon as you click the map.</span></div>
+      <div class="pin-action-sketches" id="pinActionSketches" aria-label="Quick Canon R50 composition previews"><div class="pin-action-empty">Click anywhere on the map to generate three framing ideas.</div></div>
+      <div class="pin-action-quick-idea" id="pinActionQuickIdea">Wide scene · subject in context · compressed distant layers</div>
+      <div class="pin-action-buttons"><button class="btn small" id="jumpToPhotoIdeas" type="button">All ideas & references ↓</button><button class="btn primary small" id="quickGenerateAI" type="button">✦ Generate AI image</button></div>
     </div>
   </section>
   <section class="pin-idea-board" id="pinIdeaBoard" hidden aria-live="polite">
@@ -1055,18 +1064,49 @@ function switchToRasterFallback(reason){
  }
  map.setStyle(osmRasterStyle);
 }
+let triedVectorStyles=new Set(['liberty']);
+function switchToBackupVector(reason){
+ if(state.basemapMode==='raster')return;
+ const order=['bright','positron','fiord','dark','liberty'];
+ const nextKey=order.find(key=>!triedVectorStyles.has(key));
+ if(!nextKey){
+  clearMapHealthTimers();
+  mapError('All available vector map styles failed to load. The app is keeping its custom map markers instead of switching to tiles with built-in blue parking icons. Press Retry map to try again.');
+  return;
+ }
+ triedVectorStyles.add(nextKey);
+ state.basemapFallbackTried=true;
+ state.basemapMode='vector';
+ state.styleLoaded=false;
+ state.vectorTileSuccesses=0;
+ state.basemapParking=[];
+ state.parkingFilteredLayers=new Set();
+ clearMapHealthTimers();
+ $('appState').textContent='Trying alternate vector map…';
+ if(reason){
+  $('statusTitle').textContent='Switching map style';
+  $('statusMsg').textContent=reason+' Trying another vector style so Photo Scout can keep its own parking pins.';
+ }
+ currentStyle=nextKey;
+ map.setStyle(styleUrls[nextKey]);
+ state.styleFailureTimer=setTimeout(()=>{
+  state.styleFailureTimer=null;
+  if(!state.styleLoaded)switchToBackupVector('Vector style '+nextKey+' did not respond.');
+ },12000);
+}
 function scheduleMapFallback(reason,delay){
  if(state.basemapMode==='raster'||state.basemapFallbackTried)return;
  if(state.styleFailureTimer)clearTimeout(state.styleFailureTimer);
  state.styleFailureTimer=setTimeout(()=>{
   state.styleFailureTimer=null;
-  if(!state.styleLoaded)switchToRasterFallback(reason);
+  if(!state.styleLoaded)switchToBackupVector(reason);
  },delay||3500);
 }
 function setVectorBasemap(styleKey){
  const nextKey=styleUrls[styleKey]?styleKey:'liberty';
  clearMapHealthTimers();
  currentStyle=nextKey;
+ triedVectorStyles=new Set([nextKey]);
  state.basemapFallbackTried=false;
  state.basemapMode='vector';
  state.styleLoaded=false;
@@ -1076,7 +1116,7 @@ function setVectorBasemap(styleKey){
  map.setStyle(styleUrls[currentStyle]);
  state.styleFailureTimer=setTimeout(()=>{
   state.styleFailureTimer=null;
-  if(!state.styleLoaded)switchToRasterFallback('The selected vector basemap did not respond.');
+  if(!state.styleLoaded)switchToBackupVector('The selected vector basemap did not respond.');
  },12000);
 }
 if (!maplibregl || !maplibregl.Map) {
@@ -1136,7 +1176,7 @@ map.on('style.load', function(){
   state.basemapWatchdog=setTimeout(()=>{
    state.basemapWatchdog=null;
    if(state.basemapMode==='vector'&&state.vectorTileSuccesses===0){
-    switchToRasterFallback('The vector map loaded its style but no map tiles arrived.');
+    switchToBackupVector('The vector map loaded its style but no map tiles arrived.');
    }
   },18000);
  }
@@ -1418,12 +1458,18 @@ async function overpassSearch(c,radius,id){
 async function scenicSearchIndexed(c,radius,id){
  const engine=await getRangefindEngine();
  const scoutRadius=Math.max(25000,Math.min(30000,radius*2));
- const queries=['viewpoint','lookout','panorama','hill','peak','mountain','ridge','observation tower','belvedere'];
- const responses=await Promise.allSettled(queries.map(q=>withRequestDeadline(
+ const queries=[
+  {q:'',size:100},
+  {q:'viewpoint',size:35},{q:'lookout',size:30},{q:'panorama',size:30},
+  {q:'hill',size:35},{q:'peak',size:35},{q:'mountain',size:35},{q:'ridge',size:35},
+  {q:'observation tower',size:25},{q:'belvedere',size:25},{q:'castle',size:30},
+  {q:'tower',size:30},{q:'lighthouse',size:20},{q:'promenade',size:25}
+ ];
+ const responses=await Promise.allSettled(queries.map(query=>withRequestDeadline(
   Promise.resolve().then(()=>engine.search({
-   q,
+   q:query.q,
    geo:{near:{lat:c.lat,lon:c.lng,radiusMeters:scoutRadius},sort:'distance'},
-   size:35
+   size:query.size
   })),10000,'Scenic index search'
  )));
  if(id!==state.scanId)throw new Error('stale scan');
@@ -1470,9 +1516,13 @@ async function scenicSearchIndexed(c,radius,id){
   if(manMade==='tower'||type.includes('tower')||towerType==='observation'||towerType==='watchtower'||type==='lighthouse'||manMade==='lighthouse'){
    score+=55;evidence.push('mapped tower or lighthouse may provide an elevated frame');kind='elevated cityscape';
   }
-  if(['castle','fort','ruins','fortress','monument','bridge','beach','pier','marina','harbour','harbor','waterfront','park','garden','promenade'].includes(type)){
-   score+=38;evidence.push('mapped scenic, historic or open-space feature');
-   kind=['beach','pier','marina','harbour','harbor','waterfront','promenade'].includes(type)?'coastal / waterfront':'environmental portrait';
+  if(['castle','fort','ruins','fortress','monument','bridge','beach','pier','marina','harbour','harbor','waterfront','park','garden','promenade','church','cathedral','chapel','monastery','abbey','palace','old town','lighthouse','village'].includes(type)||
+     ['castle','fort','palace','ruins','memorial'].includes(String(tags.historic||'').toLowerCase())||
+     ['park','garden','nature_reserve'].includes(String(tags.leisure||'').toLowerCase())||
+     ['river','canal','riverbank'].includes(String(tags.waterway||'').toLowerCase())){
+   score+=38;evidence.push('mapped scenic, historic, architectural or open-space feature');
+   kind=['beach','pier','marina','harbour','harbor','waterfront','promenade','river','canal'].includes(type)?'coastal / waterfront':
+    ['castle','fort','palace','ruins','church','cathedral','chapel','monastery','abbey','lighthouse','tower'].includes(type)?'architectural cityscape':'environmental portrait';
   }
   const ele=Number(tags.ele??r.ele??tags.elevation);
   if(Number.isFinite(ele)){score+=Math.min(20,Math.max(0,ele/100));evidence.push('mapped elevation '+ele+' m');}
@@ -2161,8 +2211,8 @@ function renderMarkers(){
   .sort((a,b)=>{
    const aEntrance=isParkingEntrance(a)?0:1;
    const bEntrance=isParkingEntrance(b)?0:1;
-   return (a.distance||Infinity)-(b.distance||Infinity) || aEntrance-bEntrance;
-  }).slice(0,3):[];
+   return aEntrance-bEntrance || (a.distance||Infinity)-(b.distance||Infinity);
+  }).slice(0,5):[];
  const parkingMarkers=map.getZoom()>=14.5?parking:clusterParkingMarkers(parking);
  // Keep each pin at its real geographic coordinate. Only include candidates
  // inside the viewport; pan/zoom causes a stable idle pass to fill new locations.
@@ -2213,7 +2263,7 @@ function renderMarkers(){
  // Force any missing items onto the map so a successful sidebar result cannot be invisible.
  if(state.selected&&state.spotParkingTargetId===state.selected.id){
   const represented=new Set(state.markers.flatMap(m=>(m.__scoutItems||[]).map(p=>p.id)));
-  state.spotParking.forEach(p=>{
+  state.spotParking.slice().sort((a,b)=>(isParkingEntrance(a)?0:1)-(isParkingEntrance(b)?0:1)||(a.distance||Infinity)-(b.distance||Infinity)).slice(0,5).forEach(p=>{
    if(represented.has(p.id)||!Number.isFinite(Number(p.lat))||!Number.isFinite(Number(p.lng)))return;
    const label='Mapped parking near '+state.selected.name+' · '+String(p.name||'parking point')+' · '+distanceLabel(p.distance||0);
    const el=markerEl('parking',label);
@@ -2317,6 +2367,11 @@ async function scanAt(c,opts){
   }
   // Keep marker geometry stable while source requests are settling. Render one
   // complete geographic result set below, rather than replacing all pins per source.
+  if(state.selected&&(state.selected.isUserPin||state.selected.isMapDrop)){
+   if(!state.selected.city&&state.detectedLocality)state.selected.city=state.detectedLocality;
+   renderSelectedShotIdeas(state.selected);
+   renderPinActionPreview(state.selected);
+  }
   applyLiveResults();
  };
  await Promise.all([
@@ -2371,7 +2426,13 @@ async function scanAt(c,opts){
  if(id!==state.scanId)return;
  state.scanPending=false;
  renderResults();renderPhotos();updateRadius();
- if(state.selected&&state.selected.isUserPin)renderDetailPhotoRefs(state.selected);
+ if(state.selected&&(state.selected.isUserPin||state.selected.isMapDrop)){
+  if(!state.selected.city)state.selected.city=state.detectedLocality||'';
+  renderSelectedShotIdeas(state.selected);
+  renderPinActionPreview(state.selected);
+  renderPinIdeaBoard(state.selected);
+  renderDetailPhotoRefs(state.selected);
+ }
  const parks=parkingCandidates().length;
  const histories=state.results.filter(r=>r.category==='history').length;
  const imageCount=state.photos.length;
@@ -2813,6 +2874,20 @@ function selectedShotIdeasFor(item){
   'Detail · 100–150 mm: look for textures, repeating shapes, silhouettes and compressed layers.'
  ];
 }
+function renderPinActionPreview(item){
+ if(!item)return;
+ const host=$('pinActionSketches');
+ const note=$('pinActionQuickIdea');
+ if(!host)return;
+ const modes=[
+  {mode:'wide',title:'Wide landscape',lens:'18–24 mm'},
+  {mode:'context',title:'Subject + context',lens:'35–70 mm'},
+  {mode:'compressed',title:'Distant layers',lens:'100–150 mm'}
+ ];
+ const seed=cardSeed(item.id||item.name||coordLabel(item));
+ host.innerHTML=modes.map((mode,index)=>'<article class="pin-action-sketch"><img src="'+esc(conceptSketchData(item,mode.mode,seed+index+71))+'" alt="'+esc(mode.title)+' sketch for '+esc(item.name||'this map pin')+'"><strong>'+esc(mode.title)+'</strong><small>R50 · '+esc(mode.lens)+'</small></article>').join('');
+ if(note)note.textContent=selectedShotIdeasFor(item)[0]||'Use foreground, subject and distant layers to build a stronger frame.';
+}
 function renderSelectedShotIdeas(item){
  if(!item)return;
  const image=$('selectedLocalSketch');
@@ -2963,6 +3038,7 @@ function selectItem(item,options){
  if(item.category==='parking')history='Mapped parking area/point from OpenStreetMap data. The marker may indicate the centre of a mapped lot, not its vehicle entrance. This does not confirm that parking is currently open, free, legal, safe, or available. Check the source geometry, approach road, access signs and restrictions before driving in.';
  const gear='Canon EOS R50 + RF-S 18–150mm: 18–24mm for a wide establishing frame, 35–70mm for city-with-context, 100–150mm to compress distant skyline and mountain layers.';
  renderSelectedShotIdeas(item);
+ renderPinActionPreview(item);
  renderPinIdeaBoard(item);
  $('detailHistory').innerHTML='<p>'+esc(history)+'</p>'+(item.category==='photoSpot'?'<p>'+esc(gear)+'</p>':'')+'<p><a class="footer-link" href="'+esc(safeLink(item.wikiUrl||item.sourceUrl||'#'))+'" target="_blank" rel="noopener">Open source / more history ↗</a></p>';
  renderSpotParking(item);
@@ -3074,10 +3150,10 @@ map.on('click',e=>{
   ['historic','tourism','amenity','building','natural','place','description','wikidata','wikipedia','leisure','waterway','highway','man_made'].forEach(k=>{if(p[k]!=null)tags[k]=p[k];});
   const kind=String(tags.historic||tags.tourism||tags.amenity||tags.building||tags.natural||tags.place||'').toLowerCase();
   const category=/parking/.test(kind)?'parking':/viewpoint/.test(kind)?'viewpoint':/historic|castle|monument|archaeological|church|museum|roman/.test((kind+' '+feature.name).toLowerCase())?'history':/building|architecture|cathedral|basilica|palace|tower|bridge/.test((kind+' '+feature.name).toLowerCase())?'architecture':'photoSpot';
-  item={id:'basemap-'+feature.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+clicked.lat.toFixed(5)+'-'+clicked.lng.toFixed(5),name:feature.name,lat:clicked.lat,lng:clicked.lng,distance:0,category,source:'Selected basemap feature · nearby points are loading',summary:'You clicked the map label “'+feature.name+'”. The pin is the clicked map coordinate, not necessarily the building entrance or exact viewing position. Nearby mapped places are being loaded around this point.',tags,city:'',scenicKind:category==='photoSpot'?'landscape and local views':undefined,why:'Selected directly on the map. This is a starting point for finding nearby photographic subjects; verify the actual sightline and safe access.'};
+  item={id:'basemap-'+feature.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+clicked.lat.toFixed(5)+'-'+clicked.lng.toFixed(5),name:feature.name,lat:clicked.lat,lng:clicked.lng,distance:0,category,isMapDrop:true,source:'Selected basemap feature · nearby points are loading',summary:'You clicked the map label “'+feature.name+'”. The pin is the clicked map coordinate, not necessarily the building entrance or exact viewing position. Nearby mapped places are being loaded around this point.',tags,city:'',scenicKind:category==='photoSpot'?'landscape and local views':undefined,why:'Selected directly on the map. This is a starting point for finding nearby photographic subjects; verify the actual sightline and safe access.'};
  }else{
   const coords=clicked.lat.toFixed(5)+', '+clicked.lng.toFixed(5);
-  item={id:'map-pin-'+clicked.lat.toFixed(5)+'-'+clicked.lng.toFixed(5),name:'Map pin · '+coords,lat:clicked.lat,lng:clicked.lng,distance:0,category:'photoSpot',source:'Your selected map pin',summary:'A user-selected map coordinate. Nearby landmarks, architecture, nature and parking are being searched around this point.',tags:{},city:'',scenicKind:'local landscape and streetscape',why:'Creative ideas for the clicked area. The exact viewpoint and access are not verified.'};
+  item={id:'map-pin-'+clicked.lat.toFixed(5)+'-'+clicked.lng.toFixed(5),name:'Map pin · '+coords,lat:clicked.lat,lng:clicked.lng,distance:0,category:'photoSpot',isMapDrop:true,source:'Your selected map pin',summary:'A user-selected map coordinate. Nearby landmarks, architecture, nature and parking are being searched around this point.',tags:{},city:'',scenicKind:'local landscape and streetscape',why:'Creative ideas for the clicked area. The exact viewpoint and access are not verified.'};
  }
  selectItem(item,{keepMapView:true});
 });
