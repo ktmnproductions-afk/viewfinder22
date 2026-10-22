@@ -344,6 +344,7 @@ jobs:
                   architecture:nodes.filter(n=>n.classList.contains('architecture')).length,
                   viewpoint:nodes.filter(n=>n.classList.contains('viewpoint')).length,
                   photoSpot:nodes.filter(n=>n.classList.contains('photoSpot')).length,
+                  inferredViewpoint:nodes.filter(n=>n.classList.contains('inferred-viewpoint-pin')).length,
                   parking:nodes.filter(n=>n.classList.contains('parking')).length,
                   visibleNameLabels:nodes.filter(n=>n.classList.contains('show-pin-label')).length
                 };
@@ -368,22 +369,23 @@ jobs:
                   markerStability.maxIconCenterErrorPx > 2) {
                 throw new Error('Unchanged map idle renders must reuse marker DOM nodes: ' + JSON.stringify(markerStability));
               }
-              if(!livePinDiagnostics.mapReady || livePinDiagnostics.legendButtons!==5) {
-                throw new Error('The map must expose all five interactive pin layers: '+JSON.stringify(livePinDiagnostics));
+              if(!livePinDiagnostics.mapReady || livePinDiagnostics.legendButtons!==6) {
+                throw new Error('The map must expose six interactive pin layers: '+JSON.stringify(livePinDiagnostics));
               }
               if(!livePinDiagnostics.mapBox || livePinDiagnostics.mapBox.width<livePinDiagnostics.viewport.width*.95 ||
                  !livePinDiagnostics.canvasBox || livePinDiagnostics.canvasBox.width<livePinDiagnostics.viewport.width*.95) {
                 throw new Error('The map canvas must use the full viewport width: '+JSON.stringify(livePinDiagnostics));
               }
               if(livePinDiagnostics.domCounts.landmark+livePinDiagnostics.domCounts.architecture+
-                 livePinDiagnostics.domCounts.viewpoint+livePinDiagnostics.domCounts.photoSpot===0) {
+                 livePinDiagnostics.domCounts.viewpoint+livePinDiagnostics.domCounts.photoSpot+livePinDiagnostics.domCounts.inferredViewpoint===0) {
                 throw new Error('The real scan produced no visible landmark, building, viewpoint or photo-spot pins: '+JSON.stringify(livePinDiagnostics));
               }
               const missingPinForRealResult=
                 (livePinDiagnostics.dataInView.history>0&&livePinDiagnostics.domCounts.landmark===0)||
                 (livePinDiagnostics.dataInView.architecture>0&&livePinDiagnostics.domCounts.architecture===0)||
                 (livePinDiagnostics.dataInView.viewpoint>0&&livePinDiagnostics.domCounts.viewpoint===0)||
-                (livePinDiagnostics.dataInView.scenic>0&&livePinDiagnostics.domCounts.photoSpot===0);
+                (livePinDiagnostics.dataInView.scenic>0&&livePinDiagnostics.domCounts.photoSpot===0)||
+                 (livePinDiagnostics.dataInView.inferredViewpoint>0&&livePinDiagnostics.domCounts.inferredViewpoint===0);
               if(missingPinForRealResult) {
                 throw new Error('Real in-view geographic records are missing matching visible pins: '+JSON.stringify(livePinDiagnostics));
               }
@@ -542,7 +544,7 @@ jobs:
               const markerFixture = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.renderMarkerFixture());
               if (markerFixture.landmark < 1 || markerFixture.architecture < 1 ||
                   markerFixture.viewpoint < 1 || markerFixture.photoSpot < 1 ||
-                  markerFixture.parking < 1 || markerFixture.svgIcons < 3 ||
+                  markerFixture.parking < 1 || markerFixture.inferredViewpoint < 1 || markerFixture.inferredIcon < 1 || markerFixture.svgIcons < 3 ||
                   !markerFixture.exactCoordinates || !markerFixture.zeroOffsets) {
                 throw new Error('Map feature markers must remain on their exact geographic coordinates with no visual offsets: ' + JSON.stringify(markerFixture));
               }
