@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#e9e2d2">
+<meta name="description" content="An uncertainty-aware 3D terrain reconstruction of the Battle of Kosovo Polje, 1389, using real elevation data and clearly marked schematic troop zones.">
+<title>Map Art Lab — Kosovo Polje, 1389</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#e9e2d2;--panel:#f5f0e4ed;--ink:#292c25;--muted:#73776b;--line:#9c9a8866;--green:#3d6150;--red:#8a4039;--gold:#a77b3c;--blue:#607c88;--serif:"Cormorant Garamond",Georgia,serif;--mono:"DM Mono",monospace;--sans:"DM Sans",Arial,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);font-family:var(--sans)}
+button,a,input{font:inherit}
+button{cursor:pointer}
+#stage{position:absolute;inset:0}
+#stage canvas{display:block;width:100%;height:100%;outline:0}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.12;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");mix-blend-mode:multiply}
+header{position:absolute;z-index:10;left:18px;right:18px;top:15px;display:flex;align-items:center;justify-content:space-between;gap:12px;pointer-events:none}
+.brand{pointer-events:auto;display:flex;align-items:center;gap:11px;padding:10px 13px;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(13px);color:var(--ink);text-decoration:none;box-shadow:0 7px 24px #524b3714}
+.mark{width:30px;height:30px;border:1px solid #7c8b77;border-radius:50%;display:grid;place-items:center;font:italic 20px var(--serif);color:var(--green)}
+.brand strong{display:block;font:600 10px var(--mono);letter-spacing:.13em}
+.brand small{display:block;margin-top:3px;font:8px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.actions{display:flex;gap:7px;align-items:center;pointer-events:auto;flex-wrap:wrap;justify-content:flex-end}
+.btn{border:1px solid var(--line);background:#f6f1e5e8;color:var(--ink);padding:9px 12px;font:500 9px var(--mono);letter-spacing:.03em;box-shadow:0 4px 16px #453c2b0d}
+.btn:hover,.btn.active{background:#e3dfcf;border-color:#777e6c}
+.btn.primary{background:#3e5d4c;color:#f8f3e7;border-color:#3e5d4c}
+.panel{position:absolute;z-index:8;top:82px;left:18px;width:340px;max-height:calc(100dvh - 168px);overflow:auto;background:var(--panel);border:1px solid var(--line);box-shadow:0 16px 50px #3a33251c;backdrop-filter:blur(18px);padding:16px 17px 14px}
+.eyebrow{font:500 8px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#737b68}
+h1{font:500 36px/.92 var(--serif);letter-spacing:-.035em;margin:10px 0}
+.lede{font-size:11px;line-height:1.6;color:#63675d;margin:8px 0 13px}
+.rule{height:1px;background:var(--line);margin:13px 0}
+.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.sectionhead strong{font:600 9px var(--mono);letter-spacing:.09em;text-transform:uppercase}
+.sectionhead span{font:8px var(--mono);color:var(--muted)}
+.meta{font-size:10px;line-height:1.55;color:#53584e}
+.meta strong{color:#30362d;font-weight:600}
+.date{font:500 22px/.98 var(--serif);letter-spacing:-.02em;margin:5px 0 4px}
+.chip{display:inline-block;border:1px solid #a39a814c;padding:4px 6px;margin:5px 4px 0 0;color:#656757;font:8px var(--mono);letter-spacing:.04em}
+.force{display:grid;grid-template-columns:12px 1fr;gap:8px;align-items:start;margin:9px 0}
+.swatch{height:10px;width:10px;border-radius:50%;margin-top:3px}
+.force strong{font-size:10px;display:block;margin-bottom:3px}
+.force span{font-size:9px;line-height:1.45;color:#66685e;display:block}
+.note{font-size:9px;line-height:1.55;color:#68695f;background:#e8e1d2a8;border-left:2px solid #a48d64;padding:8px 9px;margin-top:9px}
+.status{display:flex;align-items:center;gap:7px;font:8px var(--mono);letter-spacing:.05em;color:#62695d;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.led{width:7px;height:7px;border-radius:50%;background:#bf9657;flex:none}
+.status[data-state=ready] .led{background:#4e7b60}.status[data-state=error] .led{background:#9e5146}
+.sources{font-size:9px;line-height:1.55;color:#68695f}
+.sources a{color:#3e6553;text-decoration:underline;text-underline-offset:2px}
+.hud{position:absolute;right:20px;top:90px;z-index:6;max-width:242px;padding:12px 14px;background:#f5f0e4d9;border:1px solid var(--line);backdrop-filter:blur(13px)}
+.hud .kicker{font:8px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#757968}
+.hud h2{font:500 28px/.93 var(--serif);letter-spacing:-.025em;margin:8px 0}
+.hud p{font-size:10px;line-height:1.5;color:#64685d;margin:0}
+.hud .coords{margin-top:9px;font:8px var(--mono);color:#73766a}
+.legend{display:flex;flex-direction:column;gap:7px;margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:9px;color:#565b50}
+.legend-dot{width:9px;height:9px;border-radius:50%;flex:none}
+.legend-dash{width:20px;border-top:2px dashed #84795c;flex:none}
+.timeline{position:absolute;z-index:9;left:18px;right:18px;bottom:14px;background:#f5f0e4ee;border:1px solid var(--line);box-shadow:0 15px 50px #3a33251b;backdrop-filter:blur(18px);padding:12px 14px 10px}
+.timeline-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.timeline-title{font:600 9px var(--mono);letter-spacing:.13em;text-transform:uppercase;color:#68705f}
+.timeline-title b{font:500 14px var(--serif);letter-spacing:0;color:#2d3329;margin-left:7px}
+.timeline-actions{display:flex;gap:6px}
+.timeline-actions .btn{padding:7px 9px}
+.range{width:100%;accent-color:#526c55;cursor:pointer;margin:11px 0 4px}
+.ticks{display:flex;justify-content:space-between;gap:8px;color:#77776b;font:8px var(--mono)}
+.phase-note{font-size:9px;line-height:1.45;color:#696c61;margin-top:7px;min-height:14px}
+.scale{position:absolute;z-index:5;left:375px;bottom:102px;font:8px var(--mono);color:#767669;letter-spacing:.04em}
+@media(max-width:760px){
+ header{left:8px;right:8px;top:8px;align-items:flex-start}.brand{padding:7px}.brand small{display:none}.mark{width:25px;height:25px}.actions{gap:4px}.actions .btn{padding:8px 7px;font-size:8px}.actions #sourceBtn{display:none}
+ .panel{left:8px;top:57px;width:min(330px,calc(100vw - 16px));max-height:calc(100dvh - 180px);padding:12px}
+ .hud{right:8px;top:auto;bottom:165px;max-width:min(195px,45vw);padding:9px}.hud h2{font-size:22px}.hud p{font-size:9px}.legend{gap:5px}.legend-item{font-size:8px}
+ .timeline{left:8px;right:8px;bottom:8px;padding:9px}.timeline-top{align-items:flex-start;flex-direction:column}.timeline-actions{width:100%}.timeline-actions .btn{flex:1}.scale{left:10px;bottom:143px}.timeline .range{margin-top:7px}
+}
+@media(max-width:430px){.panel{width:min(305px,calc(100vw - 16px))}.hud{max-width:158px}.hud .coords{font-size:7px}.brand strong{font-size:9px}.brand small{display:none}.actions #mapBtn{display:none}}
+</style>
+</head>
+<body>
+<div id="stage"></div><div class="grain"></div>
+<header>
+ <a class="brand" href="./index.html" aria-label="Back to Map Art Lab"><span class="mark">K</span><span><strong>KOSOVO POLJE / 1389</strong><small>Historical terrain study · 01</small></span></a>
+ <div class="actions">
+  <button class="btn active" id="panelBtn" aria-expanded="true">Historical notes</button>
+  <button class="btn" id="viewBtn">Top view</button>
+  <button class="btn" id="playBtn">Play phases</button>
+  <button class="btn primary" id="recordBtn">Record 12s</button>
+  <a class="btn" id="mapBtn" href="./index.html" style="text-decoration:none">Map Art Lab ↗</a>
+ </div>
+</header>
+<aside class="panel" id="panel">
+ <div class="eyebrow">Battlefield reconstruction / 01</div>
+ <h1>The Field of<br>Blackbirds.</h1>
+ <p class="lede">An elevation-based, 3D interpretation of the Battle of Kosovo Polje. The landform uses modern elevation data; force zones show a broad, schematic reconstruction—not verified medieval positions.</p>
+ <div class="rule"></div>
+ <div class="sectionhead"><strong>Date & place</strong><span>14TH CENTURY</span></div>
+ <div class="date">15 June 1389</div>
+ <div class="meta">Julian calendar date commonly used in historical accounts; often rendered as <strong>28 June 1389</strong> in the proleptic Gregorian calendar. Some records differ in their dating.</div>
+ <span class="chip">KOSOVO FIELD / POLJE</span><span class="chip">NEAR PRIŠTINA</span>
+ <div class="rule"></div>
+ <div class="sectionhead"><strong>Forces represented</strong><span>NO FIXED COUNTS</span></div>
+ <div class="force"><i class="swatch" style="background:#4c6876"></i><div><strong>Serbian-led coalition</strong><span>Prince Lazar Hrebeljanović; Vuk Branković; a Bosnian contingent led by Vlatko Vuković.</span></div></div>
+ <div class="force"><i class="swatch" style="background:#923f37"></i><div><strong>Ottoman army</strong><span>Sultan Murad I; his sons Bayezid and Yakub appear in later accounts of the command structure.</span></div></div>
+ <div class="note">Army strengths, exact line positions and the sequence of manoeuvres are disputed or poorly documented. The colored areas are deliberately broad; they are not troop counts, unit formations or surveyed coordinates.</div>
+ <div class="rule"></div>
+ <div class="sectionhead"><strong>Read the terrain</strong><span>REAL ELEVATION</span></div>
+ <div class="meta">The relief mesh is generated from AWS Terrarium elevation tiles. It shows today's terrain shape, not a recovered 1389 landscape or period land cover. No satellite photograph is used as if it were medieval evidence.</div>
+ <div class="status" id="status" data-state="loading"><span class="led"></span><span id="statusText">Loading elevation tiles…</span></div>
+ <div class="rule"></div>
+ <div class="sectionhead"><strong>Sources & limitations</strong><span>READ CRITICALLY</span></div>
+ <div class="sources">
+  <p><a href="https://isamveri.org/pdfdkm/11/DKM111628.pdf" target="_blank" rel="noreferrer">Stephen W. Reinert, “Kosovo Polje, first battle of”</a> — overview of the battle and date/location traditions.</p>
+  <p><a href="https://ojs.acrps.ai/index.php/ostour/en/article/view/issue002-art04" target="_blank" rel="noreferrer">Muhammed Al-Arnaout, “The Battle of Kosovo 1389: From Myth Making to Ideology”</a> — emphasizes how fragmentary the earliest accounts are.</p>
+  <p><a href="https://dtk.rks-gov.net/Objekti?heritageId=8970" target="_blank" rel="noreferrer">Kosovo heritage register: Sultan Murad’s Tomb</a> — historic heritage anchor at Mazgit; not plotted as the exact place where he fell.</p>
+ </div>
+</aside>
+<div class="hud">
+ <div class="kicker" id="phaseKicker">Phase 01 / 04 · approach</div>
+ <h2 id="phaseTitle">The armies<br>converge.</h2>
+ <p id="phaseDescription">Approach directions are illustrative. The sources do not give a reliable surveyed deployment map.</p>
+ <div class="coords">BATTLEFIELD ANCHOR · 42.6907° N / 21.1238° E</div>
+ <div class="legend">
+  <div class="legend-item"><i class="legend-dot" style="background:#4c6876"></i>Serbian-led coalition · schematic zone</div>
+  <div class="legend-item"><i class="legend-dot" style="background:#923f37"></i>Ottoman host · schematic zone</div>
+  <div class="legend-item"><i class="legend-dash"></i>Proposed movement · not a measured route</div>
+ </div>
+</div>
+<div class="scale" id="scaleNote">REAL DEM · AWS TERRARIUM · VERTICAL RELIEF EXAGGERATED</div>
+<div class="timeline">
+ <div class="timeline-top"><div class="timeline-title">Interpretive sequence <b>— <span id="phaseLabel">01 · Approach</span></b></div><div class="timeline-actions"><button class="btn" id="prevBtn">←</button><button class="btn" id="nextBtn">Next →</button><button class="btn" id="stopBtn">Stop</button></div></div>
+ <input class="range" id="phaseSlider" type="range" min="0" max="3" step="1" value="0" aria-label="Historical reconstruction phase">
+ <div class="ticks"><span>01 · Approach</span><span>02 · Engagement</span><span>03 · Disputed tactics</span><span>04 · Aftermath</span></div>
+ <div class="phase-note" id="timelineNote">Force zones and approach arrows are schematic and intentionally do not imply precise troop counts or exact positions.</div>
+</div>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.180.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.180.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const $ = id => document.getElementById(id);
+const BATTLE = {lat:42.69074,lon:21.12375};
+const TOMB = {lat:42.70203,lon:21.10469};
+const GAZIMESTAN = {lat:42.68979,lon:21.12281};
+const PRISTINA = {lat:42.6629,lon:21.1655};
+const COALITION = {lat:42.6968,lon:21.1065};
+const OTTOMAN = {lat:42.6848,lon:21.1400};
+const MAP_ZOOM=11,DEM_ZOOM=13,DEM_SCALE=Math.pow(2,DEM_ZOOM-MAP_ZOOM);
+const TILE_UNITS=12,SEGMENTS=256,HEIGHT_SCALE=0.00125;
+const PHASES=[
+ {name:'Approach',title:'The armies<br>converge.',description:'Approach directions are illustrative. The sources do not give a reliable surveyed deployment map.',note:'Broad force zones and dashed approach arrows are schematic. No fixed troop counts or exact positions are asserted.'},
+ {name:'Engagement',title:'The field<br>in conflict.',description:'The battle is established in the sources, but dependable hour-by-hour descriptions are lacking.',note:'The central contact band indicates the general battle area, not a documented frontline.'},
+ {name:'Disputed tactics',title:'Tradition is<br>not a map.',description:'Later narratives describe charges and counter-movements; their sequence and geography cannot be pinned down securely.',note:'Dashed opposing arrows visualize one family of later tactical narratives. They are conjectural, not a verified reconstruction.'},
+ {name:'Aftermath',title:'Two rulers<br>did not return.',description:'Murad I died during the fighting. Lazar was captured and executed after the battle in the commonly reported later account.',note:'No death site is pinpointed: the surviving evidence does not securely establish either ruler’s exact location at the moment of death.'}
+];
+let tileOrigin={x:0,y:0},demCanvas=null,demPixels=null,demStats={loaded:0,failed:0},terrainMesh=null,terrainMaterial=null,terrainGeometry=null;
+let scene,camera,renderer,controls,terrainGroup,historyGroup,zonesGroup,approachGroup,engagementGroup,traditionGroup,afterGroup;
+let phase=0,timelineTimer=null,recordTimer=null,recorder=null,recordStream=null,recordBase=null,recording=false,initialCamera=null,topView=false,frameToken=0;
+function status(message,state='loading'){$('status').dataset.state=state;$('statusText').textContent=message;}
+function tileFor(lon,lat,z){
+ const n=Math.pow(2,z),r=lat*Math.PI/180;
+ return {x:(lon+180)/360*n,y:(1-Math.asinh(Math.tan(r))/Math.PI)/2*n};
+}
+function tileUrl(z,x,y){return 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/'+z+'/'+x+'/'+y+'.png';}
+function loadImage(url,timeout=15000){
+ return new Promise((resolve,reject)=>{
+  const img=new Image();let done=false;
+  const timer=setTimeout(()=>{if(!done){done=true;img.src='';reject(new Error('Tile request timed out'));}},timeout);
+  img.crossOrigin='anonymous';
+  img.onload=()=>{if(done)return;done=true;clearTimeout(timer);resolve(img);};
+  img.onerror=()=>{if(done)return;done=true;clearTimeout(timer);reject(new Error('Elevation tile unavailable'));};
+  img.src=url;
+ });
+}
+async function concurrent(items,limit,work){
+ let index=0;
+ await Promise.all(Array.from({length:Math.min(limit,items.length)},async()=>{
+  while(index<items.length){const item=items[index++];await work(item);}
+ }));
+}
+function encodeTerrarium(meters){
+ const v=Math.max(0,Math.round(meters+32768));
+ return [Math.min(255,Math.floor(v/256)),Math.min(255,v%256),0,255];
+}
+async function buildDEMCanvas(){
+ const origin=tileFor(BATTLE.lon,BATTLE.lat,MAP_ZOOM);
+ tileOrigin={x:Math.floor(origin.x),y:Math.floor(origin.y)};
+ const width=256*DEM_SCALE;
+ const canvas=document.createElement('canvas');canvas.width=width;canvas.height=width;
+ const ctx=canvas.getContext('2d',{willReadFrequently:true});
+ const [r,g,b,a]=encodeTerrarium(550);
+ ctx.fillStyle='rgb('+r+','+g+','+b+')';ctx.fillRect(0,0,width,width);
+ const jobs=[];
+ for(let ty=0;ty<DEM_SCALE;ty++)for(let tx=0;tx<DEM_SCALE;tx++){
+  jobs.push({x:tileOrigin.x*DEM_SCALE+tx,y:tileOrigin.y*DEM_SCALE+ty,dx:tx*256,dy:ty*256});
+ }
+ let loaded=0,failed=0;
+ await concurrent(jobs,8,async job=>{
+  try{const img=await loadImage(tileUrl(DEM_ZOOM,job.x,job.y));ctx.drawImage(img,job.dx,job.dy,256,256);loaded++;}
+  catch(e){failed++;}
+  $('statusText').textContent='Elevation tiles '+loaded+'/'+jobs.length;
+ });
+ demStats={loaded,failed};demCanvas=canvas;
+ demPixels=ctx.getImageData(0,0,width,width);
+ if(loaded===0)throw new Error('No elevation tiles loaded');
+ return canvas;
+}
+function elevationFromPixel(data,i){return data[i]*256+data[i+1]+data[i+2]/256-32768;}
+function elevationAtUV(u,v){
+ if(!demPixels)return 550;
+ const w=demPixels.width,h=demPixels.height;
+ const x=Math.max(0,Math.min(w-1,Math.round(u*(w-1))));
+ const y=Math.max(0,Math.min(h-1,Math.round(v*(h-1))));
+ return elevationFromPixel(demPixels.data,(y*w+x)*4);
+}
+function terrainY(u,v){
+ const elev=elevationAtUV(u,v);
+ return THREE.MathUtils.clamp((elev-550)*HEIGHT_SCALE*Number($('relief').value),-0.65,0.9);
+}
+function paintTerrainTexture(){
+ const w=demPixels.width,h=demPixels.height,data=demPixels.data;
+ const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+ const ctx=canvas.getContext('2d',{willReadFrequently:true}),out=ctx.createImageData(w,h),dst=out.data;
+ const stops=[[0,[192,179,137]],[0.18,[176,179,132]],[0.42,[145,157,116]],[0.65,[128,149,123]],[0.84,[137,153,145]],[1,[201,193,165]]];
+ const elevation=(x,y)=>elevationFromPixel(data,(Math.max(0,Math.min(h-1,y))*w+Math.max(0,Math.min(w-1,x)))*4);
+ for(let y=0;y<h;y++){
+  for(let x=0;x<w;x++){
+   const i=(y*w+x)*4;
+   const e=elevationFromPixel(data,i);
+   const t=THREE.MathUtils.clamp((e-480)/360,0,1);
+   let lo=stops[0],hi=stops[stops.length-1];
+   for(let k=0;k<stops.length-1;k++){if(t>=stops[k][0]&&t<=stops[k+1][0]){lo=stops[k];hi=stops[k+1];break;}}
+   const p=(t-lo[0])/Math.max(.0001,hi[0]-lo[0]);
+   const dx=elevation(x+1,y)-elevation(x-1,y),dy=elevation(x,y+1)-elevation(x,y-1);
+   const shade=THREE.MathUtils.clamp(.94+(dx-dy)*.012,.62,1.1);
+   dst[i]=Math.round((lo[1][0]+(hi[1][0]-lo[1][0])*p)*shade);
+   dst[i+1]=Math.round((lo[1][1]+(hi[1][1]-lo[1][1])*p)*shade);
+   dst[i+2]=Math.round((lo[1][2]+(hi[1][2]-lo[1][2])*p)*shade);
+   dst[i+3]=255;
+  }
+ }
+ ctx.putImageData(out,0,0);
+ const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());tex.needsUpdate=true;return tex;
+}
+function buildTerrain(){
+ const w=SEGMENTS+1,positions=new Float32Array(w*w*3),uvs=new Float32Array(w*w*2),indices=[];
+ let min=Infinity,max=-Infinity,sum=0,count=0;
+ for(let row=0;row<w;row++){
+  const v=row/SEGMENTS,py=Math.min(demCanvas.height-1,Math.round(v*(demCanvas.height-1)));
+  for(let col=0;col<w;col++){
+   const u=col/SEGMENTS,px=Math.min(demCanvas.width-1,Math.round(u*(demCanvas.width-1)));
+   const e=elevationFromPixel(demPixels.data,(py*demCanvas.width+px)*4),i=row*w+col;
+   positions[i*3]=(u-.5)*TILE_UNITS;positions[i*3+1]=THREE.MathUtils.clamp((e-550)*HEIGHT_SCALE*Number($('relief').value),-.65,.9);positions[i*3+2]=(.5-v)*TILE_UNITS;
+   uvs[i*2]=u;uvs[i*2+1]=1-v;min=Math.min(min,e);max=Math.max(max,e);sum+=e;count++;
+  }
+ }
+ for(let row=0;row<SEGMENTS;row++)for(let col=0;col<SEGMENTS;col++){const a=row*w+col,b=a+1,c=a+w,d=c+1;indices.push(a,b,c,b,d,c);}
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));geo.setAttribute('uv',new THREE.BufferAttribute(uvs,2));geo.setIndex(indices);geo.computeVertexNormals();
+ if(terrainMesh){terrainGroup.remove(terrainMesh);terrainMesh.geometry.dispose();terrainMesh.material.map?.dispose();terrainMesh.material.dispose();}
+ terrainGeometry=geo;
+ const tex=paintTerrainTexture();
+ terrainMaterial=new THREE.MeshStandardMaterial({map:tex,color:'#ffffff',roughness:.96,metalness:0,side:THREE.DoubleSide});
+ terrainMesh=new THREE.Mesh(geo,terrainMaterial);terrainMesh.receiveShadow=true;terrainGroup.add(terrainMesh);
+ $('scaleNote').textContent='REAL DEM · '+Math.round(min)+'–'+Math.round(max)+' M ELEVATION · RELIEF EXAGGERATED';
+}
+function latLonToWorld(lat,lon){
+ const p=tileFor(lon,lat,MAP_ZOOM),u=p.x-tileOrigin.x,v=p.y-tileOrigin.y;
+ return new THREE.Vector3((u-.5)*TILE_UNITS,terrainY(u,v),(0.5-v)*TILE_UNITS);
+}
+function addSpriteLabel(parent,text,position,opts={}){
+ const canvas=document.createElement('canvas');canvas.width=640;canvas.height=150;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle=opts.background||'rgba(246,241,228,0.90)';
+ ctx.strokeStyle=opts.border||'rgba(87,91,75,0.45)';ctx.lineWidth=3;ctx.fillRect(8,8,624,134);ctx.strokeRect(8,8,624,134);
+ ctx.fillStyle=opts.color||'#2f352d';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.font='600 30px "DM Sans", Arial, sans-serif';ctx.fillText(text,320,75,580);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ const mat=new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false});
+ const sprite=new THREE.Sprite(mat);sprite.position.copy(position);sprite.scale.set(opts.width||2.15,opts.height||.5,1);sprite.renderOrder=20;parent.add(sprite);return sprite;
+}
+function addPin(parent,geo,label,color,opts={}){
+ const p=latLonToWorld(geo.lat,geo.lon);p.y+=.09;
+ const ball=new THREE.Mesh(new THREE.SphereGeometry(opts.radius||.075,16,12),new THREE.MeshStandardMaterial({color,roughness:.4,metalness:.05}));
+ ball.position.copy(p);ball.position.y+=.05;ball.castShadow=true;parent.add(ball);
+ const halo=new THREE.Mesh(new THREE.RingGeometry(.11,.14,40),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.9,side:THREE.DoubleSide,depthTest:false}));
+ halo.rotation.x=-Math.PI/2;halo.position.set(p.x,p.y+.015,p.z);parent.add(halo);
+ const labPos=p.clone();labPos.y+=opts.labelY||.55;
+ addSpriteLabel(parent,label,labPos,{width:opts.width||2.5,height:.42,background:'rgba(247,242,230,.88)',border:'rgba(99,95,78,.45)',color:'#34392e'});
+ return {position:p,ball,halo};
+}
+function addZone(parent,geo,color,label){
+ const p=latLonToWorld(geo.lat,geo.lon);const y=p.y+.12;
+ const disk=new THREE.Mesh(new THREE.CircleGeometry(.88,64),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.23,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2}));
+ disk.rotation.x=-Math.PI/2;disk.position.set(p.x,y,p.z);disk.scale.set(1.48,.78,1);parent.add(disk);
+ const ring=new THREE.Mesh(new THREE.RingGeometry(.91,.95,64),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.86,depthWrite:false,side:THREE.DoubleSide}));
+ ring.rotation.x=-Math.PI/2;ring.position.set(p.x,y+.015,p.z);ring.scale.set(1.48,.78,1);parent.add(ring);
+ const labelPos=p.clone();labelPos.y+=.6;
+ addSpriteLabel(parent,label,labelPos,{width:2.8,height:.45,background:'rgba(245,240,228,.94)',border:color,color:'#2f352e'});
+ return {position:p,disk,ring};
+}
+function addGeoArrow(parent,start,end,color,dashed=true){
+ const points=[],steps=36;
+ for(let i=0;i<=steps;i++){
+  const t=i/steps,lat=start.lat+(end.lat-start.lat)*t,lon=start.lon+(end.lon-start.lon)*t;
+  const p=latLonToWorld(lat,lon);p.y+=.19;points.push(p);
+ }
+ const geo=new THREE.BufferGeometry().setFromPoints(points);
+ const mat=dashed?new THREE.LineDashedMaterial({color,dashSize:.15,gapSize:.1,transparent:true,opacity:.92,depthTest:false}):new THREE.LineBasicMaterial({color,transparent:true,opacity:.88,depthTest:false});
+ const line=new THREE.Line(geo,mat);if(dashed)line.computeLineDistances();line.renderOrder=15;parent.add(line);
+ const endP=points[points.length-1],prev=points[points.length-3],dir=new THREE.Vector3(endP.x-prev.x,0,endP.z-prev.z).normalize();
+ const head=new THREE.Mesh(new THREE.ConeGeometry(.14,.38,7),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.95,depthTest:false}));
+ head.position.set(endP.x,endP.y+.01,endP.z);head.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);head.renderOrder=16;parent.add(head);
+ return {line,head};
+}
+function clearGroup(group){
+ while(group.children.length){
+  const obj=group.children.pop();
+  group.remove(obj);
+  obj.traverse?.(child=>{
+   if(child.geometry)child.geometry.dispose();
+   if(child.material){const mats=Array.isArray(child.material)?child.material:[child.material];mats.forEach(m=>{m.map?.dispose();m.dispose();});}
+  });
+ }
+}
+function setupBattleOverlays(){
+ clearGroup(historyGroup);clearGroup(zonesGroup);clearGroup(approachGroup);clearGroup(engagementGroup);clearGroup(traditionGroup);clearGroup(afterGroup);
+ const coalition=addZone(zonesGroup,COALITION,0x4c6876,'SERBIAN-LED COALITION');
+ const ottoman=addZone(zonesGroup,OTTOMAN,0x923f37,'OTTOMAN HOST');
+ addPin(historyGroup,BATTLE,'APPROX. BATTLEFIELD',0xa77b3c,{width:2.55,labelY:.78});
+ addPin(historyGroup,TOMB,'MURAD’S TOMB · MAZGIT',0x907147,{width:2.55,labelY:.78});
+ addPin(historyGroup,GAZIMESTAN,'GAZIMESTAN · MODERN MEMORIAL',0x66765c,{width:3.15,labelY:.65,radius:.055});
+ addPin(historyGroup,PRISTINA,'PRIŠTINA · MODERN REFERENCE',0x6e7565,{width:2.75,labelY:.58,radius:.05});
+ addGeoArrow(approachGroup,{lat:COALITION.lat+.008,lon:COALITION.lon-.008},{lat:BATTLE.lat,lon:BATTLE.lon-.001},0x4c6876,true);
+ addGeoArrow(approachGroup,{lat:OTTOMAN.lat-.007,lon:OTTOMAN.lon+.007},{lat:BATTLE.lat,lon:BATTLE.lon+.002},0x923f37,true);
+ const center=latLonToWorld(BATTLE.lat,BATTLE.lon);center.y+=.13;
+ const contact=new THREE.Mesh(new THREE.CircleGeometry(.72,72),new THREE.MeshBasicMaterial({color:0x9a8056,transparent:true,opacity:.18,depthWrite:false,side:THREE.DoubleSide}));
+ contact.rotation.x=-Math.PI/2;contact.position.copy(center);engagementGroup.add(contact);
+ const contactRing=new THREE.Mesh(new THREE.RingGeometry(.72,.76,72),new THREE.MeshBasicMaterial({color:0x91774f,transparent:true,opacity:.75,depthWrite:false,side:THREE.DoubleSide}));
+ contactRing.rotation.x=-Math.PI/2;contactRing.position.y+=.012;contactRing.position.x=center.x;contactRing.position.z=center.z;engagementGroup.add(contactRing);
+ addGeoArrow(traditionGroup,COALITION,OTTOMAN,0x4c6876,true);
+ addGeoArrow(traditionGroup,OTTOMAN,{lat:42.6918,lon:21.117},0x923f37,true);
+ addSpriteLabel(traditionGroup,'LATER TACTICAL NARRATIVES · DISPUTED',{x:0,y:0,z:0},{}).position.set(center.x,center.y+.9,center.z);
+ const afterLabel=center.clone();afterLabel.y+=1.15;
+ addSpriteLabel(afterGroup,'OUTCOME KNOWN · EXACT DEATH SITES UNKNOWN',afterLabel,{width:3.4,height:.48,background:'rgba(238,230,209,.97)',border:'#a77b3c'});
+ historyGroup.visible=true;zonesGroup.visible=true;
+}
+function setPhase(index){
+ phase=THREE.MathUtils.clamp(Math.round(index),0,3);
+ const data=PHASES[phase];
+ $('phaseSlider').value=String(phase);$('phaseLabel').textContent=String(phase+1).padStart(2,'0')+' · '+data.name;
+ $('phaseKicker').textContent='Phase '+String(phase+1).padStart(2,'0')+' / 04 · '+data.name.toLowerCase();
+ $('phaseTitle').innerHTML=data.title;$('phaseDescription').textContent=data.description;$('timelineNote').textContent=data.note;
+ approachGroup.visible=phase===0;engagementGroup.visible=phase===1;traditionGroup.visible=phase===2;afterGroup.visible=phase===3;
+ zonesGroup.visible=phase!==3;
+ historyGroup.visible=true;
+}
+function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+function stopTimeline(){
+ if(timelineTimer){clearTimeout(timelineTimer);timelineTimer=null;}
+ $('playBtn').textContent='Play phases';$('playBtn').classList.remove('active');
+}
+function playTimeline(){
+ if(timelineTimer){stopTimeline();return;}
+ $('playBtn').textContent='Pause phases';$('playBtn').classList.add('active');
+ let token=frameToken;
+ const step=()=>{
+  if(token!==frameToken||!$('playBtn').classList.contains('active'))return;
+  setPhase((phase+1)%PHASES.length);
+  timelineTimer=setTimeout(step,3000);
+ };
+ timelineTimer=setTimeout(step,250);
+}
+function setCameraView(top){
+ topView=top;const target=latLonToWorld(BATTLE.lat,BATTLE.lon);target.y+=.1;
+ const radius=top?9.7:9.9;
+ camera.position.set(target.x+(top?.02:6.7),target.y+(top?13.5:7.3),target.z+(top?.02:7.4));
+ camera.lookAt(target);controls.target.copy(target);controls.update();
+ $('viewBtn').textContent=top?'Oblique view':'Top view';
+}
+function stopRecording(){
+ if(recordTimer){clearTimeout(recordTimer);recordTimer=null;}
+ if(recording&&recorder&&recorder.state!=='inactive')recorder.stop();
+ recording=false;
+}
+function download(blob,name){
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
+}
+function recordSequence(){
+ if(recording){stopRecording();return;}
+ if(!renderer.domElement.captureStream||!window.MediaRecorder){status('Video recording unavailable in this browser','error');return;}
+ let stream;try{stream=renderer.domElement.captureStream(30);}catch(e){status('Could not capture the WebGL canvas','error');return;}
+ const types=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+ const type=types.find(t=>MediaRecorder.isTypeSupported(t))||'';
+ try{recorder=new MediaRecorder(stream,type?{mimeType:type,videoBitsPerSecond:10000000}:undefined);}
+ catch(e){stream.getTracks().forEach(t=>t.stop());status('WebM export unavailable','error');return;}
+ recordStream=stream;recording=true;stopTimeline();recordBase={position:camera.position.clone(),target:controls.target.clone(),time:performance.now(),phase};
+ const chunks=[];
+ recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+ recorder.onerror=()=>{status('Recording failed','error');};
+ recorder.onstop=()=>{
+  if(recordStream)recordStream.getTracks().forEach(t=>t.stop());recordStream=null;
+  recording=false;controls.enabled=true;
+  if(recordBase){camera.position.copy(recordBase.position);controls.target.copy(recordBase.target);controls.update();setPhase(recordBase.phase);}
+  $('recordBtn').textContent='Record 12s';$('recordBtn').classList.add('primary');
+  const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});
+  if(blob.size){download(blob,'kosovo-polje-1389-threejs.webm');status('Video exported · '+(blob.size/1024/1024).toFixed(1)+' MB','ready');}
+ };
+ recorder.start(250);controls.enabled=false;
+ $('recordBtn').textContent='Stop recording';$('recordBtn').classList.remove('primary');
+ status('Recording 12-second terrain sequence…','loading');
+ const start=performance.now();
+ const recordTick=()=>{
+  if(!recording)return;
+  const t=(performance.now()-start)/12000;
+  setPhase(Math.min(3,Math.floor(t*4)));
+  const target=latLonToWorld(BATTLE.lat,BATTLE.lon);target.y+=.12;
+  const angle=t*Math.PI*1.55-.65,radius=10.2-1.0*Math.sin(t*Math.PI);
+  camera.position.set(target.x+Math.cos(angle)*radius,target.y+6.2+1.0*Math.sin(t*Math.PI*2),target.z+Math.sin(angle)*radius);
+  camera.lookAt(target);
+ };
+ recordTimer=setTimeout(stopRecording,12000);
+ recordSequence.tickTimer=setInterval(recordTick,45);
+}
+function resize(){
+ if(!renderer||!camera)return;
+ camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();
+ renderer.setSize(window.innerWidth,window.innerHeight);renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));
+}
+function makeFallbackTerrain(){
+ const count=SEGMENTS+1,positions=new Float32Array(count*count*3),uvs=new Float32Array(count*count*2),indices=[];
+ for(let row=0;row<count;row++)for(let col=0;col<count;col++){
+  const u=col/SEGMENTS,v=row/SEGMENTS,dx=u-.5,dz=v-.5;
+  const y=(Math.sin(u*8.2+v*2.5)*.12+Math.cos(v*6.5)*.13)*Number($('relief').value);
+  const i=row*count+col;positions[i*3]=(u-.5)*TILE_UNITS;positions[i*3+1]=y;positions[i*3+2]=(.5-v)*TILE_UNITS;uvs[i*2]=u;uvs[i*2+1]=1-v;
+ }
+ for(let row=0;row<SEGMENTS;row++)for(let col=0;col<SEGMENTS;col++){const a=row*count+col,b=a+1,c=a+count,d=c+1;indices.push(a,b,c,b,d,c);}
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));geo.setAttribute('uv',new THREE.BufferAttribute(uvs,2));geo.setIndex(indices);geo.computeVertexNormals();
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;const ctx=canvas.getContext('2d');
+ ctx.fillStyle='#d1c59e';ctx.fillRect(0,0,256,256);ctx.strokeStyle='#88947a';ctx.lineWidth=1;
+ for(let r=0;r<11;r++){ctx.beginPath();for(let x=0;x<=256;x+=4){const y=12+r*23+Math.sin(x/20+r)*7;if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();}
+ const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
+ terrainMaterial=new THREE.MeshStandardMaterial({map:tex,roughness:1,side:THREE.DoubleSide});
+ terrainMesh=new THREE.Mesh(geo,terrainMaterial);terrainGroup.add(terrainMesh);
+}
+async function init(){
+ scene=new THREE.Scene();scene.background=new THREE.Color('#e9e2d2');scene.fog=new THREE.Fog('#e9e2d2',24,42);
+ camera=new THREE.PerspectiveCamera(38,window.innerWidth/window.innerHeight,.1,100);
+ renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance',preserveDrawingBuffer:true});
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));renderer.setSize(window.innerWidth,window.innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+ $('stage').appendChild(renderer.domElement);
+ controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.065;controls.enablePan=true;controls.minDistance=5;controls.maxDistance=22;controls.maxPolarAngle=Math.PI*.47;
+ scene.add(new THREE.HemisphereLight(0xf5f0df,0x4d5744,2.0));
+ const key=new THREE.DirectionalLight(0xffedce,2.15);key.position.set(-5,10,7);scene.add(key);
+ const rim=new THREE.DirectionalLight(0x8ea9a0,1.05);rim.position.set(5,5,-7);scene.add(rim);
+ terrainGroup=new THREE.Group();historyGroup=new THREE.Group();zonesGroup=new THREE.Group();approachGroup=new THREE.Group();engagementGroup=new THREE.Group();traditionGroup=new THREE.Group();afterGroup=new THREE.Group();
+ scene.add(terrainGroup,historyGroup,zonesGroup,approachGroup,engagementGroup,traditionGroup,afterGroup);
+ const floor=new THREE.Mesh(new THREE.PlaneGeometry(40,40),new THREE.MeshStandardMaterial({color:'#d8d0bd',roughness:1}));
+ floor.rotation.x=-Math.PI/2;floor.position.y=-.72;scene.add(floor);
+ try{
+  await buildDEMCanvas();buildTerrain();setupBattleOverlays();status(demStats.failed?'Real elevation loaded with '+demStats.failed+' missing tile(s)':'Real DEM loaded · '+demStats.loaded+' / 16 elevation tiles',demStats.failed?'error':'ready');
+ }catch(e){
+  demCanvas=null;demPixels=null;makeFallbackTerrain();setupBattleOverlays();status('Live DEM unavailable · illustrative terrain fallback only','error');
+ }
+ setCameraView(false);setPhase(0);
+ renderer.setAnimationLoop(animate);
+ window.addEventListener('resize',resize);
+}
+function animate(now){
+ if(!renderer)return;
+ if(recording&&recordSequence.tickTimer){/* camera and phase are advanced by the recording loop */}
+ else controls.update();
+ if(phase===1&&engagementGroup.visible){const t=now*.001;engagementGroup.children[0].material.opacity=.12+.08*(.5+.5*Math.sin(t*2));}
+ renderer.render(scene,camera);
+}
+$('panelBtn').addEventListener('click',()=>{const hidden=$('panel').hidden;$('panel').hidden=!hidden;$('panelBtn').classList.toggle('active',hidden);$('panelBtn').setAttribute('aria-expanded',String(hidden));});
+$('phaseSlider').addEventListener('input',()=>{stopTimeline();setPhase(Number($('phaseSlider').value));});
+$('prevBtn').addEventListener('click',()=>{stopTimeline();setPhase((phase+PHASES.length-1)%PHASES.length);});
+$('nextBtn').addEventListener('click',()=>{stopTimeline();setPhase((phase+1)%PHASES.length);});
+$('playBtn').addEventListener('click',playTimeline);
+$('stopBtn').addEventListener('click',()=>{stopTimeline();setPhase(phase);if(recording)stopRecording();status('Playback stopped','ready');});
+$('viewBtn').addEventListener('click',()=>setCameraView(!topView));
+$('recordBtn').addEventListener('click',recordSequence);
+$('relief').addEventListener('input',()=>{if(demCanvas)buildTerrain();else if(terrainMesh)makeFallbackTerrain();});
+window.addEventListener('beforeunload',()=>{stopTimeline();if(recording)stopRecording();if(renderer)renderer.dispose();});
+window.__KOSOVO_1389_TEST__=()=>({renderCalls:renderer?renderer.info.render.calls:0,hasCanvas:!!renderer?.domElement,hasTerrain:!!terrainMesh,realDEM:!!demPixels,phase,demTiles:demStats,status:$('statusText').textContent});
+init();
+</script>
+</body>
+</html>
