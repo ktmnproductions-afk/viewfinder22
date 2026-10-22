@@ -55,8 +55,8 @@ jobs:
           console.log('Extracted module source, characters:', source.length);
           NODE
           node --check /tmp/photo-scout-check.mjs
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Use preinstalled Google Chrome
+        run: google-chrome --version
 
       - name: Serve the site
         run: |
@@ -80,6 +80,7 @@ jobs:
 
           (async () => {
             const browser = await chromium.launch({
+              channel: 'chrome',
               headless: true,
               args: ['--enable-webgl', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
             });
