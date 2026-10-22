@@ -328,38 +328,29 @@ function makeForce(name,color,lat,lon,type='mixed',facing=0){
   const pole=new THREE.Mesh(geos.bannerPole,poleMat);pole.position.set(x,.28,z);group.add(pole);
   const flag=new THREE.Mesh(geos.banner,bannerMat);flag.position.set(x+.08,.40,z);flag.rotation.y=.25;group.add(flag);
  }
- const pos=worldFor(lat,lon);pos.y=elevationY(lat,lon);group.position.copy(pos);group.rotation.y=facing;
+ const pos=worldFor(lat,lon);pos.y=elevationY(lat,lon);group.position.copy(pos);group.rotation.y=facing;group.scale.set(.72,.9,.72);
  group.userData={baseOpacity:1};
  return group;
 }
 function makeArrow(name,startGeo,endGeo,color,bend=0){
  const a=worldFor(startGeo.lat,startGeo.lon),b=worldFor(endGeo.lat,endGeo.lon);
  const dx=b.x-a.x,dz=b.z-a.z,len=Math.hypot(dx,dz)||1,nx=-dz/len,nz=dx/len;
- const mid=new THREE.Vector3((a.x+b.x)/2+nx*bend,0,(a.z+b.z)/2+nz*bend);
- const start=new THREE.Vector3(a.x,elevationY(startGeo.lat,startGeo.lon)+.12,a.z);
- const controlGeo=geoForWorld(mid.x,mid.z);
- mid.y=elevationY(controlGeo.lat,controlGeo.lon)+.12;
- const end=new THREE.Vector3(b.x,elevationY(endGeo.lat,endGeo.lon)+.12,b.z);
- const curve=new THREE.QuadraticBezierCurve3(start,mid,end);
- const points=curve.getPoints(48).map(p=>{
-  const g=geoForWorld(p.x,p.z);
-  p.y=elevationY(g.lat,g.lon)+.13;
-  return p;
- });
- const lineCurve=new THREE.CatmullRomCurve3(points,false,'centripetal');
- const ribbon=new THREE.Mesh(new THREE.TubeGeometry(lineCurve,64,.045,7,false),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.94,depthWrite:false}));
- ribbon.renderOrder=8;
- const tip=points[points.length-1],base=points[Math.floor(points.length*.85)];
- const tangent=curve.getTangent(.86),nn=new THREE.Vector2(-tangent.z,tangent.x).normalize(),half=.22;
- const left=new THREE.Vector3(base.x+nn.x*half,base.y+.01,base.z+nn.y*half);
- const right=new THREE.Vector3(base.x-nn.x*half,base.y+.01,base.z-nn.y*half);
- const tri=new THREE.BufferGeometry();
- tri.setAttribute('position',new THREE.Float32BufferAttribute([left.x,left.y,left.z,right.x,right.y,right.z,tip.x,tip.y+.01,tip.z],3));
- tri.setIndex([0,1,2]);tri.computeVertexNormals();
- const head=new THREE.Mesh(tri,new THREE.MeshBasicMaterial({color,transparent:true,opacity:.96,side:THREE.DoubleSide,depthWrite:false}));
- head.renderOrder=9;
- const group=new THREE.Group();group.name=name;group.add(ribbon,head);group.visible=false;overlayGroup.add(group);
- return group;
+ const center={x:(a.x+b.x)/2+nx*bend,z:(a.z+b.z)/2+nz*bend};
+ const ctrlGeo=geoForWorld(center.x,center.z);
+ const start=new THREE.Vector3(a.x,elevationY(startGeo.lat,startGeo.lon)+.16,a.z);
+ const control=new THREE.Vector3(center.x,elevationY(ctrlGeo.lat,ctrlGeo.lon)+.16,center.z);
+ const end=new THREE.Vector3(b.x,elevationY(endGeo.lat,endGeo.lon)+.16,b.z);
+ const curve=new THREE.QuadraticBezierCurve3(start,control,end);
+ const points=curve.getPoints(72);
+ points.forEach(p=>{const g=geoForWorld(p.x,p.z);p.y=elevationY(g.lat,g.lon)+.16;});
+ const lineGeo=new THREE.BufferGeometry().setFromPoints(points);
+ lineGeo.setDrawRange(0,0);
+ const line=new THREE.Line(lineGeo,new THREE.LineBasicMaterial({color,transparent:true,opacity:.98,depthTest:false}));
+ line.renderOrder=9;
+ const head=new THREE.Mesh(new THREE.ConeGeometry(.115,.30,7),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.98,depthTest:false}));
+ head.visible=false;head.renderOrder=10;
+ const group=new THREE.Group();group.name=name;group.add(line,head);group.visible=false;overlayGroup.add(group);
+ return {name,group,line,head,curve,points,progress:0,startedAt:0};
 }
 function createRing(lat,lon){
  const p=worldFor(lat,lon);p.y=elevationY(lat,lon)+.06;
@@ -405,7 +396,7 @@ function buildTroopLabel(){
  const p=worldFor(BATTLE.lat,BATTLE.lon);p.y=elevationY(BATTLE.lat,BATTLE.lon)+.09;
  const pin=new THREE.Mesh(new THREE.SphereGeometry(.07,10,8),new THREE.MeshStandardMaterial({color:'#c9a96c',roughness:.6}));
  pin.position.copy(p);overlayGroup.add(pin);
- addLabel('APPROXIMATE BATTLEFIELD','BETWEEN THE SITNICA / LAB RIVER AREA',BATTLE.lat,BATTLE.lon,2.5);
+ addLabel('APPROXIMATE BATTLEFIELD','BETWEEN THE SITNICA / LAB RIVER AREA',BATTLE.lat+.007,BATTLE.lon,2.25);
 }
 function setupScene(){
  scene=new THREE.Scene();scene.background=new THREE.Color('#b5b59a');scene.fog=new THREE.Fog('#b5b59a',21,37);
@@ -441,10 +432,10 @@ function seedScene(){
  ];
 }
 const targetPositions={
- 0:{coalition:[42.701,21.088,.75,1],coalitionWing:[42.706,21.083,.65,1],ottoman:[42.683,21.158,-2.3,1],ottomanWing:[42.678,21.168,-2.25,1],camera:[7.5,9.0,13.4,0]},
- 1:{coalition:[42.696,21.108,.72,1],coalitionWing:[42.696,21.098,.65,1],ottoman:[42.687,21.141,-2.25,1],ottomanWing:[42.684,21.151,-2.25,1],camera:[6.8,8.0,12.1,1]},
- 2:{coalition:[42.695,21.111,.62,1],coalitionWing:[42.701,21.133,.25,1],ottoman:[42.687,21.138,-2.22,1],ottomanWing:[42.695,21.121,-2.7,1],camera:[7.2,8.5,12.8,2]},
- 3:{coalition:[42.696,21.109,.72,.45],coalitionWing:[42.700,21.129,.25,.35],ottoman:[42.687,21.140,-2.2,.45],ottomanWing:[42.692,21.125,-2.5,.35],camera:[8.0,9.5,14.6,3]}
+ 0:{coalition:[42.701,21.088,.75,1],coalitionWing:[42.706,21.083,.65,1],ottoman:[42.683,21.158,-2.3,1],ottomanWing:[42.678,21.168,-2.25,1],camera:[.2,10.0,15.6,0]},
+ 1:{coalition:[42.696,21.108,.72,1],coalitionWing:[42.696,21.098,.65,1],ottoman:[42.687,21.141,-2.25,1],ottomanWing:[42.684,21.151,-2.25,1],camera:[.0,9.7,14.5,1]},
+ 2:{coalition:[42.695,21.111,.62,1],coalitionWing:[42.701,21.133,.25,1],ottoman:[42.687,21.138,-2.22,1],ottomanWing:[42.695,21.121,-2.7,1],camera:[.5,9.8,15.0,2]},
+ 3:{coalition:[42.696,21.109,.72,.45],coalitionWing:[42.700,21.129,.25,.35],ottoman:[42.687,21.140,-2.2,.45],ottomanWing:[42.692,21.125,-2.5,.35],camera:[.4,10.4,16.0,3]}
 };
 function getCameraTarget(i){
  const t=targetPositions[i].camera;
@@ -454,7 +445,30 @@ function getCameraTarget(i){
 }
 function arrowPhase(i){return i===0?'approach':i===1?'engagement':i===2?'tradition':null;}
 function applyArrowPhase(i){
- Object.entries(arrowGroups).forEach(([name,items])=>items.forEach(arrow=>{arrow.visible=arrowsVisible&&name===arrowPhase(i);}));
+ const activeName=arrowPhase(i);
+ Object.entries(arrowGroups).forEach(([name,items])=>items.forEach(arrow=>{
+  const active=arrowsVisible&&name===activeName;
+  arrow.group.visible=active;
+  arrow.progress=0;
+  arrow.startedAt=performance.now();
+  arrow.line.geometry.setDrawRange(0,0);
+  arrow.head.visible=false;
+ }));
+}
+function animateArrows(now){
+ Object.entries(arrowGroups).forEach(([name,items])=>items.forEach(arrow=>{
+  if(!arrow.group.visible)return;
+  const t=THREE.MathUtils.clamp((now-arrow.startedAt)/1850,0,1);
+  arrow.progress=t;
+  const count=Math.max(2,Math.min(arrow.points.length,Math.floor(arrow.points.length*t)));
+  arrow.line.geometry.setDrawRange(0,count);
+  const p=arrow.curve.getPoint(t);
+  const geo=geoForWorld(p.x,p.z);p.y=elevationY(geo.lat,geo.lon)+.19;
+  arrow.head.position.copy(p);
+  const tangent=arrow.curve.getTangent(Math.max(.001,Math.min(.999,t)));
+  arrow.head.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),tangent.normalize());
+  arrow.head.visible=t>.02;
+ }));
 }
 function beginPhaseTween(index,duration=2350){
  const from={};Object.entries(forces).forEach(([key,g])=>from[key]={position:g.position.clone(),rotation:g.rotation.y,opacity:g.userData.opacity??1});
@@ -515,7 +529,11 @@ function attachEvents(){
  window.addEventListener('resize',resize);window.addEventListener('beforeunload',()=>{stopPlayback();if(recorder&&recorder.state!=='inactive')recorder.stop();if(renderer)renderer.dispose();});
 }
 function animate(now){
- requestAnimationFrame(animate);updateTweens(now);controls.update();renderer.render(scene,camera);
+ requestAnimationFrame(animate);
+ updateTweens(now);
+ animateArrows(now);
+ controls.update();
+ renderer.render(scene,camera);
 }
 async function init(){
  try{
