@@ -369,6 +369,12 @@ jobs:
                 };
               });
               console.log('LIVE_PIN_DIAGNOSTICS '+JSON.stringify(livePinDiagnostics));
+              if (!livePinDiagnostics.cameraRoadCandidateCount ||
+                  !livePinDiagnostics.assumedViewpointCount ||
+                  !livePinDiagnostics.domCounts.inferredViewpoint) {
+                throw new Error('A real map click must produce at least one calculated camera-position pin: '+
+                  JSON.stringify(livePinDiagnostics));
+              }
               if(livePinDiagnostics.cameraCalculationPending ||
                  (livePinDiagnostics.cameraRoadCandidateCount>0&&livePinDiagnostics.assumedViewpointCount<1)) {
                 throw new Error('Mapped paths were returned but no calculated camera position was produced: '+JSON.stringify(livePinDiagnostics));
