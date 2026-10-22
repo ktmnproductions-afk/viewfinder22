@@ -2151,36 +2151,47 @@ function suppressBasemapParkingSymbols(){
   const sourceLayer=String(layer['source-layer']||'').toLowerCase();
   const layout=layer.layout||{};
   const iconImage=JSON.stringify(layout['icon-image']||'').toLowerCase();
-  const seemsParking=/parking/.test(id)||/parking/.test(iconImage);
+  const seemsParking=/parking|car[_ -]?park/.test(id+' '+iconImage+' '+sourceLayer);
+  const isPoiLayer=/(^|[_-])pois?([_-]|$)/.test(sourceLayer)||
+   /(^|[_-])pois?([_-]|$)/.test(id)||
+   /amenit|parking/.test(id+' '+sourceLayer);
   if(seemsParking){
    try{
+    if(Object.prototype.hasOwnProperty.call(layout,'icon-image'))map.setLayoutProperty(layer.id,'icon-image',null);
     map.setLayoutProperty(layer.id,'visibility','none');
     state.parkingFilteredLayers.add(layer.id);
-    state.parkingFilterDiagnostics.push({id,source,sourceLayer,method:'parking symbol layer hidden'});
+    state.parkingIconLayersSilenced.add(layer.id);
+    state.parkingFilterDiagnostics.push({id,source,sourceLayer,method:'native parking symbol layer disabled; Photo Scout provides verified-source markers'});
    }catch(error){state.parkingFilterDiagnostics.push({id,source,sourceLayer,error:String(error.message||error)});}
    return;
   }
-  const isPoiLayer=/(^|[_-])pois?([_-]|$)/.test(sourceLayer)||/(^|[_-])pois?([_-]|$)/.test(id);
   if(!isPoiLayer)return;
-  // Suppress basemap POI artwork (not just parking) while keeping text labels.
-  // Native blue P icons look like destinations even when our own search did not
-  // return that parking point. Photo Scout's green markers are the authoritative pins.
+  // Native map POI icons (including blue P symbols) are visually indistinguishable
+  // from our actionable pins. Remove the icon glyph but retain place-name text.
   if(Object.prototype.hasOwnProperty.call(layout,'icon-image')){
+   let disabled=false;
    try{
-    map.setPaintProperty(layer.id,'icon-opacity',0);
-    map.setPaintProperty(layer.id,'icon-halo-opacity',0);
-    state.parkingIconLayersSilenced.add(layer.id);
-    state.parkingFilterDiagnostics.push({id,source,sourceLayer,method:'basemap POI icons hidden by opacity; text labels preserved'});
+    map.setLayoutProperty(layer.id,'icon-image',null);
+    disabled=true;
    }catch(error){
-    try{map.setLayoutProperty(layer.id,'icon-image',null);state.parkingIconLayersSilenced.add(layer.id);}
-    catch(secondError){state.parkingFilterDiagnostics.push({id,source,sourceLayer,error:'icon suppression: '+String(secondError.message||secondError)});}
+    try{
+     map.setPaintProperty(layer.id,'icon-opacity',0);
+     map.setPaintProperty(layer.id,'icon-halo-opacity',0);
+     disabled=true;
+    }catch(secondError){
+     state.parkingFilterDiagnostics.push({id,source,sourceLayer,error:'Could not suppress native POI icon: '+String(secondError.message||secondError)});
+    }
+   }
+   if(disabled){
+    state.parkingIconLayersSilenced.add(layer.id);
+    state.parkingFilterDiagnostics.push({id,source,sourceLayer,method:'native POI icon glyph disabled; text labels preserved'});
    }
   }
   try{
    const existing=layer.filter?normalizeBasemapFilter(layer.filter):['all'];
    map.setFilter(layer.id,['all',existing,['!',parkingFeature]]);
    state.parkingFilteredLayers.add(layer.id);
-   state.parkingFilterDiagnostics.push({id,source,sourceLayer,method:'parking features excluded'});
+   state.parkingFilterDiagnostics.push({id,source,sourceLayer,method:'parking features excluded from native POI labels'});
   }catch(error){
    state.parkingFilterDiagnostics.push({id,source,sourceLayer,error:String(error.message||error)});
   }
