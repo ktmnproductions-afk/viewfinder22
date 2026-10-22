@@ -317,6 +317,19 @@ jobs:
               }
               console.log('FAST_MAP_READY_MS ' + scanReadyElapsedMs);
 
+              // The shell is deliberately interactive before optional place-data APIs return.
+              // Wait for those background requests before asserting result pins; scanPending is
+              // cleared after the fast UI deadline and is not the same as data-source completion.
+              await page.waitForFunction(() => {
+                const test=window.__PHOTO_SCOUT_TEST__;
+                if(!test)return false;
+                const state=test.getState();
+                return state.resultCount>0 || state.scenicCount>0 ||
+                  /No nearby features returned|Partial results loaded|Map ready · partial results/i.test(document.querySelector('#statusTitle')?.textContent||'');
+              }, null, { timeout: 45000 }).catch(error=>{
+                throw new Error('Nearby place and scenic data did not arrive after the pin was set: '+JSON.stringify(window.__PHOTO_SCOUT_TEST__?.getState?.()||{})+' · '+(document.querySelector('#statusTitle')?.textContent||'')+' · '+(document.querySelector('#statusMsg')?.textContent||''));
+              });
+
               // Validate real returned place records, not only the synthetic marker fixture.
               const livePinDiagnostics = await page.evaluate(() => {
                 const test=window.__PHOTO_SCOUT_TEST__;
