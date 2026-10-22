@@ -55,8 +55,8 @@ jobs:
           console.log('Extracted module source, characters:', source.length);
           NODE
           node --check /tmp/photo-scout-check.mjs
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Use preinstalled Google Chrome
+        run: google-chrome --version
 
       - name: Serve the site
         run: |
@@ -80,6 +80,7 @@ jobs:
 
           (async () => {
             const browser = await chromium.launch({
+              channel: 'chrome',
               headless: true,
               args: ['--enable-webgl', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
             });
@@ -103,7 +104,7 @@ jobs:
             });
 
             try {
-              await page.goto('http://127.0.0.1:8000/photo-scout.html?v=20261022-geometry-pins-v27', { waitUntil: 'domcontentloaded', timeout: 60000 });
+              await page.goto('http://127.0.0.1:8000/index.html?v=20261022-calculated-viewpoints-v28', { waitUntil: 'domcontentloaded', timeout: 60000 });
               try {
                 await page.waitForFunction(() => !!window.__PHOTO_SCOUT_TEST__?.map, null, { timeout: 15000 });
               } catch (startupError) {
@@ -143,7 +144,7 @@ jobs:
                   display: manifest && manifest.display,
                   startUrl: manifest && manifest.start_url,
                   workerStatus: workerResponse.status,
-                  workerCacheV27: workerText.includes('"photo-scout-shell-v27"'),
+                  workerCacheV28: workerText.includes('"photo-scout-shell-v28"'),
                   buildVersion: document.querySelector('meta[name="photo-scout-build"]')?.content||'',
                   installButton: !!document.querySelector('#installAppBtn'),
                   installButtonVisible: !!document.querySelector('#installAppBtn') && !document.querySelector('#installAppBtn').hidden,
@@ -153,8 +154,8 @@ jobs:
               if (appInstallDiagnostics.manifestStatus !== 200 ||
                   appInstallDiagnostics.display !== 'standalone' ||
                   appInstallDiagnostics.workerStatus !== 200 ||
-                  !appInstallDiagnostics.workerCacheV27 ||
-                  appInstallDiagnostics.buildVersion !== '2026-10-22-photo-scout-geometry-pins-v27' ||
+                  !appInstallDiagnostics.workerCacheV28 ||
+                  appInstallDiagnostics.buildVersion !== '2026-10-22-photo-scout-calculated-viewpoints-v28' ||
                   !appInstallDiagnostics.installButton || !appInstallDiagnostics.installButtonVisible || !appInstallDiagnostics.pinLegend) {
                 throw new Error('Photo Scout must ship as an installable standalone app with a visible pin legend: ' + JSON.stringify(appInstallDiagnostics));
               }
@@ -330,7 +331,15 @@ jobs:
                 throw new Error('Nearby place and scenic data did not arrive after the pin was set: '+JSON.stringify(window.__PHOTO_SCOUT_TEST__?.getState?.()||{})+' · '+(document.querySelector('#statusTitle')?.textContent||'')+' · '+(document.querySelector('#statusMsg')?.textContent||''));
               });
 
-              // Validate real returned place records, not only the synthetic marker fixture.
+              await page.waitForFunction(
+                 () => window.__PHOTO_SCOUT_TEST__?.getState().cameraCalculationPending === false,
+                 null, { timeout: 60000 }
+               ).catch(error => {
+                 throw new Error('Calculated viewpoint search did not finish after the map click: '+
+                   JSON.stringify(window.__PHOTO_SCOUT_TEST__?.getState?.()||{}));
+               });
+
+               // Validate real returned place records, not only the synthetic marker fixture.
               const livePinDiagnostics = await page.evaluate(() => {
                 const test=window.__PHOTO_SCOUT_TEST__;
                 const state=test.getState();
@@ -344,6 +353,7 @@ jobs:
                   architecture:nodes.filter(n=>n.classList.contains('architecture')).length,
                   viewpoint:nodes.filter(n=>n.classList.contains('viewpoint')).length,
                   photoSpot:nodes.filter(n=>n.classList.contains('photoSpot')).length,
+                  inferredViewpoint:nodes.filter(n=>n.classList.contains('inferred-viewpoint-pin')).length,
                   parking:nodes.filter(n=>n.classList.contains('parking')).length,
                   visibleNameLabels:nodes.filter(n=>n.classList.contains('show-pin-label')).length
                 };
@@ -353,12 +363,23 @@ jobs:
                   canvasBox:canvasBox&&{x:canvasBox.x,y:canvasBox.y,width:canvasBox.width,height:canvasBox.height},
                   mapReady:state.styleLoaded,scanCount:state.scanCount,scanPending:state.scanPending,
                   resultCount:state.resultCount,dataInView:state.viewportCategoryCounts||{},
+                  cameraCalculationPending:state.cameraCalculationPending,cameraRoadCandidateCount:state.cameraRoadCandidateCount,assumedViewpointCount:state.assumedViewpointCount,cameraPathSearchError:state.cameraPathSearchError,cameraPathSearchDiagnostics:state.cameraPathSearchDiagnostics,
                   markerCounts:state.markerCounts||{},domCounts,
                   legendButtons:document.querySelectorAll('[data-marker-filter]').length,
                   legendSummary:document.querySelector('#mapPinSummary')?.textContent||''
                 };
               });
               console.log('LIVE_PIN_DIAGNOSTICS '+JSON.stringify(livePinDiagnostics));
+              if (!livePinDiagnostics.cameraRoadCandidateCount ||
+                  !livePinDiagnostics.assumedViewpointCount ||
+                  !livePinDiagnostics.domCounts.inferredViewpoint) {
+                throw new Error('A real map click must produce at least one calculated camera-position pin: '+
+                  JSON.stringify(livePinDiagnostics));
+              }
+              if(livePinDiagnostics.cameraCalculationPending ||
+                 (livePinDiagnostics.cameraRoadCandidateCount>0&&livePinDiagnostics.assumedViewpointCount<1)) {
+                throw new Error('Mapped paths were returned but no calculated camera position was produced: '+JSON.stringify(livePinDiagnostics));
+              }
               const markerStability = await page.evaluate(() =>
                 window.__PHOTO_SCOUT_TEST__.runMarkerStabilityFixture()
               );
@@ -368,22 +389,23 @@ jobs:
                   markerStability.maxIconCenterErrorPx > 2) {
                 throw new Error('Unchanged map idle renders must reuse marker DOM nodes: ' + JSON.stringify(markerStability));
               }
-              if(!livePinDiagnostics.mapReady || livePinDiagnostics.legendButtons!==5) {
-                throw new Error('The map must expose all five interactive pin layers: '+JSON.stringify(livePinDiagnostics));
+              if(!livePinDiagnostics.mapReady || livePinDiagnostics.legendButtons!==6) {
+                throw new Error('The map must expose six interactive pin layers: '+JSON.stringify(livePinDiagnostics));
               }
               if(!livePinDiagnostics.mapBox || livePinDiagnostics.mapBox.width<livePinDiagnostics.viewport.width*.95 ||
                  !livePinDiagnostics.canvasBox || livePinDiagnostics.canvasBox.width<livePinDiagnostics.viewport.width*.95) {
                 throw new Error('The map canvas must use the full viewport width: '+JSON.stringify(livePinDiagnostics));
               }
               if(livePinDiagnostics.domCounts.landmark+livePinDiagnostics.domCounts.architecture+
-                 livePinDiagnostics.domCounts.viewpoint+livePinDiagnostics.domCounts.photoSpot===0) {
+                 livePinDiagnostics.domCounts.viewpoint+livePinDiagnostics.domCounts.photoSpot+livePinDiagnostics.domCounts.inferredViewpoint===0) {
                 throw new Error('The real scan produced no visible landmark, building, viewpoint or photo-spot pins: '+JSON.stringify(livePinDiagnostics));
               }
               const missingPinForRealResult=
                 (livePinDiagnostics.dataInView.history>0&&livePinDiagnostics.domCounts.landmark===0)||
                 (livePinDiagnostics.dataInView.architecture>0&&livePinDiagnostics.domCounts.architecture===0)||
                 (livePinDiagnostics.dataInView.viewpoint>0&&livePinDiagnostics.domCounts.viewpoint===0)||
-                (livePinDiagnostics.dataInView.scenic>0&&livePinDiagnostics.domCounts.photoSpot===0);
+                (livePinDiagnostics.dataInView.scenic>0&&livePinDiagnostics.domCounts.photoSpot===0)||
+                 (livePinDiagnostics.dataInView.inferredViewpoint>0&&livePinDiagnostics.domCounts.inferredViewpoint===0);
               if(missingPinForRealResult) {
                 throw new Error('Real in-view geographic records are missing matching visible pins: '+JSON.stringify(livePinDiagnostics));
               }
@@ -496,6 +518,19 @@ jobs:
                 } catch(error) { return {status:0,error:String(error&&error.message||error)}; }
               });
               console.log('OPENVERSE_REFERENCE_PROBE '+JSON.stringify(openverseProbe));
+              const calculatedViewpointFixture = await page.evaluate(() =>
+                window.__PHOTO_SCOUT_TEST__.runCalculatedViewpointFixture()
+              );
+              if (!calculatedViewpointFixture.pedestrianRoutePreferred ||
+                  !calculatedViewpointFixture.privateAccessRejected ||
+                  !calculatedViewpointFixture.cameraLensChangesWithDistance ||
+                  !calculatedViewpointFixture.clearTerrainRayRecognized ||
+                  !calculatedViewpointFixture.blockingTerrainRecognized ||
+                  !calculatedViewpointFixture.missingTerrainRemainsUnverified ||
+                  !calculatedViewpointFixture.bearingHasCompassDirection) {
+                throw new Error('Calculated Viewpoint regression: ' + JSON.stringify(calculatedViewpointFixture));
+              }
+              console.log('CALCULATED_VIEWPOINT_FIXTURE '+JSON.stringify(calculatedViewpointFixture));
               const contextualPhotoFixtures = await page.evaluate(() =>
                 window.__PHOTO_SCOUT_TEST__.runContextPhotoRegressionFixtures()
               );
@@ -529,7 +564,7 @@ jobs:
               const markerFixture = await page.evaluate(() => window.__PHOTO_SCOUT_TEST__.renderMarkerFixture());
               if (markerFixture.landmark < 1 || markerFixture.architecture < 1 ||
                   markerFixture.viewpoint < 1 || markerFixture.photoSpot < 1 ||
-                  markerFixture.parking < 1 || markerFixture.svgIcons < 3 ||
+                  markerFixture.parking < 1 || markerFixture.inferredViewpoint < 1 || markerFixture.inferredIcon < 1 || markerFixture.svgIcons < 3 ||
                   !markerFixture.exactCoordinates || !markerFixture.zeroOffsets) {
                 throw new Error('Map feature markers must remain on their exact geographic coordinates with no visual offsets: ' + JSON.stringify(markerFixture));
               }

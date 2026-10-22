@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-22-photo-scout-geometry-pins-v27">
+<meta name="photo-scout-build" content="2026-10-22-photo-scout-calculated-viewpoints-v28">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -567,7 +567,7 @@ footer{color:#7c8b7e;border-top-color:#e4eae1}.footer-link{color:#50715b}
 .map-pin-legend-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:9px;letter-spacing:.1em;font-weight:850;color:#5d765f}.map-pin-legend-heading #mapPinSummary{font-size:10px;letter-spacing:0;font-weight:600;color:#7a897c;white-space:nowrap}
 .map-pin-legend-items{display:flex;align-items:center;gap:15px;flex-wrap:wrap}.map-legend-item{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;color:#435b48;font-size:10px;font-weight:650}.map-legend-item b{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;border-radius:6px;background:#f0f4ed;color:#526958;font-size:9px;font-variant-numeric:tabular-nums}
 .map-legend-icon{width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-style:normal;background:#eaf2e8;color:#2b684e}.map-legend-icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.legend-landmark{background:#fff0e9;color:#b8503b}.legend-architecture{background:#e8eff9;color:#386798}.legend-viewpoint{background:#fff3db;color:#a86e16}.legend-photo{background:#e7f3e9;color:#2d7b50}.legend-parking{background:#e3f3e8;color:#1e7952;font-size:13px;font-weight:900}
+.legend-landmark{background:#fff0e9;color:#b8503b}.legend-architecture{background:#e8eff9;color:#386798}.legend-viewpoint{background:#fff3db;color:#a86e16}.legend-inferred-view{background:#eee8ff;color:#6041b6;font-style:normal;font-weight:900}.legend-photo{background:#e7f3e9;color:#2d7b50}.legend-parking{background:#e3f3e8;color:#1e7952;font-size:13px;font-weight:900}
 .scout-marker{overflow:visible;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:0;padding:0;border:0;background:transparent;box-shadow:none;outline:none;white-space:nowrap;isolation:isolate;cursor:pointer}
 .scout-marker .dot-core{position:relative;z-index:2;display:grid;place-items:center;width:31px;height:31px;flex:0 0 31px;border:2px solid rgba(255,255,255,.98);border-radius:10px;box-shadow:0 3px 12px rgba(30,50,35,.28),0 0 0 3px rgba(255,255,255,.38);background:#e6f0e6;color:#2c6249;font:850 13px/1 ui-sans-serif,system-ui}
 .scout-marker .dot-core svg{display:block;width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -714,6 +714,8 @@ html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
 .scout-marker.small-interest-pin .dot-core{background:#c76349!important;color:#fff!important;border:2px solid #fff8f4!important;box-shadow:0 0 0 3px rgba(199,99,73,.18),0 3px 10px rgba(35,55,40,.24)!important}
 .scout-marker.small-interest-pin .dot-core span{font-size:13px;line-height:1}
 .scout-marker.target-vantage-pin .dot-core{background:#3777a8!important;color:#fff!important;border:3px solid #f5fbff!important;box-shadow:0 0 0 4px rgba(55,119,168,.23),0 5px 14px rgba(20,45,70,.35)!important}
+.scout-marker.inferred-viewpoint-pin .dot-core{background:#7254c8!important;color:#fff!important;border:3px solid #fff!important;box-shadow:0 0 0 5px rgba(114,84,200,.22),0 5px 16px rgba(55,38,110,.27)!important}
+.scout-marker.inferred-viewpoint-pin .dot-core span{font-size:18px;line-height:1;font-weight:900}
 .scout-marker.target-vantage-pin .dot-core span{font-size:17px;line-height:1}
 .scout-marker.with-label{gap:0}
 .scout-marker.with-label .pin-name-label{display:none}
@@ -838,7 +840,8 @@ body.field-guide-context-only #fieldGuideGrid{display:none!important;visibility:
   <div class="map-pin-legend-items">
     <button type="button" class="map-legend-item" data-marker-filter="history" aria-pressed="true" title="Show or hide landmark pins"><i class="map-legend-icon legend-landmark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-5h6v5"/></svg></i><span>Landmarks</span><b id="legendLandmarkCount">—</b></button>
     <button type="button" class="map-legend-item" data-marker-filter="architecture" aria-pressed="true" title="Show or hide architecture pins"><i class="map-legend-icon legend-architecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V5h14v16M8 8h2m4 0h2M8 12h2m4 0h2M10 21v-4h4v4"/></svg></i><span>Architecture</span><b id="legendArchitectureCount">—</b></button>
-    <button type="button" class="map-legend-item" data-marker-filter="viewpoint" aria-pressed="true" title="Show or hide viewpoint pins"><i class="map-legend-icon legend-viewpoint"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"/><path d="m2 20 7-10 4 5 3-4 6 9H2Z"/></svg></i><span>Viewpoints</span><b id="legendViewpointCount">—</b></button>
+    <button type="button" class="map-legend-item" data-marker-filter="viewpoint" aria-pressed="true" title="Show or hide viewpoint pins"><i class="map-legend-icon legend-viewpoint"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"/><path d="m2 20 7-10 4 5 3-4 6 9H2Z"/></svg></i><span>Mapped views</span><b id="legendViewpointCount">—</b></button>
+    <button type="button" class="map-legend-item" data-marker-filter="inferredViewpoint" aria-pressed="true" title="Show or hide calculated camera-position pins"><i class="map-legend-icon legend-inferred-view">⌖</i><span>Calculated</span><b id="legendInferredViewpointCount">—</b></button>
     <button type="button" class="map-legend-item" data-marker-filter="photoSpot" aria-pressed="true" title="Show or hide photo-spot pins"><i class="map-legend-icon legend-photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v12H3Z"/><circle cx="12" cy="14" r="4"/></svg></i><span>Photo spots</span><b id="legendPhotoSpotCount">—</b></button>
     <button type="button" class="map-legend-item" data-marker-filter="parking" aria-pressed="true" title="Show or hide parking pins"><i class="map-legend-icon legend-parking">P</i><span>Parking</span><b id="legendParkingCount">—</b></button>
   </div>
@@ -952,6 +955,12 @@ body.field-guide-context-only #fieldGuideGrid{display:none!important;visibility:
       <div class="result-list" id="scenicResults"><div class="empty">Drop a pin to scout real mapped viewpoints and elevated landscape candidates around the city—not only inside it.</div></div>
     </div>
   </details>
+  <details class="nav-panel" id="assumedViewpointsPanel">
+    <summary><span class="nav-title">Calculated camera positions</span><span class="count" id="assumedViewpointCount">—</span></summary>
+    <div class="nav-panel-content"><p class="nav-panel-note">Purple pins are estimated positions sampled from mapped paths, walkways and open-space features. Ranking combines route type, distance, relative terrain elevation and terrain-only sightline samples. Copernicus DEM GLO-90 is about 90 m resolution; buildings, trees, access and safe stopping are not represented, so no view is guaranteed.</p>
+      <div class="result-list" id="assumedViewpointResults"><div class="empty">Click a place on the map to calculate possible camera positions around it.</div></div>
+    </div>
+  </details>
   <details class="nav-panel" id="parkingPanel">
     <summary><span class="nav-title">Parking near your stop</span><span class="count" id="parkingCount">—</span></summary>
     <div class="nav-panel-content"><p class="nav-panel-note">Mapped parking features only—not live availability or confirmation of public access. Check signs and entrances locally.</p>
@@ -975,7 +984,7 @@ body.field-guide-context-only #fieldGuideGrid{display:none!important;visibility:
     <div class="nav-panel-content"><div id="savedResults"><div class="empty">Save a pin or selected place to build a road-trip list on this device.</div></div></div>
   </details>
 </div>
-<footer>Map data © <a class="footer-link" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Vector basemap by <a class="footer-link" href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>. History links and photo licences are shown where available. Always verify road access, parking signs and private-property restrictions.</footer>
+<footer>Map data © <a class="footer-link" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Vector basemap by <a class="footer-link" href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> · Terrain elevations: Copernicus DEM via <a class="footer-link" href="https://open-meteo.com/en/docs/elevation-api" target="_blank" rel="noopener">Open-Meteo</a>. History links and photo licences are shown where available. Always verify road access, parking signs and private-property restrictions.</footer>
 </aside>
 <div class="map-credit">Made for curious photographers · Photo Scout</div>
 <script src="https://js.puter.com/v2/"></script>
@@ -994,13 +1003,13 @@ const styleUrls = {
 // Automatic recovery intentionally excludes the dark style. "Dark" remains an
 // explicit user choice only; a failed light map must never turn the landing view black.
 const vectorFallbackOrder=['bright','positron','fiord','liberty'];
-const state = {map:null, styleLoaded:false, scanCount:0, scanPending:false, scanSourcesPending:false, center:null, radius:10000, detectedLocality:'', localityCandidates:[], locationConflictExclusions:[], results:[], scenicSpots:[], photos:[], basemapParking:[], parkingFilteredLayers:new Set(), parkingIconLayersSilenced:new Set(), parkingFilterDiagnostics:[], spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0, basemapMode:'vector', basemapFallbackTried:false, basemapWatchdog:null, styleFailureTimer:null, initialScoutStarted:false};
+const state = {map:null, styleLoaded:false, scanCount:0, scanPending:false, scanSourcesPending:false, center:null, radius:10000, detectedLocality:'', localityCandidates:[], locationConflictExclusions:[], results:[], scenicSpots:[], photos:[], cameraRoadCandidates:[], assumedViewpoints:[], cameraCalculationPending:false, cameraPathSearchError:'', cameraPathSearchDiagnostics:null, basemapParking:[], parkingFilteredLayers:new Set(), parkingIconLayersSilenced:new Set(), parkingFilterDiagnostics:[], spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0, basemapMode:'vector', basemapFallbackTried:false, basemapWatchdog:null, styleFailureTimer:null, initialScoutStarted:false};
 window.__PHOTO_SCOUT_TEST__ = {
  get map(){ return state.map; },
  get styleLoaded(){ return state.styleLoaded; },
  get vectorTileSuccesses(){ return state.vectorTileSuccesses; },
  get scanCount(){ return state.scanCount; },
- getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, localityCandidates:state.localityCandidates, locationConflictExclusions:state.locationConflictExclusions, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, selectedCoordinate:state.selected&&Number.isFinite(Number(state.selected.lat))&&Number.isFinite(Number(state.selected.lng))?{lat:Number(state.selected.lat),lng:Number(state.selected.lng)}:null, scanPending:state.scanPending, scanSourcesPending:state.scanSourcesPending, resultCount:state.results.length, resultCategoryCounts:{history:state.results.filter(r=>r.category==='history').length,architecture:state.results.filter(r=>r.category==='architecture').length,viewpoint:state.results.filter(r=>r.category==='viewpoint').length,parking:state.results.filter(r=>r.category==='parking').length}, viewportCategoryCounts:(()=>{const b=state.map&&state.map.getBounds();const inView=r=>b&&Number.isFinite(Number(r.lat))&&Number.isFinite(Number(r.lng))&&b.contains([Number(r.lng),Number(r.lat)]);return {history:state.results.filter(r=>r.category==='history'&&inView(r)).length,architecture:state.results.filter(r=>r.category==='architecture'&&inView(r)).length,viewpoint:state.results.filter(r=>r.category==='viewpoint'&&inView(r)).length,scenic:state.scenicSpots.filter(inView).length};})(), distanceDiagnostics:[...state.results,...state.scenicSpots].filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&Number.isFinite(p.distance)).slice(0,25).map(p=>({name:p.name,category:p.category,reportedDistance:p.distance,computedDistance:haversine(state.center,{lat:p.lat,lng:p.lng}),delta:Math.abs(p.distance-haversine(state.center,{lat:p.lat,lng:p.lng}))})), parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), parkingLabelLayersFiltered:[...state.parkingFilteredLayers], visibleParkingMarkerClasses:state.markers.filter(m=>m.getElement().classList.contains('parking')).map(m=>({title:m.getElement().title,classes:m.getElement().className,coordinates:m.getLngLat().toArray()})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, markerCounts:{landmark:state.markers.filter(m=>m.getElement().classList.contains('history')).length,architecture:state.markers.filter(m=>m.getElement().classList.contains('architecture')).length,viewpoint:state.markers.filter(m=>m.getElement().classList.contains('viewpoint')).length,photoSpot:state.markers.filter(m=>m.getElement().classList.contains('photoSpot')).length}, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
+ getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, localityCandidates:state.localityCandidates, locationConflictExclusions:state.locationConflictExclusions, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, selectedCoordinate:state.selected&&Number.isFinite(Number(state.selected.lat))&&Number.isFinite(Number(state.selected.lng))?{lat:Number(state.selected.lat),lng:Number(state.selected.lng)}:null, scanPending:state.scanPending, scanSourcesPending:state.scanSourcesPending, cameraCalculationPending:state.cameraCalculationPending, cameraRoadCandidateCount:(state.cameraRoadCandidates||[]).length, assumedViewpointCount:(state.assumedViewpoints||[]).length, cameraPathSearchError:state.cameraPathSearchError, cameraPathSearchDiagnostics:state.cameraPathSearchDiagnostics, resultCount:state.results.length, resultCategoryCounts:{history:state.results.filter(r=>r.category==='history').length,architecture:state.results.filter(r=>r.category==='architecture').length,viewpoint:state.results.filter(r=>r.category==='viewpoint').length,parking:state.results.filter(r=>r.category==='parking').length}, viewportCategoryCounts:(()=>{const b=state.map&&state.map.getBounds();const inView=r=>b&&Number.isFinite(Number(r.lat))&&Number.isFinite(Number(r.lng))&&b.contains([Number(r.lng),Number(r.lat)]);return {history:state.results.filter(r=>r.category==='history'&&inView(r)).length,architecture:state.results.filter(r=>r.category==='architecture'&&inView(r)).length,viewpoint:state.results.filter(r=>r.category==='viewpoint'&&inView(r)).length,scenic:state.scenicSpots.filter(inView).length,inferredViewpoint:(state.assumedViewpoints||[]).filter(inView).length};})(), distanceDiagnostics:[...state.results,...state.scenicSpots].filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&Number.isFinite(p.distance)).slice(0,25).map(p=>({name:p.name,category:p.category,reportedDistance:p.distance,computedDistance:haversine(state.center,{lat:p.lat,lng:p.lng}),delta:Math.abs(p.distance-haversine(state.center,{lat:p.lat,lng:p.lng}))})), parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), parkingLabelLayersFiltered:[...state.parkingFilteredLayers], visibleParkingMarkerClasses:state.markers.filter(m=>m.getElement().classList.contains('parking')).map(m=>({title:m.getElement().title,classes:m.getElement().className,coordinates:m.getLngLat().toArray()})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, markerCounts:{landmark:state.markers.filter(m=>m.getElement().classList.contains('history')).length,architecture:state.markers.filter(m=>m.getElement().classList.contains('architecture')).length,viewpoint:state.markers.filter(m=>m.getElement().classList.contains('viewpoint')).length,inferredViewpoint:state.markers.filter(m=>m.getElement().classList.contains('inferred-viewpoint-pin')).length,photoSpot:state.markers.filter(m=>m.getElement().classList.contains('photoSpot')).length}, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
  runMarkerStabilityFixture:function(){
   if(!state.map||!state.styleLoaded)throw new Error('Map is not ready');
   renderMarkers();
@@ -1033,13 +1042,14 @@ window.__PHOTO_SCOUT_TEST__ = {
  },
  renderMarkerFixture:function(){
   if(!state.map||!state.styleLoaded)throw new Error('Map is not ready');
-  const saved={results:state.results,scenicSpots:state.scenicSpots,basemapParking:state.basemapParking,spotParking:state.spotParking,selected:state.selected,spotParkingTargetId:state.spotParkingTargetId,center:state.center,radius:state.radius};
+  const saved={results:state.results,scenicSpots:state.scenicSpots,assumedViewpoints:state.assumedViewpoints,basemapParking:state.basemapParking,spotParking:state.spotParking,selected:state.selected,spotParkingTargetId:state.spotParkingTargetId,center:state.center,radius:state.radius};
   const c=map.getCenter();
   const make=function(id,name,category,dLat,dLng){return {id,name,category,lat:c.lat+dLat,lng:c.lng+dLng,distance:420,source:'Automated test fixture',sourceUrl:'https://www.openstreetmap.org/',tags:{},city:'Fixture'};};
   let result;
   try{
    state.results=[make('fixture-landmark','Fixture Landmark','history',0.0010,0.0010),make('fixture-building','Fixture Building','architecture',0.0018,0.0018),make('fixture-viewpoint','Fixture Viewpoint','viewpoint',0.0026,0.0026),make('fixture-parking','Fixture Parking','parking',-0.0010,-0.0010)];
    state.scenicSpots=[make('fixture-photo-spot','Fixture Photo Spot','photoSpot',-0.0020,0.0020)];
+    state.assumedViewpoints=[{...make('fixture-calculated-view','Calculated viewpoint · SE','inferredViewpoint',0.0034,-0.0028),isAssumedViewpoint:true,confidence:'Fixture only',primaryTargetStatus:'unverified',viewTargetName:'Fixture Landmark',score:10}];
    state.basemapParking=[];state.spotParking=[];state.selected=null;state.spotParkingTargetId=null;state.center={lat:c.lat,lng:c.lng};state.radius=10000;
    renderMarkers();
    const markerRows=state.markers.map(marker=>{
@@ -1054,12 +1064,14 @@ window.__PHOTO_SCOUT_TEST__ = {
     viewpoint:document.querySelectorAll('.scout-marker.viewpoint').length,
     photoSpot:document.querySelectorAll('.scout-marker.photoSpot').length,
     parking:document.querySelectorAll('.scout-marker.parking').length,
+     inferredViewpoint:document.querySelectorAll('.scout-marker.inferred-viewpoint-pin').length,
+     inferredIcon:document.querySelectorAll('.scout-marker.inferred-viewpoint-pin .dot-core span').length,
     svgIcons:document.querySelectorAll('.scout-marker .dot-core svg').length,
     exactCoordinates:markerRows.length>0&&markerRows.every(row=>Math.abs(row.coordinate.lat-row.item.lat)<1e-8&&Math.abs(row.coordinate.lng-row.item.lng)<1e-8),
     zeroOffsets:markerRows.length>0&&markerRows.every(row=>Math.abs(Number(row.offset.x)||0)<0.01&&Math.abs(Number(row.offset.y)||0)<0.01)
    };
   }finally{
-   clearMarkers();state.results=saved.results;state.scenicSpots=saved.scenicSpots;state.basemapParking=saved.basemapParking;state.spotParking=saved.spotParking;state.selected=saved.selected;state.spotParkingTargetId=saved.spotParkingTargetId;state.center=saved.center;state.radius=saved.radius;renderMarkers();
+   clearMarkers();state.results=saved.results;state.scenicSpots=saved.scenicSpots;state.assumedViewpoints=saved.assumedViewpoints;state.basemapParking=saved.basemapParking;state.spotParking=saved.spotParking;state.selected=saved.selected;state.spotParkingTargetId=saved.spotParkingTargetId;state.center=saved.center;state.radius=saved.radius;renderMarkers();
   }
   return result;
  },
@@ -1129,6 +1141,20 @@ window.__PHOTO_SCOUT_TEST__ = {
  forceRasterFallback:function(){return switchToRasterFallback('Automated backup-map verification.');},
  retryVectorBasemap:function(){return setVectorBasemap(currentStyle);},
  // Read-only fixture hooks used by the no-wallet Playwright regression suite.
+ runCalculatedViewpointFixture:function(){
+  const clear=terrainSightlineStatus(80,72,[76,74,73],900,6);
+  const blocked=terrainSightlineStatus(80,72,[76,105,73],900,6);
+  const unknown=terrainSightlineStatus(null,72,[76,74,73],900,6);
+  return {
+   pedestrianRoutePreferred:cameraPathSuitability({highway:'footway'})>cameraPathSuitability({highway:'residential'}),
+   privateAccessRejected:cameraPathSuitability({highway:'path',access:'private'})<0,
+   cameraLensChangesWithDistance:cameraLensForDistance(250)==='18–35 mm'&&cameraLensForDistance(1100)==='35–70 mm'&&cameraLensForDistance(4000)==='70–150 mm',
+   clearTerrainRayRecognized:clear==='terrain-clear',
+   blockingTerrainRecognized:blocked==='terrain-blocked',
+   missingTerrainRemainsUnverified:unknown==='unverified',
+   bearingHasCompassDirection:compassDirection(initialBearingDegrees({lat:45,lng:14},{lat:45,lng:15}))==='E'
+  };
+ },
  runContextPhotoRegressionFixtures:function(){
   const previous={
    results:state.results,scenicSpots:state.scenicSpots,selected:state.selected,center:state.center,
@@ -2273,10 +2299,10 @@ async function commonsTextSearch(queries,c,id){
  }).sort((a,b)=>(b.relevance||0)-(a.relevance||0)).slice(0,18);
 }
 function cardHTML(item){
- const icon=item.category==='parking'?'P':item.category==='history'?'H':item.category==='viewpoint'?'↗':item.category==='photoSpot'?'✦':item.category==='photo'?'✦':'A';
+ const icon=item.category==='parking'?'P':item.category==='history'?'H':item.category==='viewpoint'?'↗':item.category==='inferredViewpoint'?'⌖':item.category==='photoSpot'?'✦':item.category==='photo'?'✦':'A';
  const title=esc(item.name); const dist=distanceLabel(item.distance||0);
- const desc=item.category==='photoSpot'?(item.why||item.summary||'Mapped scenic feature that may suit a landscape or cityscape composition.'):item.summary||((item.tags&&item.tags.description)||((item.tags&&item.tags.tourism==='viewpoint')?'Mapped viewpoint; the exact camera position and view are not independently verified.':'Mapped place. Check the source and access details before travelling.'));
- const typeLabel=item.category==='parking'?'Parking':item.category==='history'?'History / place':item.category==='viewpoint'?'Viewpoint / nature':item.category==='photoSpot'?'Photo spot · '+(item.confidence||'candidate'):'Architecture';
+ const desc=item.isAssumedViewpoint?(item.summary||item.why||'Calculated camera position; visibility and access are estimates.'):item.category==='photoSpot'?(item.why||item.summary||'Mapped scenic feature that may suit a landscape or cityscape composition.'):item.summary||((item.tags&&item.tags.description)||((item.tags&&item.tags.tourism==='viewpoint')?'Mapped viewpoint; the exact camera position and view are not independently verified.':'Mapped place. Check the source and access details before travelling.'));
+ const typeLabel=item.isAssumedViewpoint?'Calculated camera position · '+(item.confidence||'candidate'):item.category==='parking'?'Parking':item.category==='history'?'History / place':item.category==='viewpoint'?'Viewpoint / nature':item.category==='photoSpot'?'Photo spot · '+(item.confidence||'candidate'):'Architecture';
  const tagLine=item.source+' · '+typeLabel;
  return '<article class="spot-card" data-item-id="'+esc(item.id)+'" tabindex="0" role="button"><div class="spot-icon '+esc(item.category)+'">'+icon+'</div><div class="spot-body"><div class="spot-title">'+title+'</div><div class="spot-meta"><span>'+esc(tagLine)+'</span></div>'+(desc?'<div class="spot-summary">'+esc(desc)+'</div>':'')+'</div><div class="spot-distance">'+dist+'</div></article>';
 }
@@ -2645,16 +2671,16 @@ function refreshBasemapParking(){
 function updateMapPinLegend(){
  const current=state.markers.flatMap(marker=>marker.__scoutItems||[]);
  const count=function(items,category){return items.filter(item=>item.category===category).length;};
- const history=count(current,'history'),architecture=count(current,'architecture'),viewpoints=count(current,'viewpoint');
+ const history=count(current,'history'),architecture=count(current,'architecture'),viewpoints=count(current,'viewpoint'),calculated=count(current,'inferredViewpoint');
  const photoSpots=count(current,'photoSpot'),parking=count(current,'parking');
  const put=function(id,value){const node=$(id);if(node)node.textContent=String(value);};
- put('legendLandmarkCount',history);put('legendArchitectureCount',architecture);put('legendViewpointCount',viewpoints);
+ put('legendLandmarkCount',history);put('legendArchitectureCount',architecture);put('legendViewpointCount',viewpoints);put('legendInferredViewpointCount',calculated);
  put('legendPhotoSpotCount',photoSpots);put('legendParkingCount',parking);
- const total=history+architecture+viewpoints+photoSpots;
+ const total=history+architecture+viewpoints+calculated+photoSpots;
  put('mapPinSummary',state.scanCount?total+' place pins in view':'Map ready to scout');
 }
 
-const markerLayerVisibility={history:true,architecture:true,viewpoint:true,photoSpot:true,parking:true};
+const markerLayerVisibility={history:true,architecture:true,viewpoint:true,inferredViewpoint:true,photoSpot:true,parking:true};
 function normalizeMapMarker(item){
  if(!item||!Number.isFinite(Number(item.lat))||!Number.isFinite(Number(item.lng??item.lon)))return null;
  const tags=item.tags&&typeof item.tags==='object'?item.tags:{};
@@ -2695,11 +2721,11 @@ function compassDirection(degrees){
  return ['N','NE','E','SE','S','SW','W','NW'][Math.round(((((Number(degrees)||0)%360)+360)%360)/45)%8];
 }
 function targetVantageCandidates(bounds){
- const target=(state.selected&&!state.selected.isTargetVantage&&Number.isFinite(Number(state.selected.lat))&&Number.isFinite(Number(state.selected.lng)))
+ const target=(state.selected&&!state.selected.isTargetVantage&&!state.selected.isAssumedViewpoint&&Number.isFinite(Number(state.selected.lat))&&Number.isFinite(Number(state.selected.lng)))
   ?{lat:Number(state.selected.lat),lng:Number(state.selected.lng)}
   :state.center;
  if(!target)return [];
- const selectedName=state.selected&&!state.selected.isTargetVantage?String(state.selected.name||''):'';
+ const selectedName=state.selected&&!state.selected.isTargetVantage&&!state.selected.isAssumedViewpoint?String(state.selected.name||''):'';
  const targetName=(state.detectedLocality&&String(state.detectedLocality).trim())||
   (selectedName&&!/^map pin\b/i.test(selectedName)?selectedName:'your pinned location');
  const candidates=(state.scenicSpots||[]).filter(item=>{
@@ -2739,6 +2765,410 @@ function targetVantageCandidates(bounds){
  return picked.map(item=>({...item,id:'target-vantage-'+String(item.sourceScenicId)}));
 }
 
+function hasTerrainElevation(value){return value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value));}
+const CAMERA_PATH_SPACING_METERS=170;
+const CAMERA_VIEW_SEARCH_METERS=3200;
+function cameraPathSuitability(tags){
+ const t=tags&&typeof tags==='object'?tags:{};
+ const access=String(t.access||'').toLowerCase();
+ if(['private','no','destination'].includes(access)||t.foot==='no')return -100;
+ const highway=String(t.highway||'').toLowerCase();
+ const scores={footway:34,path:34,pedestrian:32,steps:27,track:24,cycleway:21,living_street:17,residential:14,unclassified:9,tertiary:5};
+ let score=scores[highway]||0;
+ if(t.leisure&&['park','garden','nature_reserve'].includes(String(t.leisure)))score=Math.max(score,24);
+ if(t.tourism==='viewpoint')score=Math.max(score,40);
+ if(['designated','yes','permissive'].includes(access))score+=4;
+ if(['paved','asphalt','paving_stones','concrete'].includes(String(t.surface||'').toLowerCase()))score+=2;
+ if(t.name||t.ref)score+=2;
+ return score;
+}
+function cameraLensForDistance(meters){
+ const d=Number(meters);
+ if(!Number.isFinite(d)||d<0)return '18–24 mm';
+ if(d<450)return '18–35 mm';
+ if(d<1800)return '35–70 mm';
+ return '70–150 mm';
+}
+function terrainSightlineStatus(fromElevation,toElevation,sampleElevations,distanceMeters,targetHeightMeters){
+ const samples=Array.isArray(sampleElevations)?sampleElevations:[];
+ if(!hasTerrainElevation(fromElevation)||!hasTerrainElevation(toElevation)||
+    samples.length<2||!samples.every(hasTerrainElevation)||!Number.isFinite(Number(distanceMeters))||
+    Number(distanceMeters)<250)return 'unverified';
+ const start=Number(fromElevation)+1.7;
+ const end=Number(toElevation)+Math.max(3,Number(targetHeightMeters)||4);
+ const distance=Number(distanceMeters);
+ for(let i=0;i<samples.length;i++){
+  const t=(i+1)/(samples.length+1);
+  const earthBulge=distance*distance*t*(1-t)/(2*6371000);
+  const lineHeight=start+(end-start)*t-earthBulge;
+  if(Number(samples[i])>=lineHeight-3.0)return 'terrain-blocked';
+ }
+ return 'terrain-clear';
+}
+function interpolateCameraPoint(a,b,t){
+ const lat=Number(a.lat)+(Number(b.lat)-Number(a.lat))*t;
+ let deltaLng=Number(b.lng)-Number(a.lng);
+ if(deltaLng>180)deltaLng-=360;
+ if(deltaLng< -180)deltaLng+=360;
+ return {lat,lng:((Number(a.lng)+deltaLng*t+540)%360)-180};
+}
+async function overpassCameraPathSearch(center,scanId){
+ const lat=Number(center.lat).toFixed(6),lon=Number(center.lng).toFixed(6),radius=CAMERA_VIEW_SEARCH_METERS;
+ const around='(around:'+radius+','+lat+','+lon+')';
+ const query='[out:json][timeout:12];('+
+  'way'+around+'["highway"~"^(path|footway|pedestrian|track|steps|cycleway|residential|living_street|unclassified)$"]["access"!~"^(private|no|destination)$"]["foot"!="no"];'+
+  'nwr'+around+'["tourism"="viewpoint"]["access"!~"^(private|no|destination)$"];'+
+  'way'+around+'["leisure"~"^(park|garden|nature_reserve)$"]["access"!~"^(private|no|destination)$"];'+
+  ');out geom tags qt 280;';
+ const endpoints=['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter'];
+ let lastError=null;
+ const diagnostics={endpointAttempts:0,endpoint:'',elementsReturned:0,routeWaysReturned:0,routeWaysWithGeometry:0,midpointFallbacks:0,rawCandidateCount:0,returnedCandidateCount:0,remark:''};
+ state.cameraPathSearchDiagnostics=diagnostics;
+ state.cameraPathSearchError='';
+ for(const endpoint of endpoints){
+  diagnostics.endpointAttempts++;
+  diagnostics.endpoint=endpoint;
+  if(scanId!==state.scanId)throw new Error('stale scan');
+  const controller=new AbortController();state.controllers.push(controller);
+  const timer=window.setTimeout(()=>controller.abort(),14000);
+  try{
+   const response=await fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',signal:controller.signal,
+    headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},
+    body:'data='+encodeURIComponent(query)});
+   if(!response.ok)throw new Error('Camera-path search returned HTTP '+response.status);
+   const data=await response.json();
+   diagnostics.elementsReturned=Array.isArray(data.elements)?data.elements.length:0;
+   diagnostics.remark=String(data.remark||'');
+   if(scanId!==state.scanId)throw new Error('stale scan');
+   const raw=[];
+   const add=(point,tags,el)=>{
+    if(!point||!Number.isFinite(Number(point.lat))||!Number.isFinite(Number(point.lng)))return false;
+    const distance=haversine(center,{lat:Number(point.lat),lng:Number(point.lng)});
+    if(distance<180||distance>radius)return false;
+    const score=cameraPathSuitability(tags);if(score<0)return false;
+    const type=String(tags.highway||tags.leisure||tags.tourism||'mapped open space');
+    const osmType=String(el.type||'way'),osmId=String(el.id||'');
+    raw.push({lat:Number(point.lat),lng:Number(point.lng),distance,tags:{...tags},pathScore:score,pathType:type,
+     roadName:String(tags.name||tags.ref||'Mapped '+type),osmType,osmId,
+     sourceUrl:osmId?'https://www.openstreetmap.org/'+osmType+'/'+osmId:'https://www.openstreetmap.org/',
+     source:'OpenStreetMap mapped '+type});
+    diagnostics.rawCandidateCount=raw.length;
+    return true;
+   };
+   for(const el of (Array.isArray(data.elements)?data.elements:[])){
+    const tags=el.tags||{},highway=String(tags.highway||'').toLowerCase();
+    const allowed=['path','footway','pedestrian','track','steps','cycleway','residential','living_street','unclassified'];
+    if(el.type==='way'&&allowed.includes(highway)){
+     diagnostics.routeWaysReturned++;
+    }
+    if(el.type==='way'&&allowed.includes(highway)&&Array.isArray(el.geometry)&&el.geometry.length>=2){
+     diagnostics.routeWaysWithGeometry++;
+     const candidatesBeforeWay=raw.length;
+     const geometry=el.geometry.filter(p=>Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lon))).map(p=>({lat:Number(p.lat),lng:Number(p.lon)}));
+     let traversed=0,nextAt=CAMERA_PATH_SPACING_METERS/2;
+     for(let i=0;i<geometry.length-1;i++){
+      const a=geometry[i],b=geometry[i+1],len=haversine(a,b);
+      if(!Number.isFinite(len)||len<=0)continue;
+      while(traversed+len>=nextAt){
+       add(interpolateCameraPoint(a,b,(nextAt-traversed)/len),tags,el);
+       nextAt+=CAMERA_PATH_SPACING_METERS;
+      }
+      traversed+=len;
+     }
+     // OSM often splits short streets and footpaths into ways shorter than the
+     // spacing interval. Use one true midpoint for those otherwise-missed ways.
+     if(raw.length===candidatesBeforeWay){
+      const segmentLengths=geometry.slice(0,-1).map((point,index)=>haversine(point,geometry[index+1]));
+      const totalLength=segmentLengths.reduce((sum,value)=>sum+(Number.isFinite(value)?value:0),0);
+      if(totalLength>0){
+       let remaining=totalLength/2,midpoint=geometry[0];
+       for(let i=0;i<segmentLengths.length;i++){
+        const segment=segmentLengths[i];
+        if(remaining<=segment&&segment>0){midpoint=interpolateCameraPoint(geometry[i],geometry[i+1],remaining/segment);break;}
+        remaining-=segment;
+       }
+       if(add(midpoint,tags,el))diagnostics.midpointFallbacks++;
+      }
+     }
+    }else if(tags.tourism==='viewpoint'||['park','garden','nature_reserve'].includes(String(tags.leisure||''))){
+     let point=null;
+     if(Number.isFinite(Number(el.lat))&&Number.isFinite(Number(el.lon)))point={lat:Number(el.lat),lng:Number(el.lon)};
+     else if(el.center&&Number.isFinite(Number(el.center.lat))&&Number.isFinite(Number(el.center.lon)))point={lat:Number(el.center.lat),lng:Number(el.center.lon)};
+     else if(Array.isArray(el.geometry)&&el.geometry.length){
+      const g=el.geometry.filter(p=>Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lon)));
+      if(g.length)point={lat:g.reduce((s,p)=>s+Number(p.lat),0)/g.length,lng:g.reduce((s,p)=>s+Number(p.lon),0)/g.length};
+     }
+     add(point,tags,el);
+    }
+   }
+   const byQuality=raw.sort((a,b)=>{
+    const bonus=d=>d>=450&&d<=2200?12:d<450?4:Math.max(-10,8-(d-2200)/120);
+    return (b.pathScore+bonus(b.distance))-(a.pathScore+bonus(a.distance));
+   });
+   diagnostics.rawCandidateCount=raw.length;
+   const spaced=[];
+   for(const candidate of byQuality){
+    if(spaced.some(p=>haversine(p,candidate)<120))continue;
+    spaced.push(candidate);if(spaced.length>=65)break;
+   }
+   diagnostics.returnedCandidateCount=spaced.length;
+   return spaced;
+  }catch(error){if(scanId!==state.scanId)throw error;lastError=error;state.cameraPathSearchError=String(error&&error.message||error);}
+  finally{window.clearTimeout(timer);state.controllers=state.controllers.filter(c=>c!==controller);}
+ }
+ throw lastError||new Error('No mapped paths available for camera-position inference');
+}
+
+function routeTypeFromVectorFeature(feature){
+ const p=feature&&feature.properties||{};
+ const layer=feature&&feature.layer||{};
+ const sourceLayer=String(layer['source-layer']||feature.sourceLayer||'').toLowerCase();
+ const id=String(layer.id||'').toLowerCase();
+ if(sourceLayer!=='transportation'&&!/(road|transportation)/.test(id))return null;
+ const sub=String(p.subclass||p.highway||p.road_class||'').toLowerCase();
+ const cls=String(p.class||p.type||'').toLowerCase();
+ const map={path:'path',footway:'footway',pedestrian:'pedestrian',steps:'steps',track:'track',cycleway:'cycleway',bridleway:'track',residential:'residential',living_street:'living_street',unclassified:'unclassified',tertiary:'tertiary',service:'unclassified',minor:'residential',street:'residential'};
+ const type=map[sub]||map[cls]||'';
+ if(!type)return null;
+ if(cameraPathSuitability({highway:type,access:p.access||'',foot:p.foot||''})<0)return null;
+ return type;
+}
+function collectRenderedMapCameraCandidates(center,scanId){
+ const diagnostics={source:'OpenFreeMap vector transportation tiles',renderedFeatureCount:0,sourceFeatureCount:0,routeFeatureCount:0,geometryFeatureCount:0,rawCandidateCount:0,returnedCandidateCount:0,featureSamples:[]};
+ if(!map||!state.styleLoaded||scanId!==state.scanId){state.cameraPathSearchDiagnostics=diagnostics;return [];}
+ const raw=[];
+ try{
+  const renderedFeatures=map.queryRenderedFeatures()||[];
+  let sourceFeatures=[];
+  try{if(map.getSource('openmaptiles')&&typeof map.querySourceFeatures==='function')sourceFeatures=map.querySourceFeatures('openmaptiles',{sourceLayer:'transportation'})||[];}catch(e){}
+  const features=[...renderedFeatures,...sourceFeatures];
+  diagnostics.renderedFeatureCount=renderedFeatures.length;
+  diagnostics.sourceFeatureCount=sourceFeatures.length;
+  const add=(point,geometry,tags,feature)=>{
+   if(!point||!Number.isFinite(Number(point.lat))||!Number.isFinite(Number(point.lng)))return false;
+   const d=haversine(center,{lat:Number(point.lat),lng:Number(point.lng)});
+   if(d<180||d>CAMERA_VIEW_SEARCH_METERS)return false;
+   if(cameraPathSuitability(tags)<0)return false;
+   raw.push({lat:Number(point.lat),lng:Number(point.lng),distance:d,tags:{...tags},
+    pathScore:cameraPathSuitability(tags),pathType:String(tags.highway||'mapped path'),
+    roadName:String(tags.name||tags.highway||'Mapped route'),osmType:'',osmId:'',
+    sourceUrl:'https://www.openstreetmap.org/?mlat='+Number(point.lat).toFixed(6)+'&mlon='+Number(point.lng).toFixed(6)+'#map=18/'+Number(point.lat).toFixed(6)+'/'+Number(point.lng).toFixed(6),
+    source:'OpenFreeMap vector tile · '+String(tags.highway||'mapped route'),
+    mapFeatureId:feature&&feature.id!=null?String(feature.id):'',mapLayer:String(feature&&feature.layer&&feature.layer.id||'')});
+   return true;
+  };
+  for(const feature of features){
+   if(scanId!==state.scanId)break;
+   const type=routeTypeFromVectorFeature(feature);
+   if(!type)continue;
+   diagnostics.routeFeatureCount++;
+   const g=feature.geometry;
+   if(!g||!Array.isArray(g.coordinates))continue;
+   const lines=g.type==='LineString'?[g.coordinates]:g.type==='MultiLineString'?g.coordinates:[];
+   if(!lines.length)continue;
+   diagnostics.geometryFeatureCount++;
+   const props=feature.properties||{};
+   const tags={highway:type,access:props.access||'',foot:props.foot||'',surface:props.surface||'',name:props.name||props['name:en']||'',ref:props.ref||''};
+   for(const coords of lines){
+    const pts=(Array.isArray(coords)?coords:[]).filter(v=>Array.isArray(v)&&Number.isFinite(Number(v[0]))&&Number.isFinite(Number(v[1]))&&Math.abs(Number(v[1]))<=90&&Math.abs(Number(v[0]))<=180).map(v=>({lat:Number(v[1]),lng:Number(v[0])}));
+    if(pts.length<2)continue;
+    let traversed=0,nextAt=105,addedForLine=0;
+    for(let i=0;i<pts.length-1;i++){
+     const a=pts[i],b=pts[i+1],len=haversine(a,b);
+     if(!Number.isFinite(len)||len<=0)continue;
+     while(traversed+len>=nextAt){
+      if(add(interpolateCameraPoint(a,b,(nextAt-traversed)/len),g,tags,feature))addedForLine++;
+      nextAt+=210;
+     }
+     traversed+=len;
+    }
+    if(!addedForLine){
+     const lengths=pts.slice(0,-1).map((point,index)=>haversine(point,pts[index+1]));
+     const total=lengths.reduce((sum,value)=>sum+(Number.isFinite(value)?value:0),0);
+     if(total>0){
+      let remaining=total/2,mid=pts[0];
+      for(let j=0;j<lengths.length;j++){
+       const d=lengths[j];
+       if(d>0&&remaining<=d){mid=interpolateCameraPoint(pts[j],pts[j+1],remaining/d);break;}
+       remaining-=d;
+      }
+      add(mid,g,tags,feature);
+     }
+    }
+   }
+   if(diagnostics.featureSamples.length<4)diagnostics.featureSamples.push({
+    sourceLayer:String(feature.layer&&feature.layer['source-layer']||''),
+    layer:String(feature.layer&&feature.layer.id||''),class:String(props.class||''),subclass:String(props.subclass||''),
+    geometryType:String(g.type||''),name:String(props.name||'')
+   });
+  }
+ }catch(error){diagnostics.error=String(error&&error.message||error);}
+ const unique=[];
+ const sorted=raw.sort((a,b)=>{
+  const band=d=>d>=450&&d<=2200?12:d<450?4:Math.max(-10,8-(d-2200)/120);
+  return (b.pathScore+band(b.distance))-(a.pathScore+band(a.distance));
+ });
+ for(const p of sorted){
+  if(unique.some(q=>haversine(q,p)<115))continue;
+  unique.push(p);
+  if(unique.length>=60)break;
+ }
+ diagnostics.rawCandidateCount=raw.length;
+ diagnostics.returnedCandidateCount=unique.length;
+ state.cameraPathSearchDiagnostics=diagnostics;
+ state.cameraPathSearchError=diagnostics.error||'';
+ return unique;
+}
+async function discoverCameraPathCandidates(center,scanId){
+ // The current map click has already moved the camera to the selected place.
+ // Prefer the vector-tile road/path geometry already rendered in the browser:
+ // it is fast and avoids making every click wait for an overloaded Overpass server.
+ let candidates=collectRenderedMapCameraCandidates(center,scanId);
+ if(candidates.length>=2)return candidates;
+ if(map&&scanId===state.scanId){
+  await new Promise(resolve=>{
+   let done=false;
+   const finish=()=>{if(done)return;done=true;try{map.off('idle',finish);}catch(e){}clearTimeout(timer);resolve();};
+   const timer=setTimeout(finish,1200);
+   try{map.once('idle',finish);}catch(e){}
+  });
+  if(scanId!==state.scanId)return [];
+  candidates=collectRenderedMapCameraCandidates(center,scanId);
+  if(candidates.length>=2)return candidates;
+ }
+ // Sparse or unrendered areas can still use the fuller open-data query.
+ try{
+  const remote=await overpassCameraPathSearch(center,scanId);
+  if(remote.length){
+   state.cameraPathSearchDiagnostics={...(state.cameraPathSearchDiagnostics||{}),source:'OpenStreetMap Overpass geometry',renderedFallbackCandidateCount:candidates.length};
+   state.cameraPathSearchError='';
+   return remote;
+  }
+ }catch(error){state.cameraPathSearchError=String(error&&error.message||error);}
+ if(candidates.length){
+  state.cameraPathSearchDiagnostics={...(state.cameraPathSearchDiagnostics||{}),source:'OpenFreeMap rendered transportation features · Overpass unavailable',renderedFallbackCandidateCount:candidates.length};
+  return candidates;
+ }
+ return [];
+}
+
+async function fetchTerrainElevations(points,scanId){
+ const output=[];
+ for(let i=0;i<points.length;i+=95){
+  if(scanId!==state.scanId)throw new Error('stale scan');
+  const batch=points.slice(i,i+95);if(!batch.length)continue;
+  const latitude=batch.map(p=>Number(p.lat).toFixed(5)).join(',');
+  const longitude=batch.map(p=>Number(p.lng).toFixed(5)).join(',');
+  const data=await requestJSON('https://api.open-meteo.com/v1/elevation?latitude='+encodeURIComponent(latitude)+'&longitude='+encodeURIComponent(longitude),scanId,10000);
+  const elevations=Array.isArray(data.elevation)?data.elevation:[];
+  batch.forEach((p,j)=>output.push(hasTerrainElevation(elevations[j])?Number(elevations[j]):null));
+ }
+ return output;
+}
+function chooseCameraTargets(center,targetName){
+ const primaryItem=state.selected&&state.selected.isAssumedViewpoint?null:state.selected;
+ const primary={id:'selected-place-target',name:String(targetName||'Selected map location'),lat:Number(center.lat),lng:Number(center.lng),category:'selected',tags:primaryItem&&primaryItem.tags||{},isPrimary:true};
+ const options=[...state.results,...state.scenicSpots]
+  .filter(p=>p&&['history','architecture','viewpoint','photoSpot'].includes(p.category)&&p.name&&!isGenericMapFeatureLabel(p.name,p))
+  .map(p=>({...p,lat:Number(p.lat),lng:Number(p.lng)}))
+  .filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&haversine(center,p)>=300&&haversine(center,p)<=12000)
+  .sort((a,b)=>{
+   const priority=p=>(p.category==='history'?12:p.category==='architecture'?10:p.category==='viewpoint'?8:4)+(p.tags&&(p.tags.wikidata||p.tags.wikipedia)?5:0)+(p.tags&&p.tags.tourism==='viewpoint'?4:0)+Math.min(3,Math.max(0,Number(p.scenicScore||0)/30));
+   return priority(b)-priority(a)||haversine(center,a)-haversine(center,b);
+  });
+ const chosen=[];
+ for(const p of options){
+  if(chosen.some(q=>normalizeNameForDedup(q.name)===normalizeNameForDedup(p.name)||haversine(q,p)<180))continue;
+  chosen.push({id:String(p.id||p.name),name:String(p.name),lat:p.lat,lng:p.lng,category:p.category,tags:p.tags||{},sourceUrl:p.sourceUrl||p.wikiUrl||'https://www.openstreetmap.org/',isPrimary:false});
+  if(chosen.length>=5)break;
+ }
+ return [primary,...chosen];
+}
+async function buildAssumedViewpoints(center,roadCandidates,scanId){
+ if(scanId!==state.scanId)return [];
+ const origin={lat:Number(center.lat),lng:Number(center.lng)};
+ const selected=state.selected&&!state.selected.isAssumedViewpoint?state.selected:null;
+ const selectedName=selected&&selected.name&&!/^map pin\b/i.test(selected.name)?selected.name:'';
+ const locality=state.detectedLocality||selected&&selected.city||'selected area';
+ const targetName=selectedName&&selected.category!=='parking'?selectedName:locality;
+ const targets=chooseCameraTargets(origin,targetName);
+ const raw=(Array.isArray(roadCandidates)?roadCandidates:[]).filter(p=>cameraPathSuitability(p.tags)>=0&&haversine(origin,p)>=180&&haversine(origin,p)<=CAMERA_VIEW_SEARCH_METERS);
+ if(!raw.length){state.assumedViewpoints=[];state.cameraCalculationPending=false;renderAssumedViewpoints();renderMarkers();return [];}
+ let terrain=[];
+ try{terrain=await fetchTerrainElevations([origin,...raw,...targets.map(t=>({lat:t.lat,lng:t.lng}))],scanId);}catch(error){terrain=[];}
+ if(scanId!==state.scanId)return [];
+ const originElevation=terrain.length?terrain[0]:null,targetOffset=1+raw.length;
+ const scored=raw.map((p,i)=>{
+  const elevation=terrain.length?terrain[i+1]:null;
+  const delta=hasTerrainElevation(elevation)&&hasTerrainElevation(originElevation)?Number(elevation)-Number(originElevation):null;
+  const dist=p.distance,distanceScore=dist>=450&&dist<=2200?12:dist<450?4:Math.max(-10,8-(dist-2200)/120);
+  const elevationScore=Number.isFinite(delta)?Math.max(-12,Math.min(22,delta*0.55)):0;
+  return {...p,elevation,elevationDelta:delta,preScore:p.pathScore+distanceScore+elevationScore,sector:Math.floor(initialBearingDegrees(origin,p)/45)};
+ }).sort((a,b)=>b.preScore-a.preScore);
+ const selectedCandidates=[],sectorCounts=new Map();
+ for(const pass of [1,2])for(const candidate of scored){
+  if(selectedCandidates.length>=6)break;
+  if(selectedCandidates.some(p=>haversine(p,candidate)<260))continue;
+  const count=sectorCounts.get(candidate.sector)||0;
+  if((pass===1&&count>0)||(pass===2&&count>=2))continue;
+  selectedCandidates.push(candidate);sectorCounts.set(candidate.sector,count+1);
+ }
+ if(!selectedCandidates.length){state.assumedViewpoints=[];state.cameraCalculationPending=false;renderAssumedViewpoints();renderMarkers();return [];}
+ const rayDefs=[];
+ selectedCandidates.forEach((candidate,ci)=>targets.forEach((target,ti)=>{
+  const distance=haversine(candidate,target),points=distance<1?[]:[0.2,0.4,0.6,0.8].map(t=>interpolateCameraPoint(candidate,target,t));
+  rayDefs.push({ci,ti,distance,points});
+ }));
+ let sampleElevations=[];
+ try{sampleElevations=await fetchTerrainElevations(rayDefs.flatMap(ray=>ray.points),scanId);}catch(error){sampleElevations=[];}
+ if(scanId!==state.scanId)return [];
+ let cursor=0;
+ rayDefs.forEach(ray=>{ray.elevations=ray.points.map(()=>sampleElevations.length?sampleElevations[cursor++]:null);});
+ const targetElevations=targets.map((t,i)=>terrain.length?terrain[targetOffset+i]:null);
+ const result=selectedCandidates.map((candidate,ci)=>{
+  const views=targets.map((target,ti)=>{
+   const ray=rayDefs.find(r=>r.ci===ci&&r.ti===ti),distance=ray?ray.distance:haversine(candidate,target);
+   const tall=/church|cathedral|castle|tower|lighthouse|basilica/i.test(String(target.name)+' '+String(target.tags&&target.tags.building||''));
+   const sightline=terrainSightlineStatus(candidate.elevation,targetElevations[ti],ray&&ray.elevations||[],distance,target.isPrimary?4:(tall?14:7));
+   return {...target,distance,bearingDegrees:Math.round(initialBearingDegrees(candidate,target)),bearingLabel:compassDirection(initialBearingDegrees(candidate,target)),lineOfSightStatus:sightline,recommendedLens:cameraLensForDistance(distance)};
+  });
+  const primary=views[0],terrainClear=views.filter(v=>v.lineOfSightStatus==='terrain-clear'),clearLandmarks=terrainClear.filter(v=>!v.isPrimary);
+  const score=Math.round(candidate.preScore+(primary.lineOfSightStatus==='terrain-clear'?22:primary.lineOfSightStatus==='terrain-blocked'?-10:0)+Math.min(18,clearLandmarks.length*6));
+  const direction=compassDirection(initialBearingDegrees(origin,candidate));
+  const elevationText=hasTerrainElevation(candidate.elevation)?Math.round(candidate.elevation)+' m terrain elevation':'terrain elevation unavailable';
+  const deltaText=Number.isFinite(candidate.elevationDelta)?(candidate.elevationDelta>=0?'+':'')+Math.round(candidate.elevationDelta)+' m relative to the selected pin':'relative height unknown';
+  const clearNames=clearLandmarks.slice(0,3).map(v=>v.name+' ('+v.bearingLabel+', '+distanceLabel(v.distance)+')');
+  const statusText=primary.lineOfSightStatus==='terrain-clear'?'Terrain model suggests an open line toward '+targetName+'.':primary.lineOfSightStatus==='terrain-blocked'?'The terrain model suggests a possible obstruction toward '+targetName+'.':'Terrain visibility could not be estimated reliably; direction and distance are still calculated.';
+  const accessText=['park','garden','nature_reserve'].includes(candidate.pathType)?'Mapped open-space feature; public access is not confirmed.':'Position sampled on a mapped '+candidate.pathType+' line; safe stopping and public access are not confirmed.';
+  const why=accessText+' Candidate ranked by route type, separation from the selected pin, relative terrain elevation and terrain-only sightline samples. '+statusText+' The 90 m terrain model cannot represent buildings or trees.';
+  const shotIdeas=[
+   'Wide · 18–24 mm: use the mapped approach or foreground edge to frame '+targetName+' in its surroundings; check buildings and trees in the real view.',
+   'Context · 35–70 mm: frame '+targetName+' with a supporting landmark or roofline if the direction is actually clear.',
+   'Compressed · 100–150 mm: isolate distant towers, rooflines or terrain layers; use the long end for targets that appear small in the frame.'
+  ];
+  const distance=haversine(candidate,origin);
+  return {...candidate,id:'assumed-viewpoint-'+String(candidate.osmId||'point')+'-'+Math.round(candidate.lat*100000)+'-'+Math.round(candidate.lng*100000),
+   name:'Calculated viewpoint · '+direction,locality,category:'inferredViewpoint',isAssumedViewpoint:true,distance,directionFromTarget:direction,
+   viewTargetName:targetName,primaryTargetStatus:primary.lineOfSightStatus,views,visibleTargets:terrainClear,possibleTargets:views.filter(v=>v.lineOfSightStatus!=='terrain-blocked'),
+   source:'Calculated from OpenStreetMap paths + Copernicus terrain elevation',sourceUrl:candidate.sourceUrl,
+   elevation:candidate.elevation,elevationDelta:candidate.elevationDelta,score,
+   confidence:primary.lineOfSightStatus==='terrain-clear'?'Terrain-clear estimate · structures unmodelled':'Candidate position · sightline unverified',
+   cameraPlan:cameraLensForDistance(distance)+' starting point for the selected place ('+distanceLabel(distance)+'). '+(clearNames.length?'Terrain-clear landmark directions: '+clearNames.join('; '):'No additional landmark has a confirmed terrain-clear line in this coarse check.'),
+   why,summary:'Estimated camera position '+direction+' of '+targetName+'. '+elevationText+' ('+deltaText+'). '+statusText+' This is a generated candidate, not an official viewpoint. Buildings, trees, access, road safety and the actual camera view still need checking.',shotIdeas};
+ });
+ state.assumedViewpoints=result.sort((a,b)=>b.score-a.score||a.distance-b.distance).slice(0,6);
+ state.cameraCalculationPending=false;
+ renderAssumedViewpoints();renderMarkers();
+ return state.assumedViewpoints;
+}
+function renderAssumedViewpoints(){
+ const host=$('assumedViewpointResults'),count=$('assumedViewpointCount');
+ if(count)count.textContent=state.assumedViewpoints.length?String(state.assumedViewpoints.length):'—';
+ if(!host)return;
+ if(state.cameraCalculationPending){host.innerHTML=emptyHTML('Calculating possible camera positions from mapped paths and terrain elevations…');}
+ else if(state.assumedViewpoints.length){host.innerHTML=state.assumedViewpoints.map(cardHTML).join('');wireCards(host,state.assumedViewpoints);}
+ else host.innerHTML=emptyHTML(state.center?'No calculated camera positions found here. Try moving the pin to a nearby ridge, footpath or open space.':'Click a place on the map to calculate possible camera positions around it.');
+}
 function inCurrentMapBounds(item,bounds){
  const lat=Number(item&&item.lat),lng=Number(item&&(item.lng??item.lon));
  return Number.isFinite(lat)&&Number.isFinite(lng)&&bounds.contains([lng,lat]);
@@ -2759,6 +3189,7 @@ function renderMarkers(){
  const architecture=allResults.filter(r=>r.category==='architecture');
  const targetVantages=markerLayerVisibility.viewpoint?targetVantageCandidates(bounds):[];
  const targetVantageSourceIds=new Set(targetVantages.map(item=>item.sourceScenicId));
+ const inferredViewpoints=markerLayerVisibility.inferredViewpoint?(state.assumedViewpoints||[]).filter(item=>inCurrentMapBounds(item,bounds)):[];
  const scenic=state.scenicSpots.map(item=>normalizeMapMarker({...item,category:'photoSpot'})).filter(Boolean)
   .filter(item=>markerLayerVisibility.photoSpot&&inCurrentMapBounds(item,bounds)&&!targetVantageSourceIds.has(item.id))
   .sort((a,b)=>(Number(b.scenicScore)||0)-(Number(a.scenicScore)||0)||(a.distance||Infinity)-(b.distance||Infinity))
@@ -2776,7 +3207,7 @@ function renderMarkers(){
  const parkingMarkers=parkingMarkersRaw.map(item=>nearestParking&&!item.clusterMembers&&item.id===nearestParking.id?{...item,isRecommendedParking:true}:item);
  // Keep each pin at its real geographic coordinate. Only include candidates
  // inside the viewport; pan/zoom causes a stable idle pass to fill new locations.
- const visible=[...history,...viewpoints,...targetVantages,...architecture,...scenic,...parkingMarkers];
+ const visible=[...history,...viewpoints,...targetVantages,...inferredViewpoints,...architecture,...scenic,...parkingMarkers];
  // Prefer a named/referenced feature when multiple OSM nodes describe the same place.
  const specificity=item=>osmCoordinatePriority(item)*100+(isGenericMapFeatureLabel(item.name,item)?0:15)+(item.tags&&(item.tags.wikipedia||item.tags.wikidata)?8:0)+(String(item.name||'').length>18?2:0);
  const seen=[];
@@ -2784,7 +3215,7 @@ function renderMarkers(){
  const zoom=map.getZoom();
  const labelLimit=zoom>=17?12:zoom>=15.8?6:0;
  const namedLabelCandidates=dedupedVisible.filter(item=>{
-  const categoryCanLabel=['history','architecture','viewpoint'].includes(item.category);
+  const categoryCanLabel=['history','architecture','viewpoint','inferredViewpoint'].includes(item.category);
   const meaningfulName=!isGenericMapFeatureLabel(item.name,item)&&!/^unnamed mapped/i.test(String(item.name||''));
   const closeLocalDetail=!!item.isSmallInterest&&zoom>=15.8;
   return categoryCanLabel&&!item.isTargetVantage&&(meaningfulName||closeLocalDetail);
@@ -2807,7 +3238,7 @@ function renderMarkers(){
   visible:dedupedVisible.map(item=>[
    item.id||'',item.category||'',Number(item.lat).toFixed(6),Number(item.lng).toFixed(6),
    item.name||'',Math.round(Number(item.distance)||0),item.isSmallInterest?1:0,
-   item.isTargetVantage?1:0,item.viewTargetName||'',item.viewBearingLabel||'',
+   item.isTargetVantage?1:0,item.viewTargetName||'',item.viewBearingLabel||'',item.isAssumedViewpoint?1:0,item.primaryTargetStatus||'',item.score||0,
    item.isRecommendedParking?1:0,item.clusterSize||0,
    item.tags&&item.tags.wikipedia?1:0,item.tags&&item.tags.wikidata?1:0
   ]),
@@ -2823,13 +3254,22 @@ function renderMarkers(){
   const duplicate=seen.some(other=>areDuplicateMapMarkers(other,item));
   if(duplicate)return;
   seen.push(item);
-  const label=item.isTargetVantage
+  const label=item.isAssumedViewpoint
+   ?'Calculated camera position · '+item.name+' · '+distanceLabel(item.distance)+' from selected pin · '+item.primaryTargetStatus+' · generated estimate, check access and actual view.'
+   :item.isTargetVantage
    ?'Potential view toward '+item.viewTargetName+' · '+item.viewBearingLabel+' · '+distanceLabel(item.distance)+' straight-line. Line of sight not verified.'
    :item.category==='photoSpot'?'Photo subject · '+item.name+' · '+distanceLabel(item.distance)
    :item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas · '+distanceLabel(item.distance):((item.isRecommendedParking?'Closest mapped parking · ':isParkingEntrance(item)?'Mapped parking entrance · ':'Mapped parking area/point · ')+item.name+' · '+distanceLabel(item.distance)))
    :item.name+' · '+distanceLabel(item.distance);
   const el=markerEl(item.category,label);
-  if(item.isTargetVantage){
+  if(item.isAssumedViewpoint){
+    el.classList.add('inferred-viewpoint-pin');
+    const core=el.querySelector('.dot-core');
+    if(core)core.innerHTML='<span>⌖</span>';
+    el.title=label;
+    el.setAttribute('aria-label',label);
+   }
+   if(item.isTargetVantage){
    el.classList.add('target-vantage-pin');
    const core=el.querySelector('.dot-core');
    if(core)core.innerHTML='<span>↟</span>';
@@ -2859,7 +3299,7 @@ function renderMarkers(){
   const offset=[0,0];
   // Explicit z-order stops nearby building/history dots from intercepting taps on
   // parking destinations when their coordinates are close at neighbourhood zoom.
-  el.style.zIndex=item.category==='parking'?'250':item.category==='history'?'900':item.category==='architecture'?'850':item.category==='viewpoint'?'1000':item.category==='photoSpot'?'750':'500';
+  el.style.zIndex=item.category==='parking'?'250':item.category==='history'?'900':item.category==='architecture'?'850':item.category==='inferredViewpoint'?'1100':item.category==='viewpoint'?'1000':item.category==='photoSpot'?'750':'500';
   if(item.clusterMembers){
    el.classList.add('parking-cluster');
    el.querySelector('.dot-core').textContent='×'+item.clusterSize;
@@ -2880,7 +3320,7 @@ function renderMarkers(){
   }
   const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
   m.__scoutItems=item.clusterMembers||[item];
-  if(typeof m.setZIndex==='function')m.setZIndex(item.category==='parking'?1500:item.category==='history'?5200:item.category==='architecture'?5000:item.category==='viewpoint'?5400:item.category==='photoSpot'?4700:4000);
+  if(typeof m.setZIndex==='function')m.setZIndex(item.category==='parking'?1500:item.category==='history'?5200:item.category==='architecture'?5000:item.category==='inferredViewpoint'?5600:item.category==='viewpoint'?5400:item.category==='photoSpot'?4700:4000);
   state.markers.push(m);
  });
  // The selected-place parking list is populated independently from the wider search.
@@ -2922,7 +3362,7 @@ function setStatus(title,msg,kind){
 async function scanAt(c,opts){
  if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng)||Math.abs(c.lat)>85||Math.abs(c.lng)>180){setStatus('Choose a valid map point','That coordinate cannot be scanned.','warn');return;}
  state.scanId++;const id=state.scanId;state.scanCount++;state.scanPending=true;state.scanSourcesPending=true;cancelPreviousRequests();
- state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.localityCandidates=[];state.locationConflictExclusions=[];state.results=[];state.scenicSpots=[];state.photos=[];state.basemapParking=[];state.spotParking=[];state.spotParkingTargetId=null;state.spotParkingLoading=false;state.spotParkingRequest++;state.selected=null;
+ state.center={lat:c.lat,lng:c.lng};state.radius=Number($('radius').value)||10000;state.detectedLocality='';state.localityCandidates=[];state.locationConflictExclusions=[];state.results=[];state.scenicSpots=[];state.photos=[];state.cameraRoadCandidates=[];state.assumedViewpoints=[];state.cameraCalculationPending=true;renderAssumedViewpoints();state.basemapParking=[];state.spotParking=[];state.spotParkingTargetId=null;state.spotParkingLoading=false;state.spotParkingRequest++;state.selected=null;
  // Clear stale results, but place the user's selected coordinate immediately.
  // Keep this high-contrast marker independent of all background source requests.
  clearMarkers();
@@ -3023,6 +3463,8 @@ async function scanAt(c,opts){
  const sourceTasks=[];
  const placesTask=runSource('places',rangefindPlacesSearch(c,rad,id),data=>{osmResults=data;});
  sourceTasks.push(placesTask);
+ const cameraPathTask=discoverCameraPathCandidates(c,id).then(data=>{if(id===state.scanId){state.cameraRoadCandidates=Array.isArray(data)?data:[];if(Array.isArray(data)&&data.length)state.cameraPathSearchError='';}return data;}).catch(error=>{if(id===state.scanId){state.cameraRoadCandidates=[];state.cameraPathSearchError=String(error&&error.message||error);}return [];});
+ sourceTasks.push(cameraPathTask);
  let completionScheduled=false;
  const startEnrichments=()=>{
   if(!placesFinished||enrichmentsStarted||id!==state.scanId)return;
@@ -3045,6 +3487,8 @@ async function scanAt(c,opts){
      if(id!==state.scanId)return;
  state.scanSourcesPending=false;
  mergePlaces();
+ await buildAssumedViewpoints(c,state.cameraRoadCandidates,id);
+ if(id!==state.scanId)return;
  renderResults();renderPhotos();renderMarkers();updateRadius();
  // End the critical map scan as soon as geographic results are available.
  // Image reference searching is optional and must never block pin visibility.
@@ -3614,6 +4058,12 @@ async function renderDetailPhotoRefs(item){
  });
 }
 function selectedShotIdeasFor(item){
+ if(item&&item.isAssumedViewpoint){
+  const target=String(item.viewTargetName||state.detectedLocality||'the selected place');
+  const visible=(item.visibleTargets||[]).filter(v=>!v.isPrimary&&v.lineOfSightStatus==='terrain-clear');
+  const targetHint=visible.length?'Consider '+visible.slice(0,2).map(v=>v.name+' to the '+v.bearingLabel).join(' and ')+' if the real-world view is unobstructed.':'Use the calculated bearing as a starting point, then check buildings, trees and the actual skyline on site.';
+  return ['Wide · 18–24 mm: frame '+target+' within the wider landscape, using the real foreground and rooftops for depth.','Context · 35–70 mm: tighten around '+target+' and include a contextual feature. '+targetHint,'Compressed · 100–150 mm: isolate a tower, roofline or distant ridge only if it is genuinely visible; use target directions as a scouting guide, not proof.'];
+ }
  const name=String(item&&item.name||'this place');
  const tags=item&&item.tags||{};
  const nearbyContext=item&&item.isUserPin
@@ -3875,11 +4325,12 @@ function selectItem(item,options){
  }
  // Map place selection updates the on-page photography idea and nearby references.
  $('spotDetail').classList.add('show');
- $('detailEyebrow').textContent=item.isTargetVantage?'Potential view toward pinned location · check line of sight':item.isSmallInterest?'Small historic detail · local photo subject':item.isUserPin?'Map pin · photography brief':item.category==='photo'?'Visual reference · source-linked':item.category==='photoSpot'?'Photo spot candidate · evidence-ranked':item.category==='parking'?'Parking candidate · verify on arrival':item.category==='history'?'History & place · sourced summary':item.category==='viewpoint'?'Mapped viewpoint · verify the view':'Photographic subject · map data';
+ $('detailEyebrow').textContent=item.isAssumedViewpoint?'Calculated camera position · estimated visibility':item.isTargetVantage?'Potential view toward pinned location · check line of sight':item.isSmallInterest?'Small historic detail · local photo subject':item.isUserPin?'Map pin · photography brief':item.category==='photo'?'Visual reference · source-linked':item.category==='photoSpot'?'Photo spot candidate · evidence-ranked':item.category==='parking'?'Parking candidate · verify on arrival':item.category==='history'?'History & place · sourced summary':item.category==='viewpoint'?'Mapped viewpoint · verify the view':'Photographic subject · map data';
  $('detailTitle').textContent=item.name;
  $('detailMeta').textContent=(Number.isFinite(item.distance)?distanceLabel(item.distance)+' from pin · ':'')+item.source+' · '+coordLabel({lat:item.lat,lng:item.lng});
  let history=item.history||item.summary||'No short history summary is available for this place yet. Open the source record to inspect the mapped details.';
  if(item.isUserPin)history='You placed this pin manually. The composition sketch and AI image are creative planning aids, not a verified view of the exact coordinate. Photo spots, historical records, parking and source-linked photographs will be shown only when returned by their geographic sources. Check access and road safety before travelling.';
+ else if(item.isAssumedViewpoint){const clear=(item.visibleTargets||[]).filter(v=>v.lineOfSightStatus==='terrain-clear'&&!v.isPrimary);const possible=(item.possibleTargets||[]).filter(v=>!v.isPrimary);history='CALCULATED CAMERA POSITION · '+String(item.directionFromTarget||'')+' of '+String(item.viewTargetName||'the selected place')+' · '+distanceLabel(Number(item.distance)||0)+' away. '+(hasTerrainElevation(item.elevation)?Math.round(item.elevation)+' m DEM terrain elevation; ':'')+(Number.isFinite(item.elevationDelta)?(item.elevationDelta>=0?'+':'')+Math.round(item.elevationDelta)+' m relative elevation. ':'')+(item.primaryTargetStatus==='terrain-clear'?'Terrain-only sightline to the selected place looks open. ':item.primaryTargetStatus==='terrain-blocked'?'Terrain-only check suggests an obstruction toward the selected place. ':'Terrain-only sightline is unverified. ')+'Camera starting point: '+String(item.cameraPlan||cameraLensForDistance(item.distance))+'. '+(clear.length?'Terrain-clear landmark directions (structures and trees not modelled): '+clear.map(v=>v.name+' · '+v.bearingLabel+' · '+distanceLabel(v.distance)+' · '+v.recommendedLens).join('; ')+'. ':possible.length?'Possible landmark targets, requiring an on-site sightline check: '+possible.slice(0,4).map(v=>v.name+' · '+v.bearingLabel+' · '+distanceLabel(v.distance)).join('; ')+'. ':'No additional landmark has a reliable terrain-clear estimate. ')+(item.why||'Generated from mapped route geometry and terrain data.');}
  else if(item.isTargetVantage)history='POTENTIAL VIEW TOWARD '+String(item.viewTargetName||'your pinned location').toUpperCase()+': '+String(item.viewBearingLabel||'')+' direction · '+distanceLabel(Number(item.distance)||0)+' straight-line. '+(item.why||'This is a suggested framing position, not a verified sightline. Check terrain, buildings, trees, public access and road safety.');
  else if(item.category==='photoSpot')history='WHY IT IS SUGGESTED: '+(item.why||'The mapped feature may work as a scenic photo subject.')+' This is a data-based scouting candidate, not a guarantee of an unobstructed view. Check the route, public access, terrain, private land and safe stopping before travelling. The point is a mapped feature, not necessarily the exact place where a photographer should stand.';
  if(item.category==='photo') history='Image reference by '+(item.artist||'an unlisted photographer')+'. Licence: '+(item.license||'see the original file page')+'. '+(item.geotagged?'This image is geotagged near this coordinate; the exact camera position is not independently confirmed.':'This image matches the area/topic but has no verified shooting coordinates.');
@@ -3888,14 +4339,15 @@ function selectItem(item,options){
  renderSelectedShotIdeas(item);
  renderPinActionPreview(item);
  renderPinIdeaBoard(item);
- $('detailHistory').innerHTML='<p>'+esc(history)+'</p>'+(item.category==='photoSpot'||item.isTargetVantage?'<p>'+esc(gear)+'</p>':'')+'<p><a class="footer-link" href="'+esc(safeLink(item.wikiUrl||item.sourceUrl||'#'))+'" target="_blank" rel="noopener">Open source / more history ↗</a></p>';
+ $('detailHistory').innerHTML='<p>'+esc(history)+'</p>'+(item.category==='photoSpot'||item.isTargetVantage||item.isAssumedViewpoint?'<p>'+esc(gear)+'</p>':'')+'<p><a class="footer-link" href="'+esc(safeLink(item.wikiUrl||item.sourceUrl||'#'))+'" target="_blank" rel="noopener">Open source / more history ↗</a></p>';
  renderSpotParking(item);
  loadParkingNearSelected(item);
  renderDetailPhotoRefs(item);
  updateSocialSearch(item.name+' '+(item.city||state.detectedLocality||''));
  const destination=item.lat+','+item.lng;
- $('driveLink').href='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode=driving';
- $('driveLink').textContent=item.category==='parking'?'Route to mapped parking point ↗':item.category==='photoSpot'?'Navigate to photo spot ↗':'Drive to spot ↗';
+ const walkingApproach=item.isAssumedViewpoint&&['footway','path','pedestrian','steps','track','cycleway'].includes(String(item.pathType||''));
+ $('driveLink').href=item.isAssumedViewpoint?'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode='+(walkingApproach?'walking':'driving'):'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode=driving';
+ $('driveLink').textContent=item.isAssumedViewpoint?(walkingApproach?'Check walking approach ↗':'Check route to candidate ↗'):item.category==='parking'?'Route to mapped parking point ↗':item.category==='photoSpot'?'Navigate to photo spot ↗':'Drive to spot ↗';
  // The field guide replaces the old editable AI-image prompt.
  // Field-guide content is rendered when opened.
  const viewZoom=item.category==='parking'?16.5:item.category==='photoSpot'?14.8:item.category==='viewpoint'?15.5:16;
