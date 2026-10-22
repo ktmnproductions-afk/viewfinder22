@@ -260,6 +260,31 @@ body{background-color:var(--bg);background-image:radial-gradient(ellipse at 12% 
  .local-head h2,.fh-head h2,.studio-head h2{font-size:22px}
 }
 
+
+/* Quick-start cards: practical field notes, not a sterile dashboard */
+.field-guide{margin:18px 0 25px;padding:22px;background:rgba(255,248,233,.92);border:1px solid #d8c5a6;border-radius:8px 23px 8px 23px;box-shadow:0 9px 25px rgba(53,44,28,.055)}
+.field-guide-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:16px}
+.field-kicker{font-size:10px;letter-spacing:1.3px;font-weight:850;color:#95603c;margin-bottom:8px}.field-kicker span{color:#89906a;margin-left:8px;letter-spacing:.8px}
+.field-guide-head h2{font:500 clamp(25px,3vw,35px)/1.05 Georgia,"Times New Roman",serif;letter-spacing:-.8px;margin:0 0 8px;color:#33382b}
+.field-guide-head p{color:#736b5c;font-size:12px;line-height:1.7;max-width:710px;margin:0}
+.field-stamp{width:94px;height:94px;flex:none;border:1px dashed #b56a48;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transform:rotate(7deg);font-size:10px;line-height:1.15;letter-spacing:.8px;color:#a25238;font-weight:900;background:rgba(244,220,190,.35)}
+.field-stamp span{font-size:22px;margin-top:4px}
+.guide-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.guide-card{display:flex;flex-direction:column;align-items:flex-start;min-height:202px;padding:14px;border:1px solid #dfd0b8;border-radius:6px 15px 6px 15px;background:#fffaf0}
+.guide-chat{background:#e9eddc}.guide-code{background:#e8e9de}.guide-image{background:#f7e3d2}.guide-video{background:#e4e8ed}.guide-voice{background:#eee3e9}.guide-web{background:#f6eddc}
+.guide-card-top{display:flex;align-items:center;justify-content:space-between;width:100%;gap:7px;margin-bottom:9px}
+.guide-num{font-size:9px;font-weight:900;letter-spacing:1px;color:#77715e}
+.guide-icon{width:31px;height:31px;display:grid;place-items:center;border-radius:11px 11px 11px 3px;background:rgba(255,255,255,.65);font-size:16px;color:#59653f}
+.guide-card h3{font:600 17px/1.2 Georgia,"Times New Roman",serif;letter-spacing:-.2px;color:#30372a;margin:0 0 7px}
+.guide-card p{font-size:11px;line-height:1.58;color:#706b5c;margin:0 0 13px;flex:1}
+.guide-launch{border:1px solid rgba(91,99,67,.27);background:rgba(255,251,240,.72);color:#4a5b37;border-radius:6px 9px 6px 9px;padding:8px 10px;font-size:10px;font-weight:850;text-align:left}
+.guide-launch:hover{background:#fffaf0;border-color:#9ba87e;color:#394d2d}
+.guide-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-top:16px;padding-top:15px;border-top:1px solid #e1d1b6}
+.guide-step{display:flex;align-items:flex-start;gap:9px}.guide-step>span{display:grid;place-items:center;flex:none;width:26px;height:26px;border-radius:50%;background:#2d3b2b;color:#f4e7cf;font:600 13px Georgia,serif}
+.guide-step b{display:block;font-family:Georgia,"Times New Roman",serif;font-size:14px;font-weight:600;color:#394231;margin:1px 0 3px}.guide-step p{font-size:10px;line-height:1.5;color:#797260;margin:0}
+@media(max-width:1050px){.guide-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.guide-steps{grid-template-columns:1fr}}
+@media(max-width:720px){.field-guide{padding:15px;border-radius:7px 17px 7px 17px}.field-guide-head{gap:10px}.field-stamp{width:68px;height:68px;font-size:8px}.field-stamp span{font-size:17px}.guide-grid{grid-template-columns:1fr}.guide-card{min-height:0}.guide-steps{gap:12px}}
+
 </style>
 </head>
 <body>
