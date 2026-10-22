@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-22-photo-scout-calculated-viewpoints-v29">
+<meta name="photo-scout-build" content="2026-10-22-photo-scout-calculated-viewpoints-v30">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -3027,23 +3027,37 @@ function collectRenderedMapCameraCandidates(center,scanId){
  return unique;
 }
 async function discoverCameraPathCandidates(center,scanId){
- // The current map click has already moved the camera to the selected place.
- // Prefer the vector-tile road/path geometry already rendered in the browser:
- // it is fast and avoids making every click wait for an overloaded Overpass server.
+ // A real map click jumps the camera immediately, but vector-tile geometry can still
+ // belong to the previous viewport for a frame. Wait for that move/tile cycle to settle
+ // BEFORE sampling routes; otherwise valid nearby paths can be missed on fast clicks.
+ if(map&&scanId===state.scanId){
+  await new Promise(resolve=>{
+   let done=false;
+   const finish=()=>{if(done)return;done=true;try{map.off('idle',finish);}catch(e){}clearTimeout(timer);resolve();};
+   const timer=setTimeout(finish,1100);
+   try{map.once('idle',finish);}catch(e){finish();}
+   // If the map was already idle, two paints let the jumpTo and tile query become visible.
+   requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    if(scanId!==state.scanId||(!map.isMoving()&&map.loaded()))finish();
+   }));
+  });
+  if(scanId!==state.scanId)return [];
+ }
+ // Prefer current-view vector-tile geometry after the camera settles. Fall back to the
+ // open geographic query for sparse tile coverage, then retain any current-view samples.
  let candidates=collectRenderedMapCameraCandidates(center,scanId);
  if(candidates.length>=2)return candidates;
  if(map&&scanId===state.scanId){
   await new Promise(resolve=>{
    let done=false;
    const finish=()=>{if(done)return;done=true;try{map.off('idle',finish);}catch(e){}clearTimeout(timer);resolve();};
-   const timer=setTimeout(finish,1200);
-   try{map.once('idle',finish);}catch(e){}
+   const timer=setTimeout(finish,900);
+   try{map.once('idle',finish);}catch(e){finish();}
   });
   if(scanId!==state.scanId)return [];
   candidates=collectRenderedMapCameraCandidates(center,scanId);
   if(candidates.length>=2)return candidates;
  }
- // Sparse or unrendered areas can still use the fuller open-data query.
  try{
   const remote=await overpassCameraPathSearch(center,scanId);
   if(remote.length){
