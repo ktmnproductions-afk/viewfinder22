@@ -766,6 +766,8 @@ html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
    position:relative: that moves labelled pins into document flow instead of their coordinates. */
 .maplibregl-marker.scout-marker{position:absolute!important;top:0;left:0}
 .scout-marker.with-label{position:absolute!important}
+
+body.field-guide-context-only #fieldGuideGrid{display:none!important;visibility:hidden!important;pointer-events:none!important}
 </style>
 </head>
 <body>
@@ -2052,36 +2054,41 @@ function photoReferenceFitsPlace(photo,card,localityHint){
  if(!title)return false;
  const metadataText=[
   photo&&photo.description,
-  photo&&photo.searchText,
   photo&&photo.tags,
   photo&&photo.imageTags
  ].flatMap(value=>Array.isArray(value)?value.map(v=>typeof v==='string'?v:(v&&v.name)||''):[value||''])
   .filter(Boolean).join(' ');
  const combined=normalizedPhotoTitle(title+' '+metadataText);
- // Suppress event/team/portrait media using both the title and indexed metadata.
+ // Never treat the search query copied into photo.searchText as proof of relevance:
+ // it repeats the user's place name even when the thumbnail is another landmark.
  if(IMAGE_EVENT_OR_PERSON_RE.test(title)||IMAGE_EVENT_OR_PERSON_RE.test(combined))return false;
- const searchableTokens=new Set(combined.split(/\s+/));
  const placeTokens=photoPlaceTokens(card&&card.name);
  const localityTokens=photoPlaceTokens(String(localityHint||card&&card.locality||'').split(',').join(' '));
  const wanted=[...new Set([...placeTokens,...localityTokens])];
- const metadataTokens=photoPlaceTokens(combined);
- const matched=metadataTokens.filter(token=>wanted.includes(token));
- // A title naming a different landmark is strong negative evidence. Do not reject
- // an image merely because its description mentions another place in a comparison.
  const titleTokens=photoPlaceTokens(title);
+ const titleHasPlace=titleTokens.some(token=>wanted.includes(token));
+ const titleHasLocality=titleTokens.some(token=>localityTokens.includes(token));
  const foreignTitleTokens=titleTokens.filter(token=>!wanted.includes(token)&&token.length>5);
- const genericSubject=/^(viewpoint|lookout|panorama|hill|peak|mountain|ridge|observation tower|belvedere|tower|park|beach|bridge|scenic view|unnamed mapped)/i.test(String(card&&card.name||'').trim());
- const placeMatch=placeTokens.length>0&&placeTokens.every(token=>searchableTokens.has(token));
- const localityMatch=localityTokens.length>0&&localityTokens.every(token=>searchableTokens.has(token));
- if(placeMatch&&!foreignTitleTokens.length)return true;
- if(localityMatch&&(!foreignTitleTokens.length||genericSubject))return true;
- // Metadata can support a match to the selected place; title alone is not the
- // only searchable signal in Openverse's licensed media index.
- if(matched.length>0&&!foreignTitleTokens.some(token=>token.length>5))return true;
- // Geotags are only a last resort for a scenic image very close to the pin.
+ const namedLandmarkInTitle=/\b(memorial|monument|palace|museum|basilica|cathedral|colosseum|amphitheatre|amphitheater|castle|fortress|lighthouse|bridge|statue|temple|capitol|white house|eiffel tower|taj mahal|lincoln|jefferson|buckingham|notre dame|st pauls|st pauls cathedral)\b/i.test(title);
+ const genericSubject=/^(viewpoint|lookout|panorama|hill|peak|mountain|ridge|observation tower|belvedere|tower|park|beach|bridge|scenic view|unnamed mapped|map pin|selected map place|your selected map pin)/i.test(String(card&&card.name||'').trim());
+ // A distinct named landmark in the filename is a hard mismatch when it does
+ // not also name the requested place/locality. This rejects Lincoln/Jefferson
+ // Memorials in a Kastav sheet even if the API query appears in metadata.
+ if(namedLandmarkInTitle&&!titleHasPlace&&!titleHasLocality)return false;
+ if(foreignTitleTokens.length>=2&&!titleHasPlace&&!titleHasLocality)return false;
+ const metadataTokens=photoPlaceTokens(combined);
+ const matchedMetadata=metadataTokens.filter(token=>wanted.includes(token));
+ const titleMatchesPlace=placeTokens.length>0&&placeTokens.every(token=>titleTokens.includes(token));
+ if(titleMatchesPlace)return true;
+ if(titleHasLocality&&!foreignTitleTokens.length)return true;
+ // Descriptions/tags may support a generic title but never override a clearly
+ // different named landmark in that title.
+ if(matchedMetadata.length>0&&!namedLandmarkInTitle&&!foreignTitleTokens.some(token=>token.length>7))return true;
+ // Geotags are only a last resort very close to the selected spot and still must
+ // have a scene-like title/description without a foreign landmark name.
  const distance=Number(photo&&photo.distance);
- if(photo&&photo.geotagged&&Number.isFinite(distance)&&distance<=1200&&
-    !foreignTitleTokens.some(token=>token.length>5)&&IMAGE_SCENE_RE.test(combined))return true;
+ if(photo&&photo.geotagged&&Number.isFinite(distance)&&distance<=900&&
+    !namedLandmarkInTitle&&!foreignTitleTokens.some(token=>token.length>7)&&IMAGE_SCENE_RE.test(combined))return true;
  return false;
 }
 async function commonsSearch(c,radius,id){
@@ -2119,7 +2126,8 @@ async function openverseTextSearch(queries,id){
    const tags=Array.isArray(r.tags)?r.tags.map(t=>typeof t==='string'?t:(t&&t.name)||'').filter(Boolean):[];
    const description=String(r.description||'');
    const searchText=[title,description,tags.join(' ')].filter(Boolean).join(' ');
-   if(!title||!r.thumbnail||!r.foreign_landing_url||!photoTitleIsRelevant(searchText,q))return null;
+   if(!title||!r.thumbnail||!r.foreign_landing_url||
+      !photoTitleIsRelevant(title+' '+tags.join(' '),q))return null;
    const license=String(r.license||'').toUpperCase();
    return {
     id:'openverse-'+String(r.id||title),
@@ -3557,6 +3565,12 @@ function selectedShotIdeasFor(item){
   'Context · 35–70 mm: frame a corridor of trees or columns with balanced symmetry.',
   'Detail · 100–150 mm: isolate repeated trunks, paving patterns or shafts of light.'
  ];
+ if(/\b(ulica|street|cesta|put|trg|road|avenue|lane|alley|strada|gasse|platz|riva|setaliste|šetalište|promenade)\b/.test(facts)||
+    /^(residential|pedestrian|living_street|service|footway|path|steps|tertiary|secondary)$/i.test(String(tags.highway||'')))return [
+  'Wide · 18–24 mm: use the real street perspective, paving and roofline as leading lines; keep the full bend or square in frame.',
+  'Context · 35–70 mm: frame one doorway, corner, facade or street sign together with enough of the old-town setting to show where it belongs.',
+  'Detail · 100–150 mm: isolate shutters, worn stone, house numbers, window patterns or a strong patch of side light. Do not invent arches or ruins that are not present.'
+ ];
  if(/lagoon|coast|sea|beach|island|adriatic|cliff|shore|lighthouse|duino|miramare/.test(facts))return [
   'Wide · 18–24 mm: combine shore, water and headland with a foreground edge.',
   'Context · 35–70 mm: balance a castle, boat or headland against the sea.',
@@ -4246,6 +4260,19 @@ function showGuideCardOnMap(card){
 function openFieldGuideDetail(cardId){
  const card=fieldGuideCardLookup[cardId];
  if(!card)return;
+ // When a map spot is already selected, Ideas must stay with that location.
+ // Do not let a click on a seeded catalogue card (e.g. Aquileia) replace Kastav.
+ if(state.selected&&!fieldGuideContextOnly){
+  const separation=haversine(
+   {lat:Number(state.selected.lat),lng:Number(state.selected.lng)},
+   {lat:Number(card.lat),lng:Number(card.lng)}
+  );
+  const sameSelected=!!(card.originalItem&&card.originalItem.id===state.selected.id)||(
+   Number.isFinite(separation)&&separation<=500&&
+   normalizeNameForDedup(card.name)===normalizeNameForDedup(state.selected.name)
+  );
+  if(!sameSelected){openSelectedFieldGuide();return;}
+ }
  fieldGuideDetailCardId=cardId;
  fieldGuideDetailMode='wide';
  const modal=$('fieldGuideDetail');
@@ -4435,6 +4462,8 @@ function openSelectedFieldGuide(){
  fieldGuideHasLoaded=false;
  fieldGuideAreaLookup={};
  fieldGuideCardLookup={};
+ const guideGrid=$('fieldGuideGrid');
+ if(guideGrid){guideGrid.innerHTML='';guideGrid.hidden=true;guideGrid.style.display='none';}
  $('guideSearch').value='';
  fieldGuideActiveFilter='all';
  $('fieldGuideFilters').querySelectorAll('[data-guide-filter]').forEach(b=>b.classList.toggle('active',b.dataset.guideFilter==='all'));
