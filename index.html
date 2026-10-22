@@ -2922,7 +2922,7 @@ async function overpassCameraPathSearch(center,scanId){
 function routeTypeFromVectorFeature(feature){
  const p=feature&&feature.properties||{};
  const layer=feature&&feature.layer||{};
- const sourceLayer=String(layer['source-layer']||'').toLowerCase();
+ const sourceLayer=String(layer['source-layer']||feature.sourceLayer||'').toLowerCase();
  const id=String(layer.id||'').toLowerCase();
  if(sourceLayer!=='transportation'&&!/(road|transportation)/.test(id))return null;
  const sub=String(p.subclass||p.highway||p.road_class||'').toLowerCase();
@@ -2934,12 +2934,16 @@ function routeTypeFromVectorFeature(feature){
  return type;
 }
 function collectRenderedMapCameraCandidates(center,scanId){
- const diagnostics={source:'OpenFreeMap rendered transportation features',renderedFeatureCount:0,routeFeatureCount:0,geometryFeatureCount:0,rawCandidateCount:0,returnedCandidateCount:0,featureSamples:[]};
+ const diagnostics={source:'OpenFreeMap vector transportation tiles',renderedFeatureCount:0,sourceFeatureCount:0,routeFeatureCount:0,geometryFeatureCount:0,rawCandidateCount:0,returnedCandidateCount:0,featureSamples:[]};
  if(!map||!state.styleLoaded||scanId!==state.scanId){state.cameraPathSearchDiagnostics=diagnostics;return [];}
  const raw=[];
  try{
-  const features=map.queryRenderedFeatures()||[];
-  diagnostics.renderedFeatureCount=features.length;
+  const renderedFeatures=map.queryRenderedFeatures()||[];
+  let sourceFeatures=[];
+  try{if(map.getSource('openmaptiles')&&typeof map.querySourceFeatures==='function')sourceFeatures=map.querySourceFeatures('openmaptiles',{sourceLayer:'transportation'})||[];}catch(e){}
+  const features=[...renderedFeatures,...sourceFeatures];
+  diagnostics.renderedFeatureCount=renderedFeatures.length;
+  diagnostics.sourceFeatureCount=sourceFeatures.length;
   const add=(point,geometry,tags,feature)=>{
    if(!point||!Number.isFinite(Number(point.lat))||!Number.isFinite(Number(point.lng)))return false;
    const d=haversine(center,{lat:Number(point.lat),lng:Number(point.lng)});
