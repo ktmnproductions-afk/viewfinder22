@@ -104,7 +104,7 @@ jobs:
             });
 
             try {
-              await page.goto('http://127.0.0.1:8000/index.html?v=20261022-calculated-viewpoints-v30', { waitUntil: 'domcontentloaded', timeout: 60000 });
+              await page.goto('http://127.0.0.1:8000/index.html?v=20261022-calculated-viewpoints-v31', { waitUntil: 'domcontentloaded', timeout: 60000 });
               try {
                 await page.waitForFunction(() => !!window.__PHOTO_SCOUT_TEST__?.map, null, { timeout: 15000 });
               } catch (startupError) {
@@ -144,7 +144,7 @@ jobs:
                   display: manifest && manifest.display,
                   startUrl: manifest && manifest.start_url,
                   workerStatus: workerResponse.status,
-                  workerCacheV30: workerText.includes('"photo-scout-shell-v30"'),
+                  workerCacheV31: workerText.includes('"photo-scout-shell-v31"'),
                   buildVersion: document.querySelector('meta[name="photo-scout-build"]')?.content||'',
                   installButton: !!document.querySelector('#installAppBtn'),
                   installButtonVisible: !!document.querySelector('#installAppBtn') && !document.querySelector('#installAppBtn').hidden,
@@ -154,8 +154,8 @@ jobs:
               if (appInstallDiagnostics.manifestStatus !== 200 ||
                   appInstallDiagnostics.display !== 'standalone' ||
                   appInstallDiagnostics.workerStatus !== 200 ||
-                  !appInstallDiagnostics.workerCacheV30 ||
-                  appInstallDiagnostics.buildVersion !== '2026-10-22-photo-scout-calculated-viewpoints-v30' ||
+                  !appInstallDiagnostics.workerCacheV31 ||
+                  appInstallDiagnostics.buildVersion !== '2026-10-22-photo-scout-calculated-viewpoints-v31' ||
                   !appInstallDiagnostics.installButton || !appInstallDiagnostics.installButtonVisible || !appInstallDiagnostics.pinLegend) {
                 throw new Error('Photo Scout must ship as an installable standalone app with a visible pin legend: ' + JSON.stringify(appInstallDiagnostics));
               }
@@ -332,7 +332,7 @@ jobs:
               });
 
               await page.waitForFunction(
-                 () => window.__PHOTO_SCOUT_TEST__?.getState().cameraCalculationPending === false,
+                 () => window.__PHOTO_SCOUT_TEST__?.getState().cameraCalculationPending === false && window.__PHOTO_SCOUT_TEST__?.getState().outwardViewCalculationPending === false,
                  null, { timeout: 60000 }
                ).catch(error => {
                  throw new Error('Calculated viewpoint search did not finish after the map click: '+
@@ -362,6 +362,7 @@ jobs:
                   viewpoint:nodes.filter(n=>n.classList.contains('viewpoint')).length,
                   photoSpot:nodes.filter(n=>n.classList.contains('photoSpot')).length,
                   inferredViewpoint:nodes.filter(n=>n.classList.contains('inferred-viewpoint-pin')).length,
+                  outwardViewTarget:nodes.filter(n=>n.classList.contains('outward-view-target')).length,
                   parking:nodes.filter(n=>n.classList.contains('parking')).length,
                   visibleNameLabels:nodes.filter(n=>n.classList.contains('show-pin-label')).length
                 };
@@ -371,7 +372,8 @@ jobs:
                   canvasBox:canvasBox&&{x:canvasBox.x,y:canvasBox.y,width:canvasBox.width,height:canvasBox.height},
                   mapReady:state.styleLoaded,scanCount:state.scanCount,scanPending:state.scanPending,
                   resultCount:state.resultCount,dataInView:state.viewportCategoryCounts||{},
-                  cameraCalculationPending:state.cameraCalculationPending,cameraRoadCandidateCount:state.cameraRoadCandidateCount,assumedViewpointCount:state.assumedViewpointCount,cameraPathSearchError:state.cameraPathSearchError,cameraPathSearchDiagnostics:state.cameraPathSearchDiagnostics,
+                  cameraCalculationPending:state.cameraCalculationPending,cameraRoadCandidateCount:state.cameraRoadCandidateCount,assumedViewpointCount:state.assumedViewpointCount,
+                  outwardViewCount:state.outwardViewCount,outwardViewCalculationPending:state.outwardViewCalculationPending,cameraPathSearchError:state.cameraPathSearchError,cameraPathSearchDiagnostics:state.cameraPathSearchDiagnostics,
                   markerCounts:state.markerCounts||{},domCounts,inferredPinVisuals,
                   legendButtons:document.querySelectorAll('[data-marker-filter]').length,
                   legendSummary:document.querySelector('#mapPinSummary')?.textContent||''
@@ -391,7 +393,10 @@ jobs:
               if(!livePinDiagnostics.inferredPinVisuals.some(pin=>pin.centerInsideMap&&pin.visible&&pin.coreBackground==='rgb(114, 84, 200)')) {
                 throw new Error('Calculated viewpoints must include a visible purple pin inside the current map viewport: '+JSON.stringify(livePinDiagnostics.inferredPinVisuals)+' · '+JSON.stringify(livePinDiagnostics));
               }
-              const markerStability = await page.evaluate(() =>
+              if(!livePinDiagnostics.outwardViewCount||!livePinDiagnostics.domCounts.outwardViewTarget||livePinDiagnostics.outwardViewCalculationPending) {
+                 throw new Error('Outward-view calculation must mark at least one mapped subject from the selected Kastav-area pin: '+JSON.stringify(livePinDiagnostics));
+               }
+               const markerStability = await page.evaluate(() =>
                 window.__PHOTO_SCOUT_TEST__.runMarkerStabilityFixture()
               );
               console.log('MARKER_STABILITY_FIXTURE ' + JSON.stringify(markerStability));
@@ -400,7 +405,7 @@ jobs:
                   markerStability.maxIconCenterErrorPx > 2) {
                 throw new Error('Unchanged map idle renders must reuse marker DOM nodes: ' + JSON.stringify(markerStability));
               }
-              if(!livePinDiagnostics.mapReady || livePinDiagnostics.legendButtons!==6) {
+              if(!livePinDiagnostics.mapReady || livePinDiagnostics.legendButtons!==7) {
                 throw new Error('The map must expose six interactive pin layers: '+JSON.stringify(livePinDiagnostics));
               }
               if(!livePinDiagnostics.mapBox || livePinDiagnostics.mapBox.width<livePinDiagnostics.viewport.width*.95 ||
@@ -542,6 +547,18 @@ jobs:
                 throw new Error('Calculated Viewpoint regression: ' + JSON.stringify(calculatedViewpointFixture));
               }
               console.log('CALCULATED_VIEWPOINT_FIXTURE '+JSON.stringify(calculatedViewpointFixture));
+              const outwardViewFixture = await page.evaluate(() =>
+                window.__PHOTO_SCOUT_TEST__.runOutwardViewFixture()
+              );
+              console.log('OUTWARD_VIEW_FIXTURE '+JSON.stringify(outwardViewFixture));
+              if (!outwardViewFixture.compassDirectionCalculated ||
+                  !outwardViewFixture.clearTerrainOutwardRay ||
+                  !outwardViewFixture.blockedTerrainOutwardRay ||
+                  !outwardViewFixture.missingTerrainStillMarkedUnverified ||
+                  !outwardViewFixture.lensSuggestionUsesTargetDistance ||
+                  !outwardViewFixture.bothDirectionCalculationsStayDistinct) {
+                throw new Error('Outward-view sightline and lens fixture failed: '+JSON.stringify(outwardViewFixture));
+              }
               const contextualPhotoFixtures = await page.evaluate(() =>
                 window.__PHOTO_SCOUT_TEST__.runContextPhotoRegressionFixtures()
               );
@@ -682,10 +699,10 @@ jobs:
               const alternatePage = await browser.newPage({ viewport: { width: 1200, height: 820 }, deviceScaleFactor: 1 });
               const alternateErrors = [];
               alternatePage.on('pageerror', error => alternateErrors.push(String(error)));
-              await alternatePage.goto('http://127.0.0.1:8000/photo-scout.html?v=20261022-calculated-viewpoints-v30', { waitUntil: 'domcontentloaded', timeout: 60000 });
+              await alternatePage.goto('http://127.0.0.1:8000/photo-scout.html?v=20261022-calculated-viewpoints-v31', { waitUntil: 'domcontentloaded', timeout: 60000 });
               await alternatePage.waitForFunction(() => !!window.__PHOTO_SCOUT_TEST__?.map && window.__PHOTO_SCOUT_TEST__?.styleLoaded === true, null, { timeout: 30000 });
               const alternateBuild = await alternatePage.locator('meta[name="photo-scout-build"]').getAttribute('content');
-              if (alternateBuild !== '2026-10-22-photo-scout-calculated-viewpoints-v30') {
+              if (alternateBuild !== '2026-10-22-photo-scout-calculated-viewpoints-v31') {
                 throw new Error('Alternate Photo Scout entry page did not load v30: '+alternateBuild);
               }
               // Match the real user path: position the map over Kastav before scanning,
@@ -709,7 +726,7 @@ jobs:
                 return state.resultCount>0 || state.scenicCount>0 ||
                   /No nearby features returned|Partial results loaded|Map ready · partial results/i.test(document.querySelector('#statusTitle')?.textContent||'');
               }, null, { timeout: 45000 });
-              await alternatePage.waitForFunction(() => window.__PHOTO_SCOUT_TEST__?.getState().cameraCalculationPending === false, null, { timeout: 60000 });
+              await alternatePage.waitForFunction(() => window.__PHOTO_SCOUT_TEST__?.getState().cameraCalculationPending === false && window.__PHOTO_SCOUT_TEST__?.getState().outwardViewCalculationPending === false, null, { timeout: 60000 });
               const alternatePinDiagnostics = await alternatePage.evaluate(() => {
                 const mapBox=window.__PHOTO_SCOUT_TEST__.map.getContainer().getBoundingClientRect();
                 const pins=[...document.querySelectorAll('.scout-marker.inferred-viewpoint-pin')].map(node=>{
@@ -720,12 +737,19 @@ jobs:
                 });
                 return {build:document.querySelector('meta[name="photo-scout-build"]')?.content||'',
                   selected:testSelected(),calculatedCount:window.__PHOTO_SCOUT_TEST__.getState().assumedViewpointCount,
-                  visiblePurplePins:pins.filter(p=>p.inside&&p.purple).length,pins};
+                  visiblePurplePins:pins.filter(p=>p.inside&&p.purple).length,
+                  outwardViewCount:window.__PHOTO_SCOUT_TEST__.getState().outwardViewCount,
+                  outwardViewCalculationPending:window.__PHOTO_SCOUT_TEST__.getState().outwardViewCalculationPending,
+                  visibleOutwardViewRings:[...document.querySelectorAll('.scout-marker.outward-view-target')].filter(node=>{
+                    const core=node.querySelector('.dot-core'),rect=core&&core.getBoundingClientRect(),style=core&&getComputedStyle(core);
+                    const x=rect?rect.left+rect.width/2:NaN,y=rect?rect.top+rect.height/2:NaN;
+                    return !!style&&Number.isFinite(x)&&Number.isFinite(y)&&x>=mapBox.left&&x<=mapBox.right&&y>=mapBox.top&&y<=mapBox.bottom&&style.outlineColor==='rgb(22, 168, 183)';
+                  }).length,pins};
                 function testSelected(){return window.__PHOTO_SCOUT_TEST__.getState().selectedCoordinate||null;}
               });
               console.log('ALTERNATE_ENTRY_CALCULATED_PINS '+JSON.stringify(alternatePinDiagnostics));
-              if (alternatePinDiagnostics.build !== '2026-10-22-photo-scout-calculated-viewpoints-v30' ||
-                  !alternatePinDiagnostics.calculatedCount || !alternatePinDiagnostics.visiblePurplePins || alternateErrors.length) {
+              if (alternatePinDiagnostics.build !== '2026-10-22-photo-scout-calculated-viewpoints-v31' ||
+                  !alternatePinDiagnostics.calculatedCount || !alternatePinDiagnostics.visiblePurplePins || !alternatePinDiagnostics.outwardViewCount || !alternatePinDiagnostics.visibleOutwardViewRings || alternatePinDiagnostics.outwardViewCalculationPending || alternateErrors.length) {
                 throw new Error('Alternate entry page must show calculated purple pins at the requested Kastav coordinates: '+JSON.stringify({alternatePinDiagnostics,alternateErrors}));
               }
               await alternatePage.close();
