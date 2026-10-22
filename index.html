@@ -2918,6 +2918,136 @@ async function overpassCameraPathSearch(center,scanId){
  }
  throw lastError||new Error('No mapped paths available for camera-position inference');
 }
+
+function routeTypeFromVectorFeature(feature){
+ const p=feature&&feature.properties||{};
+ const layer=feature&&feature.layer||{};
+ const sourceLayer=String(layer['source-layer']||'').toLowerCase();
+ const id=String(layer.id||'').toLowerCase();
+ if(sourceLayer!=='transportation'&&!/(road|transportation)/.test(id))return null;
+ const sub=String(p.subclass||p.highway||p.road_class||'').toLowerCase();
+ const cls=String(p.class||p.type||'').toLowerCase();
+ const map={path:'path',footway:'footway',pedestrian:'pedestrian',steps:'steps',track:'track',cycleway:'cycleway',bridleway:'track',residential:'residential',living_street:'living_street',unclassified:'unclassified',tertiary:'tertiary',service:'unclassified',minor:'residential',street:'residential'};
+ const type=map[sub]||map[cls]||'';
+ if(!type)return null;
+ if(cameraPathSuitability({highway:type,access:p.access||'',foot:p.foot||''})<0)return null;
+ return type;
+}
+function collectRenderedMapCameraCandidates(center,scanId){
+ const diagnostics={source:'OpenFreeMap rendered transportation features',renderedFeatureCount:0,routeFeatureCount:0,geometryFeatureCount:0,rawCandidateCount:0,returnedCandidateCount:0,featureSamples:[]};
+ if(!map||!state.styleLoaded||scanId!==state.scanId){state.cameraPathSearchDiagnostics=diagnostics;return [];}
+ const raw=[];
+ try{
+  const features=map.queryRenderedFeatures()||[];
+  diagnostics.renderedFeatureCount=features.length;
+  const add=(point,geometry,tags,feature)=>{
+   if(!point||!Number.isFinite(Number(point.lat))||!Number.isFinite(Number(point.lng)))return false;
+   const d=haversine(center,{lat:Number(point.lat),lng:Number(point.lng)});
+   if(d<180||d>CAMERA_VIEW_SEARCH_METERS)return false;
+   if(cameraPathSuitability(tags)<0)return false;
+   raw.push({lat:Number(point.lat),lng:Number(point.lng),distance:d,tags:{...tags},
+    pathScore:cameraPathSuitability(tags),pathType:String(tags.highway||'mapped path'),
+    roadName:String(tags.name||tags.highway||'Mapped route'),osmType:'',osmId:'',
+    sourceUrl:'https://www.openstreetmap.org/?mlat='+Number(point.lat).toFixed(6)+'&mlon='+Number(point.lng).toFixed(6)+'#map=18/'+Number(point.lat).toFixed(6)+'/'+Number(point.lng).toFixed(6),
+    source:'OpenFreeMap vector tile · '+String(tags.highway||'mapped route'),
+    mapFeatureId:feature&&feature.id!=null?String(feature.id):'',mapLayer:String(feature&&feature.layer&&feature.layer.id||'')});
+   return true;
+  };
+  for(const feature of features){
+   if(scanId!==state.scanId)break;
+   const type=routeTypeFromVectorFeature(feature);
+   if(!type)continue;
+   diagnostics.routeFeatureCount++;
+   const g=feature.geometry;
+   if(!g||!Array.isArray(g.coordinates))continue;
+   const lines=g.type==='LineString'?[g.coordinates]:g.type==='MultiLineString'?g.coordinates:[];
+   if(!lines.length)continue;
+   diagnostics.geometryFeatureCount++;
+   const props=feature.properties||{};
+   const tags={highway:type,access:props.access||'',foot:props.foot||'',surface:props.surface||'',name:props.name||props['name:en']||'',ref:props.ref||''};
+   for(const coords of lines){
+    const pts=(Array.isArray(coords)?coords:[]).filter(v=>Array.isArray(v)&&Number.isFinite(Number(v[0]))&&Number.isFinite(Number(v[1]))&&Math.abs(Number(v[1]))<=90&&Math.abs(Number(v[0]))<=180).map(v=>({lat:Number(v[1]),lng:Number(v[0])}));
+    if(pts.length<2)continue;
+    let traversed=0,nextAt=105,addedForLine=0;
+    for(let i=0;i<pts.length-1;i++){
+     const a=pts[i],b=pts[i+1],len=haversine(a,b);
+     if(!Number.isFinite(len)||len<=0)continue;
+     while(traversed+len>=nextAt){
+      if(add(interpolateCameraPoint(a,b,(nextAt-traversed)/len),g,tags,feature))addedForLine++;
+      nextAt+=210;
+     }
+     traversed+=len;
+    }
+    if(!addedForLine){
+     const lengths=pts.slice(0,-1).map((point,index)=>haversine(point,pts[index+1]));
+     const total=lengths.reduce((sum,value)=>sum+(Number.isFinite(value)?value:0),0);
+     if(total>0){
+      let remaining=total/2,mid=pts[0];
+      for(let j=0;j<lengths.length;j++){
+       const d=lengths[j];
+       if(d>0&&remaining<=d){mid=interpolateCameraPoint(pts[j],pts[j+1],remaining/d);break;}
+       remaining-=d;
+      }
+      add(mid,g,tags,feature);
+     }
+    }
+   }
+   if(diagnostics.featureSamples.length<4)diagnostics.featureSamples.push({
+    sourceLayer:String(feature.layer&&feature.layer['source-layer']||''),
+    layer:String(feature.layer&&feature.layer.id||''),class:String(props.class||''),subclass:String(props.subclass||''),
+    geometryType:String(g.type||''),name:String(props.name||'')
+   });
+  }
+ }catch(error){diagnostics.error=String(error&&error.message||error);}
+ const unique=[];
+ const sorted=raw.sort((a,b)=>{
+  const band=d=>d>=450&&d<=2200?12:d<450?4:Math.max(-10,8-(d-2200)/120);
+  return (b.pathScore+band(b.distance))-(a.pathScore+band(a.distance));
+ });
+ for(const p of sorted){
+  if(unique.some(q=>haversine(q,p)<115))continue;
+  unique.push(p);
+  if(unique.length>=60)break;
+ }
+ diagnostics.rawCandidateCount=raw.length;
+ diagnostics.returnedCandidateCount=unique.length;
+ state.cameraPathSearchDiagnostics=diagnostics;
+ state.cameraPathSearchError=diagnostics.error||'';
+ return unique;
+}
+async function discoverCameraPathCandidates(center,scanId){
+ // The current map click has already moved the camera to the selected place.
+ // Prefer the vector-tile road/path geometry already rendered in the browser:
+ // it is fast and avoids making every click wait for an overloaded Overpass server.
+ let candidates=collectRenderedMapCameraCandidates(center,scanId);
+ if(candidates.length>=2)return candidates;
+ if(map&&scanId===state.scanId){
+  await new Promise(resolve=>{
+   let done=false;
+   const finish=()=>{if(done)return;done=true;try{map.off('idle',finish);}catch(e){}clearTimeout(timer);resolve();};
+   const timer=setTimeout(finish,1200);
+   try{map.once('idle',finish);}catch(e){}
+  });
+  if(scanId!==state.scanId)return [];
+  candidates=collectRenderedMapCameraCandidates(center,scanId);
+  if(candidates.length>=2)return candidates;
+ }
+ // Sparse or unrendered areas can still use the fuller open-data query.
+ try{
+  const remote=await overpassCameraPathSearch(center,scanId);
+  if(remote.length){
+   state.cameraPathSearchDiagnostics={...(state.cameraPathSearchDiagnostics||{}),source:'OpenStreetMap Overpass geometry',renderedFallbackCandidateCount:candidates.length};
+   state.cameraPathSearchError='';
+   return remote;
+  }
+ }catch(error){state.cameraPathSearchError=String(error&&error.message||error);}
+ if(candidates.length){
+  state.cameraPathSearchDiagnostics={...(state.cameraPathSearchDiagnostics||{}),source:'OpenFreeMap rendered transportation features · Overpass unavailable',renderedFallbackCandidateCount:candidates.length};
+  return candidates;
+ }
+ return [];
+}
+
 async function fetchTerrainElevations(points,scanId){
  const output=[];
  for(let i=0;i<points.length;i+=95){
@@ -3329,7 +3459,7 @@ async function scanAt(c,opts){
  const sourceTasks=[];
  const placesTask=runSource('places',rangefindPlacesSearch(c,rad,id),data=>{osmResults=data;});
  sourceTasks.push(placesTask);
- const cameraPathTask=overpassCameraPathSearch(c,id).then(data=>{if(id===state.scanId){state.cameraRoadCandidates=Array.isArray(data)?data:[];state.cameraPathSearchError='';}return data;}).catch(error=>{if(id===state.scanId){state.cameraRoadCandidates=[];state.cameraPathSearchError=String(error&&error.message||error);}return [];});
+ const cameraPathTask=discoverCameraPathCandidates(c,id).then(data=>{if(id===state.scanId){state.cameraRoadCandidates=Array.isArray(data)?data:[];if(Array.isArray(data)&&data.length)state.cameraPathSearchError='';}return data;}).catch(error=>{if(id===state.scanId){state.cameraRoadCandidates=[];state.cameraPathSearchError=String(error&&error.message||error);}return [];});
  sourceTasks.push(cameraPathTask);
  let completionScheduled=false;
  const startEnrichments=()=>{
