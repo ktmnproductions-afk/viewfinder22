@@ -635,7 +635,7 @@ jobs:
               console.log('PHOTO_SCOUT_CHECKS ' + JSON.stringify({
                 initial,
                 primaryVectorTilesLoaded: hasVector,
-                backupRasterTilesLoaded: rasterLoaded,
+                backupRasterTilesLoaded: tileResponses.some(item => isRasterTile(item.url) && item.status >= 200 && item.status < 300),
                 pinWorkflow: 'passed',
                 pinState,
                 quickActions,
