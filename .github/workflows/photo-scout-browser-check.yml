@@ -677,6 +677,45 @@ jobs:
               }
 
               await page.screenshot({ path: 'artifacts/photo-scout-live-map.png', fullPage: false });
+              // The secondary public entry page used by some saved links/PWA sessions
+              // must not remain on the older build. Test the user's actual Kastav area too.
+              const alternatePage = await browser.newPage({ viewport: { width: 1200, height: 820 }, deviceScaleFactor: 1 });
+              const alternateErrors = [];
+              alternatePage.on('pageerror', error => alternateErrors.push(String(error)));
+              await alternatePage.goto('http://127.0.0.1:8000/photo-scout.html?v=20261022-calculated-viewpoints-v29', { waitUntil: 'domcontentloaded', timeout: 60000 });
+              await alternatePage.waitForFunction(() => !!window.__PHOTO_SCOUT_TEST__?.map && window.__PHOTO_SCOUT_TEST__?.styleLoaded === true, null, { timeout: 30000 });
+              const alternateBuild = await alternatePage.locator('meta[name="photo-scout-build"]').getAttribute('content');
+              if (alternateBuild !== '2026-10-22-photo-scout-calculated-viewpoints-v29') {
+                throw new Error('Alternate Photo Scout entry page did not load v29: '+alternateBuild);
+              }
+              await alternatePage.evaluate(() => { window.__PHOTO_SCOUT_TEST__.scanAt(45.37306,14.34903); });
+              await alternatePage.waitForFunction(() => {
+                const test=window.__PHOTO_SCOUT_TEST__;
+                if(!test)return false;
+                const state=test.getState();
+                return state.resultCount>0 || state.scenicCount>0 ||
+                  /No nearby features returned|Partial results loaded|Map ready · partial results/i.test(document.querySelector('#statusTitle')?.textContent||'');
+              }, null, { timeout: 45000 });
+              await alternatePage.waitForFunction(() => window.__PHOTO_SCOUT_TEST__?.getState().cameraCalculationPending === false, null, { timeout: 60000 });
+              const alternatePinDiagnostics = await alternatePage.evaluate(() => {
+                const mapBox=window.__PHOTO_SCOUT_TEST__.map.getContainer().getBoundingClientRect();
+                const pins=[...document.querySelectorAll('.scout-marker.inferred-viewpoint-pin')].map(node=>{
+                  const core=node.querySelector('.dot-core'),rect=core&&core.getBoundingClientRect(),style=core&&getComputedStyle(core);
+                  const x=rect?rect.left+rect.width/2:NaN,y=rect?rect.top+rect.height/2:NaN;
+                  return {x,y,inside:Number.isFinite(x)&&Number.isFinite(y)&&x>=mapBox.left&&x<=mapBox.right&&y>=mapBox.top&&y<=mapBox.bottom,
+                    purple:!!style&&style.backgroundColor==='rgb(114, 84, 200)'};
+                });
+                return {build:document.querySelector('meta[name="photo-scout-build"]')?.content||'',
+                  selected:testSelected(),calculatedCount:window.__PHOTO_SCOUT_TEST__.getState().assumedViewpointCount,
+                  visiblePurplePins:pins.filter(p=>p.inside&&p.purple).length,pins};
+                function testSelected(){return window.__PHOTO_SCOUT_TEST__.getState().selectedCoordinate||null;}
+              });
+              console.log('ALTERNATE_ENTRY_CALCULATED_PINS '+JSON.stringify(alternatePinDiagnostics));
+              if (alternatePinDiagnostics.build !== '2026-10-22-photo-scout-calculated-viewpoints-v29' ||
+                  !alternatePinDiagnostics.calculatedCount || !alternatePinDiagnostics.visiblePurplePins || alternateErrors.length) {
+                throw new Error('Alternate entry page must show calculated purple pins at the requested Kastav coordinates: '+JSON.stringify({alternatePinDiagnostics,alternateErrors}));
+              }
+              await alternatePage.close();
               if (pageErrors.length) throw new Error('Browser runtime exceptions: ' + JSON.stringify(pageErrors));
               console.log('PHOTO_SCOUT_CHECKS ' + JSON.stringify({
                 initial,
