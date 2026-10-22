@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-22-photo-scout-landmark-accuracy-v24">
-<title>Photo Scout Field Guide — Photography Planner</title>
+<meta name="photo-scout-build" content="2026-10-22-photo-scout-landmark-accuracy-v26">
+<title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
 <meta name="application-name" content="Photo Scout">
@@ -719,6 +719,53 @@ html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
 .scout-marker.with-label .pin-name-label{display:none}
 .scout-marker.with-label.show-pin-label .pin-name-label{display:block}
 
+/* v25: keep the geographic coordinate under the icon, not the attached name label.
+   MapLibre anchors the outer marker box. A wide flex/grid label displaced the icon
+   from that anchor by half the label width, making every named marker look misplaced. */
+.scout-marker.with-label{
+  position:absolute!important;
+  display:grid!important;
+  place-items:center!important;
+  box-sizing:border-box!important;
+  width:34px!important;
+  min-width:34px!important;
+  max-width:34px!important;
+  height:34px!important;
+  min-height:34px!important;
+  max-height:34px!important;
+  padding:0!important;
+  gap:0!important;
+  overflow:visible!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.scout-marker.with-label .dot-core{
+  position:relative!important;
+  margin:0!important;
+  justify-self:center!important;
+  align-self:center!important;
+}
+.scout-marker.with-label .pin-name-label{
+  position:absolute!important;
+  left:calc(100% + 7px)!important;
+  top:50%!important;
+  display:block!important;
+  width:max-content!important;
+  max-width:190px!important;
+  transform:translateY(-50%)!important;
+  margin:0!important;
+  pointer-events:none!important;
+  white-space:nowrap!important;
+  z-index:20!important;
+}
+.scout-marker.with-label .pin-name-label::before{content:none!important}
+
+/* MapLibre owns the geographic transform on the outer marker. Never override it with
+   position:relative: that moves labelled pins into document flow instead of their coordinates. */
+.maplibregl-marker.scout-marker{position:absolute!important;top:0;left:0}
+.scout-marker.with-label{position:absolute!important}
 </style>
 </head>
 <body>
@@ -2296,6 +2343,14 @@ function suppressBasemapParkingSymbols(){
   }catch(error){
    state.parkingFilterDiagnostics.push({id,source,sourceLayer,error:String(error.message||error)});
   }
+  // Some vector styles encode the blue P only as an icon inside a general POI
+  // symbol layer. Hide that glyph for parking features as a second line of defence.
+  try{
+   map.setPaintProperty(layer.id,'icon-opacity',['case',parkingFeature,0,1]);
+   state.parkingFilterDiagnostics.push({id,source,sourceLayer,method:'data-driven opacity prevents native parking icons'});
+  }catch(error){
+   state.parkingFilterDiagnostics.push({id,source,sourceLayer,opacityFallbackError:String(error.message||error)});
+  }
  });
 }
 function isParkingEntrance(item){
@@ -2623,14 +2678,15 @@ function renderMarkers(){
   .filter(item=>markerLayerVisibility.photoSpot&&inCurrentMapBounds(item,bounds)&&!targetVantageSourceIds.has(item.id))
   .sort((a,b)=>(Number(b.scenicScore)||0)-(Number(a.scenicScore)||0)||(a.distance||Infinity)-(b.distance||Infinity))
   .slice(0,map.getZoom()>=14.5?8:14);
- const parking=markerLayerVisibility.parking?parkingCandidates()
-  .filter(item=>inCurrentMapBounds(item,bounds))
-  .sort((a,b)=>{
-   const aDistance=Number.isFinite(a.distance)?a.distance:Infinity;
-   const bDistance=Number.isFinite(b.distance)?b.distance:Infinity;
-   return aDistance-bDistance || (isParkingEntrance(a)?-1:1)-(isParkingEntrance(b)?-1:1);
-  }).slice(0,5):[];
- const nearestParking=parking.filter(item=>!item.clusterMembers).slice().sort((a,b)=>(Number.isFinite(a.distance)?a.distance:Infinity)-(Number.isFinite(b.distance)?b.distance:Infinity))[0];
+ const allParkingCandidates=markerLayerVisibility.parking?parkingCandidates():[];
+ const nearestParking=allParkingCandidates.filter(item=>!item.clusterMembers).slice().sort((a,b)=>{
+  const ad=Number.isFinite(a.distance)?a.distance:Infinity,bd=Number.isFinite(b.distance)?b.distance:Infinity;
+  return ad-bd || (isParkingEntrance(a)?-1:1)-(isParkingEntrance(b)?-1:1);
+ })[0];
+ const parking=allParkingCandidates.filter(item=>inCurrentMapBounds(item,bounds)).sort((a,b)=>{
+  const ad=Number.isFinite(a.distance)?a.distance:Infinity,bd=Number.isFinite(b.distance)?b.distance:Infinity;
+  return ad-bd || (isParkingEntrance(a)?-1:1)-(isParkingEntrance(b)?-1:1);
+ }).slice(0,8);
  const parkingMarkersRaw=map.getZoom()>=14.5?parking:clusterParkingMarkers(parking);
  const parkingMarkers=parkingMarkersRaw.map(item=>nearestParking&&!item.clusterMembers&&item.id===nearestParking.id?{...item,isRecommendedParking:true}:item);
  // Keep each pin at its real geographic coordinate. Only include candidates
@@ -3641,7 +3697,8 @@ async function generateAIImageForSelectedSpot(){
    ai.txt2img(buildAIImagePrompt(item),{
     provider:'cloudflare',
     model:'@cf/black-forest-labs/flux-2-klein-4b',
-    ratio:{w:16,h:9}
+    width:1280,
+    height:720
    }),
    new Promise((_,reject)=>setTimeout(()=>reject(new Error('Image generation took longer than 120 seconds. Retry; the location-specific sketches remain available.')),120000))
   ]);
@@ -3676,6 +3733,25 @@ function setupImageGeneration(){
   if(panel)panel.scrollIntoView({behavior:'smooth',block:'nearest'});
   generateAIImageForSelectedSpot();
  });
+ // These controls are visible before a user scrolls through the whole field guide.
+ // They must call the same generator as the main image button, not be decorative.
+ const quick=$('quickGenerateAI');
+ const selected=$('selectedGenerateAI');
+ if(quick)quick.onclick=()=>{
+  if(!state.selected){
+   if(state.center){
+    const c=state.center;
+    selectItem({id:'user-pin-'+Date.now(),name:'Map pin · '+coordLabel(c),lat:c.lat,lng:c.lng,distance:null,category:'photoSpot',isUserPin:true,source:'Your map pin',sourceUrl:'https://www.openstreetmap.org/?mlat='+c.lat+'&mlon='+c.lng,summary:'Your selected scouting centre.',why:'Creative framing ideas for this coordinate; the exact view and public access are not verified.',tags:{},city:''},{keepMapView:true});
+   }else{setStatus('Drop a pin first','Click anywhere on the map to create your photography stop.','warn');return;}
+  }
+  const panel=$('aiImageGenerator');if(panel)panel.scrollIntoView({behavior:'smooth',block:'start'});
+  generateAIImageForSelectedSpot();
+ };
+ if(selected)selected.onclick=()=>{
+  const board=$('pinIdeaBoard');if(board)board.hidden=false;
+  const panel=$('aiImageGenerator');if(panel)panel.scrollIntoView({behavior:'smooth',block:'start'});
+  generateAIImageForSelectedSpot();
+ };
  syncAIImageUI();
  setAIImageStatus(window.puter&&window.puter.ai&&typeof window.puter.ai.txt2img==='function'
   ?'Ready. Generate an illustrative image for the selected spot; the image may require Puter sign-in or usage allowance.'
