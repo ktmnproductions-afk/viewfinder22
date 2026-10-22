@@ -330,7 +330,7 @@ body{background-color:var(--bg);background-image:radial-gradient(ellipse at 12% 
 .model-explainer-grid>div{background:rgba(255,255,255,.7);padding:9px 10px;border:1px solid #e8e9df;border-radius:9px}
 .model-explainer-grid b{font-size:10px;color:#9b593d}
 .model-explainer-grid p{font-size:10px;line-height:1.55;margin:5px 0 0;color:#596459}
-.model-explainer-source{display:flex;justify-content:space-between;gap:10px;margin-top:9px;padding-top:8px;border-top:1px solid #e5e4d8;font-size:9px;line-height:1.45;color:#70796c}
+.model-explainer-source{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:9px;padding-top:8px;border-top:1px solid #e5e4d8;font-size:9px;line-height:1.45;color:#70796c}.model-explainer-source a{color:#8e5037;text-decoration:underline;text-underline-offset:2px}
 @media(max-width:760px){.model-guide-head{align-items:start;flex-direction:column}.model-guide-grid{grid-template-columns:1fr}.model-explainer-grid{grid-template-columns:1fr}.model-explainer-source{flex-direction:column}.model-field-guide{margin:14px 10px;padding:14px}.model-guide-head h3{font-size:21px}}
 
 </style>
@@ -441,7 +441,7 @@ body{background-color:var(--bg);background-image:radial-gradient(ellipse at 12% 
               <div><b>Similar mainstream model</b><p id="aw-model-guide-compare">No single equivalent; the chosen free model can vary by request.</p></div>
               <div><b>What to watch for</b><p id="aw-model-guide-limit">Quota, availability and response style can vary.</p></div>
             </div>
-            <div class="model-explainer-source"><span id="aw-model-guide-cost">Free route · subject to limits</span><span id="aw-model-guide-source">Ranking is task-dependent.</span></div>
+            <div class="model-explainer-source"><span id="aw-model-guide-cost">Free route · subject to limits</span><span id="aw-model-guide-source">Ranking is task-dependent.</span><a id="aw-model-guide-link" href="https://arena.ai/leaderboard/chat/text" target="_blank" rel="noopener">Check source ↗</a></div>
           </div>
         </div>
         <div class="studio-options" id="aw-media-options" hidden>
@@ -908,6 +908,7 @@ function renderModelExplainer(cat,id,m){
  $('aw-model-guide-rank').title=p.rank;
  $('aw-model-guide-source').textContent=p.rank+' · '+p.source;
  $('aw-model-guide-cost').textContent=p.cost;
+ $('aw-model-guide-link').href=p.url||'https://arena.ai/leaderboard/chat/text';
 }
 function refreshModelDetail(){
  var cat=currentModelCategory();var id=$('aw-model').value;var pool=(cat==='text'?models.text:(models[cat]||[]));var m=pool.find(function(x){return x.id===id;});
