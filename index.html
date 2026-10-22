@@ -1003,13 +1003,13 @@ const styleUrls = {
 // Automatic recovery intentionally excludes the dark style. "Dark" remains an
 // explicit user choice only; a failed light map must never turn the landing view black.
 const vectorFallbackOrder=['bright','positron','fiord','liberty'];
-const state = {map:null, styleLoaded:false, scanCount:0, scanPending:false, scanSourcesPending:false, center:null, radius:10000, detectedLocality:'', localityCandidates:[], locationConflictExclusions:[], results:[], scenicSpots:[], photos:[], cameraRoadCandidates:[], assumedViewpoints:[], cameraCalculationPending:false, basemapParking:[], parkingFilteredLayers:new Set(), parkingIconLayersSilenced:new Set(), parkingFilterDiagnostics:[], spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0, basemapMode:'vector', basemapFallbackTried:false, basemapWatchdog:null, styleFailureTimer:null, initialScoutStarted:false};
+const state = {map:null, styleLoaded:false, scanCount:0, scanPending:false, scanSourcesPending:false, center:null, radius:10000, detectedLocality:'', localityCandidates:[], locationConflictExclusions:[], results:[], scenicSpots:[], photos:[], cameraRoadCandidates:[], assumedViewpoints:[], cameraCalculationPending:false, cameraPathSearchError:'', cameraPathSearchDiagnostics:null, basemapParking:[], parkingFilteredLayers:new Set(), parkingIconLayersSilenced:new Set(), parkingFilterDiagnostics:[], spotParking:[], spotParkingTargetId:null, spotParkingRequest:0, spotParkingLoading:false, selected:null, filter:'all', markers:[], pinMarker:null, scanId:0, controllers:[], saved:[], mapErrors:0, vectorTileSuccesses:0, basemapMode:'vector', basemapFallbackTried:false, basemapWatchdog:null, styleFailureTimer:null, initialScoutStarted:false};
 window.__PHOTO_SCOUT_TEST__ = {
  get map(){ return state.map; },
  get styleLoaded(){ return state.styleLoaded; },
  get vectorTileSuccesses(){ return state.vectorTileSuccesses; },
  get scanCount(){ return state.scanCount; },
- getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, localityCandidates:state.localityCandidates, locationConflictExclusions:state.locationConflictExclusions, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, selectedCoordinate:state.selected&&Number.isFinite(Number(state.selected.lat))&&Number.isFinite(Number(state.selected.lng))?{lat:Number(state.selected.lat),lng:Number(state.selected.lng)}:null, scanPending:state.scanPending, scanSourcesPending:state.scanSourcesPending, cameraCalculationPending:state.cameraCalculationPending, cameraRoadCandidateCount:(state.cameraRoadCandidates||[]).length, assumedViewpointCount:(state.assumedViewpoints||[]).length, resultCount:state.results.length, resultCategoryCounts:{history:state.results.filter(r=>r.category==='history').length,architecture:state.results.filter(r=>r.category==='architecture').length,viewpoint:state.results.filter(r=>r.category==='viewpoint').length,parking:state.results.filter(r=>r.category==='parking').length}, viewportCategoryCounts:(()=>{const b=state.map&&state.map.getBounds();const inView=r=>b&&Number.isFinite(Number(r.lat))&&Number.isFinite(Number(r.lng))&&b.contains([Number(r.lng),Number(r.lat)]);return {history:state.results.filter(r=>r.category==='history'&&inView(r)).length,architecture:state.results.filter(r=>r.category==='architecture'&&inView(r)).length,viewpoint:state.results.filter(r=>r.category==='viewpoint'&&inView(r)).length,scenic:state.scenicSpots.filter(inView).length,inferredViewpoint:(state.assumedViewpoints||[]).filter(inView).length};})(), distanceDiagnostics:[...state.results,...state.scenicSpots].filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&Number.isFinite(p.distance)).slice(0,25).map(p=>({name:p.name,category:p.category,reportedDistance:p.distance,computedDistance:haversine(state.center,{lat:p.lat,lng:p.lng}),delta:Math.abs(p.distance-haversine(state.center,{lat:p.lat,lng:p.lng}))})), parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), parkingLabelLayersFiltered:[...state.parkingFilteredLayers], visibleParkingMarkerClasses:state.markers.filter(m=>m.getElement().classList.contains('parking')).map(m=>({title:m.getElement().title,classes:m.getElement().className,coordinates:m.getLngLat().toArray()})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, markerCounts:{landmark:state.markers.filter(m=>m.getElement().classList.contains('history')).length,architecture:state.markers.filter(m=>m.getElement().classList.contains('architecture')).length,viewpoint:state.markers.filter(m=>m.getElement().classList.contains('viewpoint')).length,inferredViewpoint:state.markers.filter(m=>m.getElement().classList.contains('inferred-viewpoint-pin')).length,photoSpot:state.markers.filter(m=>m.getElement().classList.contains('photoSpot')).length}, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
+ getState(){ return {styleLoaded:state.styleLoaded, basemapMode:state.basemapMode, basemapFallbackTried:state.basemapFallbackTried, scanCount:state.scanCount, activeCenter:state.center, detectedLocality:state.detectedLocality, localityCandidates:state.localityCandidates, locationConflictExclusions:state.locationConflictExclusions, selectedId:state.selected&&state.selected.id||null, selectedName:state.selected&&state.selected.name||null, selectedCoordinate:state.selected&&Number.isFinite(Number(state.selected.lat))&&Number.isFinite(Number(state.selected.lng))?{lat:Number(state.selected.lat),lng:Number(state.selected.lng)}:null, scanPending:state.scanPending, scanSourcesPending:state.scanSourcesPending, cameraCalculationPending:state.cameraCalculationPending, cameraRoadCandidateCount:(state.cameraRoadCandidates||[]).length, assumedViewpointCount:(state.assumedViewpoints||[]).length, cameraPathSearchError:state.cameraPathSearchError, cameraPathSearchDiagnostics:state.cameraPathSearchDiagnostics, resultCount:state.results.length, resultCategoryCounts:{history:state.results.filter(r=>r.category==='history').length,architecture:state.results.filter(r=>r.category==='architecture').length,viewpoint:state.results.filter(r=>r.category==='viewpoint').length,parking:state.results.filter(r=>r.category==='parking').length}, viewportCategoryCounts:(()=>{const b=state.map&&state.map.getBounds();const inView=r=>b&&Number.isFinite(Number(r.lat))&&Number.isFinite(Number(r.lng))&&b.contains([Number(r.lng),Number(r.lat)]);return {history:state.results.filter(r=>r.category==='history'&&inView(r)).length,architecture:state.results.filter(r=>r.category==='architecture'&&inView(r)).length,viewpoint:state.results.filter(r=>r.category==='viewpoint'&&inView(r)).length,scenic:state.scenicSpots.filter(inView).length,inferredViewpoint:(state.assumedViewpoints||[]).filter(inView).length};})(), distanceDiagnostics:[...state.results,...state.scenicSpots].filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&Number.isFinite(p.distance)).slice(0,25).map(p=>({name:p.name,category:p.category,reportedDistance:p.distance,computedDistance:haversine(state.center,{lat:p.lat,lng:p.lng}),delta:Math.abs(p.distance-haversine(state.center,{lat:p.lat,lng:p.lng}))})), parkingCount:parkingCandidates().length, parkingSample:parkingCandidates().slice(0,20).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,origin:p.parkingOrigin,source:p.source,summary:p.summary})), explicitSearchParkingCount:state.results.filter(r=>r.category==='parking').length, basemapParkingCount:state.basemapParking.length, basemapParkingSample:state.basemapParking.slice(0,10).map(p=>({name:p.name,lat:p.lat,lng:p.lng,distance:p.distance,properties:p.tags})), parkingLabelLayersFiltered:[...state.parkingFilteredLayers], visibleParkingMarkerClasses:state.markers.filter(m=>m.getElement().classList.contains('parking')).map(m=>({title:m.getElement().title,classes:m.getElement().className,coordinates:m.getLngLat().toArray()})), historyCount:state.results.filter(r=>r.category==='history').length, scenicCount:state.scenicSpots.length, scenicDistanceBands:{near:state.scenicSpots.filter(r=>r.distance<5000).length,wide:state.scenicSpots.filter(r=>r.distance>=5000&&r.distance<15000).length,distant:state.scenicSpots.filter(r=>r.distance>=15000).length}, scenicSample:state.scenicSpots.slice(0,10).map(r=>({name:r.name,category:r.category,type:r.tags&&r.tags.type,natural:r.tags&&r.tags.natural,city:r.city,score:r.scenicScore,confidence:r.confidence,why:r.why,distance:r.distance})), photoCount:state.photos.length, photoTitles:state.photos.map(p=>p.name), geotaggedPhotos:state.photos.filter(p=>p.geotagged).length, themedPhotos:state.photos.filter(p=>!p.geotagged).length, mapPhotoMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('photo')).length, basemapParkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('basemap-parking')).length, parkingMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking')).length, parkingClusterMarkerCount:state.markers.filter(m=>m.getElement().classList.contains('parking-cluster')).length, markerCounts:{landmark:state.markers.filter(m=>m.getElement().classList.contains('history')).length,architecture:state.markers.filter(m=>m.getElement().classList.contains('architecture')).length,viewpoint:state.markers.filter(m=>m.getElement().classList.contains('viewpoint')).length,inferredViewpoint:state.markers.filter(m=>m.getElement().classList.contains('inferred-viewpoint-pin')).length,photoSpot:state.markers.filter(m=>m.getElement().classList.contains('photoSpot')).length}, parkingLabelLayersFiltered:[...state.parkingFilteredLayers], mapErrors:state.mapErrors}; },
  runMarkerStabilityFixture:function(){
   if(!state.map||!state.styleLoaded)throw new Error('Map is not ready');
   renderMarkers();
@@ -2822,7 +2822,12 @@ async function overpassCameraPathSearch(center,scanId){
   ');out geom tags qt 280;';
  const endpoints=['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter'];
  let lastError=null;
+ const diagnostics={endpointAttempts:0,endpoint:'',elementsReturned:0,routeWaysReturned:0,routeWaysWithGeometry:0,midpointFallbacks:0,rawCandidateCount:0,returnedCandidateCount:0,remark:''};
+ state.cameraPathSearchDiagnostics=diagnostics;
+ state.cameraPathSearchError='';
  for(const endpoint of endpoints){
+  diagnostics.endpointAttempts++;
+  diagnostics.endpoint=endpoint;
   if(scanId!==state.scanId)throw new Error('stale scan');
   const controller=new AbortController();state.controllers.push(controller);
   const timer=window.setTimeout(()=>controller.abort(),14000);
@@ -2832,24 +2837,33 @@ async function overpassCameraPathSearch(center,scanId){
     body:'data='+encodeURIComponent(query)});
    if(!response.ok)throw new Error('Camera-path search returned HTTP '+response.status);
    const data=await response.json();
+   diagnostics.elementsReturned=Array.isArray(data.elements)?data.elements.length:0;
+   diagnostics.remark=String(data.remark||'');
    if(scanId!==state.scanId)throw new Error('stale scan');
    const raw=[];
    const add=(point,tags,el)=>{
-    if(!point||!Number.isFinite(Number(point.lat))||!Number.isFinite(Number(point.lng)))return;
+    if(!point||!Number.isFinite(Number(point.lat))||!Number.isFinite(Number(point.lng)))return false;
     const distance=haversine(center,{lat:Number(point.lat),lng:Number(point.lng)});
-    if(distance<180||distance>radius)return;
-    const score=cameraPathSuitability(tags);if(score<0)return;
+    if(distance<180||distance>radius)return false;
+    const score=cameraPathSuitability(tags);if(score<0)return false;
     const type=String(tags.highway||tags.leisure||tags.tourism||'mapped open space');
     const osmType=String(el.type||'way'),osmId=String(el.id||'');
     raw.push({lat:Number(point.lat),lng:Number(point.lng),distance,tags:{...tags},pathScore:score,pathType:type,
      roadName:String(tags.name||tags.ref||'Mapped '+type),osmType,osmId,
      sourceUrl:osmId?'https://www.openstreetmap.org/'+osmType+'/'+osmId:'https://www.openstreetmap.org/',
      source:'OpenStreetMap mapped '+type});
+    diagnostics.rawCandidateCount=raw.length;
+    return true;
    };
    for(const el of (Array.isArray(data.elements)?data.elements:[])){
     const tags=el.tags||{},highway=String(tags.highway||'').toLowerCase();
     const allowed=['path','footway','pedestrian','track','steps','cycleway','residential','living_street','unclassified'];
+    if(el.type==='way'&&allowed.includes(highway)){
+     diagnostics.routeWaysReturned++;
+    }
     if(el.type==='way'&&allowed.includes(highway)&&Array.isArray(el.geometry)&&el.geometry.length>=2){
+     diagnostics.routeWaysWithGeometry++;
+     const candidatesBeforeWay=raw.length;
      const geometry=el.geometry.filter(p=>Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lon))).map(p=>({lat:Number(p.lat),lng:Number(p.lon)}));
      let traversed=0,nextAt=CAMERA_PATH_SPACING_METERS/2;
      for(let i=0;i<geometry.length-1;i++){
@@ -2860,6 +2874,21 @@ async function overpassCameraPathSearch(center,scanId){
        nextAt+=CAMERA_PATH_SPACING_METERS;
       }
       traversed+=len;
+     }
+     // OSM often splits short streets and footpaths into ways shorter than the
+     // spacing interval. Use one true midpoint for those otherwise-missed ways.
+     if(raw.length===candidatesBeforeWay){
+      const segmentLengths=geometry.slice(0,-1).map((point,index)=>haversine(point,geometry[index+1]));
+      const totalLength=segmentLengths.reduce((sum,value)=>sum+(Number.isFinite(value)?value:0),0);
+      if(totalLength>0){
+       let remaining=totalLength/2,midpoint=geometry[0];
+       for(let i=0;i<segmentLengths.length;i++){
+        const segment=segmentLengths[i];
+        if(remaining<=segment&&segment>0){midpoint=interpolateCameraPoint(geometry[i],geometry[i+1],remaining/segment);break;}
+        remaining-=segment;
+       }
+       if(add(midpoint,tags,el))diagnostics.midpointFallbacks++;
+      }
      }
     }else if(tags.tourism==='viewpoint'||['park','garden','nature_reserve'].includes(String(tags.leisure||''))){
      let point=null;
@@ -2876,13 +2905,15 @@ async function overpassCameraPathSearch(center,scanId){
     const bonus=d=>d>=450&&d<=2200?12:d<450?4:Math.max(-10,8-(d-2200)/120);
     return (b.pathScore+bonus(b.distance))-(a.pathScore+bonus(a.distance));
    });
+   diagnostics.rawCandidateCount=raw.length;
    const spaced=[];
    for(const candidate of byQuality){
     if(spaced.some(p=>haversine(p,candidate)<120))continue;
     spaced.push(candidate);if(spaced.length>=65)break;
    }
+   diagnostics.returnedCandidateCount=spaced.length;
    return spaced;
-  }catch(error){if(scanId!==state.scanId)throw error;lastError=error;}
+  }catch(error){if(scanId!==state.scanId)throw error;lastError=error;state.cameraPathSearchError=String(error&&error.message||error);}
   finally{window.clearTimeout(timer);state.controllers=state.controllers.filter(c=>c!==controller);}
  }
  throw lastError||new Error('No mapped paths available for camera-position inference');
@@ -3298,7 +3329,7 @@ async function scanAt(c,opts){
  const sourceTasks=[];
  const placesTask=runSource('places',rangefindPlacesSearch(c,rad,id),data=>{osmResults=data;});
  sourceTasks.push(placesTask);
- const cameraPathTask=overpassCameraPathSearch(c,id).then(data=>{if(id===state.scanId)state.cameraRoadCandidates=Array.isArray(data)?data:[];return data;}).catch(()=>{if(id===state.scanId)state.cameraRoadCandidates=[];return [];});
+ const cameraPathTask=overpassCameraPathSearch(c,id).then(data=>{if(id===state.scanId){state.cameraRoadCandidates=Array.isArray(data)?data:[];state.cameraPathSearchError='';}return data;}).catch(error=>{if(id===state.scanId){state.cameraRoadCandidates=[];state.cameraPathSearchError=String(error&&error.message||error);}return [];});
  sourceTasks.push(cameraPathTask);
  let completionScheduled=false;
  const startEnrichments=()=>{
