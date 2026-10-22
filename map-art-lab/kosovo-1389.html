@@ -157,7 +157,7 @@ const PHASES=[
 ];
 let tileOrigin={x:0,y:0},demCanvas=null,demPixels=null,demStats={loaded:0,failed:0},terrainMesh=null,terrainMaterial=null,terrainGeometry=null;
 let scene,camera,renderer,controls,terrainGroup,historyGroup,zonesGroup,approachGroup,engagementGroup,traditionGroup,afterGroup;
-let phase=0,timelineTimer=null,recordTimer=null,recorder=null,recordStream=null,recordBase=null,recording=false,initialCamera=null,topView=false,frameToken=0;
+let phase=0,timelineTimer=null,recordTimer=null,recordFrameTimer=null,recorder=null,recordStream=null,recordBase=null,recording=false,initialCamera=null,topView=false,frameToken=0;
 function status(message,state='loading'){$('status').dataset.state=state;$('statusText').textContent=message;}
 function tileFor(lon,lat,z){
  const n=Math.pow(2,z),r=lat*Math.PI/180;
@@ -316,7 +316,7 @@ function addGeoArrow(parent,start,end,color,dashed=true){
 }
 function clearGroup(group){
  while(group.children.length){
-  const obj=group.children.pop();
+  const obj=group.children[group.children.length-1];
   group.remove(obj);
   obj.traverse?.(child=>{
    if(child.geometry)child.geometry.dispose();
@@ -358,6 +358,7 @@ function setPhase(index){
 }
 function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
 function stopTimeline(){
+ frameToken++;
  if(timelineTimer){clearTimeout(timelineTimer);timelineTimer=null;}
  $('playBtn').textContent='Play phases';$('playBtn').classList.remove('active');
 }
@@ -375,12 +376,13 @@ function playTimeline(){
 function setCameraView(top){
  topView=top;const target=latLonToWorld(BATTLE.lat,BATTLE.lon);target.y+=.1;
  const radius=top?9.7:9.9;
- camera.position.set(target.x+(top?.02:6.7),target.y+(top?13.5:7.3),target.z+(top?.02:7.4));
+ camera.position.set(target.x+(top ? 0.02 : 6.7),target.y+(top ? 13.5 : 7.3),target.z+(top ? 0.02 : 7.4));
  camera.lookAt(target);controls.target.copy(target);controls.update();
  $('viewBtn').textContent=top?'Oblique view':'Top view';
 }
 function stopRecording(){
  if(recordTimer){clearTimeout(recordTimer);recordTimer=null;}
+ if(recordFrameTimer){clearInterval(recordFrameTimer);recordFrameTimer=null;}
  if(recording&&recorder&&recorder.state!=='inactive')recorder.stop();
  recording=false;
 }
@@ -400,6 +402,7 @@ function recordSequence(){
  recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
  recorder.onerror=()=>{status('Recording failed','error');};
  recorder.onstop=()=>{
+  if(recordFrameTimer){clearInterval(recordFrameTimer);recordFrameTimer=null;}
   if(recordStream)recordStream.getTracks().forEach(t=>t.stop());recordStream=null;
   recording=false;controls.enabled=true;
   if(recordBase){camera.position.copy(recordBase.position);controls.target.copy(recordBase.target);controls.update();setPhase(recordBase.phase);}
@@ -421,7 +424,7 @@ function recordSequence(){
   camera.lookAt(target);
  };
  recordTimer=setTimeout(stopRecording,12000);
- recordSequence.tickTimer=setInterval(recordTick,45);
+ recordFrameTimer=setInterval(recordTick,45);
 }
 function resize(){
  if(!renderer||!camera)return;
@@ -429,6 +432,7 @@ function resize(){
  renderer.setSize(window.innerWidth,window.innerHeight);renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));
 }
 function makeFallbackTerrain(){
+ if(terrainMesh){terrainGroup.remove(terrainMesh);terrainMesh.geometry.dispose();terrainMesh.material.map?.dispose();terrainMesh.material.dispose();terrainMesh=null;}
  const count=SEGMENTS+1,positions=new Float32Array(count*count*3),uvs=new Float32Array(count*count*2),indices=[];
  for(let row=0;row<count;row++)for(let col=0;col<count;col++){
   const u=col/SEGMENTS,v=row/SEGMENTS,dx=u-.5,dz=v-.5;
@@ -469,7 +473,7 @@ async function init(){
 }
 function animate(now){
  if(!renderer)return;
- if(recording&&recordSequence.tickTimer){/* camera and phase are advanced by the recording loop */}
+ if(recording&&recordFrameTimer){/* camera and phase are advanced by the recording loop */}
  else controls.update();
  if(phase===1&&engagementGroup.visible){const t=now*.001;engagementGroup.children[0].material.opacity=.12+.08*(.5+.5*Math.sin(t*2));}
  renderer.render(scene,camera);
@@ -482,7 +486,7 @@ $('playBtn').addEventListener('click',playTimeline);
 $('stopBtn').addEventListener('click',()=>{stopTimeline();setPhase(phase);if(recording)stopRecording();status('Playback stopped','ready');});
 $('viewBtn').addEventListener('click',()=>setCameraView(!topView));
 $('recordBtn').addEventListener('click',recordSequence);
-$('relief').addEventListener('input',()=>{if(demCanvas)buildTerrain();else if(terrainMesh)makeFallbackTerrain();});
+$('relief').addEventListener('input',()=>{if(demCanvas){buildTerrain();setupBattleOverlays();setPhase(phase);}else if(terrainMesh){makeFallbackTerrain();setupBattleOverlays();setPhase(phase);}});
 window.addEventListener('beforeunload',()=>{stopTimeline();if(recording)stopRecording();if(renderer)renderer.dispose();});
 window.__KOSOVO_1389_TEST__=()=>({renderCalls:renderer?renderer.info.render.calls:0,hasCanvas:!!renderer?.domElement,hasTerrain:!!terrainMesh,realDEM:!!demPixels,phase,demTiles:demStats,status:$('statusText').textContent});
 init();
