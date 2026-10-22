@@ -1115,24 +1115,15 @@ const mapOk = () => {
  }
 };
 function switchToRasterFallback(reason){
+ // Do not fall back to the public OpenStreetMap raster tile server: it has
+ // strict usage rules and cannot have native POI/parking glyphs removed. Cycle
+ // through the documented vector styles instead; if they all fail, show a clear
+ // map connection warning without sending blocked tile requests.
  if(state.basemapMode==='raster'){
-  mapError('The backup street map also failed to load. Check your connection and try the map again.');
+  mapError('No supported vector basemap is available right now. Check your connection and retry; the app will not use blocked volunteer raster tiles.');
   return;
  }
- if(state.basemapFallbackTried)return;
- state.basemapFallbackTried=true;
- state.basemapMode='raster';
- state.styleLoaded=false;
- state.vectorTileSuccesses=0;
- state.basemapParking=[];
- state.parkingFilteredLayers=new Set();
- clearMapHealthTimers();
- $('appState').textContent='Switching to backup street map…';
- if(reason&&!state.scanCount){
-  $('statusTitle').textContent='Trying backup map';
-  $('statusMsg').textContent=reason+' Switching to a simpler street map.';
- }
- map.setStyle(osmRasterStyle);
+ switchToBackupVector(reason||'Trying another supported vector basemap.');
 }
 let triedVectorStyles=new Set(['liberty']);
 function switchToBackupVector(reason){
