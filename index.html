@@ -125,6 +125,11 @@ footer{padding:12px 18px 14px;color:#7f9283;font-size:9px;line-height:1.45;borde
 .pin-action-strip[hidden]{display:none!important}
 #pinIdeaBoard[hidden]{display:none!important}
 #pinIdeaBoard:not([hidden]){display:block!important}
+.pin-board-primary-actions{display:flex;align-items:center;gap:10px;margin:12px 0 14px;padding:11px;border:1px solid rgba(217,243,107,.55);border-radius:12px;background:linear-gradient(120deg,rgba(217,243,107,.19),rgba(217,243,107,.06));box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.pin-board-primary-actions #pinBoardGenerateAI{flex:0 0 auto;min-height:40px;font-size:11px;font-weight:900;white-space:nowrap}
+.pin-board-primary-actions span{font-size:10px;line-height:1.5;color:#c5d3c5}
+#pinBoardGenerateAI:disabled{opacity:.7;cursor:wait}
+@media(max-width:680px){.pin-board-primary-actions{align-items:stretch;flex-direction:column}.pin-board-primary-actions #pinBoardGenerateAI{width:100%;min-height:42px}.pin-board-primary-actions span{font-size:10px}}
 .pin-action-buttons #quickGenerateAI{min-height:36px;font-size:10px;font-weight:850}
 .scout-marker.parking.is-recommended .dot-core{width:42px;height:42px;border-radius:11px;border:3px solid #effff2;background:#075a39;color:#fff;font-size:12px;box-shadow:0 0 0 7px rgba(44,219,138,.30),0 5px 16px rgba(0,0,0,.68)}
 .scout-marker.parking.is-recommended::before{content:'CLOSEST';position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:#073f2a;color:#edffe9;border:1px solid #b1e9bc;border-radius:5px;padding:3px 5px;font:900 8px/1.1 ui-sans-serif,system-ui;letter-spacing:.07em;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,.3);pointer-events:none}
@@ -822,6 +827,10 @@ html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
     <div class="pin-idea-head">
       <div><div class="eyebrow">LOCATION-AWARE FIELD NOTE</div><h2 id="pinIdeaTitle">Photo ideas for this pin</h2><p id="pinIdeaSubtitle">Three possible compositions using the Canon R50 and 18–150 mm lens.</p></div>
       <span class="pin-idea-lens">CANON R50<br>18–150 mm</span>
+    </div>
+    <div class="pin-board-primary-actions">
+      <button class="btn primary" id="pinBoardGenerateAI" type="button">✦ Generate an AI image idea</button>
+      <span>Creates a visual concept for this pin and shows it here. You can also use the automatic sketches below without signing in.</span>
     </div>
     <div class="pin-idea-sketch-grid" id="pinIdeaSketchGrid"></div>
     <div class="pin-idea-shots" id="pinIdeaShots"></div>
@@ -3511,12 +3520,14 @@ async function generateAIImageForSelectedSpot(){
  const button=$('generateAIConcept');
  const quickButton=$('quickGenerateAI');
  const selectedButton=$('selectedGenerateAI');
+ const boardButton=$('pinBoardGenerateAI');
  const preview=$('aiImageResult');
  const image=$('aiImageOutput');
  const download=$('downloadAIImage');
  if(button){button.disabled=true;button.textContent='Preparing image…';}
  if(quickButton){quickButton.disabled=true;quickButton.textContent='Preparing…';}
  if(selectedButton){selectedButton.disabled=true;selectedButton.textContent='Preparing AI visual…';}
+ if(boardButton){boardButton.disabled=true;boardButton.textContent='Preparing image…';}
  if(preview)preview.hidden=true;
  if(download){download.hidden=true;download.removeAttribute('href');}
  setAIImageStatus('Connecting to the image service, then creating a visual for '+item.name+'. On first use, Puter may ask you to sign in.','');
@@ -3524,10 +3535,11 @@ async function generateAIImageForSelectedSpot(){
   const ai=await waitForAIImageService(15000);
   if(button)button.textContent='Generating…';
   if(quickButton)quickButton.textContent='Generating…';
+  if(boardButton)boardButton.textContent='Generating image…';
   const generated=await Promise.race([
    ai.txt2img(buildAIImagePrompt(item),{
     provider:'cloudflare',
-    model:'@cf/black-forest-labs/flux-1-schnell',
+    model:'@cf/black-forest-labs/flux-2-klein-4b',
     ratio:{w:16,h:9}
    }),
    new Promise((_,reject)=>setTimeout(()=>reject(new Error('Image generation took longer than 120 seconds. Retry; the location-specific sketches remain available.')),120000))
@@ -3542,18 +3554,27 @@ async function generateAIImageForSelectedSpot(){
   if(download){download.href=src;download.download='photo-scout-'+String(item.name||'concept').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48)+'.png';download.hidden=false;}
   preview.hidden=false;
   setAIImageStatus('Image created and displayed below. It is an illustrative shot idea, not a verified photograph of the location.','success');
+  preview.scrollIntoView({behavior:'smooth',block:'nearest'});
  }catch(error){
   const message=String(error&&error.message||'Unknown image-generation error');
   setAIImageStatus(message+' If prompted, sign in to Puter. Image usage is handled by your Puter account; available free allowance and limits depend on that account.','error');
+  const status=$('aiImageStatus');if(status)status.scrollIntoView({behavior:'smooth',block:'nearest'});
  }finally{
   if(button){button.disabled=false;syncAIImageUI();}
   if(quickButton){quickButton.disabled=false;quickButton.textContent='✦ Generate image';}
   if(selectedButton){selectedButton.disabled=false;selectedButton.textContent='✦ Generate an AI visual for this spot';}
+  if(boardButton){boardButton.disabled=false;boardButton.textContent='✦ Generate an AI image idea';}
  }
 }
 function setupImageGeneration(){
  const generate=$('generateAIConcept');
+ const boardGenerate=$('pinBoardGenerateAI');
  if(generate)generate.addEventListener('click',generateAIImageForSelectedSpot);
+ if(boardGenerate)boardGenerate.addEventListener('click',()=>{
+  const panel=$('aiImageGenerator');
+  if(panel)panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  generateAIImageForSelectedSpot();
+ });
  syncAIImageUI();
  setAIImageStatus(window.puter&&window.puter.ai&&typeof window.puter.ai.txt2img==='function'
   ?'Ready. Generate an illustrative image for the selected spot; the image may require Puter sign-in or usage allowance.'
