@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f7f7f4">
 <meta name="description" content="Use a curated set of Chinese and international AI models in one integrated browser workspace: chat, coding, image and video generation, and speech.">
-<title>AI Workbench — Integrated AI Studio</title>
+<title>AI Workbench — The Free AI Atelier</title>
 <style>
 :root{--bg:#f5f6f4;--paper:#fff;--ink:#17201d;--muted:#737e79;--line:#e6e9e5;--green:#1f6a51;--green-soft:#e6f2eb;--blue:#355de7;--blue-soft:#edf1ff;--amber:#925a16;--amber-soft:#fff0da;--violet:#7755c9;--violet-soft:#f0ebff;--shadow:0 8px 30px rgba(22,38,29,.055);--radius:18px}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;line-height:1.48}a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}button{cursor:pointer}.app{display:grid;grid-template-columns:224px minmax(0,1fr);min-height:100vh;max-width:1900px;margin:auto}.sidebar{background:#fbfcfa;border-right:1px solid var(--line);padding:23px 14px;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;gap:24px}.brand{display:flex;align-items:center;gap:11px;padding:0 8px}.brandmark{width:37px;height:37px;border-radius:12px;background:linear-gradient(145deg,#d9eddf,#dce4ff);display:grid;place-items:center;color:#285943;font-size:20px}.brandname{font-weight:800;font-size:16px;letter-spacing:-.6px}.brandtag{font-size:10px;color:var(--muted);margin-top:1px}.navlabel{padding:0 11px 7px;color:#96a09b;text-transform:uppercase;font-size:10px;font-weight:800;letter-spacing:1.1px}.nav{display:grid;gap:4px}.nav button{border:0;background:transparent;text-align:left;padding:10px 11px;border-radius:11px;color:#56615b;display:flex;align-items:center;gap:10px;width:100%;transition:.15s}.nav button:hover{background:#f0f3ef;color:var(--ink)}.nav button.active{background:#e8f0e9;color:#235a42;font-weight:750}.navico{width:19px;text-align:center;font-size:15px}.navcount{margin-left:auto;border-radius:7px;background:#edf0ec;color:#707a73;padding:2px 6px;font-size:10px;font-weight:700}.sidebottom{margin-top:auto;border:1px solid var(--line);background:#fff;border-radius:14px;padding:13px}.sidebottom strong{display:block;font-size:12px;margin-bottom:5px}.sidebottom p{font-size:11px;color:var(--muted);margin:0 0 10px}.tiny-link{color:var(--green);font-weight:750;font-size:11px}.main{min-width:0;padding:25px clamp(16px,3vw,42px) 40px}.topbar{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:24px}.crumb{color:var(--muted);font-size:12px}.crumb strong{color:#4d5952}.top-actions{display:flex;gap:8px;align-items:center}.quiet-button,.primary-button,.icon-button{border:1px solid var(--line);border-radius:10px;background:#fff;color:#35423a;padding:9px 12px;font-weight:700;font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:.15s}.quiet-button:hover,.icon-button:hover{border-color:#c6d0c6;background:#fbfcfb}.primary-button{background:var(--green);border-color:var(--green);color:white}.primary-button:hover{background:#18543f}.hero{background:linear-gradient(116deg,#eaf4eb 0%,#f4f7f3 47%,#eff0ff 100%);border:1px solid #e2e9e1;border-radius:22px;padding:27px 29px;position:relative;overflow:hidden;margin-bottom:17px}.hero:after{content:"✳";position:absolute;right:42px;top:-42px;font-size:190px;color:rgba(77,128,95,.08);pointer-events:none;line-height:1}.eyebrow{display:inline-flex;align-items:center;gap:6px;color:#34624b;text-transform:uppercase;font-weight:800;letter-spacing:1.2px;font-size:10px;margin-bottom:9px}.eyedot{width:6px;height:6px;border-radius:50%;background:#51a078}.hero h1{font-size:clamp(28px,3vw,40px);line-height:1.09;letter-spacing:-1.7px;margin:0 0 11px;max-width:720px}.hero p{max-width:650px;color:#5a6960;margin:0 0 19px;font-size:13px}.heroactions{display:flex;gap:9px;flex-wrap:wrap;position:relative;z-index:1}.searchrow{display:flex;align-items:center;gap:10px;margin:18px 0 18px}.searchbox{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:0 13px;min-width:180px;flex:1;box-shadow:0 2px 9px rgba(20,30,23,.018)}.searchbox:focus-within{border-color:#9bb8a2;box-shadow:0 0 0 3px rgba(55,121,80,.08)}.searchbox input{height:43px;width:100%;border:0;outline:none;background:transparent;color:var(--ink)}.kbd{border:1px solid var(--line);border-radius:5px;font-size:10px;color:#8b948e;padding:2px 5px;white-space:nowrap}.searchfilter{height:45px;border:1px solid var(--line);border-radius:12px;background:white;padding:0 12px;color:#48554d;max-width:160px;outline:none}.sectionhead{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:22px 0 12px}.sectionhead h2{font-size:17px;letter-spacing:-.45px;margin:0 0 2px}.sectionhead p{font-size:11px;color:var(--muted);margin:0}.resultcount{color:#869089;font-size:11px;font-weight:650;white-space:nowrap}.featured{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-bottom:25px}.feature{border:1px solid var(--line);background:#fff;border-radius:15px;padding:14px;display:flex;flex-direction:column;gap:8px;min-height:140px;box-shadow:0 2px 9px rgba(20,30,23,.018)}.featuretop{display:flex;align-items:center;justify-content:space-between;gap:6px}.appicon{width:33px;height:33px;border-radius:11px;background:#eef2ef;display:grid;place-items:center;font-size:17px;flex:none}.appicon.china{background:#fff0e9}.appicon.creative{background:#f0ecff}.appicon.code{background:#eaf0ff}.feature h3{font-size:13px;letter-spacing:-.2px;margin:0}.feature p{font-size:11px;color:var(--muted);margin:0;flex:1;line-height:1.45}.featurefoot{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:3px}.textlink{font-size:11px;font-weight:800;color:var(--green)}.chip{display:inline-flex;align-items:center;gap:4px;max-width:100%;border-radius:6px;padding:4px 6px;font-weight:750;font-size:9px;letter-spacing:.15px;white-space:nowrap}.chip.free{background:var(--green-soft);color:#2b6b4e}.chip.credits{background:var(--amber-soft);color:#8a5819}.chip.open{background:var(--blue-soft);color:#3c57b0}.chip.limited{background:#f1edf9;color:#7555a1}.chip.region{background:#fff0e8;color:#995337}.toolgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.toolcard{border:1px solid var(--line);background:var(--paper);border-radius:15px;padding:14px;display:flex;flex-direction:column;min-height:190px;transition:transform .16s,border-color .16s,box-shadow .16s;min-width:0}.toolcard:hover{transform:translateY(-2px);border-color:#d2dbd2;box-shadow:var(--shadow)}.cardhead{display:flex;align-items:flex-start;gap:10px}.cardtitle{min-width:0;flex:1}.cardtitle h3{font-size:13px;margin:1px 0 2px;letter-spacing:-.2px;overflow-wrap:anywhere}.maker{font-size:10px;color:#8a948e}.star{border:1px solid transparent;border-radius:8px;background:transparent;color:#a1aaa4;font-size:17px;line-height:1;padding:4px 5px;flex:none}.star:hover{background:#f5f6f0;color:#bd8c2d}.star.on{color:#bd8c2d}.tooldesc{font-size:11px;color:#68756c;margin:12px 0 12px;line-height:1.53;flex:1}.tags{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-bottom:11px}.microtag{font-size:9px;border:1px solid #ebeeea;padding:3px 6px;border-radius:5px;color:#747f77}.cardfoot{display:flex;align-items:center;gap:8px;border-top:1px solid #f0f1ef;padding-top:10px}.cardfoot .chip{margin-right:auto}.launch{border:0;background:#eff4ef;color:#245d42;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:800;white-space:nowrap}.launch:hover{background:#dfece2}.details{background:transparent;border:0;color:#7a857d;font-size:11px;padding:6px 0}.empty{grid-column:1/-1;text-align:center;border:1px dashed #d4dbd4;border-radius:15px;padding:40px 15px;background:rgba(255,255,255,.5);color:var(--muted)}.empty strong{display:block;color:var(--ink);margin-bottom:5px}.notice{display:flex;align-items:flex-start;gap:10px;padding:13px 15px;border:1px solid #e8e9df;background:#fbfbf4;color:#75775f;border-radius:12px;font-size:11px;margin-top:23px}.notice b{color:#515641}.promptpanel{display:none;background:#fff;border:1px solid var(--line);border-radius:17px;padding:17px;margin:14px 0 22px;box-shadow:var(--shadow)}.promptpanel.show{display:block}.promptbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.promptbar h3{font-size:14px;margin:0}.promptrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.promptrow select{border:1px solid var(--line);background:#fafbf9;border-radius:9px;padding:9px 10px;color:#4c5750;min-width:180px}.promptpanel textarea{display:block;width:100%;resize:vertical;min-height:115px;border:1px solid var(--line);border-radius:10px;padding:12px;outline:none;line-height:1.55;color:#324138;background:#fbfcfa;font-size:12px}.promptpanel textarea:focus{border-color:#a6c2ad}.promptfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}.promptfoot span{font-size:10px;color:#8a948e;margin-left:auto}.comparebar{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:20;display:none;align-items:center;gap:12px;background:#1f3529;color:#fff;border-radius:13px;padding:10px 13px;box-shadow:0 10px 35px rgba(0,0,0,.2)}.comparebar.show{display:flex}.comparebar button{border:0;border-radius:8px;padding:7px 10px;color:#1f3529;background:#edf4ef;font-weight:800;font-size:11px}.comparebar .clearcompare{color:#dce7df;background:transparent}.comparemode{outline:2px solid #7e9b83;outline-offset:-2px}.comparecheck{display:none}.comparemode .comparecheck{display:inline-flex}.modalback{display:none;position:fixed;inset:0;z-index:30;background:rgba(20,30,23,.32);padding:20px;align-items:center;justify-content:center}.modalback.show{display:flex}.modal{max-width:680px;width:100%;max-height:85vh;overflow:auto;background:white;border-radius:18px;padding:22px;box-shadow:0 22px 90px rgba(13,28,17,.23)}.modalheader{display:flex;align-items:start;justify-content:space-between;gap:12px}.modal h2{margin:0 0 5px;font-size:20px;letter-spacing:-.5px}.modal p{color:var(--muted);font-size:12px}.comparelist{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:15px}.comparecol{background:#f7f9f6;border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}.comparecol h3{font-size:13px;margin:0 0 7px}.comparecol .chip{white-space:normal}.comparecol p{font-size:11px;line-height:1.5}.comparecol a{display:inline-block;color:var(--green);font-weight:800;font-size:11px;margin-top:5px}.footer{display:flex;justify-content:space-between;gap:15px;color:#98a19b;font-size:10px;margin-top:25px;padding-top:15px;border-top:1px solid var(--line)}.footer a{color:#63756a;text-decoration:underline;text-underline-offset:2px}.mobilebrand{display:none}
@@ -117,6 +117,149 @@
 @media(max-width:600px){.local-config{grid-template-columns:1fr}.local-load{grid-column:auto}.local-head{padding:16px}.local-head h2{font-size:20px}.local-config{padding:13px}.local-progress{padding:10px 13px}.local-feed{max-height:400px}.local-composer-bottom{flex-wrap:wrap}.local-composer-bottom select{flex-basis:100%}.study-link-banner{align-items:flex-start;flex-direction:column}}
 
 .free-hosted{border:1px solid #dfe6df;background:#fff;border-radius:20px;overflow:hidden;margin:18px 0 24px;box-shadow:0 7px 25px rgba(22,38,29,.04)}.fh-head{padding:18px 20px;background:linear-gradient(120deg,#eff5ed,#fafbf7);border-bottom:1px solid #e6ece4;display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.fh-head h2{font-size:20px;letter-spacing:-.6px;margin:0 0 5px}.fh-head p{font-size:11px;line-height:1.55;color:#68766b;margin:0;max-width:740px}.fh-pill{border:1px solid #d7e6d7;background:#fff;border-radius:8px;color:#286647;padding:7px 9px;font-size:10px;font-weight:850;white-space:nowrap}.fh-tabs{display:flex;gap:7px;flex-wrap:wrap;padding:12px 14px;background:#fff;border-bottom:1px solid #ebefea}.fh-tab{border:1px solid #e0e7df;background:#fff;border-radius:9px;padding:9px 11px;font-size:11px;color:#617066;font-weight:800}.fh-tab.active{color:#245c3e;border-color:#aac8ae;background:#eaf4eb}.fh-tab small{font-size:9px;color:#929d93;font-weight:650;margin-left:4px}.fh-frame-wrap{background:#eef2ed;padding:12px}.fh-frame{display:block;background:#fff;border:1px solid #dce3db;border-radius:12px;width:100%;height:720px;max-width:100%}.fh-openline{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0;padding:0 14px 13px;background:#eef2ed;color:#788479;font-size:10px}.fh-openline a{font-weight:850;color:#286647;text-decoration:underline;text-underline-offset:3px}.fh-warning{font-size:10px;line-height:1.6;color:#7b694b;background:#fff7e8;border-top:1px solid #f0e4cd;padding:10px 15px}@media(max-width:650px){.fh-head{flex-direction:column;padding:15px}.fh-head h2{font-size:20px}.fh-tabs{padding:9px}.fh-tab{padding:8px}.fh-frame-wrap{padding:6px}.fh-frame{height:650px}.fh-openline{padding:0 10px 10px}}
+
+/* Atelier palette + editorial studio layout refresh — 22 Oct 2026 */
+:root{--bg:#eee4d3;--paper:#fff9ed;--ink:#292d23;--muted:#716c5d;--line:#d7c8b1;--green:#58683c;--green-soft:#e7eddb;--blue:#43556c;--blue-soft:#e7edf3;--amber:#ad543b;--amber-soft:#f8e4d7;--violet:#78627e;--violet-soft:#eee5ef;--shadow:0 12px 32px rgba(53,44,28,.08);--radius:18px}
+html{background:var(--bg);scroll-padding-top:18px}
+body{background-color:var(--bg);background-image:radial-gradient(ellipse at 12% 9%,rgba(183,119,61,.12),transparent 28rem),radial-gradient(ellipse at 85% 38%,rgba(92,111,61,.07),transparent 30rem),repeating-linear-gradient(0deg,rgba(77,59,35,.018) 0,rgba(77,59,35,.018) 1px,transparent 1px,transparent 5px);color:var(--ink);font-size:14px}
+.app{max-width:1800px}
+.sidebar{background:#29342a;border-right:1px solid #3a4636;color:#f6edda;box-shadow:3px 0 15px rgba(33,39,28,.05)}
+.brandmark{background:linear-gradient(145deg,#e9b57c,#ce7654);color:#29352a;border-radius:12px 12px 12px 4px}
+.brandname{color:#fbf2df;font-family:Georgia,"Times New Roman",serif;font-size:18px;letter-spacing:-.45px}
+.brandtag{color:#c3c8af}
+.navlabel{color:#aeb89c}
+.nav button{color:#d8deca;border-radius:8px 12px 12px 8px}
+.nav button:hover{background:#354333;color:#fff4df}
+.nav button.active{background:#e4dfc9;color:#2e3c2c;font-weight:800;box-shadow:inset 3px 0 #d17b53}
+.navcount{background:#46513c;color:#f2e7d1}
+.nav button.active .navcount{background:#d6c7a6;color:#3b432f}
+.sidebottom{background:#313e31;border-color:#475442;color:#f4ead3;border-radius:5px 14px 14px 14px}
+.sidebottom p{color:#c3c8b8}.tiny-link{color:#f0b27e}
+.main{padding-top:28px}
+.topbar{margin-bottom:16px}.crumb{color:#89816e}.crumb strong{color:#4b573c}
+.quiet-button,.icon-button{background:#fffaf0;border-color:#d8c8b0;color:#4b5142}
+.quiet-button:hover,.icon-button:hover{background:#f6e8d2;border-color:#c6aa84}
+.primary-button{background:#a55037;border-color:#a55037;color:#fff7e9;box-shadow:0 3px 0 rgba(95,42,25,.1)}
+.primary-button:hover{background:#8d412d;border-color:#8d412d}
+.hero{background:radial-gradient(circle at 89% 18%,rgba(218,166,99,.28),transparent 16rem),linear-gradient(118deg,#29372a 0%,#414936 50%,#66503c 120%);border:1px solid #526044;border-radius:7px 26px 7px 26px;color:#fff2d8;padding:35px clamp(22px,4vw,49px);margin-bottom:10px;box-shadow:0 18px 35px rgba(52,49,34,.12)}
+.hero:after{content:"✳";position:absolute;right:clamp(14px,4vw,48px);top:-49px;font-size:clamp(135px,18vw,246px);color:rgba(240,192,128,.13);transform:rotate(-13deg)}
+.hero .eyebrow{color:#e8b27a;letter-spacing:1.65px}
+.hero .eyedot{background:#e7a46e;box-shadow:0 0 0 5px rgba(231,164,110,.15)}
+.hero h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(35px,4vw,58px);font-weight:500;letter-spacing:-1.9px;line-height:1.02;max-width:820px;margin-bottom:15px}
+.hero p{color:#d7dec8;font-size:14px;max-width:700px;line-height:1.7}
+.hero .primary-button{background:#e7b07a;border-color:#e7b07a;color:#273327;box-shadow:none}
+.hero .primary-button:hover{background:#f3c996}
+.hero .quiet-button{background:transparent;border-color:#78816a;color:#f3ead5}
+.hero .quiet-button:hover{background:rgba(255,250,239,.1);border-color:#d3b58a}
+.sectionhead h2,.sectionhead p{font-family:inherit}
+.sectionhead h2{font-family:Georgia,"Times New Roman",serif;font-weight:500;font-size:21px;letter-spacing:-.35px}
+.sectionhead p{color:#777260}
+.featured{gap:13px}
+.feature{background:rgba(255,250,239,.92);border-color:#d9c9b1;border-radius:7px 16px 7px 16px;box-shadow:0 5px 12px rgba(66,48,23,.035);padding:16px;position:relative}
+.feature:nth-child(2){background:#f7eddb}.feature:nth-child(3){background:#f0f0df}.feature:nth-child(4){background:#eee5ec}
+.feature h3,.toolcard h3{font-family:Georgia,"Times New Roman",serif;font-size:15px;font-weight:600}
+.feature .appicon{border-radius:11px 11px 11px 3px}
+.appicon.china{background:#f6ddc6}.appicon.creative{background:#ead9c4}.appicon.code{background:#dce5dc}
+.searchbox,.searchfilter{background:#fffaf0;border-color:#ddceb8}
+.searchbox:focus-within{border-color:#9eab77;box-shadow:0 0 0 3px rgba(87,105,61,.12)}
+.searchbox input{color:#34382c}.searchfilter{color:#4f5748}
+.toolcard{background:#fffaf0;border-color:#d9cab4;border-radius:8px 16px 8px 16px;box-shadow:0 5px 15px rgba(51,43,29,.035)}
+.toolcard:nth-child(5n+2){background:#fcf1df}.toolcard:nth-child(5n+3){background:#f3f0e3}
+.toolcard:hover{border-color:#b7a78d;box-shadow:0 13px 27px rgba(62,52,32,.1)}
+.toolcard .appicon{border-radius:11px 11px 11px 3px}
+.tooldesc{color:#6a6758}
+.microtag{border-color:#e4d7c4;color:#77715f;background:rgba(255,255,255,.35)}
+.cardfoot{border-color:#e9ddca}
+.chip.free{background:#e1ead8;color:#425c34}.chip.credits{background:#f7e1cc;color:#974d30}.chip.open{background:#e3e8f0;color:#405475}.chip.region{background:#f4e2da;color:#8d4b35}
+.launch{background:#e8edda;color:#3e5532;border-radius:6px 9px 6px 9px}.launch:hover{background:#d6e2c8}
+.star{color:#a49a81}.star.on{color:#ad543b}
+.local-ai{background:#fff8eb;border-color:#d9c4a2;border-radius:8px 22px 8px 22px;box-shadow:0 15px 34px rgba(63,47,23,.075);margin-top:17px}
+.local-head{background:linear-gradient(112deg,#eee6d1,#f6f1e4 65%,#e9e9d8);border-color:#e0d1b4}
+.local-kicker{color:#7e5933;letter-spacing:1.4px}
+.local-kicker span{background:#c66e48}
+.local-head h2,.fh-head h2,.studio-head h2{font-family:Georgia,"Times New Roman",serif;font-size:25px;font-weight:500;letter-spacing:-.65px}
+.local-head p{color:#716b5c}
+.local-trust{background:#31402e;border-color:#31402e;color:#f6e7c9}
+.local-config{background:#fffaf0}
+.local-field{color:#575c49}
+.local-field select,.local-option select{background:#fcf7eb;border-color:#dfd0b9}
+.local-load,.local-send{background:#576a3c;border-color:#576a3c;color:#fff5df}
+.local-load:hover,.local-send:hover{background:#445630}
+.local-model-note{background:#fff9ed;color:#79715e}
+.local-chat{background:#f9f0df;border-color:#e4d2b6}
+.local-chat-top{background:#eae1ce;border-color:#e1d0b5}
+.local-chat-top strong{font-family:Georgia,"Times New Roman",serif;font-size:15px;font-weight:500}
+.local-feed{background:#f7efdf}
+.local-welcome .mark{background:#dfdfc8;color:#58683c;border-radius:14px 14px 14px 4px}
+.local-welcome strong{font-family:Georgia,"Times New Roman",serif;font-size:17px;font-weight:500}
+.local-msg{border-color:#e2d5c1;background:#fffaf0}.local-msg.user{background:#e4e8d4;border-color:#d3dcc2}
+.local-composer{background:#fff9ed;border-color:#e4d4bb}
+.local-composer textarea{background:#fffdf7;border-color:#deceb5}
+.local-composer textarea:focus{border-color:#a8b68b;box-shadow:0 0 0 3px #e8ecd9}
+.local-clear{background:#fff9ed;border-color:#dfcfb6;color:#6a6d5a}
+.local-side{background:#fff8eb}
+.local-side h3{font-family:Georgia,"Times New Roman",serif;font-size:17px;font-weight:500}
+.local-score{border-color:#e7dac5}
+.local-score strong{font-size:12px;color:#3c4935}
+.local-score p{color:#756e5e}
+.local-tag{background:#e5ead5;color:#52643a}
+.local-caveat{background:#f8e8d8;border-color:#eddbc2;color:#7e624b}.local-caveat b{color:#7c442f}
+.free-hosted{background:#fff9ee;border-color:#d8c3a3;border-radius:8px 21px 8px 21px;box-shadow:0 14px 28px rgba(63,47,23,.065)}
+.fh-head{background:linear-gradient(112deg,#e7e7d3,#f7ecdb);border-color:#e2d1b5}
+.fh-head p{color:#726b5d}.fh-pill{color:#fff4df;background:#59693f;border-color:#59693f}
+.fh-tabs{background:#fff9ee;border-color:#e6d7bf}
+.fh-tab{background:#fcf6e9;border-color:#e0d0b7;color:#696b58}
+.fh-tab.active{background:#e2e6d3;color:#475a33;border-color:#abb78c}
+.fh-tab small{color:#827e68}
+.fh-frame-wrap{background:#e7e2d0}
+.fh-frame{border-color:#d7c7ae;border-radius:10px 18px 10px 18px;background:#fffaf0}
+.fh-openline{background:#e7e2d0;color:#766d5a}
+.fh-openline a,.local-links a{color:#8e4a32}
+.fh-warning{background:#f7e8d3;border-color:#e9d4b4;color:#795d3b}
+.studio{background:#fff9ee;border-color:#d9c6a6;border-radius:8px 21px 8px 21px;box-shadow:0 10px 28px rgba(63,47,23,.055)}
+.studio-head{background:linear-gradient(110deg,#f0e5ce,#eee8d6 62%,#e5e7d5);border-color:#e1d1b7}
+.studio-head p{color:#746d5c}
+.connect-btn{background:#fff8ea;border-color:#ddc9aa;color:#7e4a31}
+.key-panel{background:#fff9ee;border-color:#e8d8c0}
+.key-row input,.promptrow select{background:#fffdf7;border-color:#dfcfb7}
+.studio-grid{background:#f7f0e1}
+.studio-controls{background:#fffaf0;border-color:#e4d4ba}
+.studio-label{color:#5e5d4a}
+#task-input{background:#fffdf7;border-color:#ddceb8}
+#task-input:focus{border-color:#aab78b;box-shadow:0 0 0 3px #e8ecd9}
+.mode-chip{background:#fff9ee;border-color:#e0d2bd;color:#746b58}
+.mode-chip.active{background:#e4e8d5;border-color:#aab88a;color:#475d35}
+.recommend-box{background:#eeeeda;border-color:#dadcc1}
+.recommend-spark{background:#dce2c9;color:#52653c;border-radius:10px 10px 10px 3px}
+.recommend-box p{color:#706d59}
+.model-row select,.studio-option select{background:#fffaf0;border-color:#ddcfb8}
+.studio-run{background:#576a3c;box-shadow:none}.studio-run:hover{background:#43542e}
+.studio-clear{background:#fff8e9;border-color:#dfceb5}
+.studio-output{background:#f7efdf}
+.output-head{background:#eae1ce;border-color:#e0d0b4}
+.output-title{font-family:Georgia,"Times New Roman",serif;font-size:15px;font-weight:500}
+.output-feed{background:#f8f0df}
+.welcome-mark{background:#dfe4d0;color:#5b693f;border-radius:15px 15px 15px 4px}
+.welcome-card h3{font-family:Georgia,"Times New Roman",serif;font-size:18px;font-weight:500;color:#374530}
+.welcome-card p{color:#736c5d}
+.chat-message.user{background:#e3e7d3;border-color:#d5ddc4;color:#39452f}
+.chat-message.assistant{background:#fff9ef;border-color:#e4d5be;color:#393e31}
+.notice{background:#f6ebd7;border-color:#e8d6b9;color:#776749;border-radius:6px 14px 6px 14px}
+.notice b{color:#69452e}
+.footer{border-color:#d8c7ae;color:#847866}
+.footer a{color:#8c4a32}
+.empty{background:#fff8eb;border-color:#d4c1a3}
+.comparebar{background:#29372a}.comparebar button{background:#e7e8d5}.modal{background:#fff9ee}
+.searchrow{margin-top:22px}.toolgrid{gap:14px}
+@media(max-width:720px){
+ .sidebar{background:#29342a;border-bottom-color:#44503e}
+ .nav button{background:#334031;color:#dce0cf}
+ .nav button.active{background:#e4dfc9;color:#2e3c2c}
+ .hero{padding:25px 19px;border-radius:6px 19px 6px 19px}
+ .hero h1{font-size:39px}
+ .local-head h2,.fh-head h2,.studio-head h2{font-size:22px}
+}
+
 </style>
 </head>
 <body>
@@ -143,19 +286,42 @@
 <main class="main">
   <div class="topbar"><div class="crumb">Workspace <span style="padding:0 6px;color:#b0b8b2">/</span> <strong id="crumb-current">All tools</strong></div><div class="top-actions"><button class="quiet-button" id="compare-toggle">▦ Compare tools</button><button class="primary-button" id="open-prompt">✦ Prompt studio</button></div></div>
   <section class="hero">
-    <div class="eyebrow"><span class="eyedot"></span> Integrated AI workspace</div>
-    <h1>Your AI studio.<br>Choose a task. Use AI right here.</h1>
-    <p>Pick the best available model for the job, from Chinese and international AI families. Chat, research, code, generate images, create videos and make voiceovers inside this workspace.</p>
-    <div class="heroactions"><button class="primary-button" onclick="document.getElementById('local-ai').scrollIntoView({behavior:'smooth'})">✦ Start free local AI</button><button class="quiet-button" id="jump-china">◈ Explore Chinese AI</button><button class="quiet-button" id="jump-free">Find free models</button></div>
+    <div class="eyebrow"><span class="eyedot"></span> ATELIER / AI FIELD NOTES · 22 OCT 2026</div>
+    <h1>A little AI studio<br>for bigger ideas.</h1>
+    <p>Try open models on your own machine, then switch to public image, video and voice demos when the project needs a different tool. No subscription maze. Just a place to experiment, compare and make things.</p>
+    <div class="heroactions"><button class="primary-button" onclick="document.getElementById('local-ai').scrollIntoView({behavior:'smooth'})">✦ Start free local AI</button><button class="quiet-button" id="jump-china">◈ Explore Chinese AI</button><button class="quiet-button" id="jump-free">Browse the free catalogue</button></div>
   </section>
   
   
+<section class="field-guide" id="start-here">
+  <div class="field-guide-head">
+    <div>
+      <div class="field-kicker">FIELD NOTES / No. 02 <span>UPDATED 22 OCT 2026</span></div>
+      <h2>Pick a tool, make something.</h2>
+      <p>Start with a real task. The free local models are for thinking and writing; the hosted demos are for images, motion, voice and visual prototypes. No API account needed for either route.</p>
+    </div>
+    <div class="field-stamp">FREE<br>BY DESIGN <span>✳</span></div>
+  </div>
+  <div class="guide-grid">
+    <article class="guide-card guide-chat"><div class="guide-card-top"><span class="guide-num">01 / THINK</span><span class="guide-icon">✳</span></div><h3>Ask, plan, brainstorm</h3><p>Load a small Qwen or Llama model in your browser. Keep prompts focused; for current facts, use the research sites below instead.</p><button class="guide-launch" data-workflow="chat">Start a local chat ↗</button></article>
+    <article class="guide-card guide-code"><div class="guide-card-top"><span class="guide-num">02 / BUILD</span><span class="guide-icon">⌘</span></div><h3>Make or fix a website</h3><p>For small code help, use Qwen Coder locally. For a live HTML/React prototype, use the public Qwen Coder demo.</p><button class="guide-launch" data-workflow="code">Start coding ↗</button></article>
+    <article class="guide-card guide-image"><div class="guide-card-top"><span class="guide-num">03 / FRAME</span><span class="guide-icon">▧</span></div><h3>Create an image</h3><p>Open Qwen Image 2.1 or the faster Turbo variant below. Include subject, composition, lighting, texture, aspect ratio and what to avoid.</p><button class="guide-launch" data-workflow="image">Open image studio ↗</button></article>
+    <article class="guide-card guide-video"><div class="guide-card-top"><span class="guide-num">04 / MOVE</span><span class="guide-icon">▷</span></div><h3>Animate a still image</h3><p>Try Wan 2.2 or LTX 2.3. Upload one strong image and describe one camera move plus one subject action, not a whole movie at once.</p><button class="guide-launch" data-workflow="video">Open video studio ↗</button></article>
+    <article class="guide-card guide-voice"><div class="guide-card-top"><span class="guide-num">05 / LISTEN</span><span class="guide-icon">♫</span></div><h3>Make a voiceover</h3><p>Paste a clean script into Qwen3 TTS, select language and voice, generate a sample, then download the audio if the demo exposes the result.</p><button class="guide-launch" data-workflow="voice">Open voice studio ↗</button></article>
+    <article class="guide-card guide-web"><div class="guide-card-top"><span class="guide-num">06 / PROTOTYPE</span><span class="guide-icon">▤</span></div><h3>Turn an idea into a page</h3><p>Ask for one landing page with a clear audience, content and style. Inspect the preview, then refine one thing at a time.</p><button class="guide-launch" data-workflow="webapp">Build a page ↗</button></article>
+  </div>
+  <div class="guide-steps">
+    <div class="guide-step"><span>1</span><div><b>Load once</b><p>The first local model download may take a while; watch the progress bar and keep the tab open.</p></div></div>
+    <div class="guide-step"><span>2</span><div><b>Use a clear brief</b><p>Say what the output should be, who it is for, the style, constraints and format. A concrete prompt beats “make it better”.</p></div></div>
+    <div class="guide-step"><span>3</span><div><b>Iterate in small steps</b><p>Ask for one change at a time. Local chat has no live web access; use the hosted research tools when you need current sources.</p></div></div>
+  </div>
+</section>
   <section class="local-ai" id="local-ai">
     <div class="local-head">
       <div>
         <div class="local-kicker"><span></span> Actually free · Local inference · No paid connection</div>
         <h2>Use AI without connecting an account</h2>
-        <p>This mode runs a downloadable language model on your own computer, inside this page. No API key, cloud credits, payment method or model-inference account. Once a model is cached, later sessions can reuse it.</p>
+        <p>This mode runs a downloadable language model on your computer, inside this page. No API key, cloud credits, payment method or model-inference account. Load once, then send prompts here; after caching, the browser can reuse model files. Nothing is sent to an AI inference API in this local mode.</p>
       </div>
       <div class="local-trust">$0 API cost · No key</div>
     </div>
@@ -163,7 +329,10 @@
       <label class="local-field">Choose a local model
         <select id="local-model">
           <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Light · Llama 3.2 1B · lower hardware needs</option>
-          <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" selected>Balanced · Llama 3.2 3B · recommended start</option><option value="Qwen3-1.7B-q4f16_1-MLC">Chinese family · Qwen3 1.7B · compact</option><option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Chinese family · Qwen2.5 Coder 1.5B</option>
+          <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" selected>Balanced · Llama 3.2 3B · recommended start</option><option value="Qwen3-1.7B-q4f16_1-MLC">Chinese family · Qwen3 1.7B · compact</option><option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Code · Qwen2.5 Coder 1.5B</option>
+          <option value="Qwen3.5-2B-q4f16_1-MLC">Newer Chinese model · Qwen3.5 2B · ~2.25 GB VRAM</option>
+          <option value="Qwen3.5-4B-q4f16_1-MLC">More capable · Qwen3.5 4B · ~3.87 GB VRAM</option>
+          <option value="gemma-4-E2B-it-q4f16_1-MLC">Multimodal · Gemma 4 E2B · ~3.39 GB VRAM</option>
           <option value="DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC">Reasoning · DeepSeek R1 distilled Qwen 7B · heavier</option>
           <option value="Phi-4-mini-instruct-q4f16_1-MLC">Compact reasoning · Phi-4 mini · medium hardware</option>
         </select>
@@ -209,7 +378,7 @@
 
   <section class="free-hosted" id="free-hosted-ai">
     <div class="fh-head"><div><div class="local-kicker"><span></span> Free hosted demos · no API key</div><h2>Try real creative models inside this page</h2><p>Live public Hugging Face Spaces embedded here: generate/edit images, create short videos, make speech, and prototype a web app. These demos do not use your OpenRouter key. They may queue, sleep, or hit shared daily GPU limits.</p></div><div class="fh-pill">Public demo · no API key</div></div>
-    <div class="fh-tabs" role="tablist" aria-label="Free hosted AI demos"><button class="fh-tab active" role="tab" aria-selected="true" data-hfdemo="image">▧ Qwen Image 2.1 <small>Image / edit</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="video">▷ Wan 2.2 <small>Image-to-video</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="voice">♫ Qwen3 TTS <small>Speech</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="code">⌘ Qwen Coder <small>Build web app</small></button></div>
+    <div class="fh-tabs" role="tablist" aria-label="Free hosted AI demos"><button class="fh-tab active" role="tab" aria-selected="true" data-hfdemo="image">▧ Qwen Image 2.1 <small>Image / edit</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="turbo">✦ Image Turbo <small>Faster</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="moss">▦ MOSS-Image <small>Workflow</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="video">▷ Wan 2.2 <small>Image-to-video</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="ltx">◉ LTX 2.3 <small>Motion + audio</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="voice">♫ Qwen3 TTS <small>Speech</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="code">⌘ Qwen Coder <small>Web prototype</small></button></div>
     <div class="fh-frame-wrap"><iframe class="fh-frame" id="fh-frame" title="Qwen Image 2.1 public demo" src="https://qwen-qwen-image-2-1.hf.space/?__theme=light" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="clipboard-read; clipboard-write; fullscreen" allowfullscreen></iframe></div>
     <div class="fh-openline"><span id="fh-status">Loading Qwen Image 2.1 demo…</span><a id="fh-external" href="https://huggingface.co/spaces/Qwen/Qwen-Image-2.1" target="_blank" rel="noopener">Open provider page ↗</a></div>
     <div class="fh-warning"><b>Quota warning:</b> Hugging Face ZeroGPU gives unauthenticated visitors 2 minutes/day and free accounts 5 minutes/day, with queue priorities depending on account tier. This is free hosted inference with limits—not an unlimited promise. <a href="https://huggingface.co/docs/hub/spaces-zerogpu" target="_blank" rel="noopener">Official quotas ↗</a> · <a href="https://huggingface.co/docs/hub/spaces-overview" target="_blank" rel="noopener">Embedding rules ↗</a></div>
@@ -305,7 +474,7 @@
   <div class="sectionhead" id="tools-heading"><div><h2 id="list-title">All tools</h2><p id="list-subtitle">A curated collection of free, freemium and locally runnable AI tools.</p></div><span class="resultcount" id="results-count">0 tools</span></div>
   <div class="toolgrid" id="toolgrid"></div>
   <div class="notice"><span style="font-size:17px">ⓘ</span><div><b>Honest free-access labels.</b> “Free web access” means there is a free way to try the service, not unlimited use. “Free credits” can run out or change. “Open / local” means software or model weights you can run yourself, if your computer supports them. Some Chinese services require a regional account or may not expose every feature from Croatia. Provider websites and plans change; always check terms before uploading private files or using outputs commercially.</div></div>
-  <div class="footer"><span>AI Workbench · Curated launcher, not an AI provider.</span><span>External tools open on their official websites. <a href="https://github.com/ktmnproductions-afk/viewfinder22" target="_blank" rel="noopener">Project source</a></span></div>
+  <div class="footer"><span>AI Workbench · A free-first creative studio. Local inference and public demo access are separate from optional paid APIs.</span><span>External providers are optional. Local AI runs without a paid API. <a href="https://github.com/ktmnproductions-afk/viewfinder22" target="_blank" rel="noopener">Project source</a></span></div>
 </main>
 </div>
 <div class="comparebar" id="comparebar"><span id="compare-label">0 tools selected</span><button id="compare-now">Compare selected</button><button class="clearcompare" id="clear-compare">Clear</button></div>
@@ -845,7 +1014,10 @@ handleOAuthCallback();
   var $=function(id){return document.getElementById(id);};
   var modelInfo={
     'Llama-3.2-1B-Instruct-q4f16_1-MLC':{name:'Llama 3.2 1B',vram:'~0.9 GB VRAM listed by WebLLM',note:'Smallest choice. Lower memory use, lower answer quality and reasoning depth.'},
-    'Llama-3.2-3B-Instruct-q4f16_1-MLC':{name:'Llama 3.2 3B',vram:'~2.3 GB VRAM listed by WebLLM',note:'Good first local model. Download may be around 1–2 GB and take a while on the first run.'},'Qwen3-1.7B-q4f16_1-MLC':{name:'Qwen3 1.7B',vram:'Compact model; check current model metadata',note:'Chinese model family for everyday prompts and brainstorming; smaller than frontier hosted versions.'},'Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC':{name:'Qwen2.5 Coder 1.5B',vram:'Compact model; check current model metadata',note:'Chinese open-weight coding model for smaller snippets and debugging suggestions.'},
+    'Llama-3.2-3B-Instruct-q4f16_1-MLC':{name:'Llama 3.2 3B',vram:'~2.3 GB VRAM listed by WebLLM',note:'Good first local model. Download may be around 1–2 GB and take a while on the first run.'},'Qwen3-1.7B-q4f16_1-MLC':{name:'Qwen3 1.7B',vram:'Compact model; check current model metadata',note:'Chinese model family for everyday prompts and brainstorming; smaller than frontier hosted versions.'},'Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC':{name:'Qwen2.5 Coder 1.5B',vram:'~1.63 GB VRAM listed by WebLLM',note:'Chinese open-weight coding model for smaller snippets and debugging suggestions.'},
+    'Qwen3.5-2B-q4f16_1-MLC':{name:'Qwen3.5 2B',vram:'~2.25 GB VRAM listed by WebLLM',note:'Newer Chinese open model supported by the current WebLLM prebuilt catalogue. Good candidate for everyday prompts; long-context/multimodal quality differs from hosted flagships.'},
+    'Qwen3.5-4B-q4f16_1-MLC':{name:'Qwen3.5 4B',vram:'~3.87 GB VRAM listed by WebLLM',note:'Larger Qwen3.5 local choice. Try when 2B answers feel too shallow and the device has more GPU memory.'},
+    'gemma-4-E2B-it-q4f16_1-MLC':{name:'Gemma 4 E2B',vram:'~3.39 GB VRAM listed by WebLLM',note:'A compact multimodal-capable model family in the current prebuilt catalogue. Requires compatible WebGPU features; use another model if the device does not support it.'},
     'DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC':{name:'DeepSeek R1 distilled Qwen 7B',vram:'~5.1 GB VRAM listed by WebLLM',note:'Reasoning-focused 7B model. Heavier and slower; requires more GPU memory and a larger download.'},
     'Phi-4-mini-instruct-q4f16_1-MLC':{name:'Phi-4 mini',vram:'Check current WebLLM model card',note:'Compact alternative. Hardware and supported model list may differ by browser/device.'}
   };
@@ -904,7 +1076,7 @@ handleOAuthCallback();
       }});
       loadedId=id;history=[];$('local-send').disabled=false;loadProgress('Model is ready in browser cache.',1);
       status((modelInfo[id]||{name:id}).name+' ready',false);
-      addMessage('assistant','The local model is ready. There is no API connection or per-prompt inference charge. Model quality and speed depend on your hardware.','LOCAL MODEL READY');
+      addMessage('assistant','The local model is ready. No API connection or per-prompt inference charge is being used. Model quality and speed depend on your hardware.','LOCAL MODEL READY');
     }catch(e){
       engine=null;loadedId='';$('local-send').disabled=true;
       addMessage('error','Could not load this local model: '+(e&&e.message?e.message:String(e))+'\n\nTry the 1B option, use a WebGPU-enabled browser, close other GPU-heavy tabs, or check the runtime/model links. No paid API was called.','LOCAL LOAD ERROR');
@@ -959,6 +1131,31 @@ handleOAuthCallback();
 })();
 </script>
 
-<script>(function(){var demos={image:{title:'Qwen Image 2.1',src:'https://qwen-qwen-image-2-1.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen-Image-2.1',note:'Image generation and editing · Hugging Face ZeroGPU.'},video:{title:'Wan 2.2 Fast',src:'https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space/?__theme=light',page:'https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster',note:'Wan 2.2 image-to-video · GPU queue and quota apply.'},voice:{title:'Qwen3 TTS',src:'https://qwen-qwen3-tts-demo.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen3-TTS-Demo',note:'Text-to-speech and voice options.'},code:{title:'Qwen3 Coder WebDev',src:'https://qwen-qwen3-coder-webdev.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen3-Coder-WebDev',note:'Prototype HTML/React from a description.'}};var frame=document.getElementById('fh-frame');if(!frame)return;var status=document.getElementById('fh-status'),link=document.getElementById('fh-external'),loaded='image';document.querySelectorAll('[data-hfdemo]').forEach(function(btn){btn.addEventListener('click',function(){var id=btn.getAttribute('data-hfdemo'),item=demos[id];if(!item)return;loaded=id;document.querySelectorAll('[data-hfdemo]').forEach(function(b){var active=b===btn;b.classList.toggle('active',active);b.setAttribute('aria-selected',active?'true':'false');});frame.title=item.title+' public demo';status.textContent=item.title+' · Loading…';link.href=item.page;link.textContent='Open '+item.title+' ↗';if(frame.src!==item.src)frame.src=item.src;});});frame.addEventListener('load',function(){status.textContent=demos[loaded].note;});})();</script>
+<script>(function(){var demos={image:{title:'Qwen Image 2.1',src:'https://qwen-qwen-image-2-1.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen-Image-2.1',note:'Image generation and editing · Hugging Face ZeroGPU.'},turbo:{title:'Qwen Image 2.1 Turbo',src:'https://hugging-apps-qwen-qwen-image-2-1-turbo.hf.space/?__theme=light',page:'https://huggingface.co/spaces/hugging-apps/qwen-qwen-image-2-1-turbo',note:'8-step Qwen Image 2.1 Turbo · faster image generation/editing.'},moss:{title:'MOSS-Image Workflow',src:'https://openmoss-team-moss-image.hf.space/?__theme=light',page:'https://huggingface.co/spaces/OpenMOSS-Team/MOSS-Image',note:'Node-based image generation workflow · community-hosted.'},video:{title:'Wan 2.2 Fast',src:'https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space/?__theme=light',page:'https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster',note:'Wan 2.2 image-to-video · GPU queue and quota apply.'},ltx:{title:'LTX 2.3 Image-to-Video',src:'https://rdata92-ltx-2-3-10eros.hf.space/?__theme=light',page:'https://huggingface.co/spaces/rdata92/LTX-2.3-10Eros',note:'LTX 2.3 image-to-video with native audio · community-hosted.'},voice:{title:'Qwen3 TTS',src:'https://qwen-qwen3-tts-demo.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen3-TTS-Demo',note:'Text-to-speech and voice options.'},code:{title:'Qwen3 Coder WebDev',src:'https://qwen-qwen3-coder-webdev.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen3-Coder-WebDev',note:'Prototype HTML/React from a description.'}};var frame=document.getElementById('fh-frame');if(!frame)return;var status=document.getElementById('fh-status'),link=document.getElementById('fh-external'),loaded='image';document.querySelectorAll('[data-hfdemo]').forEach(function(btn){btn.addEventListener('click',function(){var id=btn.getAttribute('data-hfdemo'),item=demos[id];if(!item)return;loaded=id;document.querySelectorAll('[data-hfdemo]').forEach(function(b){var active=b===btn;b.classList.toggle('active',active);b.setAttribute('aria-selected',active?'true':'false');});frame.title=item.title+' public demo';status.textContent=item.title+' · Loading…';link.href=item.page;link.textContent='Open '+item.title+' ↗';if(frame.src!==item.src)frame.src=item.src;});});frame.addEventListener('load',function(){status.textContent=demos[loaded].note;});})();</script>
+<script>
+(function(){
+ var examples={
+  chat:{type:'general',model:'Qwen3.5-2B-q4f16_1-MLC',prompt:'Act as a thoughtful creative assistant. Give me 5 original directions for this idea, explain the strongest option, then give me a practical first step. Idea: [write your idea].'},
+  code:{type:'coding',model:'Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC',prompt:'Help me with one precise coding task. First explain your understanding of the bug or feature, then propose the smallest solution, provide complete code for the relevant change, and give a manual test checklist. Context and code/error: [paste here].'},
+  research:{type:'research',model:'Qwen3.5-2B-q4f16_1-MLC',prompt:'Help me structure a research plan: define the exact question, list what evidence would answer it, separate assumptions from facts, and propose the best primary sources to check. Topic: [write topic]. Note: this local model does not browse the live web.'}
+ };
+ document.querySelectorAll('[data-workflow]').forEach(function(btn){
+  btn.addEventListener('click',function(){
+   var mode=btn.getAttribute('data-workflow'),local=document.getElementById('local-ai'),hosted=document.getElementById('free-hosted-ai');
+   if(mode==='image'||mode==='video'||mode==='voice'||mode==='webapp'){
+    var demo=mode==='image'?'turbo':mode==='video'?'video':mode==='voice'?'voice':'code';
+    var tab=document.querySelector('[data-hfdemo="'+demo+'"]');if(tab)tab.click();
+    hosted.scrollIntoView({behavior:'smooth',block:'start'});return;
+   }
+   var spec=examples[mode]||examples.chat;
+   var type=document.getElementById('local-task-type'),model=document.getElementById('local-model'),prompt=document.getElementById('local-prompt');
+   type.value=spec.type;
+   if(Array.from(model.options).some(function(o){return o.value===spec.model;}))model.value=spec.model;
+   prompt.value=spec.prompt;local.scrollIntoView({behavior:'smooth',block:'start'});
+   prompt.focus();
+  });
+ });
+})();
+</script>
 </body>
 </html>
