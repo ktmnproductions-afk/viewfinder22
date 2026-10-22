@@ -4081,7 +4081,8 @@ function fieldGuideCardsForView(){
   const locality=String(item.city||state.detectedLocality||(existing&&existing.locality)||coordLabel({lat:item.lat,lng:item.lng}));
   const ideas=selectedShotIdeasFor(item);
   const nearbyNames=state.results.filter(r=>r.category!=='parking'&&r.name&&Number.isFinite(Number(r.lat))&&Number.isFinite(Number(r.lng))).slice().sort((a,b)=>(a.distance||0)-(b.distance||0)).slice(0,3).map(r=>r.name);
-  const searchQueries=existing&&existing.query?[existing.query,String(item.name||''),locality].filter(Boolean):[String(item.name||''),...nearbyNames,locality].filter(Boolean);
+  const photoLocality=compactPhotoLocality(locality);
+  const searchQueries=existing&&existing.query?[existing.query,String(item.name||''),photoLocality].filter(Boolean):[String(item.name||''),...nearbyNames,photoLocality].filter(Boolean);
   const selectedCard={
    ...(existing||{}),id:key,name:item.name||'Selected map place',locality,lat:Number(item.lat),lng:Number(item.lng),category,
    topics,tag:existing&&existing.tag?existing.tag:'YOUR SELECTED MAP PLACE',
@@ -4164,6 +4165,12 @@ function dedupeQueryTerms(values){
  });
  return out;
 }
+function compactPhotoLocality(value){
+ const parts=String(value||'').split(/[;,]/).map(part=>part.trim()).filter(Boolean);
+ const preferred=parts.find(part=>!/(mjesni odbor|primorje|gorski kotar|county|municipality|municipal|district|region|province|županija|zupanija|croatia|slovenia|italy|austria|friuli|state of)/i.test(part));
+ const chosen=preferred||parts[0]||'';
+ return chosen.replace(/^(?:grad|city of|town of|općina|opcina|občina|obcina)\s+/i,'').trim();
+}
 async function buildFieldGuidePhotoQueries(card,scanId){
  const center={lat:Number(card.lat),lng:Number(card.lng)};
  const selectedItem=card.originalItem||((state.selected&&state.selected.id===String(card.id).replace(/^selected-/,'') )?state.selected:null);
@@ -4182,8 +4189,9 @@ async function buildFieldGuidePhotoQueries(card,scanId){
   address.city_district,address.town,address.city,address.village,address.hamlet,address.suburb,address.county,address.state,address.country
  ].filter(Boolean);
  const locality=[...new Set(localityParts)].join(', ');
- const localityShort=String(address.city_district||address.town||address.city||address.village||address.hamlet||address.suburb||card.locality||state.detectedLocality||'').trim();
- const country=String(address.country||'').trim();
+ const rawLocality=String(card.locality||state.detectedLocality||'');
+ const localityShort=compactPhotoLocality(address.city_district||address.town||address.city||address.village||address.hamlet||address.suburb||rawLocality);
+ const country=String(address.country||(/\bcroatia\b/i.test(rawLocality)?'Croatia':/\bslovenia\b/i.test(rawLocality)?'Slovenia':/\bitaly\b/i.test(rawLocality)?'Italy':/\baustria\b/i.test(rawLocality)?'Austria':'' )).trim();
  const nearbyMapped=state.results.filter(r=>r&&r.name&&r.category!=='parking').slice()
   .sort((a,b)=>haversine(center,{lat:a.lat,lng:a.lng})-haversine(center,{lat:b.lat,lng:b.lng}))
   .slice(0,5).map(r=>String(r.name||'').trim());
@@ -4198,17 +4206,16 @@ async function buildFieldGuidePhotoQueries(card,scanId){
   /mountain|ridge|hill|valley|nature|viewpoint/.test(category+' '+(card.name||''))?'landscape and nature':
   'street architecture and landscape';
  const values=[];
- if(baseName&&localityShort)values.push(baseName+' '+localityShort+' '+country);
- if(baseName)values.push(baseName+' '+country);
- values.push(...(card.searchQueries||[]));
- values.push(...nearbyMapped.map(n=>n+' '+(localityShort||country)));
- values.push(...nearbyScenic.map(n=>n+' '+(localityShort||country)));
- if(localityShort&&country){
-  values.push(localityShort+' '+country,localityShort+' old town',localityShort+' architecture',localityShort+' landscape');
- }else if(localityShort){
-  values.push(localityShort+' architecture',localityShort+' landscape',localityShort+' historic centre');
+ if(baseName&&localityShort)values.push(baseName+' '+localityShort+(country?' '+country:''));
+ if(baseName)values.push(baseName);
+ if(localityShort&&country)values.push(localityShort+' '+country);
+ // A nearby named landmark often has more useful photo coverage than a street name.
+ values.push(...nearbyMapped.slice(0,2).map(n=>n+' '+(localityShort||country)));
+ if(localityShort){
+  values.push(localityShort+' old town',localityShort+' architecture',localityShort+' landscape',localityShort+' historic centre');
  }
- if(country)values.push(country+' '+kind, country+' village architecture');
+ values.push(...(card.searchQueries||[]));
+ values.push(...nearbyScenic.map(n=>n+' '+(localityShort||country)));
  values.push(kind);
  const queries=dedupeQueryTerms(values).slice(0,5);
  // Give the selected map pin a human-readable title after reverse-geocoding.
@@ -4226,7 +4233,7 @@ async function buildFieldGuidePhotoQueries(card,scanId){
   fieldGuideCardLookup[card.id].searchQueries=queries;
   if(locality)fieldGuideCardLookup[card.id].locality=locality;
  }
- return {queries,locality,placeName};
+ return {queries,locality:localityShort||compactPhotoLocality(locality),placeName};
 }
 
 async function loadFieldGuidePhotos(force){
