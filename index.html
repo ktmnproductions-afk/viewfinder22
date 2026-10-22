@@ -3237,7 +3237,9 @@ function conceptSketchData(item,mode,variation){
  const isRiver=/river|waterfall|watercourse|riverbank|stream|canal|waterway|elster/.test(facts)||!!tags.waterway;
  const isWetland=/wetland|lagoon|marsh|swamp|reedbed|birdwatch|birds|nature reserve|isola della cona/.test(facts)||/^(wetland|marsh|mud|tidalflat)$/.test(String(tags.natural||'').toLowerCase());
  const isRoad=/via sacra|trail|footpath|pathway|roman road|avenue|boulevard|alley|promenade|roadside|route/.test(facts)||/^(path|footway|track|cycleway)$/.test(String(tags.highway||'').toLowerCase());
- const scene=item&&item.guideScene?item.guideScene:isBattle?'battlefield':isWetland?'wetland':isRiver?'river':isCoastal?'coast':isRoad?'road':isCross?'cross':isChurch?'church':isCastle?'castle':isRuin?'ruins':isMonument?'monument':isMountain?'mountain':isUrban?'urban':category==='parking'?'street':category==='viewpoint'?'mountain':category==='photoSpot'?'landscape':isArchitecture?'architecture':'landscape';
+ const isNamedStreet=/\b(ulica|street|cesta|put|trg|road|avenue|lane|alley|strasse|straße|gasse|platz|riva|setaliste|šetalište)\b/.test(name.toLowerCase())||
+  /^(residential|pedestrian|living_street|service|tertiary|secondary)$/i.test(String(tags.highway||''));
+ const scene=item&&item.guideScene?item.guideScene:isBattle?'battlefield':isWetland?'wetland':isRiver?'river':isCoastal?'coast':isNamedStreet?'urban':isRoad?'road':isCross?'cross':isChurch?'church':isCastle?'castle':isRuin?'ruins':isMonument?'monument':isMountain?'mountain':isUrban?'urban':category==='parking'?'street':category==='viewpoint'?'mountain':category==='photoSpot'?'landscape':isArchitecture?'architecture':'landscape';
  const title=xmlEsc(name.length>45?name.slice(0,42)+'…':name);
  const place=xmlEsc(locality.length>42?locality.slice(0,39)+'…':locality);
  let seed=2166136261;
