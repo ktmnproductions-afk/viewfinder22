@@ -195,7 +195,7 @@ function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);Object.en
 function group(parent,attrs){return el('g',attrs,parent);}
 function tree(x,y,size,parent){
  const sc=.46+y/1024*.86,r=size*sc;
- el('ellipse',{cx:x+3*sc,cy:y+7*sc,rx:r*1.15,ry:r*.7,fill:'#26352a',opacity:.3,filter:'url(#softShadow)'},parent);
+ el('ellipse',{cx:x+3*sc,cy:y+7*sc,rx:r*1.15,ry:r*.7,fill:'#26352a',opacity:.24},parent);
  el('circle',{cx:x,cy:y, r:r,fill:'#314531',opacity:.93},parent);
  el('circle',{cx:x-3*sc,cy:y-4*sc,r:r*.79,fill:'url(#treeCanopy)'},parent);
  el('ellipse',{cx:x-5*sc,cy:y-7*sc,rx:r*.6,ry:r*.36,fill:'url(#treeLight)',opacity:.75},parent);
@@ -358,8 +358,8 @@ async function recordVideo(){
 function build(){
  buildWoods();buildVillage();buildFieldDetails();buildArmies();setPhase(0);applyMobileAspect();applyZoom();
 }
-$('troopsBtn').addEventListener('click',()=>{const on=$('armyLayer').style.display==='none';$('armyLayer').style.display=on?'':'none';$('bannerLayer').style.display=on?'':'none';toggle($('troopsBtn'),on,'Formations','Hide formations');});
-$('arrowsBtn').addEventListener('click',()=>{const layer=$('arrowLayer'),on=layer.style.display==='none';layer.style.display=on?'':'none';toggle($('arrowsBtn'),on,'Movement arrows','Hide arrows');});
+$('troopsBtn').addEventListener('click',()=>{const on=$('armyLayer').style.display==='none';$('armyLayer').style.display=on?'':'none';$('bannerLayer').style.display=on?'':'none';toggle($('troopsBtn'),on,'Formations','Show formations');});
+$('arrowsBtn').addEventListener('click',()=>{const layer=$('arrowLayer'),on=layer.style.display==='none';layer.style.display=on?'':'none';toggle($('arrowsBtn'),on,'Movement arrows','Show arrows');});
 $('sourcesBtn').addEventListener('click',()=>{$('sourcesDialog').classList.add('open');});
 $('closeSources').addEventListener('click',()=>{$('sourcesDialog').classList.remove('open');});
 $('sourcesDialog').addEventListener('click',e=>{if(e.target===$('sourcesDialog'))$('sourcesDialog').classList.remove('open');});
