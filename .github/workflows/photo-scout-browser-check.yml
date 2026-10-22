@@ -103,7 +103,7 @@ jobs:
             });
 
             try {
-              await page.goto('http://127.0.0.1:8000/photo-scout.html?v=20261022-landmark-accuracy-v24', { waitUntil: 'domcontentloaded', timeout: 60000 });
+              await page.goto('http://127.0.0.1:8000/photo-scout.html?v=20261022-landmark-accuracy-v26', { waitUntil: 'domcontentloaded', timeout: 60000 });
               try {
                 await page.waitForFunction(() => !!window.__PHOTO_SCOUT_TEST__?.map, null, { timeout: 15000 });
               } catch (startupError) {
@@ -143,7 +143,7 @@ jobs:
                   display: manifest && manifest.display,
                   startUrl: manifest && manifest.start_url,
                   workerStatus: workerResponse.status,
-                  workerCacheV24: workerText.includes('"photo-scout-shell-v24"'),
+                  workerCacheV26: workerText.includes('"photo-scout-shell-v26"'),
                   buildVersion: document.querySelector('meta[name="photo-scout-build"]')?.content||'',
                   installButton: !!document.querySelector('#installAppBtn'),
                   installButtonVisible: !!document.querySelector('#installAppBtn') && !document.querySelector('#installAppBtn').hidden,
@@ -153,8 +153,8 @@ jobs:
               if (appInstallDiagnostics.manifestStatus !== 200 ||
                   appInstallDiagnostics.display !== 'standalone' ||
                   appInstallDiagnostics.workerStatus !== 200 ||
-                  !appInstallDiagnostics.workerCacheV24 ||
-                  appInstallDiagnostics.buildVersion !== '2026-10-22-photo-scout-landmark-accuracy-v24' ||
+                  !appInstallDiagnostics.workerCacheV26 ||
+                  appInstallDiagnostics.buildVersion !== '2026-10-22-photo-scout-landmark-accuracy-v26' ||
                   !appInstallDiagnostics.installButton || !appInstallDiagnostics.installButtonVisible || !appInstallDiagnostics.pinLegend) {
                 throw new Error('Photo Scout must ship as an installable standalone app with a visible pin legend: ' + JSON.stringify(appInstallDiagnostics));
               }
