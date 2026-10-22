@@ -496,6 +496,19 @@ jobs:
                 } catch(error) { return {status:0,error:String(error&&error.message||error)}; }
               });
               console.log('OPENVERSE_REFERENCE_PROBE '+JSON.stringify(openverseProbe));
+              const calculatedViewpointFixture = await page.evaluate(() =>
+                window.__PHOTO_SCOUT_TEST__.runCalculatedViewpointFixture()
+              );
+              if (!calculatedViewpointFixture.pedestrianRoutePreferred ||
+                  !calculatedViewpointFixture.privateAccessRejected ||
+                  !calculatedViewpointFixture.cameraLensChangesWithDistance ||
+                  !calculatedViewpointFixture.clearTerrainRayRecognized ||
+                  !calculatedViewpointFixture.blockingTerrainRecognized ||
+                  !calculatedViewpointFixture.missingTerrainRemainsUnverified ||
+                  !calculatedViewpointFixture.bearingHasCompassDirection) {
+                throw new Error('Calculated Viewpoint regression: ' + JSON.stringify(calculatedViewpointFixture));
+              }
+              console.log('CALCULATED_VIEWPOINT_FIXTURE '+JSON.stringify(calculatedViewpointFixture));
               const contextualPhotoFixtures = await page.evaluate(() =>
                 window.__PHOTO_SCOUT_TEST__.runContextPhotoRegressionFixtures()
               );
