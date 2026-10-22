@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-22-roadtrip-fieldguide-v22">
+<meta name="photo-scout-build" content="2026-10-22-photo-scout-landmark-accuracy-v23">
 <title>Photo Scout Field Guide — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -961,13 +961,25 @@ window.__PHOTO_SCOUT_TEST__ = {
   const second=[...document.querySelectorAll('.scout-marker')];
   const normalPins=second.filter(node=>!node.classList.contains('active-pin'));
   const activePinInDom=second.some(node=>node.classList.contains('active-pin'));
+  const container=map.getContainer();
+  const containerRect=container.getBoundingClientRect();
+  const alignmentErrors=state.markers.slice(0,150).map(marker=>{
+   const core=marker.getElement().querySelector('.dot-core');
+   if(!core)return Infinity;
+   const rect=core.getBoundingClientRect();
+   const projected=map.project(marker.getLngLat());
+   const dx=(rect.left+rect.width/2)-(containerRect.left+projected.x);
+   const dy=(rect.top+rect.height/2)-(containerRect.top+projected.y);
+   return Math.hypot(dx,dy);
+  });
   return {
    markerCountBefore:first.length,
    markerCountAfter:second.length,
    sameDomNodes:first.length===second.length&&first.every((node,index)=>node===second[index]),
    signatureStable:!!signature&&signature===lastRenderedMarkerSignature,
    markerCountMatchesState:normalPins.length===state.markers.length,
-   activePinRemainsIndependent:activePinInDom===!!state.pinMarker
+   activePinRemainsIndependent:activePinInDom===!!state.pinMarker,
+   maxIconCenterErrorPx:alignmentErrors.length?Math.max(...alignmentErrors):0
   };
  },
  renderMarkerFixture:function(){
@@ -1003,15 +1015,19 @@ window.__PHOTO_SCOUT_TEST__ = {
   return result;
  },
  runMapRoleFixture:function(){
-  const nearbyMemorialA={category:'history',name:'Memorial',lat:45.3271,lng:14.4422,genericFeature:true,isSmallInterest:true};
-  const nearbyMemorialB={category:'history',name:'Memorial',lat:45.32735,lng:14.44245,genericFeature:true,isSmallInterest:true};
+  const nearbyMemorialA={category:'history',name:'Memorial',lat:45.3271,lng:14.4422,genericFeature:true,isSmallInterest:true,osmElementType:'node',osmId:'1001',sourceUrl:'https://www.openstreetmap.org/node/1001'};
+  const nearbyMemorialB={category:'history',name:'Memorial',lat:45.32735,lng:14.44245,genericFeature:true,isSmallInterest:true,osmElementType:'node',osmId:'1002',sourceUrl:'https://www.openstreetmap.org/node/1002'};
   const legacyMappedMemorialA={category:'history',name:'Memorial',lat:45.3271,lng:14.4422,genericFeature:true};
   const legacyMappedMemorialB={category:'history',name:'Memorial',lat:45.32735,lng:14.44245,genericFeature:true};
   const duplicateMemorial={...nearbyMemorialA};
+  const sameNamedNode={category:'history',name:'Chapel of Saint Ana',lat:45.3271,lng:14.4422,osmElementType:'node',osmId:'2001',sourceUrl:'https://www.openstreetmap.org/node/2001,tags:{historic:'chapel'}};
+  const sameNamedArea={category:'history',name:'Chapel of Saint Ana',lat:45.32722,lng:14.44225,osmElementType:'way',osmId:'3001',sourceUrl:'https://www.openstreetmap.org/way/3001',tags:{building:'chapel'}};
+  const preferredNode=dedupeMappedPlaces([{...sameNamedArea,distance:5},{...sameNamedNode,distance:10}]);
   const nearbyMappedDetails=dedupeMappedPlaces([
    {...legacyMappedMemorialA,distance:10},
    {...legacyMappedMemorialB,distance:20}
   ]);
+  const distinctNodeRecords=dedupeMappedPlaces([{...nearbyMemorialA,distance:10},{...nearbyMemorialB,distance:20}]);
   return {
    explicitlyMappedViewpointAccepted:isExplicitViewpoint({tourism:'viewpoint'},'viewpoint','Vidikovac'),
    namedLookoutAccepted:isExplicitViewpoint({},'hill','Belvedere Trsat'),
@@ -1026,6 +1042,9 @@ window.__PHOTO_SCOUT_TEST__ = {
    legacyGenericMemorialsKept:!areDuplicateMapMarkers(legacyMappedMemorialA,legacyMappedMemorialB),
    mappedGenericRecordsStaySeparate:nearbyMappedDetails.length===2,
    exactSameGenericCoordinateDeduplicated:areDuplicateMapMarkers(nearbyMemorialA,duplicateMemorial),
+   distinctSameNameOsmNodesKept:distinctNodeRecords.length===2,
+   namedNodePreferredToApproximateAreaCenter:preferredNode.length===1&&osmFeatureReference(preferredNode[0])?.type==='node'&&preferredNode[0].lat===sameNamedNode.lat,
+   broadHistoricTagRecognized:localInterestLabel({historic:'city_gate'})==='Historic city gate',
    darkStyleExcludedFromFallback:!vectorFallbackOrder.includes('dark')
   };
  },
@@ -1430,7 +1449,9 @@ async function rangefindPlacesSearch(c,radius,id){
   const featureCity=String(r.city||r.town||r.village||r.municipality||r.suburb||'');
   if(hasSuspiciousLocalityMismatch(name,featureCity,distance)){state.locationConflictExclusions.push({name,featureCity,distance,reason:'Title names another indexed locality at a conflicting nearby coordinate'});return;}
   if(distance>radius)return;
-  places.push({id:'rf-'+String(r.id||index)+'-'+category,name,lat,lng,distance,tags,isParkingEntrance:isEntrance,city:String(r.city||r.town||r.village||r.municipality||r.suburb||''),source:'OpenStreetMap via Rangefind',sourceUrl:r.url||(r.id?'https://www.openstreetmap.org/'+String(r.id):'https://www.openstreetmap.org/'),category,summary:isEntrance?'Mapped vehicle entrance. Check whether it serves public parking and verify the approach, signs and restrictions.':String(tags.description||tags['description:en']||r.description||''),history:String(tags.wikipedia||tags['wikipedia:en']||''),wikiUrl:tags.wikipedia?wikiURL(tags.wikipedia):tags['wikipedia:en']?wikiURL(tags['wikipedia:en']):'',license:'© OpenStreetMap contributors'});
+  const osmRef=osmFeatureReference({url:r.url,id:r.id});
+  const sourceUrl=osmRef?'https://www.openstreetmap.org/'+osmRef.type+'/'+osmRef.id:(r.url||(r.id?'https://www.openstreetmap.org/'+String(r.id):'https://www.openstreetmap.org/'));
+  places.push({id:'rf-'+String(r.id||index)+'-'+category,name,lat,lng,distance,tags,isParkingEntrance:isEntrance,city:String(r.city||r.town||r.village||r.municipality||r.suburb||''),source:'OpenStreetMap via Rangefind',sourceUrl,osmElementType:osmRef&&osmRef.type||'',osmId:osmRef&&osmRef.id||'',coordinateRank:osmCoordinatePriority({sourceUrl}),category,summary:isEntrance?'Mapped vehicle entrance. Check whether it serves public parking and verify the approach, signs and restrictions.':String(tags.description||tags['description:en']||r.description||''),history:String(tags.wikipedia||tags['wikipedia:en']||''),wikiUrl:tags.wikipedia?wikiURL(tags.wikipedia):tags['wikipedia:en']?wikiURL(tags['wikipedia:en']):'',license:'© OpenStreetMap contributors'});
  });
  return dedupeMappedPlaces(places).slice(0,100);
 }
@@ -1450,14 +1471,87 @@ function hasSuspiciousLocalityMismatch(name,featureCity,distance){
  });
  return conflicts.length>0;
 }
-function dedupeMappedPlaces(places){
- const seen=new Set();
- return places.sort((a,b)=>a.distance-b.distance).filter(p=>{
-  const precision=(p.isSmallInterest||isGenericMapFeatureLabel(p.name,p))?5:4;
-  const key=p.category+'|'+normalizeNameForDedup(p.name)+'|'+p.lat.toFixed(precision)+'|'+p.lng.toFixed(precision);
-  if(seen.has(key))return false;seen.add(key);return true;
- });
+function osmFeatureReference(item){
+ const value=item&&typeof item==='object'?item:{};
+ const explicitType=String(value.osmElementType||value.osmType||'').toLowerCase();
+ const explicitId=String(value.osmId||'');
+ if(['node','way','relation'].includes(explicitType)&&/^\d+$/.test(explicitId))return {type:explicitType,id:explicitId};
+ const candidates=[value.sourceUrl,value.url,value.id];
+ for(const raw of candidates){
+  const candidate=String(raw||'');
+  if(!candidate)continue;
+  let match=candidate.match(/openstreetmap\.org\/(node|way|relation)\/(\d+)/i);
+  if(!match)match=candidate.match(/(?:^|[-/:_])(node|way|relation)[-/:_](\d+)(?:$|[-/:_])/i);
+  if(match)return {type:match[1].toLowerCase(),id:match[2]};
+ }
+ return null;
 }
+function osmCoordinatePriority(item){
+ const ref=osmFeatureReference(item);
+ if(!ref)return 0;
+ // An OSM node is an explicit location. A way/relation's Overpass "center"
+ // is an approximate bounding-box centre, so prefer the node when both describe
+ // the same named feature.
+ return ref.type==='node'?30:ref.type==='way'?10:5;
+}
+function areSameOsmFeature(a,b){
+ const aa=osmFeatureReference(a),bb=osmFeatureReference(b);
+ return !!(aa&&bb&&aa.type===bb.type&&aa.id===bb.id);
+}
+function isPointAreaAlias(a,b,separation){
+ const aRef=osmFeatureReference(a),bRef=osmFeatureReference(b);
+ if(!aRef||!bRef||aRef.type===bRef.type)return false;
+ const oneIsNode=aRef.type==='node'||bRef.type==='node';
+ const sameName=normalizeNameForDedup(a.name)===normalizeNameForDedup(b.name);
+ const generic=isGenericMapFeatureLabel(a.name,a)||isGenericMapFeatureLabel(b.name,b);
+ // Only collapse named point/area representations of the same place. Generic
+ // "Memorial" objects may be independent features even metres apart.
+ return oneIsNode&&!generic&&sameName&&separation<=25;
+}
+function areDuplicateMapMarkers(a,b){
+ if(!a||!b||a.category!==b.category)return false;
+ if(areSameOsmFeature(a,b))return true;
+ const separation=haversine({lat:Number(a.lat),lng:Number(a.lng)},{lat:Number(b.lat),lng:Number(b.lng)});
+ if(!Number.isFinite(separation))return false;
+ const sameName=normalizeNameForDedup(a.name)===normalizeNameForDedup(b.name);
+ if(isPointAreaAlias(a,b,separation))return true;
+ const genericA=isGenericMapFeatureLabel(a.name,a),genericB=isGenericMapFeatureLabel(b.name,b);
+ if(genericA||genericB){
+  // If both have distinct OSM IDs they are distinct mapped objects; never erase
+  // one solely because it shares a generic label with another.
+  if(osmFeatureReference(a)&&osmFeatureReference(b))return false;
+  return sameName&&separation<2;
+ }
+ // Distinct OSM objects with the same name are separate destinations. If source
+ // identity is absent, only collapse records whose coordinates virtually coincide.
+ if(osmFeatureReference(a)&&osmFeatureReference(b))return false;
+ return sameName&&separation<3;
+}
+function dedupeMappedPlaces(places){
+ const candidates=(places||[]).slice().sort((a,b)=>
+  osmCoordinatePriority(b)-osmCoordinatePriority(a)||
+  Number(Boolean(b.isSmallInterest))-Number(Boolean(a.isSmallInterest))||
+  (Number(a.distance)||0)-(Number(b.distance)||0)
+ );
+ const kept=[];
+ candidates.forEach(p=>{
+  const duplicate=kept.find(existing=>{
+   if(existing.category!==p.category)return false;
+   return areDuplicateMapMarkers(existing,p);
+  });
+  if(!duplicate){kept.push(p);return;}
+  // Keep the more accurate coordinate already selected, but retain any useful
+  // text/image metadata contributed by the secondary source.
+  if(!duplicate.summary&&p.summary)duplicate.summary=p.summary;
+  if(!duplicate.history&&p.history)duplicate.history=p.history;
+  if(!duplicate.wikiUrl&&p.wikiUrl)duplicate.wikiUrl=p.wikiUrl;
+  if(!duplicate.city&&p.city)duplicate.city=p.city;
+  if(!duplicate.isSmallInterest&&p.isSmallInterest)duplicate.isSmallInterest=true;
+  if(p.tags&&typeof p.tags==='object')duplicate.tags={...p.tags,...(duplicate.tags||{})};
+ });
+ return kept.sort((a,b)=>(Number(a.distance)||0)-(Number(b.distance)||0));
+}
+
 function localInterestLabel(tags){
  const t=tags&&typeof tags==='object'?tags:{};
  const historic=String(t.historic||'').toLowerCase();
@@ -1467,6 +1561,7 @@ function localInterestLabel(tags){
  const tourism=String(t.tourism||'').toLowerCase();
  const amenity=String(t.amenity||'').toLowerCase();
  const artwork=String(t.artwork_type||'').toLowerCase();
+ const memorialType=String(t['memorial:type']||'').toLowerCase();
  if(['wayside_cross','wayside_crosses'].includes(historic)||t.cross==='yes'||manMade==='cross')return 'Wayside cross';
  if(['wayside_shrine','wayside_chapel'].includes(historic)||building==='wayside_shrine')return historic==='wayside_chapel'?'Wayside chapel':'Wayside shrine';
  if(historic==='plaque'||manMade==='plaque'||memorial==='plaque'||memorial==='blue_plaque')return 'Commemorative plaque';
@@ -1483,6 +1578,9 @@ function localInterestLabel(tags){
  if(historic==='well'||manMade==='water_well')return 'Historic well';
  if(tourism==='artwork'||artwork)return 'Public artwork';
  if(historic==='historic_marker'||historic==='memorial_marker')return 'Historic marker';
+ if(t.amenity==='memorial'||memorialType)return memorialType?'Memorial '+memorialType.replace(/_/g,' '):'Memorial';
+ if(historic&&historic!=='yes'&&historic!=='no')return 'Historic '+historic.replace(/_/g,' ');
+ if(historic==='yes'||(t.heritage&&String(t.heritage)!=='no'))return 'Historic site';
  return '';
 }
 function areDuplicateMapMarkers(a,b){
@@ -1563,7 +1661,7 @@ async function overpassApiSearch(c,radius,id){
     const osmType=String(el.type||'node');
     places.push({
      id:'osm-'+osmType+'-'+String(el.id)+'-'+category,
-     name:displayName,lat:plat,lng:plon,distance:d,tags,isParkingEntrance:isEntrance,
+     name:displayName,lat:plat,lng:plon,distance:d,tags,isParkingEntrance:isEntrance,osmElementType:osmType,osmId:String(el.id),coordinateRank:osmType==='node'?30:osmType==='way'?10:5,
      city:state.detectedLocality||'',
      source:'OpenStreetMap · live Overpass query',
      sourceUrl:'https://www.openstreetmap.org/'+osmType+'/'+el.id,
@@ -1599,8 +1697,11 @@ async function overpassLocalInterestSearch(c,radius,id){
  const lat=Number(c.lat).toFixed(6),lon=Number(c.lng).toFixed(6);
  const around='(around:'+r+','+lat+','+lon+')';
  const query='[out:json][timeout:10];('+
-  'nwr'+around+'["historic"~"^(memorial|monument|wayside_cross|wayside_shrine|wayside_chapel|plaque|obelisk|statue|milestone|boundary_stone|archaeological_site|ruins|historic_marker|memorial_marker)$"];'+
+  'nwr'+around+'["historic"];'+
+  'nwr'+around+'["heritage"];'+
   'nwr'+around+'["memorial"];'+
+  'nwr'+around+'["memorial:type"];'+
+  'nwr'+around+'["amenity"="memorial"];'+
   'nwr'+around+'["man_made"~"^(monument|obelisk|plaque|statue|milestone|boundary_stone|cross|water_well)$"];'+
   'nwr'+around+'["tourism"="artwork"];'+
   'nwr'+around+'["amenity"="fountain"];'+
@@ -1636,7 +1737,7 @@ async function overpassLocalInterestSearch(c,radius,id){
     const description=String(tags.description||tags['description:en']||tags['description:hr']||'').trim();
     places.push({
      id:'local-detail-'+osmType+'-'+osmId,
-     name,lat:itemLat,lng:itemLng,distance,tags,
+     name,lat:itemLat,lng:itemLng,distance,tags,osmElementType:osmType,osmId,coordinateRank:osmType==='node'?30:osmType==='way'?10:5,
      city:state.detectedLocality||'',
      source:'OpenStreetMap · local-interest details',
      sourceUrl:'https://www.openstreetmap.org/'+osmType+'/'+osmId,
@@ -2536,7 +2637,7 @@ function renderMarkers(){
  // inside the viewport; pan/zoom causes a stable idle pass to fill new locations.
  const visible=[...history,...viewpoints,...targetVantages,...architecture,...scenic,...parkingMarkers];
  // Prefer a named/referenced feature when multiple OSM nodes describe the same place.
- const specificity=item=>(isGenericMapFeatureLabel(item.name,item)?0:15)+(item.tags&&(item.tags.wikipedia||item.tags.wikidata)?8:0)+(String(item.name||'').length>18?2:0);
+ const specificity=item=>osmCoordinatePriority(item)*100+(isGenericMapFeatureLabel(item.name,item)?0:15)+(item.tags&&(item.tags.wikipedia||item.tags.wikidata)?8:0)+(String(item.name||'').length>18?2:0);
  const seen=[];
  const dedupedVisible=visible.slice().sort((a,b)=>specificity(b)-specificity(a));
  const zoom=map.getZoom();
