@@ -333,6 +333,21 @@ body{background-color:var(--bg);background-image:radial-gradient(ellipse at 12% 
 .model-explainer-source{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:9px;padding-top:8px;border-top:1px solid #e5e4d8;font-size:9px;line-height:1.45;color:#70796c}.model-explainer-source a{color:#8e5037;text-decoration:underline;text-underline-offset:2px}
 @media(max-width:760px){.model-guide-head{align-items:start;flex-direction:column}.model-guide-grid{grid-template-columns:1fr}.model-explainer-grid{grid-template-columns:1fr}.model-explainer-source{flex-direction:column}.model-field-guide{margin:14px 10px;padding:14px}.model-guide-head h3{font-size:21px}}
 
+
+.fh-official-links{margin:15px 0 9px;padding:15px 16px;border:1px solid #ded8c7;border-radius:13px;background:#fffaf1}
+.fh-official-links>b{display:block;font-size:11px;color:#52624f;line-height:1.5;margin-bottom:9px}
+.fh-official-links>div{display:flex;gap:8px 15px;flex-wrap:wrap}
+.fh-official-links a{font-size:11px;color:#8d5037;text-decoration:underline;text-underline-offset:3px}
+.gateway-optional{margin:24px 0;border:1px dashed #c8c2b2;background:#fbf8f0;border-radius:17px;overflow:hidden}
+.gateway-optional>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:17px 20px;color:#3c4d3c;font-size:12px;font-weight:800}
+.gateway-optional>summary::-webkit-details-marker{display:none}
+.gateway-optional>summary:after{content:"＋";font-size:20px;color:#9e5c40}
+.gateway-optional[open]>summary:after{content:"−"}
+.gateway-preface{padding:15px 20px 0;font-size:12px;line-height:1.6;color:#626d61}
+.gateway-preface p{margin:7px 0 12px}
+.gateway-optional .studio{margin:0}
+@media(max-width:700px){.gateway-optional>summary{padding:14px}.fh-official-links{padding:12px}}
+
 </style>
 </head>
 <body>
@@ -361,10 +376,119 @@ body{background-color:var(--bg);background-image:radial-gradient(ellipse at 12% 
   <section class="hero">
     <div class="eyebrow"><span class="eyedot"></span> ATELIER / AI FIELD NOTES · 22 OCT 2026</div>
     <h1>Many models.<br>One AI workspace.</h1>
-    <p>Bring Chinese and non-mainstream online models into one practical workspace. Connect once to a hosted model gateway, explore the live catalog, and try DeepSeek, Qwen, GLM, MiniMax, StepFun, Tencent, Xiaomi and other providers without downloading models or needing a local GPU. Free access is real but limited; the site labels the difference between free endpoints and paid ones.</p>
-    <div class="heroactions"><button class="primary-button" id="hero-connect">✦ Open cloud model hub</button><button class="quiet-button" id="jump-china">◈ Explore Chinese AI</button><button class="quiet-button" id="jump-free">Browse free model options</button></div>
+    <p>Start with the public model playground below. Try hosted Qwen chat, a GLM community demo, DeepSeek Janus for vision and images, plus Qwen Image, Wan/LTX video, Qwen speech and coding demos—without supplying a personal API key or downloading model weights. Every host has its own queue and limits; the unified API gateway is optional.</p>
+    <div class="heroactions"><button class="primary-button" id="hero-free">✦ Use free models now</button><button class="quiet-button" id="jump-china">◈ Explore Chinese AI</button><button class="quiet-button" id="jump-free">Browse free model options</button></div>
   </section>
-    <div class="cloud-studio-label">ONLINE MODEL GATEWAY · ONE CONNECTION · NO LOCAL DOWNLOAD</div>
+<section class="free-hosted" id="free-hosted-ai">
+    <div class="fh-head"><div><div class="local-kicker"><span></span> PUBLIC MODEL PLAYGROUND · NO PERSONAL API KEY</div><h2>Use free AI models directly on this page</h2><p>Choose a public demo below for text chat, vision, image generation, video, speech or coding. The demo host runs the model, so you do not connect OpenRouter or download model files. Public access can queue, sleep or hit limits, and some official websites may still require their own sign-in.</p></div><div class="fh-pill">Free public demos · no gateway key</div></div>
+    <div class="fh-tabs" role="tablist" aria-label="Public no-key AI model demos"><button class="fh-tab active" role="tab" aria-selected="true" data-hfdemo="qwenchat">◌ Qwen3 Chat <small>Text / reasoning</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="glmchat">✳ GLM Demo <small>Chat / code</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="janus">▣ Janus-Pro 7B <small>Vision / images</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="image">▧ Qwen Image 2.1 <small>Image / edit</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="turbo">✦ Image Turbo <small>Faster</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="moss">▦ MOSS-Image <small>Workflow</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="video">▷ Wan 2.2 <small>Image-to-video</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="ltx">◉ LTX 2.3 <small>Motion + audio</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="voice">♫ Qwen3 TTS <small>Speech</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="code">⌘ Qwen Coder <small>Web prototype</small></button></div>
+    <div class="fh-frame-wrap"><iframe class="fh-frame" id="fh-frame" title="Qwen3 public chat demo" src="https://qwen-qwen3-demo.hf.space/?__theme=light" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="clipboard-read; clipboard-write; fullscreen" allowfullscreen></iframe></div>
+    <div class="fh-openline"><span id="fh-status">Loading Qwen3 public chat…</span><a id="fh-external" href="https://huggingface.co/spaces/Qwen/Qwen3-Demo" target="_blank" rel="noopener">Open Qwen3 demo ↗</a></div>
+    <div class="fh-official-links"><b>More official chat sites — no API key, but their own sign-in may be required:</b><div><a href="https://chat.deepseek.com/" target="_blank" rel="noopener">DeepSeek ↗</a><a href="https://chat.qwen.ai/" target="_blank" rel="noopener">Qwen Chat ↗</a><a href="https://www.kimi.com/" target="_blank" rel="noopener">Kimi ↗</a><a href="https://chat.z.ai/" target="_blank" rel="noopener">Z.ai / GLM ↗</a><a href="https://agent.minimax.io/" target="_blank" rel="noopener">MiniMax ↗</a><a href="https://huggingface.co/chat/" target="_blank" rel="noopener">HuggingChat ↗</a></div></div>
+    <div class="fh-warning"><b>Limits and privacy:</b> these are public demo hosts, not a private inference service. Some Hugging Face ZeroGPU Spaces publish 2 minutes/day for anonymous use and 5 minutes/day for free accounts; other hosts use different limits. Queues, sleep, regional access and embed restrictions can apply. Prompts and uploads go to the selected demo host; do not upload sensitive files. If the panel fails to load, use “Open provider page”. <a href="https://huggingface.co/docs/hub/spaces-zerogpu" target="_blank" rel="noopener">Official ZeroGPU quotas ↗</a> · <a href="https://huggingface.co/docs/hub/spaces-overview" target="_blank" rel="noopener">About Spaces ↗</a></div>
+  </section>
+<section class="model-field-guide" id="model-field-guide">
+      <div class="model-guide-head">
+        <div><div class="guide-eyebrow">MODEL NOTES / PLAIN ENGLISH</div><h3>Which model should I choose?</h3><p>You do not need to know model jargon. Start with the task, then choose a model. The dropdown below updates with more specific guidance for the exact version selected.</p></div>
+        <a href="https://arena.ai/leaderboard/chat/text" target="_blank" rel="noopener">See the live text leaderboard ↗</a>
+      </div>
+      <div class="model-guide-grid">
+        <article class="model-guide-card"><div class="model-guide-meta"><span>EVERYDAY THINKING</span><span class="model-guide-stamp">Fast / versatile</span></div><h4>DeepSeek V4.1 Flash</h4><p class="model-guide-use"><b>Use it for</b> everyday questions, explanations, drafting, planning and coding iterations where you want a quick capable answer.</p><p><b>Mainstream comparison</b> A GPT fast-tier / Claude Sonnet-style role. In the October 2026 Arena snapshot, a tested Flash variant was #36, near GPT-5.2 Chat at #35. That is a crowd-preference result for those versions—not proof they are equal on your task.</p><p class="model-guide-rank">Task preference snapshot: #36 · version-specific</p></article>
+        <article class="model-guide-card"><div class="model-guide-meta"><span>CODING + TOOLS</span><span class="model-guide-stamp">Open weights</span></div><h4>GLM-5.3 Flash</h4><p class="model-guide-use"><b>Use it for</b> debugging, explaining code, implementation plans, long technical prompts and tool-using workflows.</p><p><b>Mainstream comparison</b> A practical alternative to GPT coding modes or Claude Sonnet for many development jobs. Arena placed a tested version at #38; Artificial Analysis Intelligence Index score is 42. Strong, but not an automatic replacement for the best frontier models.</p><p class="model-guide-rank">Arena #38 · Intelligence Index 42</p></article>
+        <article class="model-guide-card"><div class="model-guide-meta"><span>LONG DOCS + MULTIMODAL</span><span class="model-guide-stamp">Flagship</span></div><h4>Qwen3.8 Max</h4><p class="model-guide-use"><b>Use it for</b> analysing long documents, images/charts when supported, coding, structured research and multi-step assistant tasks.</p><p><b>Mainstream comparison</b> Think of the job as similar to Gemini Pro or a general GPT/Claude flagship. Its independent Intelligence Index score is 45; leading GPT-6 Astra and Claude Fable 5.1 configurations are around 53 in the same published index snapshot, so do not assume a tie with the top tier.</p><p class="model-guide-rank">Intelligence Index 45 · long context</p></article>
+        <article class="model-guide-card"><div class="model-guide-meta"><span>FAST GENERAL ASSISTANT</span><span class="model-guide-stamp">Free variant listed</span></div><h4>MiniMax M3.1 Flash</h4><p class="model-guide-use"><b>Use it for</b> quick summaries, everyday reasoning, first-pass writing and image understanding when your selected variant supports it.</p><p><b>Mainstream comparison</b> Similar job to a Gemini Flash / GPT mini-style model: useful and responsive for routine tasks. The benchmarked paid API version scored 43 on the Intelligence Index; a “free” gateway variant can have different provider limits or behaviour.</p><p class="model-guide-rank">Intelligence Index 43 · check :free pricing</p></article>
+        <article class="model-guide-card"><div class="model-guide-meta"><span>DEEP ANALYSIS</span><span class="model-guide-stamp">High capability</span></div><h4>Xiaomi MiMo-V2.6-Pro</h4><p class="model-guide-use"><b>Use it for</b> deeper analysis, long-context reasoning and tasks that benefit from text/image/audio/video input if enabled by the version.</p><p><b>Mainstream comparison</b> A credible alternative for GPT/Claude-style analysis. It scored 46 on the independent Intelligence Index, while top GPT/Claude configurations reached about 53; the review also found it slower and relatively verbose.</p><p class="model-guide-rank">Intelligence Index 46 · multimodal input</p></article>
+        <article class="model-guide-card"><div class="model-guide-meta"><span>AGENT + SOFTWARE WORK</span><span class="model-guide-stamp">Preview</span></div><h4>Step 5 Preview</h4><p class="model-guide-use"><b>Use it for</b> complex coding plans, multi-step tool/agent workflows, image-aware work and long tasks where you need it to keep context.</p><p><b>Mainstream comparison</b> Similar category of job to Codex- or Claude Code-style workflows, but those products include their own tools and integrations. The model's independent Intelligence Index score is 44; preview status and the exact provider endpoint matter.</p><p class="model-guide-rank">Intelligence Index 44 · 1M context listed</p></article>
+        <article class="model-guide-card"><div class="model-guide-meta"><span>ZERO-COST START</span><span class="model-guide-stamp">Free endpoint</span></div><h4>NVIDIA Nemotron 3 Ultra (free)</h4><p class="model-guide-use"><b>Use it for</b> trying technical explanations, structured answers, reasoning and coding without choosing a paid endpoint first.</p><p><b>Mainstream comparison</b> Treat it as a free candidate to test against GPT mini or Gemini Flash on your own prompt, not as a proven one-to-one equivalent. OpenRouter's usage list measures adoption, not which model is smartest.</p><p class="model-guide-rank">Free model list · availability can change</p></article>
+        <article class="model-guide-card model-guide-router"><div class="model-guide-meta"><span>NOT A SINGLE MODEL</span><span class="model-guide-stamp">Best first click</span></div><h4>Free model router</h4><p class="model-guide-use"><b>Use it for</b> a first attempt when you do not know which free model to pick.</p><p><b>Mainstream comparison</b> It has no fixed mainstream equivalent because the chosen free model may vary by request. When you find a response style you like, choose the named model directly for more consistent results.</p><p class="model-guide-rank">Zero model-token price · quota and routing limits</p></article>
+      </div>
+      <div class="model-guide-foot">Scores and rankings are not percentages. Arena ranks reflect human preference on tested prompts; Artificial Analysis uses a different multi-benchmark index. We name a mainstream model as a task-level analogue—not an assertion of equal quality. Version, reasoning mode, provider and date can change the result. <a href="https://arena.ai/leaderboard/chat/text" target="_blank" rel="noopener">Arena text ranking ↗</a> · <a href="https://artificialanalysis.ai/articles/artificial-analysis-intelligence-index-v4-3" target="_blank" rel="noopener">Artificial Analysis methodology ↗</a> · <a href="https://openrouter.ai/collections/free-models" target="_blank" rel="noopener">Live free-model list ↗</a></div>
+    </section>
+<section class="field-guide" id="start-here">
+  <div class="field-guide-head">
+    <div>
+      <div class="field-kicker">FIELD NOTES / No. 02 <span>UPDATED 22 OCT 2026</span></div>
+      <h2>Pick a tool, make something.</h2>
+      <p>Choose a public demo and use it directly on this page—no API key to paste and no model to download. The host provides the inference, so availability and limits differ by model. A unified API selector is optional, farther down.</p>
+    </div>
+    <div class="field-stamp">FREE-FIRST<br>ACCESS <span>✳</span></div>
+  </div>
+  <div class="guide-grid">
+    <article class="guide-card guide-chat"><div class="guide-card-top"><span class="guide-num">01 / THINK</span><span class="guide-icon">✳</span></div><h3>Ask, plan, brainstorm</h3><p>Start with Qwen3 Chat above for a hosted text model. Try the GLM tab for a second opinion. Neither public demo needs your OpenRouter key.</p><button class="guide-launch" data-workflow="chat">Open free chat ↗</button></article>
+    <article class="guide-card guide-code"><div class="guide-card-top"><span class="guide-num">02 / BUILD</span><span class="guide-icon">⌘</span></div><h3>Make or fix a website</h3><p>Try the public Qwen Coder WebDev demo. For an existing project, paste one error at a time and request a small patch plus a test checklist.</p><button class="guide-launch" data-workflow="code">Open coding demo ↗</button></article>
+    <article class="guide-card guide-image"><div class="guide-card-top"><span class="guide-num">03 / FRAME</span><span class="guide-icon">▧</span></div><h3>Create an image</h3><p>Open Qwen Image 2.1 or the faster Turbo variant below. Include subject, composition, lighting, texture, aspect ratio and what to avoid.</p><button class="guide-launch" data-workflow="image">Open image studio ↗</button></article>
+    <article class="guide-card guide-video"><div class="guide-card-top"><span class="guide-num">04 / MOVE</span><span class="guide-icon">▷</span></div><h3>Animate a still image</h3><p>Try Wan 2.2 or LTX 2.3. Upload one strong image and describe one camera move plus one subject action, not a whole movie at once.</p><button class="guide-launch" data-workflow="video">Open video studio ↗</button></article>
+    <article class="guide-card guide-voice"><div class="guide-card-top"><span class="guide-num">05 / LISTEN</span><span class="guide-icon">♫</span></div><h3>Make a voiceover</h3><p>Paste a clean script into Qwen3 TTS, select language and voice, generate a sample, then download the audio if the demo exposes the result.</p><button class="guide-launch" data-workflow="voice">Open voice studio ↗</button></article>
+    <article class="guide-card guide-web"><div class="guide-card-top"><span class="guide-num">06 / PROTOTYPE</span><span class="guide-icon">▤</span></div><h3>Turn an idea into a page</h3><p>Ask for one landing page with a clear audience, content and style. Inspect the preview, then refine one thing at a time.</p><button class="guide-launch" data-workflow="webapp">Build a page ↗</button></article>
+  </div>
+  <div class="guide-steps">
+    <div class="guide-step"><span>1</span><div><b>Pick a public demo</b><p>Use the tabs above the embedded model. Start with Qwen3 Chat for text or Qwen Image for visuals. No personal API key is needed for these public demos.</p></div></div>
+    <div class="guide-step"><span>2</span><div><b>Use a clear brief</b><p>Say what the output should be, who it is for, the style, constraints and format. A concrete prompt beats “make it better”.</p></div></div>
+    <div class="guide-step"><span>3</span><div><b>Use official sites as backups</b><p>If a demo sleeps, queues or refuses to embed, open its provider page or an official chat site. An official site may require its own user account, but that is separate from an API key.</p></div></div>
+  </div>
+</section>
+<details class="local-optional"><summary><span>Optional on-device mode · model runs inside this browser</span><span>No OpenRouter connection required</span></summary>
+  <section class="local-ai" id="local-ai">
+    <div class="local-head">
+      <div>
+        <div class="local-kicker"><span></span> Optional · On-device inference · No cloud account</div>
+        <h2>Optional on-device models (not the main workspace)</h2>
+        <p>This mode runs a downloadable language model on your computer, inside this page. No API key, cloud credits, payment method or model-inference account. Load once, then send prompts here; after caching, the browser can reuse model files. Nothing is sent to an AI inference API in this local mode.</p>
+      </div>
+      <div class="local-trust">Optional · No cloud gateway</div>
+    </div>
+    <div class="local-config">
+      <label class="local-field">Choose a local model
+        <select id="local-model">
+          <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Light · Llama 3.2 1B · lower hardware needs</option>
+          <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" selected>Balanced · Llama 3.2 3B · recommended start</option><option value="Qwen3-1.7B-q4f16_1-MLC">Chinese family · Qwen3 1.7B · compact</option><option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Code · Qwen2.5 Coder 1.5B</option>
+          <option value="Qwen3.5-2B-q4f16_1-MLC">Newer Chinese model · Qwen3.5 2B · ~2.25 GB VRAM</option>
+          <option value="Qwen3.5-4B-q4f16_1-MLC">More capable · Qwen3.5 4B · ~3.87 GB VRAM</option>
+          <option value="gemma-4-E2B-it-q4f16_1-MLC">Multimodal · Gemma 4 E2B · ~3.39 GB VRAM</option>
+          <option value="DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC">Reasoning · DeepSeek R1 distilled Qwen 7B · heavier</option>
+          <option value="Phi-4-mini-instruct-q4f16_1-MLC">Compact reasoning · Phi-4 mini · medium hardware</option>
+        </select>
+      </label>
+      <label class="local-field">Task type
+        <select id="local-task-type">
+          <option value="general">General assistant</option>
+          <option value="coding">Coding / debugging</option>
+          <option value="research">Research planning (no live web)</option>
+          <option value="creative">Creative / photography ideas</option>
+          <option value="writing">Writing and editing</option>
+        </select>
+      </label>
+      <button class="local-load" id="local-load">Load model to this device</button>
+    </div>
+    <div class="local-progress" id="local-progress">
+      <div class="local-progress-label"><span id="local-progress-text">Preparing model…</span><span id="local-progress-percent">0%</span></div>
+      <div class="local-progress-track"><div class="local-progress-fill" id="local-progress-fill"></div></div>
+    </div>
+    <div class="local-model-note" id="local-model-note">Recommended to start: the 3B model. First load downloads model files (typically hundreds of MB to several GB) from public model hosting; exact size varies by model. Browser GPU support and available memory determine whether it runs well.</div>
+    <div class="local-main">
+      <div class="local-chat">
+        <div class="local-chat-top"><strong>Local conversation</strong><span id="local-runtime-status">No model loaded</span></div>
+        <div class="local-feed" id="local-feed" aria-live="polite">
+          <div class="local-welcome"><div class="mark">✳</div><strong>No connection required</strong><p>Select a model and click <b>Load model</b>. After the first download completes, prompts run on your device. This local mode does not browse the internet or call paid APIs.</p></div>
+        </div>
+        <div class="local-composer">
+          <textarea id="local-prompt" placeholder="What do you want the local AI to do? Example: Give me 5 unusual photography ideas for Aquileia…" rows="3"></textarea>
+          <div class="local-composer-bottom"><select id="local-response-size" aria-label="Response length"><option value="512">Short answer</option><option value="1024" selected>Standard answer</option><option value="1800">Detailed answer</option></select><button class="local-clear" id="local-new-chat">New chat</button><button class="local-send" id="local-send" disabled>Run local AI</button></div>
+        </div>
+      </div>
+      <aside class="local-side">
+        <h3>Free model shortlist</h3>
+        <div class="local-score"><div><strong>Llama 3.2 1B</strong><p>Fastest starter and smallest download. Best for simple requests, rewriting and basic tasks.</p></div><span class="local-tag">LIGHT</span></div>
+        <div class="local-score"><div><strong>Llama 3.2 3B</strong><p>Balanced option for writing, brainstorming, simple coding and everyday assistance.</p></div><span class="local-tag">START HERE</span></div>
+        <div class="local-score"><div><strong>DeepSeek R1 · Qwen 7B</strong><p>Heavier reasoning-oriented model. More demanding download and GPU memory; not a frontier model.</p></div><span class="local-tag">REASONING</span></div>
+        <div class="local-score"><div><strong>Phi-4 mini</strong><p>Compact alternative for instruction following and reasoning, subject to browser compatibility.</p></div><span class="local-tag">ALT</span></div>
+        <div class="local-caveat"><b>Honest limits:</b> smaller local models are less capable than the biggest hosted models; they can make mistakes. Local research mode cannot verify current facts. Image/video generation needs different, much heavier models and is listed separately in the research report.</div>
+        <div class="local-links"><a href="https://github.com/mlc-ai/web-llm" target="_blank" rel="noopener">Runtime & model support ↗</a><a href="https://huggingface.co/mlc-ai" target="_blank" rel="noopener">Model files ↗</a><a href="https://ktmnproductions-afk.github.io/viewfinder22/ai-workspace/free-ai-study/" target="_blank" rel="noopener">Full free-AI study ↗</a></div>
+      </aside>
+    </div>
+  </section>
+  </details>
+<details class="gateway-optional" id="gateway-optional"><summary><span>Advanced option: connect a cloud API gateway</span><span>Optional · API key or account authorization required</span></summary><div class="gateway-preface"><b>This gateway is optional—not required for the free public demos above.</b><p>Open it only if you want one unified API-backed selector. It requires your own OpenRouter authorization or API key. Free API tiers have quotas, while paid models and some media endpoints may cost money. For everyday no-key use, stay in the public model playground.</p></div>  <div class="cloud-studio-label">ONLINE MODEL GATEWAY · ONE CONNECTION · NO LOCAL DOWNLOAD</div>
   <section class="studio" id="ai-studio">
     <div class="studio-head">
       <div>
@@ -384,23 +508,7 @@ body{background-color:var(--bg);background-image:radial-gradient(ellipse at 12% 
       <p class="cloud-access-limit"><b>What “free” means today:</b> OpenRouter lists 25+ free models, 4 free providers and 50 requests/day on the free plan. Its broader catalog has 500+ models, but paid endpoints require credits. Image, video, speech and web tools are not automatically free. <a href="https://openrouter.ai/pricing" target="_blank" rel="noopener">Official pricing & limits ↗</a> · <a href="https://openrouter.ai/collections/free-models" target="_blank" rel="noopener">Browse free models ↗</a></p>
     </div>
 
-    <section class="model-field-guide" id="model-field-guide">
-      <div class="model-guide-head">
-        <div><div class="guide-eyebrow">MODEL NOTES / PLAIN ENGLISH</div><h3>Which model should I choose?</h3><p>You do not need to know model jargon. Start with the task, then choose a model. The dropdown below updates with more specific guidance for the exact version selected.</p></div>
-        <a href="https://arena.ai/leaderboard/chat/text" target="_blank" rel="noopener">See the live text leaderboard ↗</a>
-      </div>
-      <div class="model-guide-grid">
-        <article class="model-guide-card"><div class="model-guide-meta"><span>EVERYDAY THINKING</span><span class="model-guide-stamp">Fast / versatile</span></div><h4>DeepSeek V4.1 Flash</h4><p class="model-guide-use"><b>Use it for</b> everyday questions, explanations, drafting, planning and coding iterations where you want a quick capable answer.</p><p><b>Mainstream comparison</b> A GPT fast-tier / Claude Sonnet-style role. In the October 2026 Arena snapshot, a tested Flash variant was #36, near GPT-5.2 Chat at #35. That is a crowd-preference result for those versions—not proof they are equal on your task.</p><p class="model-guide-rank">Task preference snapshot: #36 · version-specific</p></article>
-        <article class="model-guide-card"><div class="model-guide-meta"><span>CODING + TOOLS</span><span class="model-guide-stamp">Open weights</span></div><h4>GLM-5.3 Flash</h4><p class="model-guide-use"><b>Use it for</b> debugging, explaining code, implementation plans, long technical prompts and tool-using workflows.</p><p><b>Mainstream comparison</b> A practical alternative to GPT coding modes or Claude Sonnet for many development jobs. Arena placed a tested version at #38; Artificial Analysis Intelligence Index score is 42. Strong, but not an automatic replacement for the best frontier models.</p><p class="model-guide-rank">Arena #38 · Intelligence Index 42</p></article>
-        <article class="model-guide-card"><div class="model-guide-meta"><span>LONG DOCS + MULTIMODAL</span><span class="model-guide-stamp">Flagship</span></div><h4>Qwen3.8 Max</h4><p class="model-guide-use"><b>Use it for</b> analysing long documents, images/charts when supported, coding, structured research and multi-step assistant tasks.</p><p><b>Mainstream comparison</b> Think of the job as similar to Gemini Pro or a general GPT/Claude flagship. Its independent Intelligence Index score is 45; leading GPT-6 Astra and Claude Fable 5.1 configurations are around 53 in the same published index snapshot, so do not assume a tie with the top tier.</p><p class="model-guide-rank">Intelligence Index 45 · long context</p></article>
-        <article class="model-guide-card"><div class="model-guide-meta"><span>FAST GENERAL ASSISTANT</span><span class="model-guide-stamp">Free variant listed</span></div><h4>MiniMax M3.1 Flash</h4><p class="model-guide-use"><b>Use it for</b> quick summaries, everyday reasoning, first-pass writing and image understanding when your selected variant supports it.</p><p><b>Mainstream comparison</b> Similar job to a Gemini Flash / GPT mini-style model: useful and responsive for routine tasks. The benchmarked paid API version scored 43 on the Intelligence Index; a “free” gateway variant can have different provider limits or behaviour.</p><p class="model-guide-rank">Intelligence Index 43 · check :free pricing</p></article>
-        <article class="model-guide-card"><div class="model-guide-meta"><span>DEEP ANALYSIS</span><span class="model-guide-stamp">High capability</span></div><h4>Xiaomi MiMo-V2.6-Pro</h4><p class="model-guide-use"><b>Use it for</b> deeper analysis, long-context reasoning and tasks that benefit from text/image/audio/video input if enabled by the version.</p><p><b>Mainstream comparison</b> A credible alternative for GPT/Claude-style analysis. It scored 46 on the independent Intelligence Index, while top GPT/Claude configurations reached about 53; the review also found it slower and relatively verbose.</p><p class="model-guide-rank">Intelligence Index 46 · multimodal input</p></article>
-        <article class="model-guide-card"><div class="model-guide-meta"><span>AGENT + SOFTWARE WORK</span><span class="model-guide-stamp">Preview</span></div><h4>Step 5 Preview</h4><p class="model-guide-use"><b>Use it for</b> complex coding plans, multi-step tool/agent workflows, image-aware work and long tasks where you need it to keep context.</p><p><b>Mainstream comparison</b> Similar category of job to Codex- or Claude Code-style workflows, but those products include their own tools and integrations. The model's independent Intelligence Index score is 44; preview status and the exact provider endpoint matter.</p><p class="model-guide-rank">Intelligence Index 44 · 1M context listed</p></article>
-        <article class="model-guide-card"><div class="model-guide-meta"><span>ZERO-COST START</span><span class="model-guide-stamp">Free endpoint</span></div><h4>NVIDIA Nemotron 3 Ultra (free)</h4><p class="model-guide-use"><b>Use it for</b> trying technical explanations, structured answers, reasoning and coding without choosing a paid endpoint first.</p><p><b>Mainstream comparison</b> Treat it as a free candidate to test against GPT mini or Gemini Flash on your own prompt, not as a proven one-to-one equivalent. OpenRouter's usage list measures adoption, not which model is smartest.</p><p class="model-guide-rank">Free model list · availability can change</p></article>
-        <article class="model-guide-card model-guide-router"><div class="model-guide-meta"><span>NOT A SINGLE MODEL</span><span class="model-guide-stamp">Best first click</span></div><h4>Free model router</h4><p class="model-guide-use"><b>Use it for</b> a first attempt when you do not know which free model to pick.</p><p><b>Mainstream comparison</b> It has no fixed mainstream equivalent because the chosen free model may vary by request. When you find a response style you like, choose the named model directly for more consistent results.</p><p class="model-guide-rank">Zero model-token price · quota and routing limits</p></article>
-      </div>
-      <div class="model-guide-foot">Scores and rankings are not percentages. Arena ranks reflect human preference on tested prompts; Artificial Analysis uses a different multi-benchmark index. We name a mainstream model as a task-level analogue—not an assertion of equal quality. Version, reasoning mode, provider and date can change the result. <a href="https://arena.ai/leaderboard/chat/text" target="_blank" rel="noopener">Arena text ranking ↗</a> · <a href="https://artificialanalysis.ai/articles/artificial-analysis-intelligence-index-v4-3" target="_blank" rel="noopener">Artificial Analysis methodology ↗</a> · <a href="https://openrouter.ai/collections/free-models" target="_blank" rel="noopener">Live free-model list ↗</a></div>
-    </section>
+    
     <div class="key-panel" id="aw-key-panel" hidden>
       <p class="key-note"><strong>One cloud connection for many providers.</strong> Sign in and authorize this workspace using OpenRouter's secure PKCE flow—no copy/paste needed. Or paste an API key if you prefer. The workspace sends requests from this browser to OpenRouter, which routes them to the selected upstream provider. Your key stays in this tab's session storage and is not sent to this site's server. Keep the free-only text filter on; other endpoints may be billable. <a href="https://openrouter.ai/docs/guides/overview/auth/oauth" target="_blank" rel="noopener">How the sign-in works ↗</a></p>
       <div class="key-row">
@@ -478,103 +586,17 @@ body{background-color:var(--bg);background-image:radial-gradient(ellipse at 12% 
         <div class="output-head" style="border-top:1px solid #e7ece6;border-bottom:0;justify-content:flex-start"><span style="font-size:10px;color:#939c95" id="aw-foot-status">No request sent yet.</span></div>
       </div>
     </div>
-  </section>
+  </section></details>
+
   
   
   
-<section class="field-guide" id="start-here">
-  <div class="field-guide-head">
-    <div>
-      <div class="field-kicker">FIELD NOTES / No. 02 <span>UPDATED 22 OCT 2026</span></div>
-      <h2>Pick a tool, make something.</h2>
-      <p>Start with the cloud model hub for online chat and coding. Use the public creative demos for images, motion and voice. Your browser does not need to download or run a model; a free gateway account is required to unify API-accessible chat models.</p>
-    </div>
-    <div class="field-stamp">FREE-FIRST<br>ACCESS <span>✳</span></div>
-  </div>
-  <div class="guide-grid">
-    <article class="guide-card guide-chat"><div class="guide-card-top"><span class="guide-num">01 / THINK</span><span class="guide-icon">✳</span></div><h3>Ask, plan, brainstorm</h3><p>Use the hosted model picker to compare Chinese and international models in one chat interface. Choose the free router first; use web search for current questions when suitable.</p><button class="guide-launch" data-workflow="chat">Open cloud chat ↗</button></article>
-    <article class="guide-card guide-code"><div class="guide-card-top"><span class="guide-num">02 / BUILD</span><span class="guide-icon">⌘</span></div><h3>Make or fix a website</h3><p>Use the cloud catalog to choose a coding model such as a Qwen Coder, DeepSeek or GLM variant. No local installation is needed; the model itself runs with the provider.</p><button class="guide-launch" data-workflow="code">Open cloud coding ↗</button></article>
-    <article class="guide-card guide-image"><div class="guide-card-top"><span class="guide-num">03 / FRAME</span><span class="guide-icon">▧</span></div><h3>Create an image</h3><p>Open Qwen Image 2.1 or the faster Turbo variant below. Include subject, composition, lighting, texture, aspect ratio and what to avoid.</p><button class="guide-launch" data-workflow="image">Open image studio ↗</button></article>
-    <article class="guide-card guide-video"><div class="guide-card-top"><span class="guide-num">04 / MOVE</span><span class="guide-icon">▷</span></div><h3>Animate a still image</h3><p>Try Wan 2.2 or LTX 2.3. Upload one strong image and describe one camera move plus one subject action, not a whole movie at once.</p><button class="guide-launch" data-workflow="video">Open video studio ↗</button></article>
-    <article class="guide-card guide-voice"><div class="guide-card-top"><span class="guide-num">05 / LISTEN</span><span class="guide-icon">♫</span></div><h3>Make a voiceover</h3><p>Paste a clean script into Qwen3 TTS, select language and voice, generate a sample, then download the audio if the demo exposes the result.</p><button class="guide-launch" data-workflow="voice">Open voice studio ↗</button></article>
-    <article class="guide-card guide-web"><div class="guide-card-top"><span class="guide-num">06 / PROTOTYPE</span><span class="guide-icon">▤</span></div><h3>Turn an idea into a page</h3><p>Ask for one landing page with a clear audience, content and style. Inspect the preview, then refine one thing at a time.</p><button class="guide-launch" data-workflow="webapp">Build a page ↗</button></article>
-  </div>
-  <div class="guide-steps">
-    <div class="guide-step"><span>1</span><div><b>Connect once</b><p>Choose “Connect AI models” and sign in to OpenRouter. A free account is enough to start with its free model tier; no local model download is needed.</p></div></div>
-    <div class="guide-step"><span>2</span><div><b>Use a clear brief</b><p>Say what the output should be, who it is for, the style, constraints and format. A concrete prompt beats “make it better”.</p></div></div>
-    <div class="guide-step"><span>3</span><div><b>Iterate and verify</b><p>Ask for one improvement at a time. For current facts, use the web-search option or open the official model site. Check charges before choosing paid endpoints or media-generation APIs.</p></div></div>
-  </div>
-</section>
+  
 
 
-  <section class="free-hosted" id="free-hosted-ai">
-    <div class="fh-head"><div><div class="local-kicker"><span></span> Free hosted demos · no API key</div><h2>Try real creative models inside this page</h2><p>Live public Hugging Face Spaces embedded here: generate/edit images, create short videos, make speech, and prototype a web app. These demos do not use your OpenRouter key. They may queue, sleep, or hit shared daily GPU limits.</p></div><div class="fh-pill">Public demo · no API key</div></div>
-    <div class="fh-tabs" role="tablist" aria-label="Free hosted AI demos"><button class="fh-tab active" role="tab" aria-selected="true" data-hfdemo="image">▧ Qwen Image 2.1 <small>Image / edit</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="turbo">✦ Image Turbo <small>Faster</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="moss">▦ MOSS-Image <small>Workflow</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="video">▷ Wan 2.2 <small>Image-to-video</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="ltx">◉ LTX 2.3 <small>Motion + audio</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="voice">♫ Qwen3 TTS <small>Speech</small></button><button class="fh-tab" role="tab" aria-selected="false" data-hfdemo="code">⌘ Qwen Coder <small>Web prototype</small></button></div>
-    <div class="fh-frame-wrap"><iframe class="fh-frame" id="fh-frame" title="Qwen Image 2.1 public demo" src="https://qwen-qwen-image-2-1.hf.space/?__theme=light" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="clipboard-read; clipboard-write; fullscreen" allowfullscreen></iframe></div>
-    <div class="fh-openline"><span id="fh-status">Loading Qwen Image 2.1 demo…</span><a id="fh-external" href="https://huggingface.co/spaces/Qwen/Qwen-Image-2.1" target="_blank" rel="noopener">Open provider page ↗</a></div>
-    <div class="fh-warning"><b>Quota warning:</b> Hugging Face ZeroGPU gives unauthenticated visitors 2 minutes/day and free accounts 5 minutes/day, with queue priorities depending on account tier. This is free hosted inference with limits—not an unlimited promise. <a href="https://huggingface.co/docs/hub/spaces-zerogpu" target="_blank" rel="noopener">Official quotas ↗</a> · <a href="https://huggingface.co/docs/hub/spaces-overview" target="_blank" rel="noopener">Embedding rules ↗</a></div>
-  </section>
-  <details class="local-optional"><summary><span>Optional on-device mode · model runs inside this browser</span><span>No OpenRouter connection required</span></summary>
-  <section class="local-ai" id="local-ai">
-    <div class="local-head">
-      <div>
-        <div class="local-kicker"><span></span> Optional · On-device inference · No cloud account</div>
-        <h2>Optional on-device models (not the main workspace)</h2>
-        <p>This mode runs a downloadable language model on your computer, inside this page. No API key, cloud credits, payment method or model-inference account. Load once, then send prompts here; after caching, the browser can reuse model files. Nothing is sent to an AI inference API in this local mode.</p>
-      </div>
-      <div class="local-trust">Optional · No cloud gateway</div>
-    </div>
-    <div class="local-config">
-      <label class="local-field">Choose a local model
-        <select id="local-model">
-          <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Light · Llama 3.2 1B · lower hardware needs</option>
-          <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC" selected>Balanced · Llama 3.2 3B · recommended start</option><option value="Qwen3-1.7B-q4f16_1-MLC">Chinese family · Qwen3 1.7B · compact</option><option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Code · Qwen2.5 Coder 1.5B</option>
-          <option value="Qwen3.5-2B-q4f16_1-MLC">Newer Chinese model · Qwen3.5 2B · ~2.25 GB VRAM</option>
-          <option value="Qwen3.5-4B-q4f16_1-MLC">More capable · Qwen3.5 4B · ~3.87 GB VRAM</option>
-          <option value="gemma-4-E2B-it-q4f16_1-MLC">Multimodal · Gemma 4 E2B · ~3.39 GB VRAM</option>
-          <option value="DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC">Reasoning · DeepSeek R1 distilled Qwen 7B · heavier</option>
-          <option value="Phi-4-mini-instruct-q4f16_1-MLC">Compact reasoning · Phi-4 mini · medium hardware</option>
-        </select>
-      </label>
-      <label class="local-field">Task type
-        <select id="local-task-type">
-          <option value="general">General assistant</option>
-          <option value="coding">Coding / debugging</option>
-          <option value="research">Research planning (no live web)</option>
-          <option value="creative">Creative / photography ideas</option>
-          <option value="writing">Writing and editing</option>
-        </select>
-      </label>
-      <button class="local-load" id="local-load">Load model to this device</button>
-    </div>
-    <div class="local-progress" id="local-progress">
-      <div class="local-progress-label"><span id="local-progress-text">Preparing model…</span><span id="local-progress-percent">0%</span></div>
-      <div class="local-progress-track"><div class="local-progress-fill" id="local-progress-fill"></div></div>
-    </div>
-    <div class="local-model-note" id="local-model-note">Recommended to start: the 3B model. First load downloads model files (typically hundreds of MB to several GB) from public model hosting; exact size varies by model. Browser GPU support and available memory determine whether it runs well.</div>
-    <div class="local-main">
-      <div class="local-chat">
-        <div class="local-chat-top"><strong>Local conversation</strong><span id="local-runtime-status">No model loaded</span></div>
-        <div class="local-feed" id="local-feed" aria-live="polite">
-          <div class="local-welcome"><div class="mark">✳</div><strong>No connection required</strong><p>Select a model and click <b>Load model</b>. After the first download completes, prompts run on your device. This local mode does not browse the internet or call paid APIs.</p></div>
-        </div>
-        <div class="local-composer">
-          <textarea id="local-prompt" placeholder="What do you want the local AI to do? Example: Give me 5 unusual photography ideas for Aquileia…" rows="3"></textarea>
-          <div class="local-composer-bottom"><select id="local-response-size" aria-label="Response length"><option value="512">Short answer</option><option value="1024" selected>Standard answer</option><option value="1800">Detailed answer</option></select><button class="local-clear" id="local-new-chat">New chat</button><button class="local-send" id="local-send" disabled>Run local AI</button></div>
-        </div>
-      </div>
-      <aside class="local-side">
-        <h3>Free model shortlist</h3>
-        <div class="local-score"><div><strong>Llama 3.2 1B</strong><p>Fastest starter and smallest download. Best for simple requests, rewriting and basic tasks.</p></div><span class="local-tag">LIGHT</span></div>
-        <div class="local-score"><div><strong>Llama 3.2 3B</strong><p>Balanced option for writing, brainstorming, simple coding and everyday assistance.</p></div><span class="local-tag">START HERE</span></div>
-        <div class="local-score"><div><strong>DeepSeek R1 · Qwen 7B</strong><p>Heavier reasoning-oriented model. More demanding download and GPU memory; not a frontier model.</p></div><span class="local-tag">REASONING</span></div>
-        <div class="local-score"><div><strong>Phi-4 mini</strong><p>Compact alternative for instruction following and reasoning, subject to browser compatibility.</p></div><span class="local-tag">ALT</span></div>
-        <div class="local-caveat"><b>Honest limits:</b> smaller local models are less capable than the biggest hosted models; they can make mistakes. Local research mode cannot verify current facts. Image/video generation needs different, much heavier models and is listed separately in the research report.</div>
-        <div class="local-links"><a href="https://github.com/mlc-ai/web-llm" target="_blank" rel="noopener">Runtime & model support ↗</a><a href="https://huggingface.co/mlc-ai" target="_blank" rel="noopener">Model files ↗</a><a href="https://ktmnproductions-afk.github.io/viewfinder22/ai-workspace/free-ai-study/" target="_blank" rel="noopener">Full free-AI study ↗</a></div>
-      </aside>
-    </div>
-  </section>
-  </details>
+
+  
+  
 
 
 
@@ -1143,7 +1165,7 @@ async function run(){
  await sendChat(prompt,cat);
 }
 $('aw-connect').addEventListener('click',function(){showKeyPanel($('aw-key-panel').hidden);});
-$('hero-connect').addEventListener('click',function(){document.getElementById('ai-studio').scrollIntoView({behavior:'smooth',block:'start'});showKeyPanel(!key);});
+$('hero-free').addEventListener('click',function(){document.getElementById('free-hosted-ai').scrollIntoView({behavior:'smooth',block:'start'});});
 $('aw-oauth').addEventListener('click',startOAuth);
 $('aw-save-key').addEventListener('click',function(){
  var v=$('aw-api-key').value.trim();
@@ -1296,7 +1318,7 @@ handleOAuthCallback();
 })();
 </script>
 
-<script>(function(){var demos={image:{title:'Qwen Image 2.1',src:'https://qwen-qwen-image-2-1.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen-Image-2.1',note:'Image generation and editing · Hugging Face ZeroGPU.'},turbo:{title:'Qwen Image 2.1 Turbo',src:'https://hugging-apps-qwen-qwen-image-2-1-turbo.hf.space/?__theme=light',page:'https://huggingface.co/spaces/hugging-apps/qwen-qwen-image-2-1-turbo',note:'8-step Qwen Image 2.1 Turbo · faster image generation/editing.'},moss:{title:'MOSS-Image Workflow',src:'https://openmoss-team-moss-image.hf.space/?__theme=light',page:'https://huggingface.co/spaces/OpenMOSS-Team/MOSS-Image',note:'Node-based image generation workflow · community-hosted.'},video:{title:'Wan 2.2 Fast',src:'https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space/?__theme=light',page:'https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster',note:'Wan 2.2 image-to-video · GPU queue and quota apply.'},ltx:{title:'LTX 2.3 Image-to-Video',src:'https://rdata92-ltx-2-3-10eros.hf.space/?__theme=light',page:'https://huggingface.co/spaces/rdata92/LTX-2.3-10Eros',note:'LTX 2.3 image-to-video with native audio · community-hosted.'},voice:{title:'Qwen3 TTS',src:'https://qwen-qwen3-tts-demo.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen3-TTS-Demo',note:'Text-to-speech and voice options.'},code:{title:'Qwen3 Coder WebDev',src:'https://qwen-qwen3-coder-webdev.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen3-Coder-WebDev',note:'Prototype HTML/React from a description.'}};var frame=document.getElementById('fh-frame');if(!frame)return;var status=document.getElementById('fh-status'),link=document.getElementById('fh-external'),loaded='image';document.querySelectorAll('[data-hfdemo]').forEach(function(btn){btn.addEventListener('click',function(){var id=btn.getAttribute('data-hfdemo'),item=demos[id];if(!item)return;loaded=id;document.querySelectorAll('[data-hfdemo]').forEach(function(b){var active=b===btn;b.classList.toggle('active',active);b.setAttribute('aria-selected',active?'true':'false');});frame.title=item.title+' public demo';status.textContent=item.title+' · Loading…';link.href=item.page;link.textContent='Open '+item.title+' ↗';if(frame.src!==item.src)frame.src=item.src;});});frame.addEventListener('load',function(){status.textContent=demos[loaded].note;});})();</script>
+<script>(function(){var demos={qwenchat:{title:'Qwen3 Public Chat',src:'https://qwen-qwen3-demo.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen3-Demo',note:'Official Qwen3 chat demo · public hosted inference; no personal API key configured in this workspace.'},glmchat:{title:'GLM-5.2 Community Demo',src:'https://chrisarm01-glm-5-2-demo.static.hf.space/',page:'https://huggingface.co/spaces/chrisarm01/GLM-5.2-Demo',note:'Community-hosted GLM demo · availability and limits depend on the Space operator.'},janus:{title:'DeepSeek Janus-Pro-7B',src:'https://deepseek-ai-janus-pro-7b.hf.space/?__theme=light',page:'https://huggingface.co/spaces/deepseek-ai/Janus-Pro-7B',note:'Official DeepSeek multimodal/vision-and-image demo · shared public GPU access.'},image:{title:'Qwen Image 2.1',src:'https://qwen-qwen-image-2-1.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen-Image-2.1',note:'Image generation and editing · Hugging Face ZeroGPU.'},turbo:{title:'Qwen Image 2.1 Turbo',src:'https://hugging-apps-qwen-qwen-image-2-1-turbo.hf.space/?__theme=light',page:'https://huggingface.co/spaces/hugging-apps/qwen-qwen-image-2-1-turbo',note:'Qwen Image 2.1 Turbo · faster public image generation/editing.'},moss:{title:'MOSS-Image Workflow',src:'https://openmoss-team-moss-image.hf.space/?__theme=light',page:'https://huggingface.co/spaces/OpenMOSS-Team/MOSS-Image',note:'Node-based image workflow · community hosted.'},video:{title:'Wan 2.2 Fast',src:'https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space/?__theme=light',page:'https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster',note:'Wan 2.2 image-to-video · GPU queue and quota apply.'},ltx:{title:'LTX 2.3 Image-to-Video',src:'https://rdata92-ltx-2-3-10eros.hf.space/?__theme=light',page:'https://huggingface.co/spaces/rdata92/LTX-2.3-10Eros',note:'LTX 2.3 image-to-video with native audio · community-hosted.'},voice:{title:'Qwen3 TTS',src:'https://qwen-qwen3-tts-demo.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen3-TTS-Demo',note:'Text-to-speech and voice options.'},code:{title:'Qwen3 Coder WebDev',src:'https://qwen-qwen3-coder-webdev.hf.space/?__theme=light',page:'https://huggingface.co/spaces/Qwen/Qwen3-Coder-WebDev',note:'Prototype HTML/React from a description.'}};var frame=document.getElementById('fh-frame');if(!frame)return;var status=document.getElementById('fh-status'),link=document.getElementById('fh-external'),loaded='qwenchat';document.querySelectorAll('[data-hfdemo]').forEach(function(btn){btn.addEventListener('click',function(){var id=btn.getAttribute('data-hfdemo'),item=demos[id];if(!item)return;loaded=id;document.querySelectorAll('[data-hfdemo]').forEach(function(b){var active=b===btn;b.classList.toggle('active',active);b.setAttribute('aria-selected',active?'true':'false');});frame.title=item.title+' public demo';status.textContent=item.title+' · Loading…';link.href=item.page;link.textContent='Open '+item.title+' ↗';if(frame.src!==item.src)frame.src=item.src;});});frame.addEventListener('load',function(){status.textContent=demos[loaded].note;});})();</script>
 <script>
 (function(){
  var examples={
@@ -1307,19 +1329,10 @@ handleOAuthCallback();
  document.querySelectorAll('[data-workflow]').forEach(function(btn){
   btn.addEventListener('click',function(){
    var mode=btn.getAttribute('data-workflow'),hosted=document.getElementById('free-hosted-ai');
-   if(mode==='image'||mode==='video'||mode==='voice'||mode==='webapp'){
-    var demo=mode==='image'?'turbo':mode==='video'?'video':mode==='voice'?'voice':'code';
-    var tab=document.querySelector('[data-hfdemo="'+demo+'"]');if(tab)tab.click();
-    hosted.scrollIntoView({behavior:'smooth',block:'start'});return;
-   }
-   var spec=examples[mode]||examples.chat;
-   var task=document.getElementById('aw-task');task.value=spec.prompt;
-   var cloudMode=mode==='code'?'coding':mode;
-   var cloudButton=document.querySelector('.mode-chip[data-mode="'+cloudMode+'"]');
-   if(cloudButton)cloudButton.click();
-   var panel=document.getElementById('aw-key-panel');if(panel)panel.hidden=false;
-   document.getElementById('ai-studio').scrollIntoView({behavior:'smooth',block:'start'});
-   task.focus();
+   var demo=mode==='image'?'turbo':mode==='video'?'video':mode==='voice'?'voice':(mode==='webapp'||mode==='code')?'code':mode==='chat'?'qwenchat':'qwenchat';
+   var tab=document.querySelector('[data-hfdemo="'+demo+'"]');if(tab)tab.click();
+   hosted.scrollIntoView({behavior:'smooth',block:'start'});
+   if(mode==='research')window.open('https://www.kimi.com/','_blank','noopener');
   });
  });
 })();
