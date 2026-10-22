@@ -2912,7 +2912,7 @@ function chooseCameraTargets(center,targetName){
  for(const p of options){
   if(chosen.some(q=>normalizeNameForDedup(q.name)===normalizeNameForDedup(p.name)||haversine(q,p)<180))continue;
   chosen.push({id:String(p.id||p.name),name:String(p.name),lat:p.lat,lng:p.lng,category:p.category,tags:p.tags||{},sourceUrl:p.sourceUrl||p.wikiUrl||'https://www.openstreetmap.org/',isPrimary:false});
-  if(chosen.length>=3)break;
+  if(chosen.length>=5)break;
  }
  return [primary,...chosen];
 }
@@ -4175,8 +4175,9 @@ function selectItem(item,options){
  renderDetailPhotoRefs(item);
  updateSocialSearch(item.name+' '+(item.city||state.detectedLocality||''));
  const destination=item.lat+','+item.lng;
- $('driveLink').href='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode=driving';
- $('driveLink').textContent=item.category==='parking'?'Route to mapped parking point ↗':item.category==='photoSpot'?'Navigate to photo spot ↗':'Drive to spot ↗';
+ const walkingApproach=item.isAssumedViewpoint&&['footway','path','pedestrian','steps','track','cycleway'].includes(String(item.pathType||''));
+ $('driveLink').href=item.isAssumedViewpoint?'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode='+(walkingApproach?'walking':'driving'):'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination)+'&travelmode=driving';
+ $('driveLink').textContent=item.isAssumedViewpoint?(walkingApproach?'Check walking approach ↗':'Check route to candidate ↗'):item.category==='parking'?'Route to mapped parking point ↗':item.category==='photoSpot'?'Navigate to photo spot ↗':'Drive to spot ↗';
  // The field guide replaces the old editable AI-image prompt.
  // Field-guide content is rendered when opened.
  const viewZoom=item.category==='parking'?16.5:item.category==='photoSpot'?14.8:item.category==='viewpoint'?15.5:16;
