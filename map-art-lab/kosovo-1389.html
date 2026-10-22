@@ -105,8 +105,12 @@ h1{font:500 36px/.92 var(--serif);letter-spacing:-.035em;margin:10px 0}
  <div class="note">Army strengths, exact line positions and the sequence of manoeuvres are disputed or poorly documented. The colored areas are deliberately broad; they are not troop counts, unit formations or surveyed coordinates.</div>
  <div class="rule"></div>
  <div class="sectionhead"><strong>Read the terrain</strong><span>REAL ELEVATION</span></div>
- <div class="meta">The relief mesh is generated from AWS Terrarium elevation tiles. It shows today's terrain shape, not a recovered 1389 landscape or period land cover. No satellite photograph is used as if it were medieval evidence.</div>
+ <div class="meta">The relief mesh is generated from AWS Terrarium elevation tiles. Historical accounts place the fighting in the Kosovo field around the Sitnica–Lab river system, but do not preserve a dependable battle map. This view shows today's terrain shape, not a recovered 1389 landscape or period land cover; river courses are not presented as exact medieval shorelines.</div>
  <div class="status" id="status" data-state="loading"><span class="led"></span><span id="statusText">Loading elevation tiles…</span></div>
+ <div class="rule"></div>
+ <div class="sectionhead"><strong>Vertical relief</strong><span><output id="reliefOut">2.2×</output></span></div>
+ <input class="range" id="relief" type="range" min="1" max="3" step="0.2" value="2.2" aria-label="Vertical terrain exaggeration">
+ <div class="meta">Raise the terrain gently to read the low ridges and shallow valleys without implying mountain-scale relief.</div>
  <div class="rule"></div>
  <div class="sectionhead"><strong>Sources & limitations</strong><span>READ CRITICALLY</span></div>
  <div class="sources">
@@ -147,8 +151,8 @@ const GAZIMESTAN = {lat:42.68979,lon:21.12281};
 const PRISTINA = {lat:42.6629,lon:21.1655};
 const COALITION = {lat:42.6968,lon:21.1065};
 const OTTOMAN = {lat:42.6848,lon:21.1400};
-const MAP_ZOOM=11,DEM_ZOOM=13,DEM_SCALE=Math.pow(2,DEM_ZOOM-MAP_ZOOM);
-const TILE_UNITS=12,SEGMENTS=256,HEIGHT_SCALE=0.00125;
+const MAP_ZOOM=10,DEM_ZOOM=12,DEM_SCALE=Math.pow(2,DEM_ZOOM-MAP_ZOOM);
+const TILE_UNITS=12,SEGMENTS=256,HEIGHT_SCALE=0.0009;
 const PHASES=[
  {name:'Approach',title:'The armies<br>converge.',description:'Approach directions are illustrative. The sources do not give a reliable surveyed deployment map.',note:'Broad force zones and dashed approach arrows are schematic. No fixed troop counts or exact positions are asserted.'},
  {name:'Engagement',title:'The field<br>in conflict.',description:'The battle is established in the sources, but dependable hour-by-hour descriptions are lacking.',note:'The central contact band indicates the general battle area, not a documented frontline.'},
@@ -328,9 +332,8 @@ function setupBattleOverlays(){
  clearGroup(historyGroup);clearGroup(zonesGroup);clearGroup(approachGroup);clearGroup(engagementGroup);clearGroup(traditionGroup);clearGroup(afterGroup);
  const coalition=addZone(zonesGroup,COALITION,0x4c6876,'SERBIAN-LED COALITION');
  const ottoman=addZone(zonesGroup,OTTOMAN,0x923f37,'OTTOMAN HOST');
- addPin(historyGroup,BATTLE,'APPROX. BATTLEFIELD',0xa77b3c,{width:2.55,labelY:.78});
+ addPin(historyGroup,BATTLE,'BATTLEFIELD AREA · APPROX.',0xa77b3c,{width:2.65,labelY:.78});
  addPin(historyGroup,TOMB,'MURAD’S TOMB · MAZGIT',0x907147,{width:2.55,labelY:.78});
- addPin(historyGroup,GAZIMESTAN,'GAZIMESTAN · MODERN MEMORIAL',0x66765c,{width:3.15,labelY:.65,radius:.055});
  addPin(historyGroup,PRISTINA,'PRIŠTINA · MODERN REFERENCE',0x6e7565,{width:2.75,labelY:.58,radius:.05});
  addGeoArrow(approachGroup,{lat:COALITION.lat+.008,lon:COALITION.lon-.008},{lat:BATTLE.lat,lon:BATTLE.lon-.001},0x4c6876,true);
  addGeoArrow(approachGroup,{lat:OTTOMAN.lat-.007,lon:OTTOMAN.lon+.007},{lat:BATTLE.lat,lon:BATTLE.lon+.002},0x923f37,true);
@@ -486,7 +489,7 @@ $('playBtn').addEventListener('click',playTimeline);
 $('stopBtn').addEventListener('click',()=>{stopTimeline();setPhase(phase);if(recording)stopRecording();status('Playback stopped','ready');});
 $('viewBtn').addEventListener('click',()=>setCameraView(!topView));
 $('recordBtn').addEventListener('click',recordSequence);
-$('relief').addEventListener('input',()=>{if(demCanvas){buildTerrain();setupBattleOverlays();setPhase(phase);}else if(terrainMesh){makeFallbackTerrain();setupBattleOverlays();setPhase(phase);}});
+$('relief').addEventListener('input',()=>{$('reliefOut').textContent=Number($('relief').value).toFixed(1)+'×';if(demCanvas){buildTerrain();setupBattleOverlays();setPhase(phase);}else if(terrainMesh){makeFallbackTerrain();setupBattleOverlays();setPhase(phase);}});
 window.addEventListener('beforeunload',()=>{stopTimeline();if(recording)stopRecording();if(renderer)renderer.dispose();});
 window.__KOSOVO_1389_TEST__=()=>({renderCalls:renderer?renderer.info.render.calls:0,hasCanvas:!!renderer?.domElement,hasTerrain:!!terrainMesh,realDEM:!!demPixels,phase,demTiles:demStats,status:$('statusText').textContent});
 init();
