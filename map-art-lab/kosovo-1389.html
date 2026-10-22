@@ -278,6 +278,7 @@ let originX=0,originY=0,heightPixels=null,mapZoom=1,panX=0,panY=0,phase=0,playin
 let terrainReady=false,reliefOn=true,battleOn=true,labelsOn=true;
 const mapSvg=$('mapSvg'),mapScene=$('mapScene');
 function tileFor(lon,lat,z){const n=Math.pow(2,z),r=lat*Math.PI/180;return{x:(lon+180)/360*n,y:(1-Math.asinh(Math.tan(r))/Math.PI)/2*n};}
+function setMapOrigin(){const p=tileFor(BATTLE.lon,BATTLE.lat,Z);originX=Math.floor(p.x)-1;originY=Math.floor(p.y)-1;}
 function project(lon,lat){const p=tileFor(lon,lat,Z);return{x:((p.x-originX)/SPAN)*1000,y:((p.y-originY)/SPAN)*1000};}
 function geoLine(points){return points.map((p,i)=>{const q=project(p[0],p[1]);return(i?'L':'M')+q.x.toFixed(2)+','+q.y.toFixed(2);}).join(' ');}
 function node(tag,attrs,parent){const el=document.createElementNS(SVG,tag);Object.entries(attrs||{}).forEach(([k,v])=>el.setAttribute(k,String(v)));if(parent)parent.appendChild(el);return el;}
@@ -288,7 +289,7 @@ function concurrent(items,limit,fn){let index=0;return Promise.all(Array.from({l
 function decodeElevation(d,i){return d[i]*256+d[i+1]+d[i+2]/256-32768;}
 function setRiverPaths(){
  const sitnica=[[21.04,42.555],[21.049,42.582],[21.057,42.605],[21.061,42.625],[21.0665,42.64064],[21.0625,42.67876],[21.065,42.697],[21.061,42.716],[21.042,42.735],[21.0177,42.75515],[20.988,42.775],[20.96,42.796],[20.9415,42.815]];
- const lab=[[21.34,42.79],[21.312,42.773],[21.278,42.758],[21.24,42.744],[21.207,42.729],[21.182,42.714],[21.1655,42.696],[21.143,42.68],[21.12,42.665],[21.095,42.655]];
+ const lab=[[21.29,42.805],[21.27,42.786],[21.245,42.766],[21.22,42.747],[21.192,42.728],[21.168,42.709],[21.145,42.691],[21.12,42.673],[21.10,42.657]];
  const s=geoLine(sitnica),l=geoLine(lab);
  $('sitnicaRiver').setAttribute('d',s);$('sitnicaBank').setAttribute('d',s);
  $('labRiver').setAttribute('d',l);$('labBank').setAttribute('d',l);
@@ -417,7 +418,7 @@ function updateMobileAspect(){mapSvg.setAttribute('preserveAspectRatio',window.i
 function zoom(factor){mapZoom=Math.max(1,Math.min(2.35,mapZoom*factor));applyTransform();}
 function panStart(e){if(e.button!==undefined&&e.button!==0)return;mapSvg.classList.add('dragging');const start={x:e.clientX,y:e.clientY,px:panX,py:panY};mapSvg.setPointerCapture?.(e.pointerId);function move(ev){const k=(mapSvg.getAttribute('preserveAspectRatio')||'').includes('slice')?Math.max(window.innerWidth/1000,window.innerHeight/1000):Math.min(window.innerWidth/1000,window.innerHeight/1000);panX=start.px+(ev.clientX-start.x)/Math.max(.1,k);panY=start.py+(ev.clientY-start.y)/Math.max(.1,k);panX=Math.max(-600,Math.min(600,panX));panY=Math.max(-600,Math.min(600,panY));applyTransform();}function end(){mapSvg.classList.remove('dragging');mapSvg.removeEventListener('pointermove',move);mapSvg.removeEventListener('pointerup',end);mapSvg.removeEventListener('pointercancel',end);}mapSvg.addEventListener('pointermove',move);mapSvg.addEventListener('pointerup',end);mapSvg.addEventListener('pointercancel',end);}
 function svgSnapshot(){
- const clone=mapSvg.cloneNode(true);clone.setAttribute('width','2000');clone.setAttribute('height','2000');clone.setAttribute('viewBox','0 0 1000 1000');clone.setAttribute('preserveAspectRatio','xMidYMid meet');clone.style.width='2000px';clone.style.height='2000px';
+ const clone=mapSvg.cloneNode(true);const embeddedStyle=document.createElementNS(SVG,'style');embeddedStyle.textContent=document.querySelector('style').textContent;clone.insertBefore(embeddedStyle,clone.firstChild);clone.setAttribute('width','2000');clone.setAttribute('height','2000');clone.setAttribute('viewBox','0 0 1000 1000');clone.setAttribute('preserveAspectRatio','xMidYMid meet');clone.style.width='2000px';clone.style.height='2000px';
  const image=clone.querySelector('#terrainBase');if(image&&$('terrainBase').getAttribute('href'))image.setAttribute('href',$('terrainBase').getAttribute('href'));
  return new Promise((resolve,reject)=>{const source=new XMLSerializer().serializeToString(clone),blob=new Blob([source],{type:'image/svg+xml;charset=utf-8'}),url=URL.createObjectURL(blob),img=new Image();img.onload=()=>resolve({img,url});img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Could not render map snapshot'));};img.src=url;});
 }
@@ -443,7 +444,7 @@ async function recordVideo(){
   recorder.onstop=()=>{stream.getTracks().forEach(t=>t.stop());snaps.forEach(s=>URL.revokeObjectURL(s.url));recording=false;$('recordBtn').disabled=false;$('recordBtn').textContent='Record 12s';setPhase(originalPhase);const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(blob.size){downloadBlob(blob,'kosovo-polje-1389-atlas.webm');setStatus('Video exported · '+(blob.size/1048576).toFixed(1)+' MB','ready');}};
   recorder.start(250);$('recordBtn').disabled=false;$('recordBtn').textContent='Stop recording';setStatus('Recording the four map phases…','');
   const start=performance.now();let last=-1;
-  function tick(now){if(!recording||!recorder||recorder.state==='inactive')return;const t=Math.min(11.999,(now-start)/1000),idx=Math.min(3,Math.floor(t/3));if(idx!==last){last=idx;ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(snaps[idx].img,0,0,c.width,c.height);}if(t>=12){recorder.stop();return;}requestAnimationFrame(tick);}
+  function tick(now){if(!recording||!recorder||recorder.state==='inactive')return;const raw=(now-start)/1000,t=Math.min(11.999,raw),idx=Math.min(3,Math.floor(t/3));if(idx!==last){last=idx;ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(snaps[idx].img,0,0,c.width,c.height);}if(raw>=12){recorder.stop();return;}requestAnimationFrame(tick);}
   requestAnimationFrame(tick);
  }catch(e){snaps.forEach(s=>URL.revokeObjectURL(s.url));recording=false;$('recordBtn').disabled=false;$('recordBtn').textContent='Record 12s';setPhase(originalPhase);setStatus('Could not prepare video in this browser','error');}
 }
@@ -482,7 +483,7 @@ document.querySelectorAll('.phase-tab').forEach(b=>b.addEventListener('click',()
 mapSvg.addEventListener('pointerdown',panStart);
 window.addEventListener('resize',updateMobileAspect);
 window.addEventListener('beforeunload',()=>{stopPlayback();if(recorder&&recorder.state!=='inactive')recorder.stop();});
-updateMobileAspect();initLayers();setPhase(0);applyTransform();
+updateMobileAspect();setMapOrigin();initLayers();setPhase(0);applyTransform();
 initTerrain().catch(()=>setStatus('Elevation tiles unavailable · relief layer omitted','error'));
 window.__KOSOVO_1389_TEST__=()=>({phase,terrainReady,hasTerrainImage:!!$('terrainBase').getAttribute('href'),contours:$('contoursLayer').children.length,places:PLACES.length,zoom:mapZoom});
 })();
