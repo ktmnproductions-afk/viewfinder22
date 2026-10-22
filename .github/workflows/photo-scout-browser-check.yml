@@ -104,7 +104,7 @@ jobs:
             });
 
             try {
-              await page.goto('http://127.0.0.1:8000/index.html?v=20261022-calculated-viewpoints-v29', { waitUntil: 'domcontentloaded', timeout: 60000 });
+              await page.goto('http://127.0.0.1:8000/index.html?v=20261022-calculated-viewpoints-v30', { waitUntil: 'domcontentloaded', timeout: 60000 });
               try {
                 await page.waitForFunction(() => !!window.__PHOTO_SCOUT_TEST__?.map, null, { timeout: 15000 });
               } catch (startupError) {
@@ -144,7 +144,7 @@ jobs:
                   display: manifest && manifest.display,
                   startUrl: manifest && manifest.start_url,
                   workerStatus: workerResponse.status,
-                  workerCacheV29: workerText.includes('"photo-scout-shell-v29"'),
+                  workerCacheV30: workerText.includes('"photo-scout-shell-v30"'),
                   buildVersion: document.querySelector('meta[name="photo-scout-build"]')?.content||'',
                   installButton: !!document.querySelector('#installAppBtn'),
                   installButtonVisible: !!document.querySelector('#installAppBtn') && !document.querySelector('#installAppBtn').hidden,
@@ -154,8 +154,8 @@ jobs:
               if (appInstallDiagnostics.manifestStatus !== 200 ||
                   appInstallDiagnostics.display !== 'standalone' ||
                   appInstallDiagnostics.workerStatus !== 200 ||
-                  !appInstallDiagnostics.workerCacheV29 ||
-                  appInstallDiagnostics.buildVersion !== '2026-10-22-photo-scout-calculated-viewpoints-v29' ||
+                  !appInstallDiagnostics.workerCacheV30 ||
+                  appInstallDiagnostics.buildVersion !== '2026-10-22-photo-scout-calculated-viewpoints-v30' ||
                   !appInstallDiagnostics.installButton || !appInstallDiagnostics.installButtonVisible || !appInstallDiagnostics.pinLegend) {
                 throw new Error('Photo Scout must ship as an installable standalone app with a visible pin legend: ' + JSON.stringify(appInstallDiagnostics));
               }
@@ -682,13 +682,26 @@ jobs:
               const alternatePage = await browser.newPage({ viewport: { width: 1200, height: 820 }, deviceScaleFactor: 1 });
               const alternateErrors = [];
               alternatePage.on('pageerror', error => alternateErrors.push(String(error)));
-              await alternatePage.goto('http://127.0.0.1:8000/photo-scout.html?v=20261022-calculated-viewpoints-v29', { waitUntil: 'domcontentloaded', timeout: 60000 });
+              await alternatePage.goto('http://127.0.0.1:8000/photo-scout.html?v=20261022-calculated-viewpoints-v30', { waitUntil: 'domcontentloaded', timeout: 60000 });
               await alternatePage.waitForFunction(() => !!window.__PHOTO_SCOUT_TEST__?.map && window.__PHOTO_SCOUT_TEST__?.styleLoaded === true, null, { timeout: 30000 });
               const alternateBuild = await alternatePage.locator('meta[name="photo-scout-build"]').getAttribute('content');
-              if (alternateBuild !== '2026-10-22-photo-scout-calculated-viewpoints-v29') {
-                throw new Error('Alternate Photo Scout entry page did not load v29: '+alternateBuild);
+              if (alternateBuild !== '2026-10-22-photo-scout-calculated-viewpoints-v30') {
+                throw new Error('Alternate Photo Scout entry page did not load v30: '+alternateBuild);
               }
-              await alternatePage.evaluate(() => { window.__PHOTO_SCOUT_TEST__.scanAt(45.37306,14.34903); });
+              // Match the real user path: position the map over Kastav before scanning,
+              // then wait for its vector tiles to settle. scanAt itself does not move the map.
+              await alternatePage.evaluate(async () => {
+                const map=window.__PHOTO_SCOUT_TEST__.map;
+                map.jumpTo({center:[14.34903,45.37306],zoom:16});
+                await new Promise(resolve=>{
+                  let done=false;
+                  const finish=()=>{if(done)return;done=true;try{map.off('idle',finish);}catch(e){}clearTimeout(timer);resolve();};
+                  const timer=setTimeout(finish,5000);
+                  try{map.once('idle',finish);}catch(e){finish();}
+                  requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!map.isMoving()&&map.loaded())finish();}));
+                });
+                window.__PHOTO_SCOUT_TEST__.scanAt(45.37306,14.34903);
+              });
               await alternatePage.waitForFunction(() => {
                 const test=window.__PHOTO_SCOUT_TEST__;
                 if(!test)return false;
@@ -711,7 +724,7 @@ jobs:
                 function testSelected(){return window.__PHOTO_SCOUT_TEST__.getState().selectedCoordinate||null;}
               });
               console.log('ALTERNATE_ENTRY_CALCULATED_PINS '+JSON.stringify(alternatePinDiagnostics));
-              if (alternatePinDiagnostics.build !== '2026-10-22-photo-scout-calculated-viewpoints-v29' ||
+              if (alternatePinDiagnostics.build !== '2026-10-22-photo-scout-calculated-viewpoints-v30' ||
                   !alternatePinDiagnostics.calculatedCount || !alternatePinDiagnostics.visiblePurplePins || alternateErrors.length) {
                 throw new Error('Alternate entry page must show calculated purple pins at the requested Kastav coordinates: '+JSON.stringify({alternatePinDiagnostics,alternateErrors}));
               }
