@@ -362,7 +362,7 @@ jobs:
                   canvasBox:canvasBox&&{x:canvasBox.x,y:canvasBox.y,width:canvasBox.width,height:canvasBox.height},
                   mapReady:state.styleLoaded,scanCount:state.scanCount,scanPending:state.scanPending,
                   resultCount:state.resultCount,dataInView:state.viewportCategoryCounts||{},
-                  cameraCalculationPending:state.cameraCalculationPending,cameraRoadCandidateCount:state.cameraRoadCandidateCount,assumedViewpointCount:state.assumedViewpointCount,
+                  cameraCalculationPending:state.cameraCalculationPending,cameraRoadCandidateCount:state.cameraRoadCandidateCount,assumedViewpointCount:state.assumedViewpointCount,cameraPathSearchError:state.cameraPathSearchError,cameraPathSearchDiagnostics:state.cameraPathSearchDiagnostics,
                   markerCounts:state.markerCounts||{},domCounts,
                   legendButtons:document.querySelectorAll('[data-marker-filter]').length,
                   legendSummary:document.querySelector('#mapPinSummary')?.textContent||''
