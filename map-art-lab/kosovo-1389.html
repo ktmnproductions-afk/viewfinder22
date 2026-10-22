@@ -149,10 +149,10 @@ const BATTLE = {lat:42.69074,lon:21.12375};
 const TOMB = {lat:42.70203,lon:21.10469};
 const GAZIMESTAN = {lat:42.68979,lon:21.12281};
 const PRISTINA = {lat:42.6629,lon:21.1655};
-const COALITION = {lat:42.6968,lon:21.1065};
-const OTTOMAN = {lat:42.6848,lon:21.1400};
-const MAP_ZOOM=10,DEM_ZOOM=12,DEM_SCALE=Math.pow(2,DEM_ZOOM-MAP_ZOOM);
-const TILE_UNITS=12,SEGMENTS=256,HEIGHT_SCALE=0.0009;
+const COALITION = {lat:42.6968,lon:21.0950};
+const OTTOMAN = {lat:42.6848,lon:21.1550};
+const MAP_ZOOM=11,DEM_ZOOM=13,DEM_SCALE=Math.pow(2,DEM_ZOOM-MAP_ZOOM),MAP_SPAN=2;
+const TILE_UNITS=12,SEGMENTS=256,HEIGHT_SCALE=0.00105;
 const PHASES=[
  {name:'Approach',title:'The armies<br>converge.',description:'Approach directions are illustrative. The sources do not give a reliable surveyed deployment map.',note:'Broad force zones and dashed approach arrows are schematic. No fixed troop counts or exact positions are asserted.'},
  {name:'Engagement',title:'The field<br>in conflict.',description:'The battle is established in the sources, but dependable hour-by-hour descriptions are lacking.',note:'The central contact band indicates the general battle area, not a documented frontline.'},
@@ -190,14 +190,15 @@ function encodeTerrarium(meters){
 }
 async function buildDEMCanvas(){
  const origin=tileFor(BATTLE.lon,BATTLE.lat,MAP_ZOOM);
- tileOrigin={x:Math.floor(origin.x),y:Math.floor(origin.y)};
- const width=256*DEM_SCALE;
+ tileOrigin={x:Math.floor(origin.x)-1,y:Math.floor(origin.y)};
+ const tileSpan=DEM_SCALE*MAP_SPAN;
+ const width=256*tileSpan;
  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=width;
  const ctx=canvas.getContext('2d',{willReadFrequently:true});
  const [r,g,b,a]=encodeTerrarium(550);
  ctx.fillStyle='rgb('+r+','+g+','+b+')';ctx.fillRect(0,0,width,width);
  const jobs=[];
- for(let ty=0;ty<DEM_SCALE;ty++)for(let tx=0;tx<DEM_SCALE;tx++){
+ for(let ty=0;ty<tileSpan;ty++)for(let tx=0;tx<tileSpan;tx++){
   jobs.push({x:tileOrigin.x*DEM_SCALE+tx,y:tileOrigin.y*DEM_SCALE+ty,dx:tx*256,dy:ty*256});
  }
  let loaded=0,failed=0;
@@ -270,7 +271,7 @@ function buildTerrain(){
  $('scaleNote').textContent='REAL DEM · '+Math.round(min)+'–'+Math.round(max)+' M ELEVATION · RELIEF EXAGGERATED';
 }
 function latLonToWorld(lat,lon){
- const p=tileFor(lon,lat,MAP_ZOOM),u=p.x-tileOrigin.x,v=p.y-tileOrigin.y;
+ const p=tileFor(lon,lat,MAP_ZOOM),u=(p.x-tileOrigin.x)/MAP_SPAN,v=(p.y-tileOrigin.y)/MAP_SPAN;
  return new THREE.Vector3((u-.5)*TILE_UNITS,terrainY(u,v),(0.5-v)*TILE_UNITS);
 }
 function addSpriteLabel(parent,text,position,opts={}){
@@ -466,7 +467,7 @@ async function init(){
  const floor=new THREE.Mesh(new THREE.PlaneGeometry(40,40),new THREE.MeshStandardMaterial({color:'#d8d0bd',roughness:1}));
  floor.rotation.x=-Math.PI/2;floor.position.y=-.72;scene.add(floor);
  try{
-  await buildDEMCanvas();buildTerrain();setupBattleOverlays();status(demStats.failed?'Real elevation loaded with '+demStats.failed+' missing tile(s)':'Real DEM loaded · '+demStats.loaded+' / 16 elevation tiles',demStats.failed?'error':'ready');
+  await buildDEMCanvas();buildTerrain();setupBattleOverlays();status(demStats.failed?'Real elevation loaded with '+demStats.failed+' missing tile(s)':'Real DEM loaded · '+demStats.loaded+' / '+(DEM_SCALE*DEM_SCALE*MAP_SPAN*MAP_SPAN)+' elevation tiles',demStats.failed?'error':'ready');
  }catch(e){
   demCanvas=null;demPixels=null;makeFallbackTerrain();setupBattleOverlays();status('Live DEM unavailable · illustrative terrain fallback only','error');
  }
