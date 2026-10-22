@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-22-photo-scout-landmark-accuracy-v26">
+<meta name="photo-scout-build" content="2026-10-22-photo-scout-geometry-pins-v27">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -1075,6 +1075,15 @@ window.__PHOTO_SCOUT_TEST__ = {
    {...legacyMappedMemorialB,distance:20}
   ]);
   const distinctNodeRecords=dedupeMappedPlaces([{...nearbyMemorialA,distance:10},{...nearbyMemorialB,distance:20}]);
+  const poiNode={category:'history',name:'Centred Chapel',lat:45.3271,lng:14.4422,osmElementType:'node',osmId:'2011',sourceUrl:'https://www.openstreetmap.org/node/2011',tags:{amenity:'place_of_worship'}};
+  const footprint={category:'history',name:'Centred Chapel',lat:45.32713,lng:14.4421,osmElementType:'way',osmId:'3011',sourceUrl:'https://www.openstreetmap.org/way/3011',tags:{building:'chapel'},coordinateMethod:'polygon-centroid',coordinateRank:35};
+  const centredChapel=dedupeMappedPlaces([{...poiNode,distance:10},{...footprint,distance:5}]);
+  const explicitMemorialNode={category:'history',name:'Memorial to Test',lat:45.3271,lng:14.4422,osmElementType:'node',osmId:'2012',sourceUrl:'https://www.openstreetmap.org/node/2012',tags:{historic:'memorial'}};
+  const memorialFootprint={category:'history',name:'Memorial to Test',lat:45.32713,lng:14.4421,osmElementType:'way',osmId:'3012',sourceUrl:'https://www.openstreetmap.org/way/3012',tags:{historic:'memorial'},coordinateMethod:'polygon-centroid',coordinateRank:35};
+  const centredMemorial=dedupeMappedPlaces([{...memorialFootprint,distance:5},{...explicitMemorialNode,distance:10}]);
+  const polygonCentroid=resolveOverpassCoordinate({type:'way',center:{lat:45.3272,lon:14.44215},geometry:[
+   {lat:45.3270,lon:14.4420},{lat:45.3270,lon:14.4423},{lat:45.3274,lon:14.4420},{lat:45.3270,lon:14.4420}
+  ]});
   return {
    explicitlyMappedViewpointAccepted:isExplicitViewpoint({tourism:'viewpoint'},'viewpoint','Vidikovac'),
    namedLookoutAccepted:isExplicitViewpoint({},'hill','Belvedere Trsat'),
@@ -1091,6 +1100,9 @@ window.__PHOTO_SCOUT_TEST__ = {
    exactSameGenericCoordinateDeduplicated:areDuplicateMapMarkers(nearbyMemorialA,duplicateMemorial),
    distinctSameNameOsmNodesKept:distinctNodeRecords.length===2,
    namedNodePreferredToApproximateAreaCenter:preferredNode.length===1&&osmFeatureReference(preferredNode[0])?.type==='node'&&preferredNode[0].lat===sameNamedNode.lat,
+   buildingOutlineCentroidPreferredToPoiNode:centredChapel.length===1&&centredChapel[0].coordinateMethod==='polygon-centroid',
+   explicitMemorialNodePreferredToAreaCentroid:centredMemorial.length===1&&osmFeatureReference(centredMemorial[0])?.type==='node'&&centredMemorial[0].lat===explicitMemorialNode.lat,
+   polygonCentroidDiffersFromBoundingBoxCenter:polygonCentroid&&polygonCentroid.method==='polygon-centroid'&&Math.abs(polygonCentroid.lat-45.3272)>0.00001,
    broadHistoricTagRecognized:localInterestLabel({historic:'city_gate'})==='Historic city gate',
    darkStyleExcludedFromFallback:!vectorFallbackOrder.includes('dark')
   };
@@ -1533,13 +1545,77 @@ function osmFeatureReference(item){
  }
  return null;
 }
+function resolveOverpassCoordinate(element){
+ const valid=(lat,lng)=>Number.isFinite(Number(lat))&&Number.isFinite(Number(lng))&&Math.abs(Number(lat))<=90&&Math.abs(Number(lng))<=180;
+ const type=String(element&&element.type||'node').toLowerCase();
+ if(type==='node'&&valid(element.lat,element.lon))return {lat:Number(element.lat),lng:Number(element.lon),method:'osm-node',rank:30};
+ let geometry=Array.isArray(element&&element.geometry)?element.geometry:[];
+ if(!geometry.length&&type==='relation'&&Array.isArray(element.members)){
+  const candidates=element.members.filter(member=>member&&(!member.role||member.role==='outer')&&Array.isArray(member.geometry))
+   .map(member=>member.geometry.filter(point=>valid(point.lat,point.lon)));
+  geometry=candidates.sort((a,b)=>b.length-a.length)[0]||[];
+ }
+ geometry=geometry.filter(point=>valid(point.lat,point.lon));
+ if(geometry.length>=3){
+  const first=geometry[0],last=geometry[geometry.length-1];
+  const closed=Math.abs(Number(first.lat)-Number(last.lat))<1e-8&&Math.abs(Number(first.lon)-Number(last.lon))<1e-8;
+  if(closed&&geometry.length>=4){
+   let area2=0,cx=0,cy=0;
+   for(let i=0;i<geometry.length-1;i++){
+    const x1=Number(geometry[i].lon),y1=Number(geometry[i].lat),x2=Number(geometry[i+1].lon),y2=Number(geometry[i+1].lat);
+    const cross=x1*y2-x2*y1;area2+=cross;cx+=(x1+x2)*cross;cy+=(y1+y2)*cross;
+   }
+   if(Math.abs(area2)>1e-14){
+    const lng=cx/(3*area2),lat=cy/(3*area2);
+    if(valid(lat,lng))return {lat,lng,method:'polygon-centroid',rank:35};
+   }
+  }
+  if(geometry.length>=2){
+   const lengths=[];let total=0;
+   for(let i=0;i<geometry.length-1;i++){
+    const d=haversine({lat:Number(geometry[i].lat),lng:Number(geometry[i].lon)},{lat:Number(geometry[i+1].lat),lng:Number(geometry[i+1].lon)});
+    const length=Number.isFinite(d)?d:0;lengths.push(length);total+=length;
+   }
+   if(total>0){
+    let remaining=total/2;
+    for(let i=0;i<lengths.length;i++){
+     const len=lengths[i];
+     if(remaining<=len&&len>0){
+      const a=geometry[i],b=geometry[i+1],t=remaining/len;
+      let deltaLng=Number(b.lon)-Number(a.lon);if(deltaLng>180)deltaLng-=360;if(deltaLng< -180)deltaLng+=360;
+      const lng=((Number(a.lon)+deltaLng*t+540)%360)-180,lat=Number(a.lat)+(Number(b.lat)-Number(a.lat))*t;
+      if(valid(lat,lng))return {lat,lng,method:'line-midpoint',rank:18};
+     }
+     remaining-=len;
+    }
+   }
+  }
+ }
+ const center=element&&element.center;
+ if(center&&valid(center.lat,center.lon))return {lat:Number(center.lat),lng:Number(center.lon),method:'bbox-center',rank:type==='way'?10:5};
+ if(valid(element&&element.lat,element&&element.lon))return {lat:Number(element.lat),lng:Number(element.lon),method:'osm-coordinate',rank:type==='way'?10:5};
+ return null;
+}
+function hasExplicitHistoricPoint(tags){
+ const t=tags&&typeof tags==='object'?tags:{};
+ return t.amenity==='memorial'||!!t.memorial||!!t['memorial:type']||
+  ['memorial','monument','wayside_cross','wayside_shrine','statue','obelisk','plaque','milestone','boundary_stone','historic_marker'].includes(String(t.historic||'').toLowerCase())||
+  ['monument','obelisk','plaque','statue','milestone','boundary_stone','cross'].includes(String(t.man_made||'').toLowerCase());
+}
+
 function osmCoordinatePriority(item){
- const ref=osmFeatureReference(item);
- if(!ref)return 0;
- // An OSM node is an explicit location. A way/relation's Overpass "center"
- // is an approximate bounding-box centre, so prefer the node when both describe
- // the same named feature.
- return ref.type==='node'?30:ref.type==='way'?10:5;
+ const value=item&&typeof item==='object'?item:{};
+ const ref=osmFeatureReference(value);
+ const tags=value.tags||{};
+ if(value.coordinateMethod==='polygon-centroid'){
+  if(ref&&ref.type==='node'&&hasExplicitHistoricPoint(tags))return 50;
+  return 35;
+ }
+ if(value.coordinateMethod==='line-midpoint')return 18;
+ if(ref&&ref.type==='node')return hasExplicitHistoricPoint(tags)?50:30;
+ if(ref&&ref.type==='way')return 10;
+ if(ref&&ref.type==='relation')return 5;
+ return Number(value.coordinateRank)||0;
 }
 function areSameOsmFeature(a,b){
  const aa=osmFeatureReference(a),bb=osmFeatureReference(b);
@@ -1754,7 +1830,7 @@ async function overpassLocalInterestSearch(c,radius,id){
   'nwr'+around+'["amenity"="fountain"];'+
   'nwr'+around+'["building"="wayside_shrine"];'+
   'nwr'+around+'["cross"="yes"];'+
-  ');out center tags qt 500;';
+  ');out geom tags qt 750;';
  const endpoints=['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter'];
  let lastError=null;
  for(const endpoint of endpoints){
@@ -1772,9 +1848,9 @@ async function overpassLocalInterestSearch(c,radius,id){
     const tags=el.tags||{};
     const label=localInterestLabel(tags);
     if(!label)return;
-    const itemLat=Number(el.lat??(el.center&&el.center.lat));
-    const itemLng=Number(el.lon??(el.center&&el.center.lon));
-    if(!Number.isFinite(itemLat)||!Number.isFinite(itemLng))return;
+    const coordinate=resolveOverpassCoordinate(el);
+    if(!coordinate)return;
+    const itemLat=coordinate.lat,itemLng=coordinate.lng;
     const distance=haversine(c,{lat:itemLat,lng:itemLng});
     if(distance>r)return;
     const rawName=String(tags.name||tags['name:en']||tags['name:hr']||tags.ref||'').trim();
@@ -1784,7 +1860,7 @@ async function overpassLocalInterestSearch(c,radius,id){
     const description=String(tags.description||tags['description:en']||tags['description:hr']||'').trim();
     places.push({
      id:'local-detail-'+osmType+'-'+osmId,
-     name,lat:itemLat,lng:itemLng,distance,tags,osmElementType:osmType,osmId,coordinateRank:osmType==='node'?30:osmType==='way'?10:5,
+     name,lat:itemLat,lng:itemLng,distance,tags,osmElementType:osmType,osmId,coordinateRank:coordinate.rank,coordinateMethod:coordinate.method,
      city:state.detectedLocality||'',
      source:'OpenStreetMap · local-interest details',
      sourceUrl:'https://www.openstreetmap.org/'+osmType+'/'+osmId,
