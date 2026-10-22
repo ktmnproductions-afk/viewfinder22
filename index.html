@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-22-photo-scout-landmark-accuracy-v23">
+<meta name="photo-scout-build" content="2026-10-22-photo-scout-landmark-accuracy-v24">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -1020,7 +1020,7 @@ window.__PHOTO_SCOUT_TEST__ = {
   const legacyMappedMemorialA={category:'history',name:'Memorial',lat:45.3271,lng:14.4422,genericFeature:true};
   const legacyMappedMemorialB={category:'history',name:'Memorial',lat:45.32735,lng:14.44245,genericFeature:true};
   const duplicateMemorial={...nearbyMemorialA};
-  const sameNamedNode={category:'history',name:'Chapel of Saint Ana',lat:45.3271,lng:14.4422,osmElementType:'node',osmId:'2001',sourceUrl:'https://www.openstreetmap.org/node/2001,tags:{historic:'chapel'}};
+  const sameNamedNode={category:'history',name:'Chapel of Saint Ana',lat:45.3271,lng:14.4422,osmElementType:'node',osmId:'2001',sourceUrl:'https://www.openstreetmap.org/node/2001',tags:{historic:'chapel'}};
   const sameNamedArea={category:'history',name:'Chapel of Saint Ana',lat:45.32722,lng:14.44225,osmElementType:'way',osmId:'3001',sourceUrl:'https://www.openstreetmap.org/way/3001',tags:{building:'chapel'}};
   const preferredNode=dedupeMappedPlaces([{...sameNamedArea,distance:5},{...sameNamedNode,distance:10}]);
   const nearbyMappedDetails=dedupeMappedPlaces([
