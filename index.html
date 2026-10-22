@@ -2016,11 +2016,12 @@ async function wikipediaSearch(c,radius,id){
 const IMAGE_EVENT_OR_PERSON_RE = /\b(event|festival|concert|tournament|championship|competition|match|team|players?|skatehockey|football|soccer|basketball|volleyball|hockey|marathon|race|bicycl\w*|cycling|biciklijad\w*|kolesar\w*|utrk\w*|dirk\w*|natjecanj\w*|utakmic\w*|turnir\w*|prired\w*|sejem\w*|wedding|birthday|graduation|crowd|spectators?|audience|selfie|portrait|headshot|family|children|athletes?|school class|group photo|tombstone|gravestone|cemetery|headstone|u(?:1[0-9]|2[0-3])\b|award ceremony|celebration|party|conference|meeting|demonstration|protest|zvoncari|zvončari|maškare|maskare|karneval|carnival|pust|fešta|festa|proslava|svetkovina|procession|parade)\b/i;
 const IMAGE_SCENE_RE = /\b(panorama|skyline|cityscape|landscape|architecture|historic|old town|church|cathedral|castle|cross|monument|coast|coastal|harbou?r|bay|rooftops?|mountains?|valley|viewpoint|lookout|sunset|sunrise|bridge|fort|ruins|street|town|city|village|port|waterfront|cliff|hill|ridge|sea|island|beach|square|chapel|tower|lighthouse|building|aerial|view|scenic|landmark|nature|forest|river|lake|churchyard|wayside)\b/i;
 const IMAGE_QUERY_STOPWORDS=new Set(['photo','photos','picture','pictures','photography','landscape','landscapes','panorama','architecture','historic','historical','old','town','city','cityscape','view','viewpoint','images','image','near','around','the','with','and','for','from']);
-function normalizedPhotoTitle(value){return String(value||'').replace(/^File:/i,'').replace(/\.[a-z0-9]{2,5}$/i,'').replace(/[_-]+/g,' ').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim().toLowerCase();}
+function normalizedPhotoTitle(value){return String(value||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/^File:/i,'').replace(/\.[a-z0-9]{2,5}$/i,'').replace(/[_-]+/g,' ').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim().toLowerCase();}
 const IMAGE_REFERENCE_GENERIC_WORDS=new Set([
  ...IMAGE_QUERY_STOPWORDS,
  'street','ulica','cesta','put','road','square','trg','church','chapel','basilica','cathedral','castle','palace','monument','memorial','bridge','ruins','roman','historic','historical','landmark','museum','building','architecture','viewpoint','landscape','panorama','old','town','city','village','grad','mjesni','odbor','county','region','municipality','district','kotar','gorski','photo','photograph','croatia','slovenia','italy','austria','friuli','istria'
 ]);
+['panoramic','panoramic','vista','vistas','scenic','dusk','dawn','sunset','sunrise','overlooking','overlook','skyline','cityscape','aerial','rooftops','memorial'].forEach(word=>IMAGE_REFERENCE_GENERIC_WORDS.add(word));
 function photoPlaceTokens(value){
  return normalizedPhotoTitle(value).split(/\s+/).filter(t=>t.length>3&&!/^\d+$/.test(t)&&!/^(img|dsc|dscn|pxl|imgp|pict)\d*$/i.test(t)&&!IMAGE_REFERENCE_GENERIC_WORDS.has(t));
 }
@@ -2074,7 +2075,7 @@ function photoReferenceFitsPlace(photo,card,localityHint){
  // A distinct named landmark in the filename is a hard mismatch when it does
  // not also name the requested place/locality. This rejects Lincoln/Jefferson
  // Memorials in a Kastav sheet even if the API query appears in metadata.
- if(namedLandmarkInTitle&&!titleHasPlace&&!titleHasLocality)return false;
+ if(namedLandmarkInTitle&&foreignTitleTokens.length>0)return false;
  if(foreignTitleTokens.length>=2&&!titleHasPlace&&!titleHasLocality)return false;
  const metadataTokens=photoPlaceTokens(combined);
  const matchedMetadata=metadataTokens.filter(token=>wanted.includes(token));
