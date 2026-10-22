@@ -146,7 +146,7 @@ const PHASES=[
  {name:'Aftermath',title:'History keeps<br>the uncertainty.',description:'The armies fade back from the centre; no exact death sites or decisive tactical result are assigned to a coordinate.',confidence:'No exact death sites plotted'}
 ];
 let scene,camera,renderer,controls,terrain,terrainGroup,overlayGroup,forestGroup,villageGroup,labelGroup,riverGroup,arrowGroups={},forces={},terrainCanvas,terrainPixels,terrainInfo=null,demTiles={loaded:0,failed:0};
-let phase=0,phaseTween=null,cameraTween=null,playing=false,playTimer=null,recording=false,recorder=null,originalCaptureTracks=[],formationsVisible=true,arrowsVisible=true;
+let phase=0,phaseTween=null,cameraTween=null,playing=false,playTimer=null,recording=false,recorder=null,recordTimers=[],modernRiversLoaded=false,originalCaptureTracks=[],formationsVisible=true,arrowsVisible=true;
 const worldW=20,worldD=14,gridN=180,HEIGHT_SCALE=.0040;
 const mats={};
 function setStatus(text,state=''){ $('statusText').textContent=text;$('status').className='status'+(state?' '+state:'');}
@@ -178,7 +178,7 @@ function elevationAt(lat,lon){
  const a=decodeTerrarium(d,(y0*w+x0)*4),b=decodeTerrarium(d,(y0*w+x1)*4),c=decodeTerrarium(d,(y1*w+x0)*4),e=decodeTerrarium(d,(y1*w+x1)*4);
  return (a*(1-tx)+b*tx)*(1-ty)+(c*(1-tx)+e*tx)*ty;
 }
-function elevationY(lat,lon){return terrainInfo?THREE.MathUtils.clamp((elevationAt(lat,lon)-(terrainInfo.mean||560))*HEIGHT_SCALE,-.65,.75):.02*Math.sin(lon*28)+.03*Math.cos(lat*25);}
+function elevationY(lat,lon){if(terrainInfo?.fallback){const p=worldFor(lat,lon);return .055*Math.sin(p.x*.48)+.035*Math.cos(p.z*.72)+.02*Math.sin((p.x+p.z)*.6);}return terrainInfo?THREE.MathUtils.clamp((elevationAt(lat,lon)-(terrainInfo.mean||560))*HEIGHT_SCALE,-.65,.75):.02*Math.sin(lon*28)+.03*Math.cos(lat*25);}
 function groundY(x,z){const g=geoForWorld(x,z);return elevationY(g.lat,g.lon);}
 function buildTexture(){
  const W=768,H=512,c=document.createElement('canvas');c.width=W;c.height=H;
@@ -488,8 +488,8 @@ function recordVideo(){
  const chunks=[];const previous=phase;
  recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
  recorder.onerror=()=>setStatus('Recorder reported an error','error');
- recorder.onstop=()=>{stream.getTracks().forEach(t=>t.stop());recording=false;$('recordBtn').textContent='Record 12s';const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(blob.size){downloadBlob(blob,'kosovo-polje-1389-animated.webm');setStatus('12-second animated video exported','ready');}beginPhaseTween(previous,1000);};
- try{recorder.start(250);beginPhaseTween(0,900);let step=0;const advance=()=>{if(!recording||step>=3)return;step++;beginPhaseTween(step,950);};const timers=[setTimeout(advance,3000),setTimeout(advance,6000),setTimeout(advance,9000)];setTimeout(()=>{if(recording&&recorder&&recorder.state!=='inactive')recorder.stop();},12000);setStatus('Recording · phases change every 3 seconds');}catch(e){recording=false;$('recordBtn').textContent='Record 12s';setStatus('Recording could not start','error');}
+ recorder.onstop=()=>{recordTimers.forEach(clearTimeout);recordTimers=[];stream.getTracks().forEach(t=>t.stop());recording=false;$('recordBtn').textContent='Record 12s';const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(blob.size){downloadBlob(blob,'kosovo-polje-1389-animated.webm');setStatus('12-second animated video exported','ready');}beginPhaseTween(previous,1000);};
+ try{recorder.start(250);beginPhaseTween(0,900);let step=0;const advance=()=>{if(!recording||step>=3)return;step++;beginPhaseTween(step,950);};recordTimers=[setTimeout(advance,3000),setTimeout(advance,6000),setTimeout(advance,9000),setTimeout(()=>{if(recording&&recorder&&recorder.state!=='inactive')recorder.stop();},12000)];setStatus('Recording · phases change every 3 seconds');}catch(e){recordTimers.forEach(clearTimeout);recordTimers=[];recording=false;$('recordBtn').textContent='Record 12s';setStatus('Recording could not start','error');}
 }
 function setToggle(btn,on,onText,offText){btn.classList.toggle('active',on);btn.setAttribute('aria-pressed',String(on));btn.textContent=on?onText:offText;}
 let geos;
@@ -515,14 +515,15 @@ async function init(){
   try{await fetchDEM();info=buildTexture();}catch(e){setStatus('Modern elevation unavailable · schematic fallback terrain only','error');info=buildFallbackDEM();}
   buildTerrain(info);
   seedScene();
-  const riverOk=await loadModernRivers();
   camera.position.set(7.5,9,13.4);controls.target.copy(worldFor(BATTLE.lat,BATTLE.lon));controls.target.y=elevationY(BATTLE.lat,BATTLE.lon);controls.update();
   Object.values(forces).forEach(g=>setGroupOpacity(g,1));
   applyArrowPhase(0);beginPhaseTween(0,2100);
   if(terrainInfo.fallback)setStatus('Elevation fallback · terrain not geographically verified','error');
-  else setStatus('Modern elevation '+Math.round(info.min)+'–'+Math.round(info.max)+' m · '+(riverOk?'OSM rivers loaded':'river traces approximate'),demTiles.failed?'error':'ready');
-  window.__KOSOVO_1389_TEST__=()=>({phase,terrainLoaded:!!terrain,realDEM:!terrainInfo.fallback,elevationRange:[info.min,info.max],riverData:riverOk,formations:Object.keys(forces),activeTween:!!phaseTween,demTiles});
+  else setStatus('Modern elevation '+Math.round(info.min)+'–'+Math.round(info.max)+' m · loading modern river alignments',demTiles.failed?'error':'ready');
+  window.__KOSOVO_1389_TEST__=()=>({phase,terrainLoaded:!!terrain,realDEM:!terrainInfo.fallback,elevationRange:[info.min,info.max],riverData:modernRiversLoaded,formations:Object.keys(forces),activeTween:!!phaseTween,demTiles});
   requestAnimationFrame(animate);
+  loadModernRivers().then(ok=>{modernRiversLoaded=ok;if(!terrainInfo.fallback)setStatus('Modern elevation '+Math.round(info.min)+'–'+Math.round(info.max)+' m · '+(ok?'OSM river paths loaded':'approximate river paths'),demTiles.failed?'error':'ready');}).catch(()=>{modernRiversLoaded=false;});
+  play();
  }catch(e){console.error(e);setStatus('3D scene failed to initialise · '+e.message,'error');}
 }
 attachEvents();init();
