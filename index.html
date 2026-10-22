@@ -2766,8 +2766,9 @@ function targetVantageCandidates(bounds){
 }
 
 function hasTerrainElevation(value){return value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value));}
-const CAMERA_PATH_SPACING_METERS=170;
+const CAMERA_PATH_SPACING_METERS=85;
 const CAMERA_VIEW_SEARCH_METERS=3200;
+const CAMERA_MIN_SEPARATION_METERS=45;
 function cameraPathSuitability(tags){
  const t=tags&&typeof tags==='object'?tags:{};
  const access=String(t.access||'').toLowerCase();
@@ -2844,7 +2845,10 @@ async function overpassCameraPathSearch(center,scanId){
    const add=(point,tags,el)=>{
     if(!point||!Number.isFinite(Number(point.lat))||!Number.isFinite(Number(point.lng)))return false;
     const distance=haversine(center,{lat:Number(point.lat),lng:Number(point.lng)});
-    if(distance<180||distance>radius)return false;
+    if(distance<CAMERA_MIN_SEPARATION_METERS||distance>radius)return false;
+    // The parent OSM way can extend beyond the map viewport. Only suggest a camera
+    // position when its actual coordinate is visible in the current map frame.
+    if(map&&state.styleLoaded&&!map.getBounds().contains([Number(point.lng),Number(point.lat)]))return false;
     const score=cameraPathSuitability(tags);if(score<0)return false;
     const type=String(tags.highway||tags.leisure||tags.tourism||'mapped open space');
     const osmType=String(el.type||'way'),osmId=String(el.id||'');
@@ -2947,7 +2951,10 @@ function collectRenderedMapCameraCandidates(center,scanId){
   const add=(point,geometry,tags,feature)=>{
    if(!point||!Number.isFinite(Number(point.lat))||!Number.isFinite(Number(point.lng)))return false;
    const d=haversine(center,{lat:Number(point.lat),lng:Number(point.lng)});
-   if(d<180||d>CAMERA_VIEW_SEARCH_METERS)return false;
+   if(d<CAMERA_MIN_SEPARATION_METERS||d>CAMERA_VIEW_SEARCH_METERS)return false;
+   // A rendered vector feature's full geometry may reach outside the viewport.
+   // Its sampled camera coordinate must still be on-screen to be useful immediately.
+   if(!map.getBounds().contains([Number(point.lng),Number(point.lat)]))return false;
    if(cameraPathSuitability(tags)<0)return false;
    raw.push({lat:Number(point.lat),lng:Number(point.lng),distance:d,tags:{...tags},
     pathScore:cameraPathSuitability(tags),pathType:String(tags.highway||'mapped path'),
@@ -3092,7 +3099,11 @@ async function buildAssumedViewpoints(center,roadCandidates,scanId){
  const locality=state.detectedLocality||selected&&selected.city||'selected area';
  const targetName=selectedName&&selected.category!=='parking'?selectedName:locality;
  const targets=chooseCameraTargets(origin,targetName);
- const raw=(Array.isArray(roadCandidates)?roadCandidates:[]).filter(p=>cameraPathSuitability(p.tags)>=0&&haversine(origin,p)>=180&&haversine(origin,p)<=CAMERA_VIEW_SEARCH_METERS);
+ const viewportBounds=map&&state.styleLoaded?map.getBounds():null;
+ const raw=(Array.isArray(roadCandidates)?roadCandidates:[]).filter(p=>
+  cameraPathSuitability(p.tags)>=0&&haversine(origin,p)>=CAMERA_MIN_SEPARATION_METERS&&haversine(origin,p)<=CAMERA_VIEW_SEARCH_METERS&&
+  (!viewportBounds||viewportBounds.contains([Number(p.lng),Number(p.lat)]))
+ );
  if(!raw.length){state.assumedViewpoints=[];state.cameraCalculationPending=false;renderAssumedViewpoints();renderMarkers();return [];}
  let terrain=[];
  try{terrain=await fetchTerrainElevations([origin,...raw,...targets.map(t=>({lat:t.lat,lng:t.lng}))],scanId);}catch(error){terrain=[];}
@@ -3101,7 +3112,9 @@ async function buildAssumedViewpoints(center,roadCandidates,scanId){
  const scored=raw.map((p,i)=>{
   const elevation=terrain.length?terrain[i+1]:null;
   const delta=hasTerrainElevation(elevation)&&hasTerrainElevation(originElevation)?Number(elevation)-Number(originElevation):null;
-  const dist=p.distance,distanceScore=dist>=450&&dist<=2200?12:dist<450?4:Math.max(-10,8-(dist-2200)/120);
+  const dist=p.distance;
+  // At neighbourhood zoom, prioritise a useful nearby composition that is visible now.
+  const distanceScore=dist<70?5:dist<=850?14:dist<=2200?7:Math.max(-10,8-(dist-2200)/120);
   const elevationScore=Number.isFinite(delta)?Math.max(-12,Math.min(22,delta*0.55)):0;
   return {...p,elevation,elevationDelta:delta,preScore:p.pathScore+distanceScore+elevationScore,sector:Math.floor(initialBearingDegrees(origin,p)/45)};
  }).sort((a,b)=>b.preScore-a.preScore);
