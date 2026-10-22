@@ -153,8 +153,8 @@ jobs:
               if (appInstallDiagnostics.manifestStatus !== 200 ||
                   appInstallDiagnostics.display !== 'standalone' ||
                   appInstallDiagnostics.workerStatus !== 200 ||
-                  !appInstallDiagnostics.workerCacheV22 ||
-                  appInstallDiagnostics.buildVersion !== '2026-10-22-roadtrip-fieldguide-v21' ||
+                  !appInstallDiagnostics.workerCacheV23 ||
+                  appInstallDiagnostics.buildVersion !== '2026-10-22-photo-scout-landmark-accuracy-v23' ||
                   !appInstallDiagnostics.installButton || !appInstallDiagnostics.installButtonVisible || !appInstallDiagnostics.pinLegend) {
                 throw new Error('Photo Scout must ship as an installable standalone app with a visible pin legend: ' + JSON.stringify(appInstallDiagnostics));
               }
@@ -351,7 +351,8 @@ jobs:
               );
               console.log('MARKER_STABILITY_FIXTURE ' + JSON.stringify(markerStability));
               if (!markerStability.sameDomNodes || !markerStability.signatureStable ||
-                  !markerStability.markerCountMatchesState || !markerStability.activePinRemainsIndependent) {
+                  !markerStability.markerCountMatchesState || !markerStability.activePinRemainsIndependent ||
+                  markerStability.maxIconCenterErrorPx > 2) {
                 throw new Error('Unchanged map idle renders must reuse marker DOM nodes: ' + JSON.stringify(markerStability));
               }
               if(!livePinDiagnostics.mapReady || livePinDiagnostics.legendButtons!==5) {
@@ -462,7 +463,8 @@ jobs:
                   !mapRoleFixture.plaqueRecognized || !mapRoleFixture.fountainRecognized ||
                   !mapRoleFixture.distinctNearbyMemorialsKept || !mapRoleFixture.legacyGenericMemorialsKept ||
                   !mapRoleFixture.mappedGenericRecordsStaySeparate || !mapRoleFixture.exactSameGenericCoordinateDeduplicated ||
-                  !mapRoleFixture.darkStyleExcludedFromFallback) {
+                  !mapRoleFixture.distinctSameNameOsmNodesKept || !mapRoleFixture.namedNodePreferredToApproximateAreaCenter ||
+                  !mapRoleFixture.broadHistoricTagRecognized || !mapRoleFixture.darkStyleExcludedFromFallback) {
                 throw new Error('Small local-interest subjects must be retained without collapsing distinct nearby memorials: ' + JSON.stringify(mapRoleFixture));
               }
 
