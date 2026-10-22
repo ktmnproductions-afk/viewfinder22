@@ -567,7 +567,7 @@ footer{color:#7c8b7e;border-top-color:#e4eae1}.footer-link{color:#50715b}
 .map-pin-legend-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:9px;letter-spacing:.1em;font-weight:850;color:#5d765f}.map-pin-legend-heading #mapPinSummary{font-size:10px;letter-spacing:0;font-weight:600;color:#7a897c;white-space:nowrap}
 .map-pin-legend-items{display:flex;align-items:center;gap:15px;flex-wrap:wrap}.map-legend-item{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;color:#435b48;font-size:10px;font-weight:650}.map-legend-item b{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;border-radius:6px;background:#f0f4ed;color:#526958;font-size:9px;font-variant-numeric:tabular-nums}
 .map-legend-icon{width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-style:normal;background:#eaf2e8;color:#2b684e}.map-legend-icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.legend-landmark{background:#fff0e9;color:#b8503b}.legend-architecture{background:#e8eff9;color:#386798}.legend-viewpoint{background:#fff3db;color:#a86e16}.legend-photo{background:#e7f3e9;color:#2d7b50}.legend-parking{background:#e3f3e8;color:#1e7952;font-size:13px;font-weight:900}
+.legend-landmark{background:#fff0e9;color:#b8503b}.legend-architecture{background:#e8eff9;color:#386798}.legend-viewpoint{background:#fff3db;color:#a86e16}.legend-inferred-view{background:#eee8ff;color:#6041b6;font-style:normal;font-weight:900}.legend-photo{background:#e7f3e9;color:#2d7b50}.legend-parking{background:#e3f3e8;color:#1e7952;font-size:13px;font-weight:900}
 .scout-marker{overflow:visible;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:0;padding:0;border:0;background:transparent;box-shadow:none;outline:none;white-space:nowrap;isolation:isolate;cursor:pointer}
 .scout-marker .dot-core{position:relative;z-index:2;display:grid;place-items:center;width:31px;height:31px;flex:0 0 31px;border:2px solid rgba(255,255,255,.98);border-radius:10px;box-shadow:0 3px 12px rgba(30,50,35,.28),0 0 0 3px rgba(255,255,255,.38);background:#e6f0e6;color:#2c6249;font:850 13px/1 ui-sans-serif,system-ui}
 .scout-marker .dot-core svg{display:block;width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -714,6 +714,8 @@ html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
 .scout-marker.small-interest-pin .dot-core{background:#c76349!important;color:#fff!important;border:2px solid #fff8f4!important;box-shadow:0 0 0 3px rgba(199,99,73,.18),0 3px 10px rgba(35,55,40,.24)!important}
 .scout-marker.small-interest-pin .dot-core span{font-size:13px;line-height:1}
 .scout-marker.target-vantage-pin .dot-core{background:#3777a8!important;color:#fff!important;border:3px solid #f5fbff!important;box-shadow:0 0 0 4px rgba(55,119,168,.23),0 5px 14px rgba(20,45,70,.35)!important}
+.scout-marker.inferred-viewpoint-pin .dot-core{background:#7254c8!important;color:#fff!important;border:3px solid #fff!important;box-shadow:0 0 0 5px rgba(114,84,200,.22),0 5px 16px rgba(55,38,110,.27)!important}
+.scout-marker.inferred-viewpoint-pin .dot-core span{font-size:18px;line-height:1;font-weight:900}
 .scout-marker.target-vantage-pin .dot-core span{font-size:17px;line-height:1}
 .scout-marker.with-label{gap:0}
 .scout-marker.with-label .pin-name-label{display:none}
@@ -838,7 +840,8 @@ body.field-guide-context-only #fieldGuideGrid{display:none!important;visibility:
   <div class="map-pin-legend-items">
     <button type="button" class="map-legend-item" data-marker-filter="history" aria-pressed="true" title="Show or hide landmark pins"><i class="map-legend-icon legend-landmark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-5h6v5"/></svg></i><span>Landmarks</span><b id="legendLandmarkCount">—</b></button>
     <button type="button" class="map-legend-item" data-marker-filter="architecture" aria-pressed="true" title="Show or hide architecture pins"><i class="map-legend-icon legend-architecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V5h14v16M8 8h2m4 0h2M8 12h2m4 0h2M10 21v-4h4v4"/></svg></i><span>Architecture</span><b id="legendArchitectureCount">—</b></button>
-    <button type="button" class="map-legend-item" data-marker-filter="viewpoint" aria-pressed="true" title="Show or hide viewpoint pins"><i class="map-legend-icon legend-viewpoint"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"/><path d="m2 20 7-10 4 5 3-4 6 9H2Z"/></svg></i><span>Viewpoints</span><b id="legendViewpointCount">—</b></button>
+    <button type="button" class="map-legend-item" data-marker-filter="viewpoint" aria-pressed="true" title="Show or hide viewpoint pins"><i class="map-legend-icon legend-viewpoint"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"/><path d="m2 20 7-10 4 5 3-4 6 9H2Z"/></svg></i><span>Mapped views</span><b id="legendViewpointCount">—</b></button>
+    <button type="button" class="map-legend-item" data-marker-filter="inferredViewpoint" aria-pressed="true" title="Show or hide calculated camera-position pins"><i class="map-legend-icon legend-inferred-view">⌖</i><span>Calculated</span><b id="legendInferredViewpointCount">—</b></button>
     <button type="button" class="map-legend-item" data-marker-filter="photoSpot" aria-pressed="true" title="Show or hide photo-spot pins"><i class="map-legend-icon legend-photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v12H3Z"/><circle cx="12" cy="14" r="4"/></svg></i><span>Photo spots</span><b id="legendPhotoSpotCount">—</b></button>
     <button type="button" class="map-legend-item" data-marker-filter="parking" aria-pressed="true" title="Show or hide parking pins"><i class="map-legend-icon legend-parking">P</i><span>Parking</span><b id="legendParkingCount">—</b></button>
   </div>
@@ -952,6 +955,12 @@ body.field-guide-context-only #fieldGuideGrid{display:none!important;visibility:
       <div class="result-list" id="scenicResults"><div class="empty">Drop a pin to scout real mapped viewpoints and elevated landscape candidates around the city—not only inside it.</div></div>
     </div>
   </details>
+  <details class="nav-panel" id="assumedViewpointsPanel">
+    <summary><span class="nav-title">Calculated camera positions</span><span class="count" id="assumedViewpointCount">—</span></summary>
+    <div class="nav-panel-content"><p class="nav-panel-note">Purple pins are estimated positions sampled from mapped paths, walkways and open-space features. Ranking combines route type, distance, relative terrain elevation and terrain-only sightline samples. Copernicus DEM GLO-90 is about 90 m resolution; buildings, trees, access and safe stopping are not represented, so no view is guaranteed.</p>
+      <div class="result-list" id="assumedViewpointResults"><div class="empty">Click a place on the map to calculate possible camera positions around it.</div></div>
+    </div>
+  </details>
   <details class="nav-panel" id="parkingPanel">
     <summary><span class="nav-title">Parking near your stop</span><span class="count" id="parkingCount">—</span></summary>
     <div class="nav-panel-content"><p class="nav-panel-note">Mapped parking features only—not live availability or confirmation of public access. Check signs and entrances locally.</p>
@@ -975,7 +984,7 @@ body.field-guide-context-only #fieldGuideGrid{display:none!important;visibility:
     <div class="nav-panel-content"><div id="savedResults"><div class="empty">Save a pin or selected place to build a road-trip list on this device.</div></div></div>
   </details>
 </div>
-<footer>Map data © <a class="footer-link" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Vector basemap by <a class="footer-link" href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>. History links and photo licences are shown where available. Always verify road access, parking signs and private-property restrictions.</footer>
+<footer>Map data © <a class="footer-link" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Vector basemap by <a class="footer-link" href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> · Terrain elevations: Copernicus DEM via <a class="footer-link" href="https://open-meteo.com/en/docs/elevation-api" target="_blank" rel="noopener">Open-Meteo</a>. History links and photo licences are shown where available. Always verify road access, parking signs and private-property restrictions.</footer>
 </aside>
 <div class="map-credit">Made for curious photographers · Photo Scout</div>
 <script src="https://js.puter.com/v2/"></script>
@@ -2287,10 +2296,10 @@ async function commonsTextSearch(queries,c,id){
  }).sort((a,b)=>(b.relevance||0)-(a.relevance||0)).slice(0,18);
 }
 function cardHTML(item){
- const icon=item.category==='parking'?'P':item.category==='history'?'H':item.category==='viewpoint'?'↗':item.category==='photoSpot'?'✦':item.category==='photo'?'✦':'A';
+ const icon=item.category==='parking'?'P':item.category==='history'?'H':item.category==='viewpoint'?'↗':item.category==='inferredViewpoint'?'⌖':item.category==='photoSpot'?'✦':item.category==='photo'?'✦':'A';
  const title=esc(item.name); const dist=distanceLabel(item.distance||0);
- const desc=item.category==='photoSpot'?(item.why||item.summary||'Mapped scenic feature that may suit a landscape or cityscape composition.'):item.summary||((item.tags&&item.tags.description)||((item.tags&&item.tags.tourism==='viewpoint')?'Mapped viewpoint; the exact camera position and view are not independently verified.':'Mapped place. Check the source and access details before travelling.'));
- const typeLabel=item.category==='parking'?'Parking':item.category==='history'?'History / place':item.category==='viewpoint'?'Viewpoint / nature':item.category==='photoSpot'?'Photo spot · '+(item.confidence||'candidate'):'Architecture';
+ const desc=item.isAssumedViewpoint?(item.summary||item.why||'Calculated camera position; visibility and access are estimates.'):item.category==='photoSpot'?(item.why||item.summary||'Mapped scenic feature that may suit a landscape or cityscape composition.'):item.summary||((item.tags&&item.tags.description)||((item.tags&&item.tags.tourism==='viewpoint')?'Mapped viewpoint; the exact camera position and view are not independently verified.':'Mapped place. Check the source and access details before travelling.'));
+ const typeLabel=item.isAssumedViewpoint?'Calculated camera position · '+(item.confidence||'candidate'):item.category==='parking'?'Parking':item.category==='history'?'History / place':item.category==='viewpoint'?'Viewpoint / nature':item.category==='photoSpot'?'Photo spot · '+(item.confidence||'candidate'):'Architecture';
  const tagLine=item.source+' · '+typeLabel;
  return '<article class="spot-card" data-item-id="'+esc(item.id)+'" tabindex="0" role="button"><div class="spot-icon '+esc(item.category)+'">'+icon+'</div><div class="spot-body"><div class="spot-title">'+title+'</div><div class="spot-meta"><span>'+esc(tagLine)+'</span></div>'+(desc?'<div class="spot-summary">'+esc(desc)+'</div>':'')+'</div><div class="spot-distance">'+dist+'</div></article>';
 }
@@ -2659,16 +2668,16 @@ function refreshBasemapParking(){
 function updateMapPinLegend(){
  const current=state.markers.flatMap(marker=>marker.__scoutItems||[]);
  const count=function(items,category){return items.filter(item=>item.category===category).length;};
- const history=count(current,'history'),architecture=count(current,'architecture'),viewpoints=count(current,'viewpoint');
+ const history=count(current,'history'),architecture=count(current,'architecture'),viewpoints=count(current,'viewpoint'),calculated=count(current,'inferredViewpoint');
  const photoSpots=count(current,'photoSpot'),parking=count(current,'parking');
  const put=function(id,value){const node=$(id);if(node)node.textContent=String(value);};
- put('legendLandmarkCount',history);put('legendArchitectureCount',architecture);put('legendViewpointCount',viewpoints);
+ put('legendLandmarkCount',history);put('legendArchitectureCount',architecture);put('legendViewpointCount',viewpoints);put('legendInferredViewpointCount',calculated);
  put('legendPhotoSpotCount',photoSpots);put('legendParkingCount',parking);
- const total=history+architecture+viewpoints+photoSpots;
+ const total=history+architecture+viewpoints+calculated+photoSpots;
  put('mapPinSummary',state.scanCount?total+' place pins in view':'Map ready to scout');
 }
 
-const markerLayerVisibility={history:true,architecture:true,viewpoint:true,photoSpot:true,parking:true};
+const markerLayerVisibility={history:true,architecture:true,viewpoint:true,inferredViewpoint:true,photoSpot:true,parking:true};
 function normalizeMapMarker(item){
  if(!item||!Number.isFinite(Number(item.lat))||!Number.isFinite(Number(item.lng??item.lon)))return null;
  const tags=item.tags&&typeof item.tags==='object'?item.tags:{};
@@ -3010,6 +3019,7 @@ function renderMarkers(){
  const architecture=allResults.filter(r=>r.category==='architecture');
  const targetVantages=markerLayerVisibility.viewpoint?targetVantageCandidates(bounds):[];
  const targetVantageSourceIds=new Set(targetVantages.map(item=>item.sourceScenicId));
+ const inferredViewpoints=markerLayerVisibility.inferredViewpoint?(state.assumedViewpoints||[]).filter(item=>inCurrentMapBounds(item,bounds)):[];
  const scenic=state.scenicSpots.map(item=>normalizeMapMarker({...item,category:'photoSpot'})).filter(Boolean)
   .filter(item=>markerLayerVisibility.photoSpot&&inCurrentMapBounds(item,bounds)&&!targetVantageSourceIds.has(item.id))
   .sort((a,b)=>(Number(b.scenicScore)||0)-(Number(a.scenicScore)||0)||(a.distance||Infinity)-(b.distance||Infinity))
@@ -3027,7 +3037,7 @@ function renderMarkers(){
  const parkingMarkers=parkingMarkersRaw.map(item=>nearestParking&&!item.clusterMembers&&item.id===nearestParking.id?{...item,isRecommendedParking:true}:item);
  // Keep each pin at its real geographic coordinate. Only include candidates
  // inside the viewport; pan/zoom causes a stable idle pass to fill new locations.
- const visible=[...history,...viewpoints,...targetVantages,...architecture,...scenic,...parkingMarkers];
+ const visible=[...history,...viewpoints,...targetVantages,...inferredViewpoints,...architecture,...scenic,...parkingMarkers];
  // Prefer a named/referenced feature when multiple OSM nodes describe the same place.
  const specificity=item=>osmCoordinatePriority(item)*100+(isGenericMapFeatureLabel(item.name,item)?0:15)+(item.tags&&(item.tags.wikipedia||item.tags.wikidata)?8:0)+(String(item.name||'').length>18?2:0);
  const seen=[];
@@ -3035,7 +3045,7 @@ function renderMarkers(){
  const zoom=map.getZoom();
  const labelLimit=zoom>=17?12:zoom>=15.8?6:0;
  const namedLabelCandidates=dedupedVisible.filter(item=>{
-  const categoryCanLabel=['history','architecture','viewpoint'].includes(item.category);
+  const categoryCanLabel=['history','architecture','viewpoint','inferredViewpoint'].includes(item.category);
   const meaningfulName=!isGenericMapFeatureLabel(item.name,item)&&!/^unnamed mapped/i.test(String(item.name||''));
   const closeLocalDetail=!!item.isSmallInterest&&zoom>=15.8;
   return categoryCanLabel&&!item.isTargetVantage&&(meaningfulName||closeLocalDetail);
@@ -3058,7 +3068,7 @@ function renderMarkers(){
   visible:dedupedVisible.map(item=>[
    item.id||'',item.category||'',Number(item.lat).toFixed(6),Number(item.lng).toFixed(6),
    item.name||'',Math.round(Number(item.distance)||0),item.isSmallInterest?1:0,
-   item.isTargetVantage?1:0,item.viewTargetName||'',item.viewBearingLabel||'',
+   item.isTargetVantage?1:0,item.viewTargetName||'',item.viewBearingLabel||'',item.isAssumedViewpoint?1:0,item.primaryTargetStatus||'',item.score||0,
    item.isRecommendedParking?1:0,item.clusterSize||0,
    item.tags&&item.tags.wikipedia?1:0,item.tags&&item.tags.wikidata?1:0
   ]),
@@ -3074,13 +3084,22 @@ function renderMarkers(){
   const duplicate=seen.some(other=>areDuplicateMapMarkers(other,item));
   if(duplicate)return;
   seen.push(item);
-  const label=item.isTargetVantage
+  const label=item.isAssumedViewpoint
+   ?'Calculated camera position · '+item.name+' · '+distanceLabel(item.distance)+' from selected pin · '+item.primaryTargetStatus+' · generated estimate, check access and actual view.'
+   :item.isTargetVantage
    ?'Potential view toward '+item.viewTargetName+' · '+item.viewBearingLabel+' · '+distanceLabel(item.distance)+' straight-line. Line of sight not verified.'
    :item.category==='photoSpot'?'Photo subject · '+item.name+' · '+distanceLabel(item.distance)
    :item.category==='parking'?(item.clusterMembers?'Parking cluster · '+item.clusterSize+' mapped areas · '+distanceLabel(item.distance):((item.isRecommendedParking?'Closest mapped parking · ':isParkingEntrance(item)?'Mapped parking entrance · ':'Mapped parking area/point · ')+item.name+' · '+distanceLabel(item.distance)))
    :item.name+' · '+distanceLabel(item.distance);
   const el=markerEl(item.category,label);
-  if(item.isTargetVantage){
+  if(item.isAssumedViewpoint){
+    el.classList.add('inferred-viewpoint-pin');
+    const core=el.querySelector('.dot-core');
+    if(core)core.innerHTML='<span>⌖</span>';
+    el.title=label;
+    el.setAttribute('aria-label',label);
+   }
+   if(item.isTargetVantage){
    el.classList.add('target-vantage-pin');
    const core=el.querySelector('.dot-core');
    if(core)core.innerHTML='<span>↟</span>';
@@ -3110,7 +3129,7 @@ function renderMarkers(){
   const offset=[0,0];
   // Explicit z-order stops nearby building/history dots from intercepting taps on
   // parking destinations when their coordinates are close at neighbourhood zoom.
-  el.style.zIndex=item.category==='parking'?'250':item.category==='history'?'900':item.category==='architecture'?'850':item.category==='viewpoint'?'1000':item.category==='photoSpot'?'750':'500';
+  el.style.zIndex=item.category==='parking'?'250':item.category==='history'?'900':item.category==='architecture'?'850':item.category==='inferredViewpoint'?'1100':item.category==='viewpoint'?'1000':item.category==='photoSpot'?'750':'500';
   if(item.clusterMembers){
    el.classList.add('parking-cluster');
    el.querySelector('.dot-core').textContent='×'+item.clusterSize;
@@ -3131,7 +3150,7 @@ function renderMarkers(){
   }
   const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
   m.__scoutItems=item.clusterMembers||[item];
-  if(typeof m.setZIndex==='function')m.setZIndex(item.category==='parking'?1500:item.category==='history'?5200:item.category==='architecture'?5000:item.category==='viewpoint'?5400:item.category==='photoSpot'?4700:4000);
+  if(typeof m.setZIndex==='function')m.setZIndex(item.category==='parking'?1500:item.category==='history'?5200:item.category==='architecture'?5000:item.category==='inferredViewpoint'?5600:item.category==='viewpoint'?5400:item.category==='photoSpot'?4700:4000);
   state.markers.push(m);
  });
  // The selected-place parking list is populated independently from the wider search.
@@ -3298,6 +3317,8 @@ async function scanAt(c,opts){
      if(id!==state.scanId)return;
  state.scanSourcesPending=false;
  mergePlaces();
+ await buildAssumedViewpoints(c,state.cameraRoadCandidates,id);
+ if(id!==state.scanId)return;
  renderResults();renderPhotos();renderMarkers();updateRadius();
  // End the critical map scan as soon as geographic results are available.
  // Image reference searching is optional and must never block pin visibility.
@@ -3867,6 +3888,12 @@ async function renderDetailPhotoRefs(item){
  });
 }
 function selectedShotIdeasFor(item){
+ if(item&&item.isAssumedViewpoint){
+  const target=String(item.viewTargetName||state.detectedLocality||'the selected place');
+  const visible=(item.visibleTargets||[]).filter(v=>!v.isPrimary&&v.lineOfSightStatus==='terrain-clear');
+  const targetHint=visible.length?'Consider '+visible.slice(0,2).map(v=>v.name+' to the '+v.bearingLabel).join(' and ')+' if the real-world view is unobstructed.':'Use the calculated bearing as a starting point, then check buildings, trees and the actual skyline on site.';
+  return ['Wide · 18–24 mm: frame '+target+' within the wider landscape, using the real foreground and rooftops for depth.','Context · 35–70 mm: tighten around '+target+' and include a contextual feature. '+targetHint,'Compressed · 100–150 mm: isolate a tower, roofline or distant ridge only if it is genuinely visible; use target directions as a scouting guide, not proof.'];
+ }
  const name=String(item&&item.name||'this place');
  const tags=item&&item.tags||{};
  const nearbyContext=item&&item.isUserPin
@@ -4128,12 +4155,13 @@ function selectItem(item,options){
  }
  // Map place selection updates the on-page photography idea and nearby references.
  $('spotDetail').classList.add('show');
- $('detailEyebrow').textContent=item.isTargetVantage?'Potential view toward pinned location · check line of sight':item.isSmallInterest?'Small historic detail · local photo subject':item.isUserPin?'Map pin · photography brief':item.category==='photo'?'Visual reference · source-linked':item.category==='photoSpot'?'Photo spot candidate · evidence-ranked':item.category==='parking'?'Parking candidate · verify on arrival':item.category==='history'?'History & place · sourced summary':item.category==='viewpoint'?'Mapped viewpoint · verify the view':'Photographic subject · map data';
+ $('detailEyebrow').textContent=item.isAssumedViewpoint?'Calculated camera position · estimated visibility':item.isTargetVantage?'Potential view toward pinned location · check line of sight':item.isSmallInterest?'Small historic detail · local photo subject':item.isUserPin?'Map pin · photography brief':item.category==='photo'?'Visual reference · source-linked':item.category==='photoSpot'?'Photo spot candidate · evidence-ranked':item.category==='parking'?'Parking candidate · verify on arrival':item.category==='history'?'History & place · sourced summary':item.category==='viewpoint'?'Mapped viewpoint · verify the view':'Photographic subject · map data';
  $('detailTitle').textContent=item.name;
  $('detailMeta').textContent=(Number.isFinite(item.distance)?distanceLabel(item.distance)+' from pin · ':'')+item.source+' · '+coordLabel({lat:item.lat,lng:item.lng});
  let history=item.history||item.summary||'No short history summary is available for this place yet. Open the source record to inspect the mapped details.';
  if(item.isUserPin)history='You placed this pin manually. The composition sketch and AI image are creative planning aids, not a verified view of the exact coordinate. Photo spots, historical records, parking and source-linked photographs will be shown only when returned by their geographic sources. Check access and road safety before travelling.';
- else if(item.isTargetVantage)history='POTENTIAL VIEW TOWARD '+String(item.viewTargetName||'your pinned location').toUpperCase()+': '+String(item.viewBearingLabel||'')+' direction · '+distanceLabel(Number(item.distance)||0)+' straight-line. '+(item.why||'This is a suggested framing position, not a verified sightline. Check terrain, buildings, trees, public access and road safety.');
+ else if(item.isAssumedViewpoint){const clear=(item.visibleTargets||[]).filter(v=>v.lineOfSightStatus==='terrain-clear'&&!v.isPrimary);const possible=(item.possibleTargets||[]).filter(v=>!v.isPrimary);history='CALCULATED CAMERA POSITION · '+String(item.directionFromTarget||'')+' of '+String(item.viewTargetName||'the selected place')+' · '+distanceLabel(Number(item.distance)||0)+' away. '+(hasTerrainElevation(item.elevation)?Math.round(item.elevation)+' m DEM terrain elevation; ':'')+(Number.isFinite(item.elevationDelta)?(item.elevationDelta>=0?'+':'')+Math.round(item.elevationDelta)+' m relative elevation. ':'')+(item.primaryTargetStatus==='terrain-clear'?'Terrain-only sightline to the selected place looks open. ':item.primaryTargetStatus==='terrain-blocked'?'Terrain-only check suggests an obstruction toward the selected place. ':'Terrain-only sightline is unverified. ')+'Camera starting point: '+String(item.cameraPlan||cameraLensForDistance(item.distance))+'. '+(clear.length?'Terrain-clear landmark directions (structures and trees not modelled): '+clear.map(v=>v.name+' · '+v.bearingLabel+' · '+distanceLabel(v.distance)+' · '+v.recommendedLens).join('; ')+'. ':possible.length?'Possible landmark targets, requiring an on-site sightline check: '+possible.slice(0,4).map(v=>v.name+' · '+v.bearingLabel+' · '+distanceLabel(v.distance)).join('; ')+'. ':'No additional landmark has a reliable terrain-clear estimate. ')+(item.why||'Generated from mapped route geometry and terrain data.');}
+ else if(item.isTargetVantage)='POTENTIAL VIEW TOWARD '+String(item.viewTargetName||'your pinned location').toUpperCase()+': '+String(item.viewBearingLabel||'')+' direction · '+distanceLabel(Number(item.distance)||0)+' straight-line. '+(item.why||'This is a suggested framing position, not a verified sightline. Check terrain, buildings, trees, public access and road safety.');
  else if(item.category==='photoSpot')history='WHY IT IS SUGGESTED: '+(item.why||'The mapped feature may work as a scenic photo subject.')+' This is a data-based scouting candidate, not a guarantee of an unobstructed view. Check the route, public access, terrain, private land and safe stopping before travelling. The point is a mapped feature, not necessarily the exact place where a photographer should stand.';
  if(item.category==='photo') history='Image reference by '+(item.artist||'an unlisted photographer')+'. Licence: '+(item.license||'see the original file page')+'. '+(item.geotagged?'This image is geotagged near this coordinate; the exact camera position is not independently confirmed.':'This image matches the area/topic but has no verified shooting coordinates.');
  if(item.category==='parking')history='Mapped parking area/point from OpenStreetMap data. The marker may indicate the centre of a mapped lot, not its vehicle entrance. This does not confirm that parking is currently open, free, legal, safe, or available. Check the source geometry, approach road, access signs and restrictions before driving in.';
@@ -4141,7 +4169,7 @@ function selectItem(item,options){
  renderSelectedShotIdeas(item);
  renderPinActionPreview(item);
  renderPinIdeaBoard(item);
- $('detailHistory').innerHTML='<p>'+esc(history)+'</p>'+(item.category==='photoSpot'||item.isTargetVantage?'<p>'+esc(gear)+'</p>':'')+'<p><a class="footer-link" href="'+esc(safeLink(item.wikiUrl||item.sourceUrl||'#'))+'" target="_blank" rel="noopener">Open source / more history ↗</a></p>';
+ $('detailHistory').innerHTML='<p>'+esc(history)+'</p>'+(item.category==='photoSpot'||item.isTargetVantage||item.isAssumedViewpoint?'<p>'+esc(gear)+'</p>':'')+'<p><a class="footer-link" href="'+esc(safeLink(item.wikiUrl||item.sourceUrl||'#'))+'" target="_blank" rel="noopener">Open source / more history ↗</a></p>';
  renderSpotParking(item);
  loadParkingNearSelected(item);
  renderDetailPhotoRefs(item);
