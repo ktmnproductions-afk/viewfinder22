@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-27-photo-scout-historic-pin-accuracy-v32">
+<meta name="photo-scout-build" content="2026-10-27-photo-scout-outward-target-pins-v33">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -718,8 +718,9 @@ html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
 .scout-marker.inferred-viewpoint-pin .dot-core span{font-size:18px;line-height:1;font-weight:900}
 .scout-marker.target-vantage-pin .dot-core span{font-size:17px;line-height:1}
 /* Outward-view targets keep their original landmark glyph and receive a separate cyan sightline ring. */
-.scout-marker.outward-view-target .dot-core{outline:3px solid #16a8b7!important;outline-offset:4px;box-shadow:0 0 0 7px rgba(22,168,183,.17),0 4px 13px rgba(13,88,98,.24)!important}
-.scout-marker.outward-view-target .dot-core::after{content:'↗';position:absolute;right:-8px;top:-8px;display:grid;place-items:center;width:15px;height:15px;border:1.5px solid #fff;border-radius:50%;background:#087f8e;color:#fff;font:900 10px/1 ui-sans-serif,system-ui;box-shadow:0 2px 5px rgba(20,60,65,.25)}
+.scout-marker.outward-view-pin .dot-core{background:#087f8e!important;color:#fff!important;border:3px solid #eaffff!important;box-shadow:0 0 0 5px rgba(22,168,183,.28),0 5px 16px rgba(13,88,98,.35)!important}
+.scout-marker.outward-view-pin .dot-core span{font-size:18px;line-height:1;font-weight:950}
+.scout-marker.outward-view-pin .pin-name-label{border-color:#9cecf0;color:#075b64}
 .scout-marker.with-label{gap:0}
 .scout-marker.with-label .pin-name-label{display:none}
 .scout-marker.with-label.show-pin-label .pin-name-label{display:block}
@@ -2721,13 +2722,13 @@ function refreshBasemapParking(){
 function updateMapPinLegend(){
  const current=state.markers.flatMap(marker=>marker.__scoutItems||[]);
  const count=function(items,category){return items.filter(item=>item.category===category).length;};
- const history=count(current,'history'),architecture=count(current,'architecture'),viewpoints=count(current,'viewpoint'),calculated=count(current,'inferredViewpoint');
+ const history=count(current,'history'),architecture=count(current,'architecture'),viewpoints=count(current,'viewpoint'),calculated=count(current,'inferredViewpoint'),outward=count(current,'outwardView');
  const photoSpots=count(current,'photoSpot'),parking=count(current,'parking');
  const put=function(id,value){const node=$(id);if(node)node.textContent=String(value);};
  put('legendLandmarkCount',history);put('legendArchitectureCount',architecture);put('legendViewpointCount',viewpoints);put('legendInferredViewpointCount',calculated);
  put('legendPhotoSpotCount',photoSpots);put('legendParkingCount',parking);
- const outward=current.filter(item=>item.isOutwardViewTarget).length;put('legendOutwardViewCount',outward);
- const total=history+architecture+viewpoints+calculated+photoSpots;
+ put('legendOutwardViewCount',outward);
+ const total=history+architecture+viewpoints+calculated+outward+photoSpots;
  put('mapPinSummary',state.scanCount?total+' place pins'+(outward?' · '+outward+' outward views':'')+' in view':'Map ready to scout');
 }
 
@@ -3391,16 +3392,14 @@ function renderMarkers(){
   return;
  }
  const bounds=map.getBounds();
- const outwardById=new Map((state.outwardViews||[]).map(item=>[String(item.sourceItemId||item.id),item]));
- const applyOutwardView=item=>{const outward=markerLayerVisibility.outwardView&&outwardById.get(String(item.sourceScenicId||item.id));return outward?{...item,isOutwardViewTarget:true,outwardViewInfo:outward.outwardViewInfo||outward}:item;};
- const allResults=state.results.map(normalizeMapMarker).filter(Boolean).map(applyOutwardView).filter(item=>item.category!=='parking'&&markerLayerVisibility[item.category]!==false&&inCurrentMapBounds(item,bounds));
+  const allResults=state.results.map(normalizeMapMarker).filter(Boolean).filter(item=>item.category!=='parking'&&markerLayerVisibility[item.category]!==false&&inCurrentMapBounds(item,bounds));
  const history=allResults.filter(r=>r.category==='history');
  const viewpoints=allResults.filter(r=>r.category==='viewpoint');
  const architecture=allResults.filter(r=>r.category==='architecture');
  const targetVantages=markerLayerVisibility.viewpoint?targetVantageCandidates(bounds):[];
  const targetVantageSourceIds=new Set(targetVantages.map(item=>item.sourceScenicId));
  const inferredViewpoints=markerLayerVisibility.inferredViewpoint?(state.assumedViewpoints||[]).filter(item=>inCurrentMapBounds(item,bounds)):[];
- const scenic=state.scenicSpots.map(item=>normalizeMapMarker({...item,category:'photoSpot'})).filter(Boolean).map(applyOutwardView)
+ const scenic=state.scenicSpots.map(item=>normalizeMapMarker({...item,category:'photoSpot'})).filter(Boolean)
   .filter(item=>markerLayerVisibility.photoSpot&&inCurrentMapBounds(item,bounds)&&!targetVantageSourceIds.has(item.id))
   .sort((a,b)=>(Number(b.scenicScore)||0)-(Number(a.scenicScore)||0)||(a.distance||Infinity)-(b.distance||Infinity))
   .slice(0,map.getZoom()>=14.5?8:14);
@@ -3415,9 +3414,14 @@ function renderMarkers(){
  }).slice(0,8);
  const parkingMarkersRaw=map.getZoom()>=14.5?parking:clusterParkingMarkers(parking);
  const parkingMarkers=parkingMarkersRaw.map(item=>nearestParking&&!item.clusterMembers&&item.id===nearestParking.id?{...item,isRecommendedParking:true}:item);
+ // Distinct subject pins show what may be photographed FROM the selected location.
+ // They are independent of the original landmarks and can be hidden with the Outward views toggle.
+ const outwardTargets=markerLayerVisibility.outwardView?(state.outwardViews||[])
+  .filter(item=>item.isOutwardViewTarget&&inCurrentMapBounds(item,bounds))
+  .map(item=>({...item,id:'outward-view-target-'+String(item.sourceItemId||item.id),category:'outwardView',isOutwardViewTarget:true,source:'Calculated outward view'})):[];
  // Keep each pin at its real geographic coordinate. Only include candidates
  // inside the viewport; pan/zoom causes a stable idle pass to fill new locations.
- const visible=[...history,...viewpoints,...targetVantages,...inferredViewpoints,...architecture,...scenic,...parkingMarkers];
+ const visible=[...history,...viewpoints,...targetVantages,...inferredViewpoints,...outwardTargets,...architecture,...scenic,...parkingMarkers];
  // Prefer a named/referenced feature when multiple OSM nodes describe the same place.
  const specificity=item=>osmCoordinatePriority(item)*100+(isGenericMapFeatureLabel(item.name,item)?0:15)+(item.tags&&(item.tags.wikipedia||item.tags.wikidata)?8:0)+(String(item.name||'').length>18?2:0);
  const seen=[];
@@ -3481,7 +3485,9 @@ function renderMarkers(){
     el.setAttribute('aria-label',label);
    }
    if(item.isOutwardViewTarget){
-    el.classList.add('outward-view-target');
+    el.classList.add('outward-view-pin');
+     const core=el.querySelector('.dot-core');
+     if(core)core.innerHTML='<span>↗</span>';
     el.title=label+' · outward view from selected pin: '+String(item.outwardViewInfo&&item.outwardViewInfo.bearingLabel||'')+' · '+String(item.outwardViewInfo&&item.outwardViewInfo.statusLabel||'terrain unverified');
     el.setAttribute('aria-label',el.title);
    }
@@ -3515,7 +3521,7 @@ function renderMarkers(){
   const offset=[0,0];
   // Explicit z-order stops nearby building/history dots from intercepting taps on
   // parking destinations when their coordinates are close at neighbourhood zoom.
-  el.style.zIndex=item.category==='parking'?'250':item.category==='history'?'900':item.category==='architecture'?'850':item.category==='inferredViewpoint'?'1100':item.category==='viewpoint'?'1000':item.category==='photoSpot'?'750':'500';
+  el.style.zIndex=item.category==='parking'?'250':item.category==='outwardView'?'1400':item.category==='history'?'900':item.category==='architecture'?'850':item.category==='inferredViewpoint'?'1100':item.category==='viewpoint'?'1000':item.category==='photoSpot'?'750':'500';
   if(item.clusterMembers){
    el.classList.add('parking-cluster');
    el.querySelector('.dot-core').textContent='×'+item.clusterSize;
@@ -3536,7 +3542,7 @@ function renderMarkers(){
   }
   const m=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([item.lng,item.lat]).addTo(map);
   m.__scoutItems=item.clusterMembers||[item];
-  if(typeof m.setZIndex==='function')m.setZIndex(item.category==='parking'?1500:item.category==='history'?5200:item.category==='architecture'?5000:item.category==='inferredViewpoint'?5600:item.category==='viewpoint'?5400:item.category==='photoSpot'?4700:4000);
+  if(typeof m.setZIndex==='function')m.setZIndex(item.category==='outwardView'?6200:item.category==='parking'?1500:item.category==='history'?5200:item.category==='architecture'?5000:item.category==='inferredViewpoint'?5600:item.category==='viewpoint'?5400:item.category==='photoSpot'?4700:4000);
   state.markers.push(m);
  });
  // The selected-place parking list is populated independently from the wider search.
