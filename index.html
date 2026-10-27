@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f1">
 <meta name="description" content="A visual field app for scouting real photography locations, historic landmarks, viewpoints, parking, photo references and camera-specific shot ideas.">
-<meta name="photo-scout-build" content="2026-10-22-photo-scout-calculated-viewpoints-v31">
+<meta name="photo-scout-build" content="2026-10-27-photo-scout-historic-pin-accuracy-v32">
 <title>Photo Scout — Photography Planner</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
@@ -1099,6 +1099,10 @@ window.__PHOTO_SCOUT_TEST__ = {
    {...legacyMappedMemorialB,distance:20}
   ]);
   const distinctNodeRecords=dedupeMappedPlaces([{...nearbyMemorialA,distance:10},{...nearbyMemorialB,distance:20}]);
+  const areaRing=[[14.4415,45.3270],[14.4430,45.3270],[14.4430,45.3280],[14.4415,45.3280],[14.4415,45.3270]];
+  const offsetHistoricNode={category:'history',name:'Memorial at Test Square',lat:45.32725,lng:14.4419,distance:12,osmElementType:'node',osmId:'4101',sourceUrl:'https://www.openstreetmap.org/node/4101',tags:{historic:'memorial'}};
+  const offsetMemorialArea={category:'history',name:'Memorial at Test Square',lat:45.3275,lng:14.44225,distance:8,osmElementType:'way',osmId:'5101',sourceUrl:'https://www.openstreetmap.org/way/5101',tags:{historic:'memorial'},coordinateMethod:'polygon-centroid',coordinateFootprint:areaRing};
+  const geometryMatchedMemorial=dedupeMappedPlaces([{...offsetMemorialArea},{...offsetHistoricNode}]);
   const poiNode={category:'history',name:'Centred Chapel',lat:45.3271,lng:14.4422,osmElementType:'node',osmId:'2011',sourceUrl:'https://www.openstreetmap.org/node/2011',tags:{amenity:'place_of_worship'}};
   const footprint={category:'history',name:'Centred Chapel',lat:45.32713,lng:14.4421,osmElementType:'way',osmId:'3011',sourceUrl:'https://www.openstreetmap.org/way/3011',tags:{building:'chapel'},coordinateMethod:'polygon-centroid',coordinateRank:35};
   const centredChapel=dedupeMappedPlaces([{...poiNode,distance:10},{...footprint,distance:5}]);
@@ -1128,6 +1132,10 @@ window.__PHOTO_SCOUT_TEST__ = {
    explicitMemorialNodePreferredToAreaCentroid:centredMemorial.length===1&&osmFeatureReference(centredMemorial[0])?.type==='node'&&centredMemorial[0].lat===explicitMemorialNode.lat,
    polygonCentroidDiffersFromBoundingBoxCenter:polygonCentroid&&polygonCentroid.method==='polygon-centroid'&&Math.abs(polygonCentroid.lat-45.3272)>0.00001,
    broadHistoricTagRecognized:localInterestLabel({historic:'city_gate'})==='Historic city gate',
+   buildingMonumentRecognized:localInterestLabel({building:'monument'})==='Monument',
+   manMadeMemorialRecognized:localInterestLabel({man_made:'memorial'})==='Memorial',
+   buildingWaysideShrineRecognized:localInterestLabel({building:'wayside_shrine'})==='Wayside shrine',
+   offsetHistoricPointInsideFootprintWins:geometryMatchedMemorial.length===1&&osmFeatureReference(geometryMatchedMemorial[0])?.type==='node'&&geometryMatchedMemorial[0].lat===offsetHistoricNode.lat,
    darkStyleExcludedFromFallback:!vectorFallbackOrder.includes('dark')
   };
  },
@@ -1650,9 +1658,12 @@ function resolveOverpassCoordinate(element){
 }
 function hasExplicitHistoricPoint(tags){
  const t=tags&&typeof tags==='object'?tags:{};
- return t.amenity==='memorial'||!!t.memorial||!!t['memorial:type']||
-  ['memorial','monument','wayside_cross','wayside_shrine','statue','obelisk','plaque','milestone','boundary_stone','historic_marker'].includes(String(t.historic||'').toLowerCase())||
-  ['monument','obelisk','plaque','statue','milestone','boundary_stone','cross'].includes(String(t.man_made||'').toLowerCase());
+ return t.amenity==='memorial'||t.amenity==='place_of_worship'||!!t.memorial||!!t['memorial:type']||
+  ['memorial','monument','wayside_cross','wayside_shrine','statue','obelisk','plaque','milestone','boundary_stone','historic_marker','historic_marker','chapel','church','city_gate','fort','castle','archaeological_site'].includes(String(t.historic||'').toLowerCase())||
+  ['monument','memorial','obelisk','plaque','statue','milestone','boundary_stone','cross'].includes(String(t.man_made||'').toLowerCase())||
+  ['monument','historic','wayside_shrine','wayside_chapel'].includes(String(t.building||'').toLowerCase())||
+  ['attraction','museum','artwork'].includes(String(t.tourism||'').toLowerCase())||
+  (!!t.heritage&&String(t.heritage)!=='no');
 }
 
 function osmCoordinatePriority(item){
@@ -1673,15 +1684,46 @@ function areSameOsmFeature(a,b){
  const aa=osmFeatureReference(a),bb=osmFeatureReference(b);
  return !!(aa&&bb&&aa.type===bb.type&&aa.id===bb.id);
 }
+function compactCoordinateFootprint(geometry){
+ if(!Array.isArray(geometry)||geometry.length<4)return null;
+ const valid=geometry.map(point=>[Number(point.lon),Number(point.lat)])
+  .filter(point=>Number.isFinite(point[0])&&Number.isFinite(point[1])&&Math.abs(point[0])<=180&&Math.abs(point[1])<=90);
+ if(valid.length<4)return null;
+ const first=valid[0],last=valid[valid.length-1];
+ if(Math.abs(first[0]-last[0])>1e-8||Math.abs(first[1]-last[1])>1e-8)return null;
+ const open=valid.slice(0,-1),maxVertices=128;
+ if(open.length<=maxVertices)return open;
+ const stride=Math.ceil(open.length/maxVertices);
+ const reduced=open.filter((point,index)=>index%stride===0);
+ if(reduced.length<3)return null;
+ return reduced;
+}
+function pointInsideCoordinateFootprint(point,footprint){
+ if(!point||!Array.isArray(footprint)||footprint.length<3)return false;
+ const x=Number(point.lng),y=Number(point.lat);
+ if(!Number.isFinite(x)||!Number.isFinite(y))return false;
+ let inside=false;
+ for(let i=0,j=footprint.length-1;i<footprint.length;j=i++){
+  const xi=Number(footprint[i][0]),yi=Number(footprint[i][1]);
+  const xj=Number(footprint[j][0]),yj=Number(footprint[j][1]);
+  const crosses=((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi||1e-15)+xi);
+  if(crosses)inside=!inside;
+ }
+ return inside;
+}
 function isPointAreaAlias(a,b,separation){
  const aRef=osmFeatureReference(a),bRef=osmFeatureReference(b);
  if(!aRef||!bRef||aRef.type===bRef.type)return false;
- const oneIsNode=aRef.type==='node'||bRef.type==='node';
+ const node=aRef.type==='node'?a:bRef.type==='node'?b:null;
+ const area=node===a?b:node===b?a:null;
  const sameName=normalizeNameForDedup(a.name)===normalizeNameForDedup(b.name);
  const generic=isGenericMapFeatureLabel(a.name,a)||isGenericMapFeatureLabel(b.name,b);
- // Only collapse named point/area representations of the same place. Generic
- // "Memorial" objects may be independent features even metres apart.
- return oneIsNode&&!generic&&sameName&&separation<=25;
+ if(!node||!area||generic||!sameName)return false;
+ // If the explicit OSM point falls inside the mapped polygon footprint, it is
+ // the point/area representation of the same named place even when its distance
+ // from the footprint centroid exceeds 25 m.
+ if(pointInsideCoordinateFootprint(node,area.coordinateFootprint))return true;
+ return separation<=25;
 }
 function areDuplicateMapMarkers(a,b){
  if(!a||!b||a.category!==b.category)return false;
@@ -1738,7 +1780,10 @@ function localInterestLabel(tags){
  const artwork=String(t.artwork_type||'').toLowerCase();
  const memorialType=String(t['memorial:type']||'').toLowerCase();
  if(['wayside_cross','wayside_crosses'].includes(historic)||t.cross==='yes'||manMade==='cross')return 'Wayside cross';
- if(['wayside_shrine','wayside_chapel'].includes(historic)||building==='wayside_shrine')return historic==='wayside_chapel'?'Wayside chapel':'Wayside shrine';
+ if(manMade==='memorial')return 'Memorial';
+ if(['wayside_shrine','wayside_chapel'].includes(historic)||['wayside_shrine','wayside_chapel'].includes(building))return historic==='wayside_chapel'||building==='wayside_chapel'?'Wayside chapel':'Wayside shrine';
+ if(building==='monument')return 'Monument';
+ if(building==='historic')return 'Historic building';
  if(historic==='plaque'||manMade==='plaque'||memorial==='plaque'||memorial==='blue_plaque')return 'Commemorative plaque';
  if(historic==='obelisk'||manMade==='obelisk'||memorial==='obelisk')return 'Obelisk';
  if(historic==='statue'||manMade==='statue'||memorial==='statue'||artwork==='statue')return 'Statue';
@@ -1758,28 +1803,8 @@ function localInterestLabel(tags){
  if(historic==='yes'||(t.heritage&&String(t.heritage)!=='no'))return 'Historic site';
  return '';
 }
-function areDuplicateMapMarkers(a,b){
- if(!a||!b||a.category!==b.category)return false;
- const sourceId=item=>{
-  const url=String(item.sourceUrl||'');
-  const match=url.match(/openstreetmap\.org\/(node|way|relation)\/(\d+)/i);
-  return match?match[1].toLowerCase()+'/'+match[2]:'';
- };
- const aSource=sourceId(a),bSource=sourceId(b);
- if(aSource&&bSource&&aSource===bSource)return true;
- const separation=haversine({lat:Number(a.lat),lng:Number(a.lng)},{lat:Number(b.lat),lng:Number(b.lng)});
- if(!Number.isFinite(separation))return false;
- const sameName=normalizeNameForDedup(a.name)===normalizeNameForDedup(b.name);
- const genericA=isGenericMapFeatureLabel(a.name,a),genericB=isGenericMapFeatureLabel(b.name,b);
- // Generic features such as "Memorial", "Wayside cross" or "Monument"
- // often describe different objects in the same neighbourhood. Only collapse
- // those when they are effectively at the same coordinate; never merge them
- // merely because they are within walking distance.
- if(genericA||genericB)return sameName&&separation<2;
- // Multiple sources can describe the same properly named landmark from slightly
- // different coordinates, so keep a modest radius only for non-generic names.
- return sameName&&separation<45;
-}
+// Keep one canonical areDuplicateMapMarkers implementation above so OSM identity,
+// explicit point/area aliases and distinct nearby memorials use the same rules.
 
 async function overpassApiSearch(c,radius,id){
  const r=Math.max(500,Math.min(30000,Math.round(Number(radius)||10000)));
@@ -1877,10 +1902,10 @@ async function overpassLocalInterestSearch(c,radius,id){
   'nwr'+around+'["memorial"];'+
   'nwr'+around+'["memorial:type"];'+
   'nwr'+around+'["amenity"="memorial"];'+
-  'nwr'+around+'["man_made"~"^(monument|obelisk|plaque|statue|milestone|boundary_stone|cross|water_well)$"];'+
+  'nwr'+around+'["man_made"~"^(monument|memorial|obelisk|plaque|statue|milestone|boundary_stone|cross|water_well)$"];'+
   'nwr'+around+'["tourism"="artwork"];'+
   'nwr'+around+'["amenity"="fountain"];'+
-  'nwr'+around+'["building"="wayside_shrine"];'+
+  'nwr'+around+'["building"~"^(monument|historic|wayside_shrine|wayside_chapel)$"];'+
   'nwr'+around+'["cross"="yes"];'+
   ');out geom tags qt 750;';
  const endpoints=['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter'];
@@ -1913,6 +1938,7 @@ async function overpassLocalInterestSearch(c,radius,id){
     places.push({
      id:'local-detail-'+osmType+'-'+osmId,
      name,lat:itemLat,lng:itemLng,distance,tags,osmElementType:osmType,osmId,coordinateRank:coordinate.rank,coordinateMethod:coordinate.method,
+     coordinateFootprint:coordinate.method==='polygon-centroid'?compactCoordinateFootprint(el.geometry):null,
      city:state.detectedLocality||'',
      source:'OpenStreetMap · local-interest details',
      sourceUrl:'https://www.openstreetmap.org/'+osmType+'/'+osmId,
