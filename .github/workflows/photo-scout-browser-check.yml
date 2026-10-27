@@ -160,6 +160,35 @@ jobs:
                 throw new Error('Photo Scout must ship as an installable standalone app with a visible pin legend: ' + JSON.stringify(appInstallDiagnostics));
               }
 
+              const mapRoleFixture = await page.evaluate(() =>
+                window.__PHOTO_SCOUT_TEST__.runMapRoleFixture()
+              );
+              if (!mapRoleFixture.explicitlyMappedViewpointAccepted ||
+                  !mapRoleFixture.namedLookoutAccepted ||
+                  !mapRoleFixture.genericHillNotTreatedAsVisitorViewpoint ||
+                  !mapRoleFixture.repeatedGenericMemorialNotLabelled ||
+                  !mapRoleFixture.namedHistoricPlaceCanBeLabelled) {
+                throw new Error('Mapped viewpoints, targeted vantage points and sparse landmark labels regressed: ' + JSON.stringify(mapRoleFixture));
+              }
+              console.log('MAP_ROLE_AND_LABEL_FIXTURE ' + JSON.stringify(mapRoleFixture));
+              if (!mapRoleFixture.buildingMonumentRecognized ||
+                  !mapRoleFixture.manMadeMemorialRecognized ||
+                  !mapRoleFixture.buildingWaysideShrineRecognized ||
+                  !mapRoleFixture.offsetHistoricPointInsideFootprintWins) {
+                throw new Error('Historic pins should preserve the mapped point and include additional small monument tags: ' + JSON.stringify(mapRoleFixture));
+              }
+              if (!mapRoleFixture.memorialTagsRecognized || !mapRoleFixture.waysideCrossRecognized ||
+                  !mapRoleFixture.plaqueRecognized || !mapRoleFixture.fountainRecognized ||
+                  !mapRoleFixture.distinctNearbyMemorialsKept || !mapRoleFixture.legacyGenericMemorialsKept ||
+                  !mapRoleFixture.mappedGenericRecordsStaySeparate || !mapRoleFixture.exactSameGenericCoordinateDeduplicated ||
+                  !mapRoleFixture.distinctSameNameOsmNodesKept || !mapRoleFixture.namedNodePreferredToApproximateAreaCenter ||
+                  !mapRoleFixture.buildingOutlineCentroidPreferredToPoiNode ||
+                  !mapRoleFixture.explicitMemorialNodePreferredToAreaCentroid ||
+                  !mapRoleFixture.polygonCentroidDiffersFromBoundingBoxCenter ||
+                  !mapRoleFixture.broadHistoricTagRecognized || !mapRoleFixture.darkStyleExcludedFromFallback) {
+                throw new Error('Small local-interest subjects must be retained without collapsing distinct nearby memorials: ' + JSON.stringify(mapRoleFixture));
+              }
+
               const initial = await page.evaluate(() => ({
                 title: document.title,
                 styleLoaded: window.__PHOTO_SCOUT_TEST__.styleLoaded,
@@ -499,35 +528,6 @@ jobs:
                   !parkingEntranceFixture.ordinaryLotsNotCalledEntrances) {
                 throw new Error('Parking entrances must be distinguished from lot-centre points: ' + JSON.stringify(parkingEntranceFixture));
               }
-              const mapRoleFixture = await page.evaluate(() =>
-                window.__PHOTO_SCOUT_TEST__.runMapRoleFixture()
-              );
-              if (!mapRoleFixture.explicitlyMappedViewpointAccepted ||
-                  !mapRoleFixture.namedLookoutAccepted ||
-                  !mapRoleFixture.genericHillNotTreatedAsVisitorViewpoint ||
-                  !mapRoleFixture.repeatedGenericMemorialNotLabelled ||
-                  !mapRoleFixture.namedHistoricPlaceCanBeLabelled) {
-                throw new Error('Mapped viewpoints, targeted vantage points and sparse landmark labels regressed: ' + JSON.stringify(mapRoleFixture));
-              }
-              console.log('MAP_ROLE_AND_LABEL_FIXTURE ' + JSON.stringify(mapRoleFixture));
-              if (!mapRoleFixture.buildingMonumentRecognized ||
-                  !mapRoleFixture.manMadeMemorialRecognized ||
-                  !mapRoleFixture.buildingWaysideShrineRecognized ||
-                  !mapRoleFixture.offsetHistoricPointInsideFootprintWins) {
-                throw new Error('Historic pins should preserve the mapped point and include additional small monument tags: ' + JSON.stringify(mapRoleFixture));
-              }
-              if (!mapRoleFixture.memorialTagsRecognized || !mapRoleFixture.waysideCrossRecognized ||
-                  !mapRoleFixture.plaqueRecognized || !mapRoleFixture.fountainRecognized ||
-                  !mapRoleFixture.distinctNearbyMemorialsKept || !mapRoleFixture.legacyGenericMemorialsKept ||
-                  !mapRoleFixture.mappedGenericRecordsStaySeparate || !mapRoleFixture.exactSameGenericCoordinateDeduplicated ||
-                  !mapRoleFixture.distinctSameNameOsmNodesKept || !mapRoleFixture.namedNodePreferredToApproximateAreaCenter ||
-                  !mapRoleFixture.buildingOutlineCentroidPreferredToPoiNode ||
-                  !mapRoleFixture.explicitMemorialNodePreferredToAreaCentroid ||
-                  !mapRoleFixture.polygonCentroidDiffersFromBoundingBoxCenter ||
-                  !mapRoleFixture.broadHistoricTagRecognized || !mapRoleFixture.darkStyleExcludedFromFallback) {
-                throw new Error('Small local-interest subjects must be retained without collapsing distinct nearby memorials: ' + JSON.stringify(mapRoleFixture));
-              }
-
               // Diagnostic only: Openverse is anonymous but rate limited. The app
               // retains Wikimedia Commons and in-app sketches if the service is unavailable.
               const openverseProbe = await page.evaluate(async () => {
