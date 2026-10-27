@@ -104,7 +104,7 @@ jobs:
             });
 
             try {
-              await page.goto('http://127.0.0.1:8000/index.html?v=20261022-calculated-viewpoints-v31', { waitUntil: 'domcontentloaded', timeout: 60000 });
+              await page.goto('http://127.0.0.1:8000/index.html?v=20261027-outward-target-pins-v33', { waitUntil: 'domcontentloaded', timeout: 60000 });
               try {
                 await page.waitForFunction(() => !!window.__PHOTO_SCOUT_TEST__?.map, null, { timeout: 15000 });
               } catch (startupError) {
@@ -362,7 +362,7 @@ jobs:
                   viewpoint:nodes.filter(n=>n.classList.contains('viewpoint')).length,
                   photoSpot:nodes.filter(n=>n.classList.contains('photoSpot')).length,
                   inferredViewpoint:nodes.filter(n=>n.classList.contains('inferred-viewpoint-pin')).length,
-                  outwardViewTarget:nodes.filter(n=>n.classList.contains('outward-view-target')).length,
+                  outwardViewPin:nodes.filter(n=>n.classList.contains('outward-view-pin')).length,
                   parking:nodes.filter(n=>n.classList.contains('parking')).length,
                   visibleNameLabels:nodes.filter(n=>n.classList.contains('show-pin-label')).length
                 };
@@ -393,7 +393,7 @@ jobs:
               if(!livePinDiagnostics.inferredPinVisuals.some(pin=>pin.centerInsideMap&&pin.visible&&pin.coreBackground==='rgb(114, 84, 200)')) {
                 throw new Error('Calculated viewpoints must include a visible purple pin inside the current map viewport: '+JSON.stringify(livePinDiagnostics.inferredPinVisuals)+' · '+JSON.stringify(livePinDiagnostics));
               }
-              if(!livePinDiagnostics.outwardViewCount||!livePinDiagnostics.domCounts.outwardViewTarget||livePinDiagnostics.outwardViewCalculationPending) {
+              if(!livePinDiagnostics.outwardViewCount||!livePinDiagnostics.domCounts.outwardViewPin||livePinDiagnostics.outwardViewCalculationPending) {
                  throw new Error('Outward-view calculation must mark at least one mapped subject from the selected Kastav-area pin: '+JSON.stringify(livePinDiagnostics));
                }
                const markerStability = await page.evaluate(() =>
@@ -705,10 +705,10 @@ jobs:
               const alternatePage = await browser.newPage({ viewport: { width: 1200, height: 820 }, deviceScaleFactor: 1 });
               const alternateErrors = [];
               alternatePage.on('pageerror', error => alternateErrors.push(String(error)));
-              await alternatePage.goto('http://127.0.0.1:8000/photo-scout.html?v=20261022-calculated-viewpoints-v31', { waitUntil: 'domcontentloaded', timeout: 60000 });
+              await alternatePage.goto('http://127.0.0.1:8000/photo-scout.html?v=20261027-outward-target-pins-v33', { waitUntil: 'domcontentloaded', timeout: 60000 });
               await alternatePage.waitForFunction(() => !!window.__PHOTO_SCOUT_TEST__?.map && window.__PHOTO_SCOUT_TEST__?.styleLoaded === true, null, { timeout: 30000 });
               const alternateBuild = await alternatePage.locator('meta[name="photo-scout-build"]').getAttribute('content');
-              if (alternateBuild !== '2026-10-22-photo-scout-calculated-viewpoints-v31') {
+              if (alternateBuild !== '2026-10-27-photo-scout-outward-target-pins-v33') {
                 throw new Error('Alternate Photo Scout entry page did not load v30: '+alternateBuild);
               }
               // Match the real user path: position the map over Kastav before scanning,
@@ -746,17 +746,17 @@ jobs:
                   visiblePurplePins:pins.filter(p=>p.inside&&p.purple).length,
                   outwardViewCount:window.__PHOTO_SCOUT_TEST__.getState().outwardViewCount,
                   outwardViewCalculationPending:window.__PHOTO_SCOUT_TEST__.getState().outwardViewCalculationPending,
-                  visibleOutwardViewRings:[...document.querySelectorAll('.scout-marker.outward-view-target')].filter(node=>{
+                  visibleOutwardViewPins:[...document.querySelectorAll('.scout-marker.outward-view-pin')].filter(node=>{
                     const core=node.querySelector('.dot-core'),rect=core&&core.getBoundingClientRect(),style=core&&getComputedStyle(core);
                     const x=rect?rect.left+rect.width/2:NaN,y=rect?rect.top+rect.height/2:NaN;
-                    return !!style&&Number.isFinite(x)&&Number.isFinite(y)&&x>=mapBox.left&&x<=mapBox.right&&y>=mapBox.top&&y<=mapBox.bottom&&style.outlineColor==='rgb(22, 168, 183)';
+                    return !!style&&Number.isFinite(x)&&Number.isFinite(y)&&x>=mapBox.left&&x<=mapBox.right&&y>=mapBox.top&&y<=mapBox.bottom&&style.backgroundColor==='rgb(8, 127, 142)';
                   }).length,pins};
                 function testSelected(){return window.__PHOTO_SCOUT_TEST__.getState().selectedCoordinate||null;}
               });
               console.log('ALTERNATE_ENTRY_CALCULATED_PINS '+JSON.stringify(alternatePinDiagnostics));
-              if (alternatePinDiagnostics.build !== '2026-10-22-photo-scout-calculated-viewpoints-v31' ||
-                  !alternatePinDiagnostics.calculatedCount || !alternatePinDiagnostics.visiblePurplePins || !alternatePinDiagnostics.outwardViewCount || !alternatePinDiagnostics.visibleOutwardViewRings || alternatePinDiagnostics.outwardViewCalculationPending || alternateErrors.length) {
-                throw new Error('Alternate entry page must show calculated purple pins at the requested Kastav coordinates: '+JSON.stringify({alternatePinDiagnostics,alternateErrors}));
+              if (alternatePinDiagnostics.build !== '2026-10-27-photo-scout-outward-target-pins-v33' ||
+                  !alternatePinDiagnostics.calculatedCount || !alternatePinDiagnostics.visiblePurplePins || !alternatePinDiagnostics.outwardViewCount || !alternatePinDiagnostics.visibleOutwardViewPins || alternatePinDiagnostics.outwardViewCalculationPending || alternateErrors.length) {
+                throw new Error('Alternate entry page must show purple camera positions and teal outward-target pins at Kastav: '+JSON.stringify({alternatePinDiagnostics,alternateErrors}));
               }
               await alternatePage.close();
               if (pageErrors.length) throw new Error('Browser runtime exceptions: ' + JSON.stringify(pageErrors));
