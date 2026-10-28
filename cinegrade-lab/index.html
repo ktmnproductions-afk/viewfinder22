@@ -16,12 +16,12 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;pa
 .brand strong{display:block;font-size:12px;letter-spacing:.17em;text-transform:uppercase}.brand span{display:block;color:var(--muted);font-size:9px;letter-spacing:.09em;margin-top:2px}
 .top-chip,.chip{font-size:9px;text-transform:uppercase;letter-spacing:.1em;padding:6px 9px;border-radius:99px;border:1px solid #47513f;background:#242c22;color:#d4e3c7;white-space:nowrap}
 .hero{padding:24px 0 20px}.eyebrow{margin:0 0 7px;color:var(--cream);text-transform:uppercase;letter-spacing:.18em;font-size:10px;font-weight:800}.hero h1{margin:0;font-size:clamp(28px,3.4vw,42px);font-weight:560;letter-spacing:-.045em;line-height:1.05}.hero h1 em{font-style:normal;color:var(--cream)}.hero p{margin:9px 0 0;max-width:820px;font-size:12px;color:var(--muted)}
-.layout{display:grid;grid-template-columns:minmax(420px,.94fr) minmax(520px,1.06fr);gap:18px;align-items:stretch}
+.layout{display:grid;grid-template-columns:minmax(0,.94fr) minmax(0,1.06fr);gap:18px;align-items:stretch;min-width:0}
 .panel{min-width:0;background:linear-gradient(150deg,#1d221d,#161a16);border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:0 14px 50px #0003}
 .panel-head{display:flex;justify-content:space-between;align-items:start;gap:12px;padding:17px 18px 12px}.panel-head h2{font-size:12px;margin:0;font-weight:800}.panel-head p{margin:4px 0 0;color:var(--muted);font-size:10px}
 .panel-body{padding:0 18px 18px}
 .wheel-stage{width:min(100%,500px);aspect-ratio:1;margin:2px auto 0;position:relative;isolation:isolate}
-.color-wheel{display:block;position:absolute;inset:0;width:100%;height:100%;padding:0;border-radius:50%;border:1px solid #ffffff38;box-shadow:inset 0 0 25px #0003,0 10px 24px #0003;background:#82827b;touch-action:none;cursor:crosshair}
+.color-wheel{display:block;position:absolute;inset:0;width:100%;height:100%;padding:0;border-radius:50%;border:1px solid #ffffff38;box-shadow:inset 0 0 25px #0003,0 10px 24px #0003;background:radial-gradient(circle,rgba(245,243,232,1) 0%,rgba(245,243,232,.92) 9%,rgba(245,243,232,0) 100%),conic-gradient(from 90deg,#ff463d 0deg,#f5a13e 35deg,#f1e54f 60deg,#81d84e 100deg,#2ebba0 150deg,#3aabd3 185deg,#466ed4 230deg,#815ecb 270deg,#c457ba 305deg,#eb5589 330deg,#ff463d 360deg);touch-action:none;cursor:crosshair;overflow:hidden}
 .main-marker,.mini-marker{position:absolute;left:50%;top:50%;width:22px;height:22px;border-radius:50%;border:3px solid #fff8e7;background:var(--marker,#4f88a5);box-shadow:0 0 0 2px #151a16,0 0 18px #fff7;transform:translate(-50%,-50%);pointer-events:none}
 .main-marker:after,.mini-marker:after{content:"";position:absolute;inset:5px;border-radius:50%;background:#1113}
 .marker-label{position:absolute;top:-18px;left:50%;transform:translateX(-50%);background:#171b17;color:#f4eddb;border:1px solid var(--marker);border-radius:4px;padding:1px 4px;font-size:8px;letter-spacing:.05em;font-weight:900;line-height:1.25;white-space:nowrap}
@@ -34,7 +34,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;pa
 .mini-card{min-width:0;background:#121612;border:1px solid var(--line);border-radius:11px;padding:11px 10px 10px;text-align:center}
 .mini-title{font-size:11px;font-weight:800}.mini-desc{font-size:9px;color:var(--muted);margin-top:3px;min-height:25px}
 .mini-stage{width:min(100%,155px);aspect-ratio:1;margin:8px auto 9px;position:relative}
-.mini-wheel{display:block;position:absolute;inset:0;width:100%;height:100%;padding:0;border-radius:50%;border:1px solid #ffffff35;background:#82827b;box-shadow:inset 0 0 10px #0003}
+.mini-wheel{display:block;position:absolute;inset:0;width:100%;height:100%;padding:0;border-radius:50%;border:1px solid #ffffff35;background:radial-gradient(circle,rgba(245,243,232,1) 0%,rgba(245,243,232,.92) 9%,rgba(245,243,232,0) 100%),conic-gradient(from 90deg,#ff463d 0deg,#f5a13e 35deg,#f1e54f 60deg,#81d84e 100deg,#2ebba0 150deg,#3aabd3 185deg,#466ed4 230deg,#815ecb 270deg,#c457ba 305deg,#eb5589 330deg,#ff463d 360deg);box-shadow:inset 0 0 10px #0003;overflow:hidden}
 .mini-marker{width:17px;height:17px;border-width:2.5px}
 .mini-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
 .value{border:1px solid #31392f;background:#191e19;border-radius:6px;padding:5px 2px;min-width:0}
@@ -49,8 +49,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;pa
 .palette-card:hover{border-color:#87977c;transform:translateY(-1px)}.palette-card.active{border-color:var(--cream);background:linear-gradient(135deg,#292e25,#171b16);box-shadow:inset 0 0 0 1px #e8d8ad18}
 .palette-title-row{display:flex;justify-content:space-between;gap:8px;align-items:start}.palette-title{font-size:10px;font-weight:850;line-height:1.35}.palette-number{color:var(--cream);font:10px ui-monospace,monospace;margin-right:4px}.palette-mode{font-size:7px;letter-spacing:.09em;color:#9eaa92;white-space:nowrap}
 .palette-desc{color:var(--muted);font-size:9px;line-height:1.35;margin-top:4px;min-height:24px}
-.swatches{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin-top:9px}
-.swatch{display:block;min-width:0}.swatch-color{display:block;width:100%;height:35px;border:1px solid #ffffff1d;border-radius:4px;box-sizing:border-box}.swatch-code{display:block;color:#cdd2c6;font:7.5px ui-monospace,SFMono-Regular,Consolas,monospace;margin-top:4px;text-align:center}
+.swatches{display:grid;width:100%;min-width:0;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin-top:9px}
+.swatch{display:block;width:100%;min-width:0}.swatch-color{display:block;width:100%;min-width:0;height:35px;border:1px solid #ffffff1d;border-radius:4px;box-sizing:border-box}.swatch-code{display:block;color:#cdd2c6;font:7.5px ui-monospace,SFMono-Regular,Consolas,monospace;margin-top:4px;text-align:center}
 .palette-footer{margin:13px 0 0;color:#879084;font-size:9px;line-height:1.5}.palette-footer a{color:#c9d5bc;text-underline-offset:2px}
 .toast{position:fixed;right:20px;bottom:20px;background:var(--cream);color:#181d16;padding:10px 14px;border-radius:9px;font-size:11px;font-weight:800;box-shadow:0 8px 35px #0006;opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateY(0)}
 @media(max-width:1000px){.app{padding:16px}.layout{grid-template-columns:1fr}.wheel-stage{max-width:430px}.palette-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -73,7 +73,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;pa
   <div class="panel-head"><div><h2>01 / Shadow color wheel</h2><p>Click anywhere on the wheel to select hue and saturation.</p></div><span class="chip">CLICK TO PICK</span></div>
   <div class="panel-body">
     <div class="wheel-stage" id="shadowStage">
-      <canvas class="color-wheel" id="shadowWheel" width="500" height="500" role="application" aria-label="Clickable Shadows color wheel"></canvas>
+      <div class="color-wheel" id="shadowWheel" role="application" aria-label="Clickable Shadows color wheel"></div>
       <span class="main-marker" id="shadowMarker"><span class="marker-label">SHADOWS</span></span>
     </div>
     <p class="wheel-instructions">The shadow color you choose is the anchor for the other two wheels.</p>
@@ -85,14 +85,14 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;pa
     <div class="mini-grid">
       <article class="mini-card">
         <div class="mini-title">02 / Midtones match</div><div class="mini-desc">Warm desert earth · calculated from Shadows</div>
-        <div class="mini-stage"><canvas class="mini-wheel" id="midWheel" width="220" height="220" aria-label="Midtones color wheel"></canvas><span class="mini-marker" id="midMarker"><span class="marker-label">MID</span></span></div>
+        <div class="mini-stage"><div class="mini-wheel" id="midWheel" aria-label="Midtones color wheel"></div><span class="mini-marker" id="midMarker"><span class="marker-label">MID</span></span></div>
         <div class="mini-values">
           <div class="value"><small>Hue</small><b id="midHue">15°</b></div><div class="value"><small>Sat</small><b id="midSat">19</b></div><div class="value"><small>Lum</small><b id="midLum">0</b></div>
         </div>
       </article>
       <article class="mini-card">
         <div class="mini-title">03 / Highlights match</div><div class="mini-desc">Pale sunlit warmth · softer saturation</div>
-        <div class="mini-stage"><canvas class="mini-wheel" id="highWheel" width="220" height="220" aria-label="Highlights color wheel"></canvas><span class="mini-marker" id="highMarker"><span class="marker-label">HIGH</span></span></div>
+        <div class="mini-stage"><div class="mini-wheel" id="highWheel" aria-label="Highlights color wheel"></div><span class="mini-marker" id="highMarker"><span class="marker-label">HIGH</span></span></div>
         <div class="mini-values">
           <div class="value"><small>Hue</small><b id="highHue">20°</b></div><div class="value"><small>Sat</small><b id="highSat">11</b></div><div class="value"><small>Lum</small><b id="highLum">+8</b></div>
         </div>
@@ -150,7 +150,6 @@ function rgbHsl(r,g,b){r/=255;g/=255;b/=255;var max=Math.max(r,g,b),min=Math.min
 function toHex(h,s,l){var c=hslRgb(h,s,l);return"#"+[c.r,c.g,c.b].map(function(v){return v.toString(16).padStart(2,"0")}).join("").toUpperCase()}
 function fromHex(txt){var v=String(txt||"").trim().replace(/^#/,"");if(/^[0-9a-f]{3}$/i.test(v))v=v.split("").map(function(c){return c+c}).join("");if(!/^[0-9a-f]{6}$/i.test(v))return null;return{r:parseInt(v.slice(0,2),16),g:parseInt(v.slice(2,4),16),b:parseInt(v.slice(4,6),16)}}
 function nameForHue(h){var names=["Red","Orange","Yellow","Lime","Green","Mint","Cyan","Sky blue","Blue","Indigo","Violet","Magenta"];return names[Math.floor((norm(h)+15)/30)%12]}
-function drawColorWheel(canvas){var ctx=canvas.getContext("2d"),n=canvas.width,mid=(n-1)/2,rad=n/2-2,img=ctx.createImageData(n,n),d=img.data;for(var y=0;y<n;y++){for(var x=0;x<n;x++){var dx=x-mid,dy=y-mid,r=Math.sqrt(dx*dx+dy*dy),i=(y*n+x)*4;if(r>rad){d[i]=0;d[i+1]=0;d[i+2]=0;d[i+3]=0;continue}var hue=norm(Math.atan2(dy,dx)*180/Math.PI),sat=clamp(r/rad*100,0,100),col=hslRgb(hue,sat,52);d[i]=col.r;d[i+1]=col.g;d[i+2]=col.b;d[i+3]=255}}ctx.putImageData(img,0,0)}
 function wheelPoint(h,s){var a=h*Math.PI/180,r=clamp(s,0,100)*.46;return{x:50+Math.cos(a)*r,y:50+Math.sin(a)*r}}
 function place(id,h,s,color){var p=wheelPoint(h,s),e=$(id);e.style.left=p.x+"%";e.style.top=p.y+"%";e.style.setProperty("--marker",color);return p}
 function activePalette(){return palettes[state.active]||palettes[0]}
@@ -177,13 +176,13 @@ function copyRecipe(){var text=getRecipe();if(navigator.clipboard&&navigator.cli
 function copyFallback(text){var area=document.createElement("textarea");area.value=text;document.body.appendChild(area);area.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}area.remove();showToast(ok?"Lightroom values copied":"Copy was blocked by the browser")}
 function download(name,text,mime){var a=document.createElement("a"),url=URL.createObjectURL(new Blob([text],{type:mime||"text/plain"}));a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},1000)}
 function makeXmp(){var g=state.grade,p=activePalette(),attrs={PresetType:"Normal",UUID:"CINEGRADE"+Date.now().toString(16).toUpperCase(),SupportsAmount:"True",SupportsColor:"True",SupportsMonochrome:"True",SupportsHighDynamicRange:"True",SupportsNormalDynamicRange:"True",SupportsSceneReferred:"True",SupportsOutputReferred:"True",Name:"Cinegrade Lab - "+p.name,Treatment:"Color",ProcessVersion:"15.4",HasSettings:"True",WhiteBalance:"As Shot",ColorGradeMidtoneHue:g.midtones.h,ColorGradeMidtoneSat:g.midtones.s,ColorGradeMidtoneLum:g.midtones.l,ColorGradeHighlightHue:g.highlights.h,ColorGradeHighlightSat:g.highlights.s,ColorGradeHighlightLum:g.highlights.l,ColorGradeShadowHue:g.shadows.h,ColorGradeShadowSat:g.shadows.s,ColorGradeShadowLum:g.shadows.l,ColorGradeGlobalHue:0,ColorGradeGlobalSat:0,ColorGradeGlobalLum:0,ColorGradeBlending:state.blending,ColorGradeBalance:state.balance};var lines=Object.keys(attrs).map(function(k){return'    crs:'+k+'="'+String(attrs[k]).replace(/&/g,"&amp;").replace(/"/g,"&quot;")+'"'}).join("\n");return'<?xpacket begin="\uFEFF" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about="" xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"\n'+lines+'\n  />\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>'}
-$("shadowWheel").addEventListener("pointerdown",function(e){this.setPointerCapture(e.pointerId);fromPointer(e)});
+$("shadowWheel").addEventListener("pointerdown",function(e){fromPointer(e)});
 $("shadowWheel").addEventListener("pointermove",function(e){if(e.buttons===1)fromPointer(e)});
 $("paletteGrid").addEventListener("click",function(e){var b=e.target.closest(".palette-card");if(b)usePalette(+b.dataset.id)});
 $("hexInput").addEventListener("change",function(){var rgb=fromHex(this.value);if(!rgb){this.value=toHex(state.h,state.s,state.l);showToast("Use a HEX color such as #507C9F");return}var hsl=rgbHsl(rgb.r,rgb.g,rgb.b);setShadow(hsl.h,hsl.s,hsl.l)});
 $("copyBtn").addEventListener("click",copyRecipe);
 $("xmpBtn").addEventListener("click",function(){download("paris-texas-"+activePalette().name.toLowerCase().replace(/[^a-z0-9]+/g,"-")+".xmp",makeXmp(),"application/rdf+xml");showToast("XMP preset exported")});
-$("resetBtn").addEventListener("click",function(){state.strength=100;drawColorWheel($("shadowWheel"));drawColorWheel($("midWheel"));drawColorWheel($("highWheel"));usePalette(0);showToast("Reset to Desert Signal")});
+$("resetBtn").addEventListener("click",function(){state.strength=100;usePalette(0);showToast("Reset to Desert Signal")});
 usePalette(0);
 })();
 </script>
