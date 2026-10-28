@@ -30,6 +30,30 @@
 .look-swatch-code{display:block;color:#d4dbcf;font:7px ui-monospace,SFMono-Regular,Consolas,monospace;margin-top:2px}
 @media(max-width:480px){.palette{grid-template-columns:1fr}.look-swatch-color{height:38px}.look-card-desc{min-height:0}}
 
+
+/* Paris, Texas: single reference palette and connected 3-tone wheel */
+.grade-connections{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;overflow:visible}
+.grade-connections line{stroke:#fff9;stroke-width:.5;stroke-dasharray:1.6 1.8;vector-effect:non-scaling-stroke}
+.wheel-marker{z-index:3;width:20px;height:20px}
+.wheel-marker:before{content:attr(data-label);position:absolute;left:50%;top:-18px;transform:translateX(-50%);font-size:8px;line-height:13px;letter-spacing:.04em;font-weight:900;color:#f5f2e8;background:#161a17;border:1px solid var(--marker,#ddd);border-radius:4px;padding:0 4px;white-space:nowrap;text-shadow:none}
+.shadow-marker{border-color:#f9f4e5;box-shadow:0 0 0 2px #172019,0 0 12px #a7d4e8aa}
+.mid-marker{width:18px;height:18px;border-width:3px;border-color:#f6ca87;box-shadow:0 0 0 2px #172019,0 0 12px #f6ca8777}
+.highlight-marker{width:17px;height:17px;border-width:3px;border-color:#fff0c8;box-shadow:0 0 0 2px #172019,0 0 12px #fff1ba88}
+.wheel-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 14px;margin-top:9px;color:#b6beb1;font-size:9px}
+.wheel-legend>span{display:flex;gap:5px;align-items:center}
+.legend-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.shadow-dot{background:#8cb9d7}.mid-dot{background:#ce8e52}.hi-dot{background:#efe0b8}
+.palette{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-top:18px}
+.reference-swatch .swatch-color{height:70px}
+.reference-swatch .swatch-meta{padding:7px 5px 8px}
+.reference-swatch .swatch-meta b{font-size:9px;line-height:1.25;min-height:22px}
+.reference-swatch .swatch-meta code{font-size:8px}
+.reference-swatch .swatch-meta small{display:block;color:#899286;font-size:7px;letter-spacing:.08em;margin-top:4px}
+.source-note{font-size:9px;color:#879085;line-height:1.5;margin:12px 0 0}
+.source-note a{color:#c7d0bf;text-decoration:underline;text-underline-offset:2px}
+.source-note a:hover{color:var(--accent)}
+@media(max-width:480px){.palette{grid-template-columns:repeat(3,minmax(0,1fr))}.reference-swatch .swatch-color{height:48px}.wheel-marker:before{font-size:7px}.wheel-legend{gap:6px 10px}}
+
 </style>
 </head>
 <body>
@@ -39,18 +63,22 @@
   <div class="status">● Instant color recommendations</div>
 </header>
 <section class="hero">
-  <div><p class="eyebrow">Find your cinematic color language</p><h2>Pick a color. <em>Build a look.</em></h2><p>Click anywhere on the wheel. The palette and Lightroom Color Grading setup update immediately, with the suggested colors placed on their own wheels.</p></div>
+  <div><p class="eyebrow">Paris, Texas · color study</p><h2>Start in the shadows. <em>Shape the light.</em></h2><p>Choose a shadow hue on the wheel. The tool suggests the opposing desert-warm midtones and softer sunlit highlights, and shows all three positions together.</p></div>
 </section>
 
 <main class="layout">
 <section class="panel">
-  <div class="panel-head"><div><h3>01 / Choose your anchor color</h3><p>Hue is the angle. Saturation increases toward the edge.</p></div><span class="pill">CLICK THE WHEEL</span></div>
+  <div class="panel-head"><div><h3>01 / Choose your Shadows color</h3><p>The hue angle sets the starting tone; distance sets its saturation.</p></div><span class="pill">SHADOWS FIRST</span></div>
   <div class="panel-body">
     <div class="wheel-stage" id="wheelStage">
-      <canvas id="colorWheel" class="main-wheel" width="500" height="500" aria-label="Interactive hue and saturation color wheel" role="img"></canvas>
-      <span id="wheelMarker" class="wheel-marker" aria-hidden="true"></span>
+      <canvas id="colorWheel" class="main-wheel" width="500" height="500" aria-label="Paris, Texas-inspired tonal color wheel. Click or drag to choose the shadow color." role="img"></canvas>
+      <svg id="gradeConnections" class="grade-connections" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line id="lineSM" x1="0" y1="0" x2="0" y2="0"></line><line id="lineMH" x1="0" y1="0" x2="0" y2="0"></line></svg>
+      <span id="wheelMarker" class="wheel-marker shadow-marker" data-label="SH" title="Shadow starting color" aria-hidden="true"></span>
+      <span id="midMarker" class="wheel-marker mid-marker" data-label="MID" title="Recommended midtones position" aria-hidden="true"></span>
+      <span id="highlightMarker" class="wheel-marker highlight-marker" data-label="HI" title="Recommended highlights position" aria-hidden="true"></span>
     </div>
-    <p class="wheel-hint">Click or drag across the wheel to choose any hue and saturation.</p>
+    <div class="wheel-legend"><span><i class="legend-dot shadow-dot"></i>Shadows · chosen</span><span><i class="legend-dot mid-dot"></i>Midtones · suggested</span><span><i class="legend-dot hi-dot"></i>Highlights · suggested</span></div>
+    <p class="wheel-hint">The chosen point is your Shadows anchor. Midtones and Highlights are calculated and plotted around it using the film-inspired scheme.</p>
     <div class="chosen-color">
       <span id="anchorChip" class="color-chip"></span>
       <div class="chosen-text"><strong id="anchorName">Selected color</strong><span id="anchorMeta">H 190° · S 65% · L 58%</span></div>
@@ -64,16 +92,17 @@
 </section>
 
 <section class="panel">
-  <div class="panel-head"><div><h3>02 / 10 cinematic palettes</h3><p>Ten Wenders-inspired visual directions, generated from your chosen hue.</p></div><span class="pill" id="harmonyPill">10 LOOKS</span></div>
+  <div class="panel-head"><div><h3>02 / Paris, Texas reference palette</h3><p>One film, one color language: desert warmth, signal red, blue distance and fluorescent green.</p></div><span class="pill" id="harmonyPill">FILM STUDY</span></div>
   <div class="panel-body">
-    <div class="recommend"><span class="recommend-mark" id="recommendMark"></span><div class="recommend-copy"><h3 id="lookTitle" class="recommend-title">Paris, Texas — Desert Signal</h3><p id="lookSubtitle" class="recommend-sub">Sun-bleached earth · signal red · lonely blue distance</p></div></div>
-    <div id="palette" class="palette" aria-label="Ten cinematic color palettes"></div>
-    <p id="paletteNote" class="swatch-note">These are original, Wenders-inspired palette studies—not official film grades. Your wheel selection rotates the color relationships across all ten looks. Click any card to load its Lightroom setup.</p>
+    <div class="recommend"><span class="recommend-mark" id="recommendMark"></span><div class="recommend-copy"><h3 id="lookTitle" class="recommend-title">Paris, Texas — Desert to Neon</h3><p id="lookSubtitle" class="recommend-sub">Dusty ochre midtones · cool blue shadows · pale sunlit highlights</p></div></div>
+    <div id="palette" class="palette" aria-label="Paris, Texas reference colors"></div>
+    <p id="paletteNote" class="swatch-note">A visual study, not frame-extracted exact values. The film pairs faded desert earth and open-sky blue with deliberately vivid red, cyan/blue and fluorescent green in selected scenes. Click a reference swatch to use it as your shadow starting color.</p>
+    <p class="source-note">Research basis: <a href="https://scalar.usc.edu/works/paristx-in-color/rgb" target="_blank" rel="noopener noreferrer">USC · Paris, Texas: In Color</a> · <a href="https://www.lwlies.com/interviews/wim-wenders-with-restoration-theres-a-danger-you-can-falsify-the-film" target="_blank" rel="noopener noreferrer">Wim Wenders on preserving the film’s fluorescent greens</a></p>
     <div class="section-rule"></div>
     <div class="section-head"><div><h4>03 / Lightroom Color Grading setup</h4><p>Match these three wheel positions and values in Lightroom.</p></div><span class="pill">3-WAY GRADE</span></div>
     <div id="setupGrid" class="setup-grid"></div>
     <div class="controls">
-      <div class="slider-box"><div class="slider-top"><label for="strength">Color strength</label><output id="strengthOut">100%</output></div><input id="strength" type="range" min="40" max="140" value="100"></div>
+      <div class="slider-box"><div class="slider-top"><label for="strength">Grade strength</label><output id="strengthOut">100%</output></div><input id="strength" type="range" min="40" max="140" value="100"></div>
       <div class="slider-box"><div class="slider-top"><label for="blending">Blending</label><output id="blendOut">55</output></div><input id="blending" type="range" min="0" max="100" value="48"></div>
       <div class="slider-box"><div class="slider-top"><label for="balance">Balance</label><output id="balanceOut">−12</output></div><input id="balance" type="range" min="-100" max="100" value="-18"></div>
       <div class="slider-box"><div class="slider-top"><label for="luminance">Highlight luminance</label><output id="lumOut">+6</output></div><input id="luminance" type="range" min="-25" max="25" value="8"></div>
@@ -91,39 +120,28 @@
 (function(){
 "use strict";
 var $=function(id){return document.getElementById(id)};
-var state={h:190,s:65,l:58,strength:100,blending:48,balance:-18,highlightLum:8,selectedLook:0,grade:{}};
-var looks=[
-{name:"Paris, Texas — Desert Signal",short:"Sun-bleached earth · signal red · lonely blue distance",pill:"ROAD MOVIE",note:"Faded desert neutrals meet a deliberate red and cool distance. Keep saturation selective rather than pushing every color.",offsets:[0,170,205,35,180],sat:[46,39,34,34,72],lum:[53,25,45,77,49],gradeSat:[18,9,14],gradeLum:[-11,0,8],blend:48,balance:-18,hl:8},
-{name:"Wings of Desire — Silver City",short:"Concrete grey · silver blue · a little human warmth",pill:"MONOCHROME",note:"A near-monochrome interpretation with a slight cool bias and restrained warmth. The idea is tonal depth, not a literal copy of the film's color treatment.",offsets:[0,215,205,35,165],sat:[8,9,7,9,16],lum:[54,25,52,79,62],gradeSat:[3,2,4],gradeLum:[-15,0,3],blend:65,balance:-4,hl:3},
-{name:"The American Friend — Tobacco & Steel",short:"Tobacco shadow · muted steel · one sharp color",pill:"NOIR / COLOR",note:"A low-key, slightly uneasy palette: hold the shadows down, keep midtones earthy, and use the highlight color as a restrained accent.",offsets:[0,198,24,210,155],sat:[38,34,24,26,56],lum:[47,21,44,72,45],gradeSat:[21,12,14],gradeLum:[-13,0,4],blend:45,balance:-17,hl:4},
-{name:"Tokyo-Ga — Quiet Observation",short:"Stone · weathered green · faded blue-grey",pill:"OBSERVATIONAL",note:"Understated city and nature tones with lifted, soft highlights. Keep greens natural and let texture and light do most of the work.",offsets:[0,148,175,40,78],sat:[34,21,25,21,39],lum:[49,26,51,79,51],gradeSat:[12,8,9],gradeLum:[-6,0,5],blend:68,balance:-7,hl:5},
-{name:"Perfect Days — Leaf & Concrete",short:"Park green · clean blue · soft afternoon sun",pill:"EVERYDAY POETRY",note:"Quiet greens and cool urban tones with a little warmth in brighter areas. Best when the original light and natural colors remain believable.",offsets:[0,155,172,42,82],sat:[40,28,24,29,37],lum:[52,30,50,81,53],gradeSat:[14,8,12],gradeLum:[-7,0,8],blend:62,balance:2,hl:8},
-{name:"Neon Motel — Red / Cyan / Green",short:"Electric sign light · deep color · dark interiors",pill:"NEON NIGHT",note:"A more expressive night palette inspired by colored practical light. Keep neon colors local in the photograph; this grade alone will not create real light sources.",offsets:[0,155,185,32,290],sat:[52,64,48,51,86],lum:[43,26,49,72,52],gradeSat:[25,15,24],gradeLum:[-9,0,9],blend:40,balance:-10,hl:9},
-{name:"Kings of the Road — Empty Highway",short:"Dusty olive · faded sky · worn asphalt",pill:"FADED TRAVEL",note:"A muted road-film palette of dusty greens, dry earth and faded sky. Use low saturation and preserve the photograph's original contrast.",offsets:[0,175,190,38,65],sat:[33,22,18,20,31],lum:[47,23,46,77,53],gradeSat:[12,7,10],gradeLum:[-14,0,4],blend:60,balance:-20,hl:4},
-{name:"Blue Hour Berlin — City Silence",short:"Cold blue-grey · old stone · amber windows",pill:"BLUE HOUR",note:"Cool city shadows with a subtle warm counterpoint, designed for overcast streets, architecture and the last light after sunset.",offsets:[0,175,210,25,150],sat:[37,33,30,23,47],lum:[45,20,47,74,51],gradeSat:[19,11,15],gradeLum:[-16,0,7],blend:55,balance:-26,hl:7},
-{name:"Pastel Memory — Faded Summer",short:"Washed rose · pale peach · dusty blue",pill:"SOFT / MEMORY",note:"A gentle, faded palette with soft separation and brighter mid-light tones. Avoid lifting blacks so far that the image loses its shape.",offsets:[0,185,215,25,120],sat:[31,25,20,22,33],lum:[59,38,57,83,65],gradeSat:[10,6,9],gradeLum:[-2,0,8],blend:72,balance:12,hl:8},
-{name:"Last Light — Rose & Amber",short:"Burnt gold · dark plum · dusty rose",pill:"DUSK / MELANCHOLY",note:"Warm late-day highlights against a cooler, slightly purple shadow color. Keep the warmth strongest where real light already exists.",offsets:[0,185,220,45,280],sat:[46,35,32,45,66],lum:[48,22,46,77,54],gradeSat:[20,8,15],gradeLum:[-8,0,12],blend:54,balance:15,hl:12}
-];
-function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
-function norm(h){return ((h%360)+360)%360}
-function hslRgb(h,s,l){h=norm(h);s=clamp(s,0,100)/100;l=clamp(l,0,100)/100;var c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2,r=0,g=0,b=0;if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}return{r:Math.round((r+m)*255),g:Math.round((g+m)*255),b:Math.round((b+m)*255)}}
-function hex(h,s,l){var c=hslRgb(h,s,l);return "#"+[c.r,c.g,c.b].map(function(v){return v.toString(16).padStart(2,"0")}).join("").toUpperCase()}
-function rgbHsl(r,g,b){r/=255;g/=255;b/=255;var max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min,h=0,s=0,l=(max+min)/2;if(d){s=d/(1-Math.abs(2*l-1));if(max===r)h=60*(((g-b)/d)%6);else if(max===g)h=60*((b-r)/d+2);else h=60*((r-g)/d+4)}return{h:norm(h),s:s*100,l:l*100}}
-function parseHex(txt){var v=String(txt).trim().replace(/^#/,"");if(/^[0-9a-f]{3}$/i.test(v))v=v.split("").map(function(c){return c+c}).join("");if(!/^[0-9a-f]{6}$/i.test(v))return null;return{r:parseInt(v.slice(0,2),16),g:parseInt(v.slice(2,4),16),b:parseInt(v.slice(4,6),16)}}
-function colorLabel(h){var names=["Red","Orange","Yellow","Chartreuse","Green","Spring green","Cyan","Azure","Blue","Violet","Magenta","Rose"];return names[Math.floor((norm(h)+15)/30)%12]}
-function recommendation(){var p=looks[state.selectedLook]||looks[0];return{name:p.name,sub:p.short,pill:p.pill,note:p.note}}
-function makeGrade(){var p=looks[state.selectedLook]||looks[0],k=state.strength/100,anchorFactor=.55+state.s/100*.65;var sh=norm(state.h+p.offsets[1]),mi=norm(state.h+p.offsets[2]),hi=norm(state.h+p.offsets[3]);state.grade={shadows:{h:Math.round(sh),s:Math.round(clamp(p.gradeSat[0]*anchorFactor*k,0,100)),l:p.gradeLum[0]},midtones:{h:Math.round(mi),s:Math.round(clamp(p.gradeSat[1]*anchorFactor*k,0,100)),l:p.gradeLum[1]},highlights:{h:Math.round(hi),s:Math.round(clamp(p.gradeSat[2]*anchorFactor*k,0,100)),l:state.highlightLum}}}
+var state={h:205,s:42,l:58,strength:100,blending:55,balance:-10,highlightLum:8,grade:{}};
+function recommendation(){return{name:"Paris, Texas — Desert to Neon",sub:"Cool blue shadows · dusty red-ochre midtones · pale warm highlights",pill:"FILM STUDY",note:"A restrained tonal grade inspired by the film’s visual vocabulary: earthy desert warmth and cool sky tones, with red and fluorescent green reserved as scene-dependent accents. The exact grade still depends on the photograph."}}
+function makeGrade(){var k=state.strength/100,shadowHue=norm(state.h),midHue=norm(state.h+185),highHue=norm(state.h+195);state.grade={shadows:{h:Math.round(shadowHue),s:Math.round(clamp((7+state.s*.23)*k,4,32)),l:-9},midtones:{h:Math.round(midHue),s:Math.round(clamp((10+state.s*.16)*k,5,27)),l:0},highlights:{h:Math.round(highHue),s:Math.round(clamp((8+state.s*.13)*k,4,23)),l:state.highlightLum}}}
 function cssWheel(h,s){var radius=clamp(s/65,0,1.2)*40,angle=h*Math.PI/180,x=50+Math.cos(angle)*radius,y=50+Math.sin(angle)*radius;return{left:clamp(x,8,92)+"%",top:clamp(y,8,92)+"%"}}
 function drawWheel(){var c=$("colorWheel"),ctx=c.getContext("2d"),n=c.width,mid=(n-1)/2,rad=n/2-2,img=ctx.createImageData(n,n),d=img.data;for(var y=0;y<n;y++){for(var x=0;x<n;x++){var dx=x-mid,dy=y-mid,r=Math.sqrt(dx*dx+dy*dy),i=(y*n+x)*4;if(r>rad){d[i+3]=0;continue}var hue=norm(Math.atan2(dy,dx)*180/Math.PI),sat=r/rad*100,col=hslRgb(hue,sat,58);d[i]=col.r;d[i+1]=col.g;d[i+2]=col.b;d[i+3]=255}}ctx.putImageData(img,0,0)}
-function positionMainMarker(){var rad=49.5,angle=state.h*Math.PI/180,dist=state.s/100*rad;$("wheelMarker").style.left=(50+Math.cos(angle)*dist)+"%";$("wheelMarker").style.top=(50+Math.sin(angle)*dist)+"%";$("wheelMarker").style.setProperty("--marker",hex(state.h,state.s,state.l))}
+function wheelPoint(h,s){var rad=47,angle=h*Math.PI/180,dist=clamp(s,0,100)/100*rad;return{x:clamp(50+Math.cos(angle)*dist,3,97),y:clamp(50+Math.sin(angle)*dist,3,97)}}
+function placeMarker(id,h,s,color){var p=wheelPoint(h,s),el=$(id);el.style.left=p.x+"%";el.style.top=p.y+"%";el.style.setProperty("--marker",color);return p}
+function positionMainMarker(){var sh=state.grade.shadows,mi=state.grade.midtones,hi=state.grade.highlights;var pS=placeMarker("wheelMarker",state.h,state.s,hex(state.h,state.s,state.l));var pM=placeMarker("midMarker",mi.h,mi.s,hex(mi.h,clamp(mi.s*2.2,0,90),50));var pH=placeMarker("highlightMarker",hi.h,hi.s,hex(hi.h,clamp(hi.s*2.2,0,80),76));$("lineSM").setAttribute("x1",pS.x);$("lineSM").setAttribute("y1",pS.y);$("lineSM").setAttribute("x2",pM.x);$("lineSM").setAttribute("y2",pM.y);$("lineMH").setAttribute("x1",pM.x);$("lineMH").setAttribute("y1",pM.y);$("lineMH").setAttribute("x2",pH.x);$("lineMH").setAttribute("y2",pH.y)}
 function setAnchor(h,s){state.h=norm(h);state.s=clamp(s,0,100);makeGrade();render()}
 function fromWheelEvent(e){var c=$("colorWheel"),r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*c.width,y=(e.clientY-r.top)/r.height*c.height,mid=c.width/2,dx=x-mid,dy=y-mid,rad=c.width/2-2,dist=Math.sqrt(dx*dx+dy*dy);if(dist>rad)return;setAnchor(norm(Math.atan2(dy,dx)*180/Math.PI),dist/rad*100)}
-function renderPalette(){var wrap=$("palette");wrap.innerHTML=looks.map(function(p,i){var offsets=[0].concat(p.offsets.slice(1));var influence=.3+state.s/100*.7;var swatches=[{role:"KEY",h:state.h,s:state.s,l:state.l},{role:"SHADOW",h:norm(state.h+offsets[1]),s:p.sat[1]*influence,l:p.lum[1]},{role:"MID",h:norm(state.h+offsets[2]),s:p.sat[2]*influence,l:p.lum[2]},{role:"HIGH",h:norm(state.h+offsets[3]),s:p.sat[3]*influence,l:p.lum[3]},{role:"ACCENT",h:norm(state.h+offsets[4]),s:p.sat[4]*influence,l:p.lum[4]}];var colors=swatches.map(function(c){return{role:c.role,color:hex(c.h,c.s,c.l)}});return '<button type="button" class="look-card '+(i===state.selectedLook?'active':'')+'" data-look="'+i+'" aria-pressed="'+(i===state.selectedLook?'true':'false')+'"><span class="look-card-head"><strong><span class="look-number">'+String(i+1).padStart(2,"0")+'</span> '+p.name+'</strong><span class="look-pick">'+(i===state.selectedLook?'SELECTED':'LOAD LOOK')+'</span></span><span class="look-card-desc">'+p.short+'</span><span class="look-swatch-row">'+colors.map(function(c){return '<span class="look-swatch"><span class="look-swatch-color" style="background:'+c.color+'"></span><span class="look-swatch-role">'+c.role+'</span><span class="look-swatch-code">'+c.color+'</span></span>'}).join("")+'</span></button>'}).join("");wrap.querySelectorAll("[data-look]").forEach(function(b){b.addEventListener("click",function(){selectLook(+b.dataset.look)})})}
-function selectLook(index){state.selectedLook=clamp(index,0,looks.length-1);var p=looks[state.selectedLook];state.blending=p.blend;state.balance=p.balance;state.highlightLum=p.hl;$("blending").value=state.blending;$("balance").value=state.balance;$("luminance").value=state.highlightLum;render()}
+function renderPalette(){var colors=[
+{name:"Desert sand",hex:"#C8A675",role:"EARTH"},
+{name:"Sunlit cream",hex:"#E8D8B9",role:"LIGHT"},
+{name:"Signal red",hex:"#C9443B",role:"RED"},
+{name:"Open-sky blue",hex:"#719CC3",role:"BLUE"},
+{name:"Fluorescent green",hex:"#63B957",role:"NEON"},
+{name:"Night asphalt",hex:"#242831",role:"DARK"}
+];$("palette").innerHTML=colors.map(function(c){var rgb=parseHex(c.hex),hsl=rgbHsl(rgb.r,rgb.g,rgb.b);return '<button type="button" class="swatch reference-swatch" data-h="'+Math.round(hsl.h)+'" data-s="'+Math.round(clamp(hsl.s,25,80))+'" title="Use '+c.name+' as the Shadows starting color"><span class="swatch-color" style="display:block;background:'+c.hex+'"></span><span class="swatch-meta"><b>'+c.name+'</b><code>'+c.hex+'</code><small>'+c.role+'</small></span></button>'}).join("");$("palette").querySelectorAll("[data-h]").forEach(function(b){b.addEventListener("click",function(){setAnchor(+b.dataset.h,+b.dataset.s);notify("Shadow starting color set from Paris, Texas palette")})})}
 function renderSetup(){var arr=[["shadows","Shadows"],["midtones","Midtones"],["highlights","Highlights"]],html="";arr.forEach(function(entry){var key=entry[0],name=entry[1],g=state.grade[key],col=hex(g.h,clamp(g.s*2.2,0,90),clamp(51+g.l*.25,22,78)),pos=cssWheel(g.h,g.s);html+='<article class="setup-card"><div class="setup-top"><strong>'+name+'</strong><span>'+colorLabel(g.h)+'</span></div><div class="mini-wheel"><span class="mini-marker" style="--dot:'+col+';left:'+pos.left+';top:'+pos.top+'"></span></div><div class="tone-name">'+colorLabel(g.h)+' · '+g.h+'°</div><div class="tone-values"><div class="tone-value"><small>Hue</small><b>'+g.h+'°</b></div><div class="tone-value"><small>Sat</small><b>'+g.s+'</b></div><div class="tone-value"><small>Lum</small><b>'+(g.l>0?"+":"")+g.l+'</b></div></div></article>'});$("setupGrid").innerHTML=html}
 function renderRecipe(){var g=state.grade,rows=[["Shadows — Hue",g.shadows.h+"°"],["Shadows — Saturation",g.shadows.s],["Shadows — Luminance",g.shadows.l],["Midtones — Hue",g.midtones.h+"°"],["Midtones — Saturation",g.midtones.s],["Midtones — Luminance",g.midtones.l],["Highlights — Hue",g.highlights.h+"°"],["Highlights — Saturation",g.highlights.s],["Highlights — Luminance",(g.highlights.l>0?"+":"")+g.highlights.l],["Blending",state.blending],["Balance",(state.balance>0?"+":"")+state.balance]];$("recipeRows").innerHTML=rows.map(function(r){return"<tr><td>"+r[0]+"</td><td>"+r[1]+"</td></tr>"}).join("")}
-function render(){makeGrade();var rec=recommendation();var anchor=hex(state.h,state.s,state.l);positionMainMarker();$("anchorChip").style.background=anchor;$("anchorName").textContent=colorLabel(state.h)+" · "+Math.round(state.s)+"% saturation";$("anchorMeta").textContent="H "+Math.round(state.h)+"° · S "+Math.round(state.s)+"% · L "+state.l+"%";$("hexInput").value=anchor;$("lookTitle").textContent=rec.name;$("lookSubtitle").textContent=rec.sub;$("harmonyPill").textContent=rec.pill;$("paletteNote").textContent=rec.note;$("recommendMark").style.background=hex(norm(state.h+looks[state.selectedLook].offsets[3]),55,62);$("strengthOut").textContent=state.strength+"%";$("blendOut").textContent=state.blending;$("balanceOut").textContent=(state.balance>0?"+":"")+state.balance;$("lumOut").textContent=(state.highlightLum>0?"+":"")+state.highlightLum;renderPalette();renderSetup();renderRecipe()}
-function recipeText(){var rec=recommendation(),g=state.grade;return "CINEGRADE LAB — "+rec.name+"\nAnchor: "+hex(state.h,state.s,state.l)+"\nPalette: "+[hex(state.h,state.s,58),hex(g.shadows.h,50,27),hex(g.midtones.h,50,51),hex(g.highlights.h,48,76),hex(norm(state.h+145),50,49)].join(" / ")+"\n\nLIGHTROOM CLASSIC — COLOR GRADING\nShadows: Hue "+g.shadows.h+"° | Saturation "+g.shadows.s+" | Luminance "+g.shadows.l+"\nMidtones: Hue "+g.midtones.h+"° | Saturation "+g.midtones.s+" | Luminance "+g.midtones.l+"\nHighlights: Hue "+g.highlights.h+"° | Saturation "+g.highlights.s+" | Luminance "+g.highlights.l+"\nBlending: "+state.blending+"\nBalance: "+state.balance+"\n\nWhite balance: set for each photo. Starting values only; adjust exposure and skin tones to the image."}
+function render(){makeGrade();var rec=recommendation();var anchor=hex(state.h,state.s,state.l);positionMainMarker();$("anchorChip").style.background=anchor;$("anchorName").textContent=colorLabel(state.h)+" · "+Math.round(state.s)+"% saturation";$("anchorMeta").textContent="H "+Math.round(state.h)+"° · S "+Math.round(state.s)+"% · L "+state.l+"%";$("hexInput").value=anchor;$("lookTitle").textContent=rec.name;$("lookSubtitle").textContent=rec.sub;$("harmonyPill").textContent=rec.pill;$("paletteNote").textContent=rec.note;$("recommendMark").style.background=hex(state.grade.highlights.h,30,70);$("strengthOut").textContent=state.strength+"%";$("blendOut").textContent=state.blending;$("balanceOut").textContent=(state.balance>0?"+":"")+state.balance;$("lumOut").textContent=(state.highlightLum>0?"+":"")+state.highlightLum;renderPalette();renderSetup();renderRecipe()}
+function recipeText(){var rec=recommendation(),g=state.grade;return "CINEGRADE LAB — "+rec.name+"\nShadow starting color: "+hex(state.h,state.s,state.l)+"\nParis, Texas reference palette: desert sand #C8A675 | sunlit cream #E8D8B9 | signal red #C9443B | open-sky blue #719CC3 | fluorescent green #63B957 | night asphalt #242831"+"\n\nLIGHTROOM CLASSIC — COLOR GRADING\nShadows: Hue "+g.shadows.h+"° | Saturation "+g.shadows.s+" | Luminance "+g.shadows.l+"\nMidtones: Hue "+g.midtones.h+"° | Saturation "+g.midtones.s+" | Luminance "+g.midtones.l+"\nHighlights: Hue "+g.highlights.h+"° | Saturation "+g.highlights.s+" | Luminance "+g.highlights.l+"\nBlending: "+state.blending+"\nBalance: "+state.balance+"\n\nWhite balance: set for each photo. Starting values only; adjust exposure and skin tones to the image."}
 function copyText(txt){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){notify("Lightroom recipe copied")}).catch(function(){fallbackCopy(txt)})}else fallbackCopy(txt)}
 function fallbackCopy(txt){var ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();notify(ok?"Lightroom recipe copied":"Copy was blocked by the browser")}
 function notify(t){var n=$("toast");n.textContent=t;n.classList.add("show");clearTimeout(notify.timer);notify.timer=setTimeout(function(){n.classList.remove("show")},2300)}
@@ -133,7 +151,7 @@ $("colorWheel").addEventListener("pointerdown",function(e){this.setPointerCaptur
 $("colorWheel").addEventListener("pointermove",function(e){if(e.buttons===1)fromWheelEvent(e)});
 $("hexInput").addEventListener("change",function(){var rgb=parseHex(this.value);if(!rgb){notify("Enter a HEX color, like #4AADB2");this.value=hex(state.h,state.s,state.l);return}var hsl=rgbHsl(rgb.r,rgb.g,rgb.b);state.l=Math.round(hsl.l);setAnchor(hsl.h,hsl.s)});
 $("randomBtn").addEventListener("click",function(){setAnchor(Math.floor(Math.random()*360),35+Math.floor(Math.random()*65))});
-$("resetBtn").addEventListener("click",function(){state.strength=100;state.blending=55;state.balance=-12;state.highlightLum=6;$("strength").value=100;$("blending").value=55;$("balance").value=-12;$("luminance").value=6;setAnchor(190,65);notify("Wheel reset")});
+$("resetBtn").addEventListener("click",function(){state.strength=100;state.blending=55;state.balance=-12;state.highlightLum=6;$("strength").value=100;$("blending").value=55;$("balance").value=-12;$("luminance").value=6;setAnchor(205,42);notify("Wheel reset")});
 $("strength").addEventListener("input",function(){state.strength=+this.value;render()});
 $("blending").addEventListener("input",function(){state.blending=+this.value;render()});
 $("balance").addEventListener("input",function(){state.balance=+this.value;render()});
