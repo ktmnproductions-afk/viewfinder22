@@ -132,7 +132,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;pa
 var $=function(id){return document.getElementById(id)};
 var clamp=function(v,a,b){return Math.max(a,Math.min(b,v))};
 var norm=function(h){return((h%360)+360)%360};
-var state={h:205,s:42,l:47,strength:100,active:0,blending:55,balance:-10,grade:{}};
+var state={h:205,s:42,l:47,strength:100,active:0,blending:55,balance:-10,highlightLum:8,grade:{}};
 var palettes=[
 {id:0,name:"Desert Signal",shadow:"#507C9F",midOffset:167,highOffset:174,midSat:12,highSat:5,shadowLum:-9,highlightLum:8,blend:55,balance:-10},
 {id:1,name:"Sun-bleached Road",shadow:"#7896A9",midOffset:163,highOffset:172,midSat:10,highSat:4,shadowLum:-7,highlightLum:9,blend:64,balance:-17},
@@ -157,7 +157,7 @@ function activePalette(){return palettes[state.active]||palettes[0]}
 function makeGrade(){var p=activePalette(),k=state.strength/100;state.grade={
 shadows:{h:Math.round(norm(state.h)),s:Math.round(clamp(state.s*k,0,100)),l:p.shadowLum},
 midtones:{h:Math.round(norm(state.h+p.midOffset)),s:Math.round(clamp((p.midSat+state.s*.13)*k,4,36)),l:0},
-highlights:{h:Math.round(norm(state.h+p.highOffset)),s:Math.round(clamp((p.highSat+state.s*.06)*k,2,24)),l:state.highlightLum}
+highlights:{h:Math.round(norm(state.h+p.highOffset)),s:Math.round(clamp((p.highSat+state.s*.06)*k,2,24)),l:p.highlightLum}
 };state.blending=p.blend;state.balance=p.balance}
 function moveMainMarker(){var g=state.grade;place("shadowMarker",g.shadows.h,g.shadows.s,toHex(g.shadows.h,clamp(g.shadows.s,5,100),50));place("midMarker",g.midtones.h,g.midtones.s,toHex(g.midtones.h,clamp(g.midtones.s*2.5,0,85),55));place("highMarker",g.highlights.h,g.highlights.s,toHex(g.highlights.h,clamp(g.highlights.s*2.5,0,85),75))}
 function moveMiniMarker(id,grade,lum){var p=wheelPoint(grade.h,grade.s),e=$(id);e.style.left=p.x+"%";e.style.top=p.y+"%";e.style.setProperty("--marker",toHex(grade.h,clamp(grade.s*2.3,0,80),lum))}
